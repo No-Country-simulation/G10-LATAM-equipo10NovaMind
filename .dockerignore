@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.git/
+.gitignore
+data/chroma/*
+data/documents/*
+!data/chroma/.gitkeep
+!data/documents/.gitkeep
+*.md
+.pytest_cache/
