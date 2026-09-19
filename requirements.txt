@@ -1,0 +1,34 @@
+# --- Web / UI ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+streamlit==1.38.0
+python-multipart==0.0.9
+
+# --- Validación / esquemas ---
+pydantic==2.9.2
+python-dotenv==1.0.1
+
+# --- RAG / Orquestación ---
+langchain==0.3.7
+langchain-core==0.3.15
+langchain-community==0.3.5
+langgraph==0.2.39
+langchain-google-genai==2.0.4
+langchain-ollama==0.2.0
+
+# --- Vector store / Embeddings ---
+chromadb==0.5.20
+sentence-transformers==3.2.1
+
+# --- Ingesta de documentos ---
+pypdf==5.0.1
+
+# --- OCI ---
+oci==2.135.1
+
+# --- Utilidades ---
+tenacity==9.0.0
+
+# --- Agentes RAG / Cohere ---
+cohere==7.1.1
+langchain-text-splitters==1.1.2

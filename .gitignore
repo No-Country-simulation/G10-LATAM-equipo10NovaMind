@@ -1,0 +1,29 @@
+# Entornos virtuales
+venv/
+.venv/
+
+# Variables de entorno / secretos
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Backups temporales
+*.bak
+
+# Chroma local del Agente 1
+chroma_db/
+
+# Documentos locales usados para pruebas
+data/documents/*
+!data/documents/.gitkeep
+
+# Chroma persistente local
+data/chroma/*
+!data/chroma/.gitkeep
+
+# Herramientas
+.pytest_cache/
+.mypy_cache/
