@@ -1,20 +1,21 @@
 """
 Orquestación multi-agente con LangGraph.
 
-Integración:
-    Agente 1 (RAG Cohere + Chroma)
+Flujo:
+    Agente 1 (Investigador RAG)
         ↓
-    Agente 2 (Productor Cohere)
+    Agente 2 (Productor de contenido)
         ↓
-    Crítico (Cohere)
+    Agente 3 (Crítico / Revisor)
         ↓
-    reintento automático si el anclaje a la fuente es bajo
+    LangGraph decide:
+        ├── score suficiente → FIN
+        └── score bajo       → reintentar Agente 2
 """
 
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 from functools import lru_cache
 from typing import Optional, TypedDict
@@ -23,22 +24,19 @@ from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-load_dotenv()
-
-import cohere
-from langgraph.graph import END, StateGraph
-from tenacity import retry, stop_after_attempt, wait_exponential
-
-from agente1_investigador import AgenteInvestigadorRAG, ChunkResultado
+from agente1_investigador import (
+    AgenteInvestigadorRAG,
+    ChunkResultado,
+)
 from agente2_productor import (
     AgenteProductorContenido,
     ParametrosGeneracion,
 )
-
-from app.core.prompts import (
-    SYSTEM_CRITICO,
-    construir_prompt_critico,
+from agente3_critico import (
+    AgenteCriticoContenido,
+    CriticoGenerationError,
 )
+
 from app.core.schemas import (
     ContenidoAdaptado as NuevaMenteContenidoAdaptado,
     EvaluacionCalidad,
@@ -46,6 +44,12 @@ from app.core.schemas import (
     SolicitudAdaptacion,
 )
 
+
+# ---------------------------------------------------------------------------
+# Configuración
+# ---------------------------------------------------------------------------
+
+load_dotenv()
 
 MIN_ANCLAJE_FUENTE_SCORE = float(
     os.getenv("MIN_ANCLAJE_FUENTE_SCORE", "0.75")
@@ -57,24 +61,12 @@ MAX_REDACCION_RETRIES = int(
 
 
 class LLMGenerationError(Exception):
-    """Error al invocar Cohere o al validar una salida estructurada."""
+    """Error al invocar o validar una salida generada por un LLM."""
 
 
 # ---------------------------------------------------------------------------
-# Clientes
+# Clientes / agentes
 # ---------------------------------------------------------------------------
-
-@lru_cache(maxsize=1)
-def obtener_cliente_cohere() -> cohere.ClientV2:
-    api_key = os.getenv("COHERE_API_KEY")
-
-    if not api_key:
-        raise LLMGenerationError(
-            "No existe COHERE_API_KEY en las variables de entorno."
-        )
-
-    return cohere.ClientV2(api_key=api_key)
-
 
 @lru_cache(maxsize=1)
 def obtener_investigador() -> AgenteInvestigadorRAG:
@@ -120,74 +112,35 @@ def obtener_productor() -> AgenteProductorContenido:
     )
 
 
+@lru_cache(maxsize=1)
+def obtener_critico() -> AgenteCriticoContenido:
+    api_key = os.getenv("COHERE_API_KEY")
+
+    if not api_key:
+        raise LLMGenerationError(
+            "No existe COHERE_API_KEY en las variables de entorno."
+        )
+
+    return AgenteCriticoContenido(
+        api_key=api_key,
+        modelo=os.getenv(
+            "COHERE_MODEL",
+            "command-a-03-2025",
+        ),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Utilidades
 # ---------------------------------------------------------------------------
 
-def _parsear_json(texto: str) -> dict:
+def _crear_documento_id(
+    solicitud: SolicitudAdaptacion,
+) -> str:
     """
-    Convierte la respuesta del modelo en un diccionario JSON.
-    También elimina fences Markdown si aparecen.
+    Genera un ID estable a partir del título y contenido del documento.
     """
-    limpio = (
-        texto
-        .strip()
-        .removeprefix("```json")
-        .removeprefix("```")
-        .removesuffix("```")
-        .strip()
-    )
 
-    try:
-        resultado = json.loads(limpio)
-
-        if not isinstance(resultado, dict):
-            raise LLMGenerationError(
-                "La respuesta JSON no contiene un objeto."
-            )
-
-        return resultado
-
-    except json.JSONDecodeError as exc:
-        raise LLMGenerationError(
-            f"Cohere no devolvió JSON válido: {exc}\n---\n{texto}"
-        ) from exc
-
-
-def _texto_respuesta_cohere(respuesta) -> str:
-    """
-    Extrae el texto de una respuesta ClientV2 de Cohere.
-    """
-    try:
-        contenido = respuesta.message.content
-
-        if isinstance(contenido, list):
-            if not contenido:
-                raise LLMGenerationError(
-                    "Cohere devolvió una respuesta vacía."
-                )
-
-            primer_bloque = contenido[0]
-
-            if hasattr(primer_bloque, "text"):
-                return primer_bloque.text
-
-            if isinstance(primer_bloque, dict):
-                return str(primer_bloque.get("text", ""))
-
-        return str(contenido)
-
-    except Exception as exc:
-        raise LLMGenerationError(
-            f"No se pudo extraer el texto de la respuesta de Cohere: {exc}"
-        ) from exc
-
-
-def _crear_documento_id(solicitud: SolicitudAdaptacion) -> str:
-    """
-    Genera un ID estable a partir del título + contenido.
-    Así podemos reindexar el mismo documento sin generar IDs infinitos.
-    """
     base = (
         f"{solicitud.documento_titulo}\n"
         f"{solicitud.documento_contenido}"
@@ -199,7 +152,7 @@ def _crear_documento_id(solicitud: SolicitudAdaptacion) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Adaptación del formato de salida de Agente 2
+# Adaptación de parámetros para Agente 2
 # ---------------------------------------------------------------------------
 
 def _crear_parametros_generacion(
@@ -207,15 +160,20 @@ def _crear_parametros_generacion(
     feedback_critico: Optional[str] = None,
 ) -> ParametrosGeneracion:
     """
-    Traduce los enums de NuevaMente al modelo de parámetros de Agente 2.
+    Traduce los modelos de NuevaMente al contrato esperado por Agente 2.
     """
 
     formatos = {
-        FormatoSalida.TUTORIAL: "Guía Práctica Paso a Paso",
-        FormatoSalida.FLASHCARDS: "Flashcards",
-        FormatoSalida.QUIZ: "Quiz Interactivo con Justificaciones",
-        FormatoSalida.RESUMEN_TLDR: "Resumen Ejecutivo (TL;DR)",
-        FormatoSalida.GUION_CLASE: "Guion de Clase / Video",
+        FormatoSalida.TUTORIAL:
+            "Guía Práctica Paso a Paso",
+        FormatoSalida.FLASHCARDS:
+            "Flashcards",
+        FormatoSalida.QUIZ:
+            "Quiz Interactivo con Justificaciones",
+        FormatoSalida.RESUMEN_TLDR:
+            "Resumen Ejecutivo (TL;DR)",
+        FormatoSalida.GUION_CLASE:
+            "Guion de Clase / Video",
     }
 
     nichos_validos = {
@@ -250,15 +208,16 @@ def _crear_parametros_generacion(
     )
 
 
+# ---------------------------------------------------------------------------
+# Conversión de salida del Agente 2 al schema de NuevaMente
+# ---------------------------------------------------------------------------
+
 def _convertir_paquete_a_nuevamente(
     paquete,
     formato: FormatoSalida,
 ) -> NuevaMenteContenidoAdaptado:
     """
-    Convierte el ContenidoAdaptado propio de Agente 2 al
-    ContenidoAdaptado que espera NuevaMente.
-
-    No modificamos el modelo original de Agente 2.
+    Convierte la salida del Agente 2 al contrato de NuevaMente.
     """
 
     generado = paquete.contenido_adaptado.model_dump(
@@ -268,9 +227,9 @@ def _convertir_paquete_a_nuevamente(
     items_origen = generado.get("items") or []
     items_destino = []
 
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Flashcards
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
 
     if formato == FormatoSalida.FLASHCARDS:
         for item in items_origen:
@@ -284,9 +243,9 @@ def _convertir_paquete_a_nuevamente(
                 }
             )
 
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Quiz
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
 
     elif formato == FormatoSalida.QUIZ:
         for item in items_origen:
@@ -297,13 +256,15 @@ def _convertir_paquete_a_nuevamente(
                     "respuesta_correcta": item.get(
                         "respuesta_correcta"
                     ),
-                    "justificacion": item.get("justificacion"),
+                    "justificacion": item.get(
+                        "justificacion"
+                    ),
                 }
             )
 
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Tutorial
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
 
     elif formato == FormatoSalida.TUTORIAL:
         for item in items_origen:
@@ -320,9 +281,9 @@ def _convertir_paquete_a_nuevamente(
                 }
             )
 
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Guion de clase / video
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
 
     elif formato == FormatoSalida.GUION_CLASE:
         for indice, item in enumerate(
@@ -354,18 +315,16 @@ def _convertir_paquete_a_nuevamente(
                 }
             )
 
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
     # TL;DR
-    # ---------------------------------------------------------------
+    # ------------------------------------------------------------------
 
     elif formato == FormatoSalida.RESUMEN_TLDR:
         lineas = []
 
         for item in items_origen:
             punto = item.get("punto")
-            importancia = item.get(
-                "por_que_importa"
-            )
+            importancia = item.get("por_que_importa")
 
             if punto and importancia:
                 lineas.append(
@@ -376,15 +335,13 @@ def _convertir_paquete_a_nuevamente(
                     f"- **{punto}**"
                 )
 
-        resumen_markdown = "\n".join(lineas)
-
         return NuevaMenteContenidoAdaptado(
             titulo=generado["titulo"],
             introduccion_contextualizada=generado[
                 "introduccion_contextualizada"
             ],
             items=[],
-            resumen_markdown=resumen_markdown,
+            resumen_markdown="\n".join(lineas),
         )
 
     else:
@@ -409,10 +366,6 @@ def _convertir_paquete_a_nuevamente(
 class AgentState(TypedDict):
     solicitud: SolicitudAdaptacion
     fragmentos: str
-
-    # NUEVO:
-    # conservamos los objetos originales recuperados por Agente 1
-    # para entregárselos directamente a Agente 2.
     chunks_rag: list[ChunkResultado]
 
     contenido_adaptado: Optional[
@@ -427,7 +380,7 @@ class AgentState(TypedDict):
 
 
 # ---------------------------------------------------------------------------
-# Nodo 1 — TU AGENTE INVESTIGADOR
+# Nodo 1 — Agente Investigador
 # ---------------------------------------------------------------------------
 
 @retry(
@@ -438,22 +391,23 @@ class AgentState(TypedDict):
         max=10,
     ),
 )
-def nodo_investigador(state: AgentState) -> AgentState:
+def nodo_investigador(
+    state: AgentState,
+) -> AgentState:
     solicitud = state["solicitud"]
 
     investigador = obtener_investigador()
 
-    documento_id = _crear_documento_id(solicitud)
+    documento_id = _crear_documento_id(
+        solicitud
+    )
 
-    # Indexamos este documento en el RAG de TU Agente 1.
     investigador.ingerir_documento(
         documento_id=documento_id,
         documento_titulo=solicitud.documento_titulo,
         texto=solicitud.documento_contenido,
     )
 
-    # No necesitamos otro LLM para formular la consulta.
-    # Agente 1 ya realiza la recuperación semántica.
     consulta = (
         f"{solicitud.documento_titulo}. "
         f"{solicitud.nicho_sector}"
@@ -466,9 +420,6 @@ def nodo_investigador(state: AgentState) -> AgentState:
         min_score=0.0,
     )
 
-    # Fallback de seguridad:
-    # si por alguna razón Chroma no devuelve resultados,
-    # no dejamos al Productor sin fuente.
     if not chunks:
         chunks = [
             ChunkResultado(
@@ -482,7 +433,8 @@ def nodo_investigador(state: AgentState) -> AgentState:
         ]
 
     fragmentos = "\n\n---\n\n".join(
-        chunk.texto for chunk in chunks
+        chunk.texto
+        for chunk in chunks
     )
 
     return {
@@ -493,7 +445,7 @@ def nodo_investigador(state: AgentState) -> AgentState:
 
 
 # ---------------------------------------------------------------------------
-# Nodo 2 — TU AGENTE PRODUCTOR
+# Nodo 2 — Agente Productor
 # ---------------------------------------------------------------------------
 
 @retry(
@@ -504,10 +456,15 @@ def nodo_investigador(state: AgentState) -> AgentState:
         max=10,
     ),
 )
-def nodo_redactor(state: AgentState) -> AgentState:
+def nodo_redactor(
+    state: AgentState,
+) -> AgentState:
     solicitud = state["solicitud"]
 
-    chunks = state.get("chunks_rag", [])
+    chunks = state.get(
+        "chunks_rag",
+        [],
+    )
 
     if not chunks:
         raise LLMGenerationError(
@@ -543,7 +500,7 @@ def nodo_redactor(state: AgentState) -> AgentState:
 
 
 # ---------------------------------------------------------------------------
-# Nodo 3 — CRÍTICO
+# Nodo 3 — Agente Crítico
 # ---------------------------------------------------------------------------
 
 @retry(
@@ -554,7 +511,9 @@ def nodo_redactor(state: AgentState) -> AgentState:
         max=10,
     ),
 )
-def nodo_critico(state: AgentState) -> AgentState:
+def nodo_critico(
+    state: AgentState,
+) -> AgentState:
     contenido = state["contenido_adaptado"]
 
     if contenido is None:
@@ -562,51 +521,17 @@ def nodo_critico(state: AgentState) -> AgentState:
             "No existe contenido para evaluar."
         )
 
-    cliente = obtener_cliente_cohere()
-
-    prompt = construir_prompt_critico(
-        contenido_generado=contenido.model_dump_json(),
-        fragmentos=state["fragmentos"],
-    )
+    critico = obtener_critico()
 
     try:
-        respuesta = cliente.chat(
-            model=os.getenv(
-                "COHERE_MODEL",
-                "command-a-03-2025",
-            ),
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_CRITICO,
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-            response_format={
-                "type": "json_object"
-            },
-            temperature=0.0,
+        evaluacion = critico.evaluar(
+            contenido_generado=contenido,
+            fragmentos=state["fragmentos"],
         )
 
-        texto = _texto_respuesta_cohere(
-            respuesta
-        )
-
-        data = _parsear_json(texto)
-
-        evaluacion = (
-            EvaluacionCalidad.model_validate(data)
-        )
-
-    except Exception as exc:
-        if isinstance(exc, LLMGenerationError):
-            raise
-
+    except CriticoGenerationError as exc:
         raise LLMGenerationError(
-            f"Salida del Crítico no válida: {exc}"
+            str(exc)
         ) from exc
 
     feedback = None
@@ -625,7 +550,7 @@ def nodo_critico(state: AgentState) -> AgentState:
 
 
 # ---------------------------------------------------------------------------
-# Decisión del ciclo Crítico -> Redactor
+# Decisión del ciclo Crítico → Productor
 # ---------------------------------------------------------------------------
 
 def _decidir_despues_de_critico(
@@ -709,7 +634,11 @@ def ejecutar_pipeline(
     solicitud: SolicitudAdaptacion,
 ) -> AgentState:
     """
-    Punto de entrada utilizado por Streamlit y FastAPI.
+    Ejecuta el pipeline completo de NuevaMente.
+
+    Flujo:
+        Investigador → Productor → Crítico
+        → FIN o reintento del Productor.
     """
 
     global _GRAFO
