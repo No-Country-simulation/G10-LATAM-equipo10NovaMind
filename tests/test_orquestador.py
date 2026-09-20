@@ -295,7 +295,7 @@ def test_alias_del_brief_se_normalizan():
     s2 = SolicitudAdaptacion.model_validate(
         {**SOLICITUD_BASE, "formato_salida": "tutorial", "perfil_destinatario": "Avanzado"}
     )
-    assert s2.formato_salida == "Guía Práctica Paso a Paso"
+    assert s2.formato_salida == "Guía Práctica Paso a Paso (Tutorial)"
     assert s2.perfil_destinatario == "Líder Técnico / Arquitecto"
 
 
@@ -767,3 +767,79 @@ def test_agente1_actualiza_el_indice_sin_borrado_previo():
     assert total == 2
     assert agente.collection.upsert_llamado is True
     assert agente.collection.delete_ids == ["doc-x_9"]
+
+
+# ----------------------------------------------------------------------
+# Regresión: etiquetas EXACTAS del brief y few-shot por formato
+# ----------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "campo, etiqueta, esperado",
+    [
+        ("formato_salida", "Guía Práctica Paso a Paso (Tutorial)", "Guía Práctica Paso a Paso (Tutorial)"),
+        ("formato_salida", "Guía Práctica Paso a Paso", "Guía Práctica Paso a Paso (Tutorial)"),
+        ("formato_salida", "Flashcards de Memorización", "Flashcards"),
+        ("formato_salida", "Quiz Interactivo con Justificaciones", "Quiz Interactivo con Justificaciones"),
+        ("formato_salida", "Resumen Ejecutivo (TL;DR)", "Resumen Ejecutivo (TL;DR)"),
+        ("formato_salida", "Guion de Clase / Video", "Guion de Clase / Video"),
+        ("perfil_destinatario", "Gestor / Ejecutivo (No Técnico)", "Gestor / Ejecutivo (No Técnico)"),
+        ("nivel_detalle", "Estándar", "Intermedio"),
+    ],
+)
+def test_acepta_las_etiquetas_exactas_del_brief(campo, etiqueta, esperado):
+    """El brief usa etiquetas con paréntesis que antes se rechazaban."""
+    s = SolicitudAdaptacion.model_validate({**SOLICITUD_BASE, campo: etiqueta})
+    assert getattr(s, campo) == esperado
+
+
+_CLAVES_POR_FORMATO = {
+    "Flashcards": ('"frente"', ['"pregunta"', '"numero_paso"', '"punto"', '"minuto_aproximado"']),
+    "Quiz Interactivo con Justificaciones": ('"respuesta_correcta"', ['"frente"', '"numero_paso"', '"punto"']),
+    "Guía Práctica Paso a Paso (Tutorial)": ('"numero_paso"', ['"frente"', '"respuesta_correcta"', '"punto"']),
+    "Resumen Ejecutivo (TL;DR)": ('"por_que_importa"', ['"frente"', '"respuesta_correcta"', '"numero_paso"']),
+    "Guion de Clase / Video": ('"apoyo_visual_sugerido"', ['"frente"', '"respuesta_correcta"', '"punto"']),
+}
+
+
+@pytest.mark.parametrize("formato", list(_CLAVES_POR_FORMATO))
+def test_few_shot_del_productor_usa_la_estructura_del_formato_pedido(formato):
+    """Regresión: antes el ejemplo era siempre de Flashcards aunque se pidiera un Quiz."""
+    from agente2_productor import AgenteProductorContenido
+
+    agente = AgenteProductorContenido.__new__(AgenteProductorContenido)
+    parametros = ParametrosGeneracion(
+        perfil_destinatario="Líder Técnico / Arquitecto",
+        formato_salida=formato,
+        nicho_sector="General",
+        nivel_detalle="Profundo",
+        tema_consulta="VCN",
+    )
+    prompt = agente._construir_prompt(chunks_falsos(), parametros)
+    inicio = prompt.index("EJEMPLO DE TRANSFORMACIÓN")
+    fin = prompt.index("FORMATO DE RESPUESTA")
+    bloque = prompt[inicio:fin]
+
+    esperada, prohibidas = _CLAVES_POR_FORMATO[formato]
+    assert f"FORMATO:\n{formato}" in bloque
+    assert esperada in bloque
+    for clave in prohibidas:
+        assert clave not in bloque
+
+
+@pytest.mark.parametrize("formato", list(_CLAVES_POR_FORMATO))
+def test_los_items_de_cada_few_shot_cumplen_el_esquema_estricto(formato):
+    """El ejemplo que se le muestra al modelo debe ser válido para nuestro propio validador."""
+    import json
+
+    from app.core.prompts import obtener_ejemplo_few_shot
+    from app.core.schemas import ESQUEMA_POR_FORMATO
+
+    texto = obtener_ejemplo_few_shot(formato)
+    json_ejemplo = texto[texto.index("SALIDA ESPERADA:") + len("SALIDA ESPERADA:"):]
+    json_ejemplo = json_ejemplo.split("\n\n(El ejemplo muestra")[0].strip()
+    items = json.loads(json_ejemplo)["contenido_adaptado"]["items"]
+
+    modelo = ESQUEMA_POR_FORMATO[formato][0]
+    for item in items:
+        modelo.model_validate(item)
