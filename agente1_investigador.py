@@ -5,6 +5,7 @@ from typing import List, Optional
 
 import chromadb
 import cohere
+from chromadb.config import Settings
 
 
 @dataclass
@@ -15,6 +16,9 @@ class ChunkResultado:
     chunk_id: str
     posicion: int
     score: float
+
+
+_MAX_EMBED_TEXTS_POR_LLAMADA = 96
 
 
 class AgenteInvestigadorRAG:
@@ -63,17 +67,17 @@ class AgenteInvestigadorRAG:
         # ========================================================
 
         self.chroma_client = chromadb.PersistentClient(
-            path=chroma_path
+            path=chroma_path,
+            settings=Settings(anonymized_telemetry=False),
         )
 
         self.collection = (
             self.chroma_client.get_or_create_collection(
                 name=collection_name,
-                configuration={
-                    "hnsw": {
-                        "space": "cosine"
-                    }
-                },
+                # Compatible con chromadb 0.5.x (la clave `configuration`
+                # falla en esa versión con AttributeError: 'dict' object
+                # has no attribute 'to_json').
+                metadata={"hnsw:space": "cosine"},
             )
         )
 
@@ -87,20 +91,45 @@ class AgenteInvestigadorRAG:
         input_type: str,
     ) -> List[List[float]]:
         """
-        Genera embeddings utilizando Cohere.
-        """
+        Genera embeddings utilizando Cohere en lotes de tamaño seguro.
 
+        Cohere limita la solicitud de textos del endpoint Embed a 96 elementos
+        por llamada. Se mantiene el mismo orden de entrada al concatenar los
+        resultados de cada lote.
+        """
         if not textos:
             return []
 
-        respuesta = self.cohere_client.embed(
-            model=self.embedding_model,
-            texts=textos,
-            input_type=input_type,
-            embedding_types=["float"],
-        )
+        embeddings: List[List[float]] = []
 
-        return respuesta.embeddings.float
+        for inicio in range(0, len(textos), _MAX_EMBED_TEXTS_POR_LLAMADA):
+            lote = textos[inicio:inicio + _MAX_EMBED_TEXTS_POR_LLAMADA]
+
+            respuesta = self.cohere_client.embed(
+                model=self.embedding_model,
+                texts=lote,
+                input_type=input_type,
+                embedding_types=["float"],
+            )
+
+            valores = getattr(respuesta.embeddings, "float", None)
+            if valores is None:
+                valores = getattr(respuesta.embeddings, "float_", None)
+
+            if valores is None:
+                raise RuntimeError(
+                    "Cohere no devolvió embeddings de tipo float."
+                )
+
+            if len(valores) != len(lote):
+                raise RuntimeError(
+                    "La cantidad de embeddings devueltos por Cohere "
+                    "no coincide con la cantidad de textos enviada."
+                )
+
+            embeddings.extend(valores)
+
+        return embeddings
 
     # ============================================================
     # INGESTA DE DOCUMENTOS
@@ -185,15 +214,10 @@ class AgenteInvestigadorRAG:
             return 0
 
         # --------------------------------------------------------
-        # ELIMINAR VERSIÓN ANTERIOR
-        # --------------------------------------------------------
-
-        self.eliminar_documento(documento_id)
-
-        # --------------------------------------------------------
         # GENERAR EMBEDDINGS
         # --------------------------------------------------------
-
+        # Se hace antes de borrar la versión anterior para no perder
+        # una indexación válida si Cohere falla.
         embeddings = self._embeber(
             chunks,
             input_type="search_document",
@@ -206,7 +230,7 @@ class AgenteInvestigadorRAG:
             )
 
         # --------------------------------------------------------
-        # CREAR IDS Y METADATOS
+        # PREPARAR IDS Y METADATOS
         # --------------------------------------------------------
 
         ids = []
@@ -228,15 +252,27 @@ class AgenteInvestigadorRAG:
             )
 
         # --------------------------------------------------------
-        # INDEXAR EN CHROMADB
+        # ACTUALIZAR ÍNDICE EN CHROMADB
         # --------------------------------------------------------
+        # `upsert` permite reemplazar los chunks existentes sin borrar
+        # primero una indexación válida. Los chunks antiguos que ya no
+        # existen se eliminan DESPUÉS de que el nuevo conjunto fue aceptado.
+        existentes = self.collection.get(
+            where={"documento_id": documento_id},
+            include=[],
+        ).get("ids", [])
 
-        self.collection.add(
+        self.collection.upsert(
             ids=ids,
             documents=chunks,
             embeddings=embeddings,
             metadatas=metadatos,
         )
+
+        ids_nuevos = set(ids)
+        ids_obsoletos = [id_ for id_ in existentes if id_ not in ids_nuevos]
+        if ids_obsoletos:
+            self.collection.delete(ids=ids_obsoletos)
 
         return len(chunks)
 
@@ -513,12 +549,27 @@ class AgenteInvestigadorRAG:
         # --------------------------------------------------------
         # BÚSQUEDA EN CHROMADB
         # --------------------------------------------------------
+        # Chroma no debe recibir más resultados de los que existen.
+        if documento_id:
+            disponibles = len(
+                self.collection.get(
+                    where={"documento_id": documento_id},
+                    include=[],
+                ).get("ids", [])
+            )
+        else:
+            disponibles = self.collection.count()
+
+        if disponibles <= 0:
+            return []
+
+        n_results = min(top_k, disponibles)
 
         resultados = self.collection.query(
             query_embeddings=[
                 embedding_consulta
             ],
-            n_results=top_k,
+            n_results=n_results,
             where=where,
             include=[
                 "documents",

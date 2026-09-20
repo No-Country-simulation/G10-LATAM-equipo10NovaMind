@@ -20,10 +20,6 @@ chroma_db/
 data/documents/*
 !data/documents/.gitkeep
 
-# Chroma persistente local
-data/chroma/*
-!data/chroma/.gitkeep
-
 # Herramientas
 .pytest_cache/
 .mypy_cache/
