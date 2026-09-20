@@ -44,7 +44,7 @@ PerfilDestinatario = Literal[
 ]
 
 FormatoSalida = Literal[
-    "Guía Práctica Paso a Paso",
+    "Guía Práctica Paso a Paso (Tutorial)",
     "Flashcards",
     "Quiz Interactivo con Justificaciones",
     "Resumen Ejecutivo (TL;DR)",
@@ -112,13 +112,19 @@ _MAPA_PERFIL = _construir_mapa(
 
 _MAPA_FORMATO = _construir_mapa(
     {
-        "Guía Práctica Paso a Paso": [
+        "Guía Práctica Paso a Paso (Tutorial)": [
+            "guia practica paso a paso",
             "tutorial",
             "guia",
             "guia practica",
             "paso a paso",
         ],
-        "Flashcards": ["flashcard", "tarjetas", "tarjetas de memorizacion"],
+        "Flashcards": [
+            "flashcard",
+            "flashcards de memorizacion",
+            "tarjetas",
+            "tarjetas de memorizacion",
+        ],
         "Quiz Interactivo con Justificaciones": [
             "quiz",
             "quiz interactivo",
@@ -388,7 +394,7 @@ class ItemSegmentoGuion(_ItemBase):
 ESQUEMA_POR_FORMATO: Dict[str, tuple] = {
     "Flashcards": (ItemFlashcard, 5, 10),
     "Quiz Interactivo con Justificaciones": (ItemQuiz, 5, 8),
-    "Guía Práctica Paso a Paso": (ItemPaso, 4, 10),
+    "Guía Práctica Paso a Paso (Tutorial)": (ItemPaso, 4, 10),
     "Resumen Ejecutivo (TL;DR)": (ItemResumen, 4, 6),
     "Guion de Clase / Video": (ItemSegmentoGuion, 4, 8),
 }

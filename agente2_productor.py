@@ -27,7 +27,7 @@ import cohere
 from pydantic import ValidationError
 
 from agente1_investigador import ChunkResultado
-from app.core.prompts import EJEMPLO_FEW_SHOT_PRODUCTOR
+from app.core.prompts import obtener_ejemplo_few_shot
 from app.core.schemas import (
     ContenidoAdaptado,
     FuenteUtilizada,
@@ -58,7 +58,7 @@ _INSTRUCCIONES_FORMATO: Dict[str, str] = {
         'No inventes ejemplos, valores, vectores, matrices, ecuaciones '
         'ni casos concretos.'
     ),
-    "Guía Práctica Paso a Paso": (
+    "Guía Práctica Paso a Paso (Tutorial)": (
         'Genera "items" como una lista de pasos ordenados, cada uno con las claves '
         '"numero_paso", "titulo" e "instruccion". Entre 4 y 10 pasos. '
         'Los pasos deben derivarse exclusivamente de la documentación fuente. '
@@ -271,6 +271,10 @@ class AgenteProductorContenido:
             for c in chunks
         )
 
+        ejemplo_few_shot = obtener_ejemplo_few_shot(
+            parametros.formato_salida
+        )
+
         instrucciones_formato = _INSTRUCCIONES_FORMATO[
             parametros.formato_salida
         ]
@@ -321,10 +325,10 @@ REGLAS:
 
 {instrucciones_formato}
 
-{EJEMPLO_FEW_SHOT_PRODUCTOR}
+{ejemplo_few_shot}
 
 Usa el ejemplo anterior SOLO como referencia de estructura y nivel de
-transformación. No copies sus entidades, afirmaciones, números, relaciones
+transformación (el perfil del ejemplo es ilustrativo: adapta al perfil de tu tarea). No copies sus entidades, afirmaciones, números, relaciones
 o contenido al resultado final. Toda afirmación técnica de la respuesta debe
 estar respaldada por los fragmentos fuente recibidos.
 
