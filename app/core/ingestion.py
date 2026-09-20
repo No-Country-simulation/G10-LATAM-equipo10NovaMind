@@ -103,9 +103,9 @@ def cargar_documento_desde_bytes(
     contenido: bytes, nombre_archivo: str, titulo: str | None = None
 ) -> DocumentoIngresado:
     """
-    Variante para uso desde Streamlit (`st.file_uploader` entrega bytes en
-    memoria, no una ruta en disco). Persiste a un archivo temporal en
-    /app/data/documents para poder reutilizar `cargar_documento`.
+    Variante para documentos recibidos directamente como bytes en memoria.
+    Persiste el contenido temporalmente para reutilizar la misma lógica
+    de carga y extracción.
     """
     destino_dir = Path("data/documents")
     destino_dir.mkdir(parents=True, exist_ok=True)

@@ -7,90 +7,34 @@ Responsable de:
 2. Adaptarlos al perfil del destinatario, nicho/sector y formato pedagógico pedidos
 3. Llamar al LLM (Cohere Command) con un prompt estructurado
 4. Validar y devolver la salida en el formato JSON que espera el resto del sistema
+5. (Reintentos) Recibir el feedback del Agente Crítico y corregir su salida
 
 Este agente NO valida fidelidad ni calidad pedagógica: esa es tarea
-del Agente Crítico/Revisor (fuera del alcance de este módulo). Por eso
-la salida incluye "fuentes_utilizadas", para que el crítico pueda
-comparar el contenido generado contra el material original.
+del Agente Crítico/Revisor. Por eso la salida incluye "fuentes_utilizadas",
+para que el crítico pueda comparar el contenido generado contra el material
+original. La decisión de reintentar la toma el Orquestador LangGraph.
+
+Los contratos (esquemas Pydantic) viven en app/core/schemas.py.
 """
 
 from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List, Literal, Optional
+from typing import Dict, List, Optional
 
 import cohere
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 
 from agente1_investigador import ChunkResultado
-
-
-# ----------------------------------------------------------------------
-# Contratos de entrada / salida
-# ----------------------------------------------------------------------
-
-PerfilDestinatario = Literal[
-    "Principiante / Transición de Carrera",
-    "Desarrollador Junior / Semi Senior",
-    "Líder Técnico / Arquitecto",
-    "Gestor / Ejecutivo (No Técnico)",
-]
-
-FormatoSalida = Literal[
-    "Guía Práctica Paso a Paso",
-    "Flashcards",
-    "Quiz Interactivo con Justificaciones",
-    "Resumen Ejecutivo (TL;DR)",
-    "Guion de Clase / Video",
-]
-
-NichoSector = Literal[
-    "Fintech",
-    "Salud",
-    "E-commerce",
-    "General",
-]
-
-
-class ParametrosGeneracion(BaseModel):
-    """Parámetros que recibe el Agente Productor."""
-
-    perfil_destinatario: PerfilDestinatario
-    formato_salida: FormatoSalida
-    nicho_sector: NichoSector
-    tema_consulta: str = Field(
-        ...,
-        description="Tema o pregunta usada para buscar chunks relevantes",
-    )
-
-
-class MetadatosSalida(BaseModel):
-    perfil_aplicado: str
-    formato_generado: str
-    nicho_aplicado: str
-    tiempo_estimado_estudio_minutos: int
-    conceptos_clave: List[str]
-
-
-class ContenidoAdaptado(BaseModel):
-    titulo: str
-    introduccion_contextualizada: str
-    items: List[Dict[str, Any]]
-
-
-class FuenteUtilizada(BaseModel):
-    documento_id: str
-    chunk_id: str
-    texto_fuente: str
-
-
-class PaqueteEducativo(BaseModel):
-    status: Literal["exito", "error"]
-    metadatos: MetadatosSalida
-    contenido_adaptado: ContenidoAdaptado
-    fuentes_utilizadas: List[FuenteUtilizada]
-    evaluacion_calidad: Optional[Dict[str, Any]] = None
+from app.core.prompts import EJEMPLO_FEW_SHOT_PRODUCTOR
+from app.core.schemas import (
+    ContenidoAdaptado,
+    FuenteUtilizada,
+    MetadatosSalida,
+    PaqueteEducativo,
+    ParametrosGeneracion,
+)
 
 
 # ----------------------------------------------------------------------
@@ -165,6 +109,7 @@ class AgenteProductorContenido:
         self,
         chunks: List[ChunkResultado],
         parametros: ParametrosGeneracion,
+        feedback_critico: Optional[str] = None,
     ) -> PaqueteEducativo:
         """
         Genera el paquete educativo adaptado a partir de los chunks recuperados.
@@ -172,6 +117,9 @@ class AgenteProductorContenido:
         Args:
             chunks: fragmentos relevantes devueltos por el Agente Investigador.
             parametros: perfil, nicho y formato elegidos por el usuario.
+            feedback_critico: correcciones del Agente Crítico (o del
+                orquestador) para reintentar tras un rechazo. None en el
+                primer intento.
 
         Returns:
             Un PaqueteEducativo validado.
@@ -189,6 +137,7 @@ class AgenteProductorContenido:
         prompt = self._construir_prompt(
             chunks,
             parametros,
+            feedback_critico,
         )
 
         respuesta = self._cliente.chat(
@@ -239,6 +188,9 @@ class AgenteProductorContenido:
                     conceptos_clave=datos["metadatos"][
                         "conceptos_clave"
                     ],
+                    prerrequisitos=datos["metadatos"].get(
+                        "prerrequisitos", []
+                    ),
                 ),
                 contenido_adaptado=ContenidoAdaptado(
                     **datos["contenido_adaptado"]
@@ -311,6 +263,7 @@ class AgenteProductorContenido:
         self,
         chunks: List[ChunkResultado],
         parametros: ParametrosGeneracion,
+        feedback_critico: Optional[str] = None,
     ) -> str:
         contexto = "\n\n".join(
             f"[Fuente: {c.documento_titulo} | fragmento {c.chunk_id}]\n"
@@ -321,6 +274,12 @@ class AgenteProductorContenido:
         instrucciones_formato = _INSTRUCCIONES_FORMATO[
             parametros.formato_salida
         ]
+
+        bloque_feedback = (
+            f"\n{feedback_critico.strip()}\n"
+            if feedback_critico and feedback_critico.strip()
+            else ""
+        )
 
         return f"""
 DOCUMENTACIÓN TÉCNICA FUENTE
@@ -333,7 +292,8 @@ Adapta la información anterior sobre "{parametros.tema_consulta}" para:
 - Perfil del destinatario: {parametros.perfil_destinatario}
 - Nicho / sector de aplicación: {parametros.nicho_sector}
 - Formato pedagógico de salida: {parametros.formato_salida}
-
+- Nivel de detalle: {parametros.nivel_detalle}
+{bloque_feedback}
 REGLAS:
 
 1. Conserva la fidelidad al contenido fuente.
@@ -361,13 +321,21 @@ REGLAS:
 
 {instrucciones_formato}
 
+{EJEMPLO_FEW_SHOT_PRODUCTOR}
+
+Usa el ejemplo anterior SOLO como referencia de estructura y nivel de
+transformación. No copies sus entidades, afirmaciones, números, relaciones
+o contenido al resultado final. Toda afirmación técnica de la respuesta debe
+estar respaldada por los fragmentos fuente recibidos.
+
 FORMATO DE RESPUESTA
 (JSON exacto, sin texto fuera del JSON):
 
 {{
   "metadatos": {{
     "tiempo_estimado_estudio_minutos": <entero>,
-    "conceptos_clave": [<hasta 5 strings>]
+    "conceptos_clave": [<hasta 5 strings>],
+    "prerrequisitos": [<hasta 4 strings con conocimientos previos necesarios>]
   }},
   "contenido_adaptado": {{
     "titulo": "<título atractivo y específico>",

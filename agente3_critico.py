@@ -27,6 +27,7 @@ from app.core.prompts import (
 from app.core.schemas import (
     ContenidoAdaptado,
     EvaluacionCalidad,
+    ParametrosGeneracion,
 )
 
 
@@ -64,6 +65,7 @@ class AgenteCriticoContenido:
         self,
         contenido_generado: ContenidoAdaptado,
         fragmentos: str,
+        parametros: ParametrosGeneracion,
     ) -> EvaluacionCalidad:
         """
         Evalúa el contenido generado frente a los fragmentos fuente.
@@ -71,6 +73,8 @@ class AgenteCriticoContenido:
         Args:
             contenido_generado: contenido producido por el Agente 2.
             fragmentos: información recuperada por el Agente 1.
+            parametros: contexto real utilizado para la adaptación:
+                perfil, formato, nivel de detalle, nicho y tema.
 
         Returns:
             EvaluacionCalidad validada con Pydantic.
@@ -89,6 +93,10 @@ class AgenteCriticoContenido:
         prompt = construir_prompt_critico(
             contenido_generado=contenido_json,
             fragmentos=fragmentos,
+            perfil_destinatario=parametros.perfil_destinatario,
+            formato_salida=parametros.formato_salida,
+            nivel_detalle=parametros.nivel_detalle,
+            nicho_sector=parametros.nicho_sector,
         )
 
         try:

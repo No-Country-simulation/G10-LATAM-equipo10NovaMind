@@ -1,174 +1,502 @@
 """
-Esquemas Pydantic para NuevaMente.
+Contratos de datos de NuevaMente (tipado estricto con Pydantic).
 
-Estos modelos son el contrato tipado que:
-  1. Valida la entrada del usuario (Streamlit o REST).
-  2. Fuerza el formato de salida del LLM (Structured Outputs).
-  3. Cumple el requisito del whitepaper: "validación de esquemas de entrada
-     y salida con tipado estricto".
+Este módulo es la ÚNICA fuente de verdad de los esquemas que comparten:
+- el Agente 1 (Investigador RAG)
+- el Agente 2 (Productor de contenido)
+- el Agente 3 (Crítico / Revisor)
+- el Orquestador LangGraph
+- la interfaz (Streamlit / API) y el módulo de OCI
+
+Incluye:
+1. Enumeraciones (perfil, formato, nicho, nivel de detalle) con normalización
+   de alias, para aceptar tanto "Principiante" (ejemplo del brief) como
+   "Principiante / Transición de Carrera".
+2. Esquema de la solicitud (entrada) y de la respuesta (salida) según el brief.
+3. Validación estricta de los `items` según el formato pedagógico.
+4. EvaluacionCalidad con `anclaje_fuente_score` CALCULADO en código a partir
+   de las afirmaciones auditadas (no es un número inventado por el LLM).
 """
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import Any, Optional
+import unicodedata
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+
+# ----------------------------------------------------------------------
+# Enumeraciones
+# ----------------------------------------------------------------------
+
+PerfilDestinatario = Literal[
+    "Principiante / Transición de Carrera",
+    "Desarrollador Junior / Semi Senior",
+    "Líder Técnico / Arquitecto",
+    "Gestor / Ejecutivo (No Técnico)",
+]
+
+FormatoSalida = Literal[
+    "Guía Práctica Paso a Paso",
+    "Flashcards",
+    "Quiz Interactivo con Justificaciones",
+    "Resumen Ejecutivo (TL;DR)",
+    "Guion de Clase / Video",
+]
+
+NichoSector = Literal[
+    "Fintech",
+    "Salud",
+    "E-commerce",
+    "General",
+]
+
+NivelDetalle = Literal["Didáctico", "Intermedio", "Profundo"]
 
 
-# ---------------------------------------------------------------------------
-# Enums de parametrización (tal como los define el whitepaper)
-# ---------------------------------------------------------------------------
-
-class PerfilDestinatario(str, Enum):
-    PRINCIPIANTE = "Principiante / Transición de Carrera"
-    JUNIOR_SEMI_SENIOR = "Desarrollador Junior / Semi Senior"
-    LIDER_ARQUITECTO = "Líder Técnico / Arquitecto"
-    GESTOR_NO_TECNICO = "Gestor / Ejecutivo (No Técnico)"
-
-
-class FormatoSalida(str, Enum):
-    TUTORIAL = "Guía Práctica Paso a Paso (Tutorial)"
-    FLASHCARDS = "Flashcards"
-    QUIZ = "Quiz Interactivo con Justificaciones"
-    RESUMEN_TLDR = "Resumen Ejecutivo (TL;DR)"
-    GUION_CLASE = "Guion de Clase / Video"
+def _normalizar(texto: str) -> str:
+    """Minúsculas, sin tildes y con espacios colapsados (para comparar alias)."""
+    sin_tildes = "".join(
+        c
+        for c in unicodedata.normalize("NFD", texto)
+        if unicodedata.category(c) != "Mn"
+    )
+    return " ".join(sin_tildes.lower().split())
 
 
-class NivelDetalle(str, Enum):
-    DIDACTICO = "Didactico"
-    ESTANDAR = "Estandar"
-    PROFUNDO = "Profundo"
+def _construir_mapa(canonicos: Dict[str, List[str]]) -> Dict[str, str]:
+    mapa: Dict[str, str] = {}
+    for canonico, alias in canonicos.items():
+        mapa[_normalizar(canonico)] = canonico
+        for a in alias:
+            mapa[_normalizar(a)] = canonico
+    return mapa
 
 
-class ClaridadPedagogica(str, Enum):
-    BAJA = "Baja"
-    MEDIA = "Media"
-    ALTA = "Alta"
+_MAPA_PERFIL = _construir_mapa(
+    {
+        "Principiante / Transición de Carrera": [
+            "principiante",
+            "transicion de carrera",
+            "novato",
+        ],
+        "Desarrollador Junior / Semi Senior": [
+            "junior",
+            "semi senior",
+            "semisenior",
+            "desarrollador junior",
+            "desarrollador",
+            "intermedio",
+        ],
+        "Líder Técnico / Arquitecto": [
+            "avanzado",
+            "lider tecnico",
+            "arquitecto",
+            "senior",
+        ],
+        "Gestor / Ejecutivo (No Técnico)": [
+            "gestor",
+            "ejecutivo",
+            "no tecnico",
+            "gerente",
+        ],
+    }
+)
+
+_MAPA_FORMATO = _construir_mapa(
+    {
+        "Guía Práctica Paso a Paso": [
+            "tutorial",
+            "guia",
+            "guia practica",
+            "paso a paso",
+        ],
+        "Flashcards": ["flashcard", "tarjetas", "tarjetas de memorizacion"],
+        "Quiz Interactivo con Justificaciones": [
+            "quiz",
+            "quiz interactivo",
+            "cuestionario",
+        ],
+        "Resumen Ejecutivo (TL;DR)": [
+            "resumen",
+            "resumen ejecutivo",
+            "tl;dr",
+            "tldr",
+        ],
+        "Guion de Clase / Video": ["guion", "guion de clase", "video"],
+    }
+)
+
+_MAPA_NICHO = _construir_mapa(
+    {
+        "Fintech": ["finanzas"],
+        "Salud": ["health", "healthcare"],
+        "E-commerce": ["ecommerce", "comercio electronico", "tienda online"],
+        "General": ["generico"],
+    }
+)
+
+_MAPA_NIVEL = _construir_mapa(
+    {
+        "Didáctico": ["didactico", "basico"],
+        "Intermedio": ["estandar", "medio"],
+        "Profundo": ["avanzado", "detallado", "tecnico"],
+    }
+)
 
 
-# ---------------------------------------------------------------------------
-# Entrada (Solicitud)
-# ---------------------------------------------------------------------------
+def _resolver_alias(
+    valor: Any, mapa: Dict[str, str], nombre_campo: str
+) -> Any:
+    """Convierte un alias al valor canónico o falla con un mensaje claro."""
+    if not isinstance(valor, str):
+        return valor
+    clave = _normalizar(valor)
+    if clave in mapa:
+        return mapa[clave]
+    validos = sorted(set(mapa.values()))
+    raise ValueError(
+        f"'{valor}' no es un valor válido para {nombre_campo}. "
+        f"Opciones: {', '.join(validos)}."
+    )
+
+
+# ----------------------------------------------------------------------
+# Entrada
+# ----------------------------------------------------------------------
+
+MIN_CARACTERES_DOCUMENTO = 40
+MAX_CARACTERES_DOCUMENTO = 400_000
+
 
 class SolicitudAdaptacion(BaseModel):
-    documento_titulo: str = Field(..., min_length=3, max_length=300)
+    """
+    Solicitud de adaptación educativa (entrada del sistema).
+
+    Sigue el ejemplo del brief: documento_titulo, documento_contenido,
+    perfil_destinatario, formato_salida, nicho_sector y nivel_detalle.
+    Los campos `tema_consulta` y `documento_id` son opcionales.
+    """
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    documento_titulo: str = Field(..., min_length=1, max_length=200)
     documento_contenido: str = Field(
-        ..., min_length=20,
-        description="Texto crudo extraído del PDF/Markdown/txt de entrada.",
+        ...,
+        min_length=MIN_CARACTERES_DOCUMENTO,
+        max_length=MAX_CARACTERES_DOCUMENTO,
     )
     perfil_destinatario: PerfilDestinatario
     formato_salida: FormatoSalida
-    nicho_sector: str = Field(default="General", max_length=100)
-    nivel_detalle: NivelDetalle = NivelDetalle.DIDACTICO
+    nicho_sector: NichoSector = "General"
+    nivel_detalle: NivelDetalle = "Didáctico"
+    tema_consulta: Optional[str] = Field(
+        default=None,
+        max_length=300,
+        description="Consulta usada para recuperar chunks. "
+        "Si no se indica, se usa el título del documento.",
+    )
+    documento_id: Optional[str] = Field(
+        default=None,
+        max_length=120,
+        description="Identificador estable del documento. "
+        "Si no se indica, se calcula un hash del contenido.",
+    )
 
-    @field_validator("documento_contenido")
+    @field_validator("perfil_destinatario", mode="before")
     @classmethod
-    def contenido_no_vacio(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("El contenido del documento no puede estar vacío.")
-        return v
+    def _perfil(cls, v: Any) -> Any:
+        return _resolver_alias(v, _MAPA_PERFIL, "perfil_destinatario")
+
+    @field_validator("formato_salida", mode="before")
+    @classmethod
+    def _formato(cls, v: Any) -> Any:
+        return _resolver_alias(v, _MAPA_FORMATO, "formato_salida")
+
+    @field_validator("nicho_sector", mode="before")
+    @classmethod
+    def _nicho(cls, v: Any) -> Any:
+        return _resolver_alias(v, _MAPA_NICHO, "nicho_sector")
+
+    @field_validator("nivel_detalle", mode="before")
+    @classmethod
+    def _nivel(cls, v: Any) -> Any:
+        return _resolver_alias(v, _MAPA_NIVEL, "nivel_detalle")
+
+    @field_validator("tema_consulta", "documento_id")
+    @classmethod
+    def _vacio_a_none(cls, v: Optional[str]) -> Optional[str]:
+        return v or None
 
 
-# ---------------------------------------------------------------------------
-# Salida — contenido adaptado (estructura flexible según formato)
-# ---------------------------------------------------------------------------
+class ParametrosGeneracion(BaseModel):
+    """Parámetros que recibe el Agente Productor."""
 
-class ItemContenido(BaseModel):
-    """
-    Unidad atómica de contenido. Su forma varía según el formato de salida:
-      - Flashcards -> frente / dorso / pista_didactica
-      - Quiz       -> pregunta / opciones / respuesta_correcta / justificacion
-      - Tutorial   -> paso_titulo / paso_contenido
-      - Guion      -> escena / narracion
-    Se modela de forma laxa (todos los campos opcionales) para admitir los
-    distintos formatos sin duplicar cinco esquemas casi idénticos; el
-    Agente Redactor solo completa los campos relevantes al formato pedido.
-    """
+    perfil_destinatario: PerfilDestinatario
+    formato_salida: FormatoSalida
+    nicho_sector: NichoSector
+    nivel_detalle: NivelDetalle = "Didáctico"
+    tema_consulta: str = Field(
+        ...,
+        description="Tema o pregunta usada para buscar chunks relevantes",
+    )
 
-    frente: Optional[str] = None
-    dorso: Optional[str] = None
-    pista_didactica: Optional[str] = None
 
-    pregunta: Optional[str] = None
-    opciones: Optional[list[str]] = None
-    respuesta_correcta: Optional[str] = None
-    justificacion: Optional[str] = None
+# ----------------------------------------------------------------------
+# Salida del Agente 2
+# ----------------------------------------------------------------------
 
-    paso_titulo: Optional[str] = None
-    paso_contenido: Optional[str] = None
 
-    escena: Optional[str] = None
-    narracion: Optional[str] = None
+class MetadatosSalida(BaseModel):
+    perfil_aplicado: str
+    formato_generado: str
+    nicho_aplicado: str
+    tiempo_estimado_estudio_minutos: int = Field(..., ge=1, le=600)
+    conceptos_clave: List[str] = Field(..., min_length=1, max_length=10)
+    prerrequisitos: List[str] = Field(default_factory=list, max_length=10)
 
 
 class ContenidoAdaptado(BaseModel):
-    titulo: str
-    introduccion_contextualizada: str
-    items: list[ItemContenido] = Field(default_factory=list)
-    resumen_markdown: Optional[str] = Field(
-        default=None,
-        description="Usado por formatos de texto corrido (TL;DR), donde 'items' no aplica.",
-    )
+    titulo: str = Field(..., min_length=1)
+    introduccion_contextualizada: str = Field(..., min_length=1)
+    items: List[Dict[str, Any]] = Field(..., min_length=1)
 
 
-class Metadatos(BaseModel):
-    perfil_aplicado: str
-    formato_generado: str
-    tiempo_estimado_estudio_minutos: int = Field(ge=1, le=240)
-    conceptos_clave: list[str] = Field(default_factory=list)
+class FuenteUtilizada(BaseModel):
+    documento_id: str
+    chunk_id: str
+    texto_fuente: str
+
+
+# ----------------------------------------------------------------------
+# Salida del Agente 3 (Crítico)
+# ----------------------------------------------------------------------
+
+
+class AfirmacionEvaluada(BaseModel):
+    """Una afirmación técnica del contenido y su verificación contra la fuente."""
+
+    afirmacion: str = Field(..., min_length=1)
+    respaldada: bool
+    chunk_id_evidencia: Optional[str] = None
+    comentario: Optional[str] = None
 
 
 class EvaluacionCalidad(BaseModel):
-    anclaje_fuente_score: float = Field(ge=0.0, le=1.0)
-    claridad_pedagogica: ClaridadPedagogica
-    observaciones: str
+    """
+    Evaluación de calidad del contenido generado.
+
+    MÉTODO DE FIDELIDAD (defendible ante el jurado):
+    el crítico lista las afirmaciones técnicas del contenido y marca cada una
+    como respaldada o no por los fragmentos fuente. El `anclaje_fuente_score`
+    NO lo escribe el LLM: se calcula aquí como
+        afirmaciones respaldadas / afirmaciones totales.
+    """
+
+    anclaje_fuente_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    claridad_pedagogica: Literal["Alta", "Media", "Baja"]
+    observaciones: str = ""
+    afirmaciones: List[AfirmacionEvaluada] = Field(..., min_length=1)
+    sugerencias_correccion: List[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _calcular_score(self) -> "EvaluacionCalidad":
+        respaldadas = sum(1 for a in self.afirmaciones if a.respaldada)
+        self.anclaje_fuente_score = round(
+            respaldadas / len(self.afirmaciones), 4
+        )
+        return self
+
+    @property
+    def afirmaciones_no_respaldadas(self) -> List[AfirmacionEvaluada]:
+        return [a for a in self.afirmaciones if not a.respaldada]
+
+
+class PaqueteEducativo(BaseModel):
+    """Paquete producido por el Agente 2."""
+
+    status: Literal["exito", "error"]
+    metadatos: MetadatosSalida
+    contenido_adaptado: ContenidoAdaptado
+    fuentes_utilizadas: List[FuenteUtilizada]
+    evaluacion_calidad: Optional[EvaluacionCalidad] = None
+
+
+# ----------------------------------------------------------------------
+# Validación estricta de `items` según el formato
+# ----------------------------------------------------------------------
+
+
+class EstructuraInvalidaError(ValueError):
+    """Los items generados no cumplen el esquema del formato pedido."""
+
+
+class _ItemBase(BaseModel):
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+
+class ItemFlashcard(_ItemBase):
+    frente: str = Field(..., min_length=1)
+    dorso: str = Field(..., min_length=1)
+    pista_didactica: str = Field(..., min_length=1)
+
+
+class ItemQuiz(_ItemBase):
+    pregunta: str = Field(..., min_length=1)
+    opciones: List[str] = Field(..., min_length=4, max_length=4)
+    respuesta_correcta: str = Field(..., min_length=1)
+    justificacion: str = Field(..., min_length=1)
+
+    @model_validator(mode="after")
+    def _respuesta_en_opciones(self) -> "ItemQuiz":
+        if self.respuesta_correcta not in self.opciones:
+            raise ValueError(
+                "respuesta_correcta debe coincidir exactamente con una de "
+                "las opciones"
+            )
+        if len(set(self.opciones)) != len(self.opciones):
+            raise ValueError("las opciones no pueden repetirse")
+        return self
+
+
+class ItemPaso(_ItemBase):
+    numero_paso: int = Field(..., ge=1)
+    titulo: str = Field(..., min_length=1)
+    instruccion: str = Field(..., min_length=1)
+
+
+class ItemResumen(_ItemBase):
+    punto: str = Field(..., min_length=1)
+    por_que_importa: str = Field(..., min_length=1)
+
+
+class ItemSegmentoGuion(_ItemBase):
+    minuto_aproximado: Union[int, str]
+    narracion: str = Field(..., min_length=1)
+    apoyo_visual_sugerido: str = Field(..., min_length=1)
+
+
+# formato -> (modelo del item, mínimo de items, máximo de items)
+# Los rangos coinciden con las instrucciones del prompt del Agente 2.
+ESQUEMA_POR_FORMATO: Dict[str, tuple] = {
+    "Flashcards": (ItemFlashcard, 5, 10),
+    "Quiz Interactivo con Justificaciones": (ItemQuiz, 5, 8),
+    "Guía Práctica Paso a Paso": (ItemPaso, 4, 10),
+    "Resumen Ejecutivo (TL;DR)": (ItemResumen, 4, 6),
+    "Guion de Clase / Video": (ItemSegmentoGuion, 4, 8),
+}
+
+
+def validar_items(
+    formato: str, items: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Valida (tipado estricto) los items generados y devuelve versiones limpias.
+
+    Raises:
+        EstructuraInvalidaError: con un mensaje pensado para que el Agente 2
+            corrija su salida en el siguiente intento.
+    """
+    if formato not in ESQUEMA_POR_FORMATO:
+        raise EstructuraInvalidaError(f"Formato desconocido: {formato}")
+
+    modelo, minimo, maximo = ESQUEMA_POR_FORMATO[formato]
+
+    if not (minimo <= len(items) <= maximo):
+        raise EstructuraInvalidaError(
+            f"Para '{formato}' se requieren entre {minimo} y {maximo} items; "
+            f"se recibieron {len(items)}."
+        )
+
+    limpios: List[Dict[str, Any]] = []
+    for posicion, item in enumerate(items, start=1):
+        try:
+            limpios.append(modelo.model_validate(item).model_dump())
+        except ValidationError as error:
+            detalle = "; ".join(
+                f"{'.'.join(str(p) for p in e['loc']) or 'item'}: {e['msg']}"
+                for e in error.errors()
+            )
+            raise EstructuraInvalidaError(
+                f"El item {posicion} de '{formato}' es inválido: {detalle}"
+            ) from error
+    return limpios
+
+
+# ----------------------------------------------------------------------
+# Salida del sistema (respuesta final, según el brief)
+# ----------------------------------------------------------------------
+
+CodigoError = Literal[
+    "ENTRADA_INVALIDA",
+    "DOCUMENTO_VACIO",
+    "SIN_CONTEXTO",
+    "ERROR_GENERACION",
+    "ERROR_CRITICO",
+    "ERROR_INDEXACION",
+    "ERROR_INESPERADO",
+]
+
+
+class ErrorFlujo(BaseModel):
+    codigo: CodigoError
+    etapa: str
+    mensaje_amigable: str
+    detalle_tecnico: Optional[str] = None
 
 
 class AlmacenamientoOCI(BaseModel):
-    bucket: str
-    objeto_id: str
-    status_upload: str  # "completado" | "pendiente" | "error"
+    bucket: Optional[str] = None
+    objeto_id: Optional[str] = None
+    status_upload: Literal["completado", "error", "omitido"]
+
+
+class MetricasOrquestacion(BaseModel):
+    intentos_redaccion: int = 0
+    scores_por_intento: List[float] = Field(default_factory=list)
+    umbral_anclaje: float
+    max_reintentos: int
+    duracion_segundos: float = 0.0
+    documento_id: Optional[str] = None
+    chunks_recuperados: int = 0
 
 
 class RespuestaAdaptacion(BaseModel):
-    status: str  # "exito" | "error"
-    metadatos: Optional[Metadatos] = None
+    """
+    Respuesta final del sistema.
+
+    status:
+      - "exito": el crítico aprobó el contenido (score >= umbral).
+      - "exito_con_advertencias": se agotaron los reintentos sin alcanzar el
+        umbral; se entrega el MEJOR intento y se recomienda revisión humana.
+      - "error": no se pudo generar contenido; ver `error`.
+    """
+
+    status: Literal["exito", "exito_con_advertencias", "error"]
+    metadatos: Optional[MetadatosSalida] = None
     contenido_adaptado: Optional[ContenidoAdaptado] = None
+    fuentes_utilizadas: List[FuenteUtilizada] = Field(default_factory=list)
     evaluacion_calidad: Optional[EvaluacionCalidad] = None
     almacenamiento_oci: Optional[AlmacenamientoOCI] = None
-    error_detalle: Optional[str] = None
+    advertencias: List[str] = Field(default_factory=list)
+    error: Optional[ErrorFlujo] = None
+    orquestacion: MetricasOrquestacion
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "status": "exito",
-                "metadatos": {
-                    "perfil_aplicado": "Principiante",
-                    "formato_generado": "Flashcards",
-                    "tiempo_estimado_estudio_minutos": 5,
-                    "conceptos_clave": ["VCN", "Subredes", "Internet Gateway"],
-                },
-            }
-        }
-    }
-
-
-# ---------------------------------------------------------------------------
-# Chunk indexado (para trazabilidad de fuente en el Vector Store)
-# ---------------------------------------------------------------------------
-
-class ChunkMetadata(BaseModel):
-    doc_id: str
-    doc_titulo: str
-    chunk_index: int
-    fuente_extracto: str = Field(
-        max_length=280,
-        description="Primeros caracteres del chunk, para citar la fuente en la UI.",
-    )
-
-
-class ChunkRecuperado(BaseModel):
-    texto: str
-    metadata: ChunkMetadata
-    score: float
+    @model_validator(mode="after")
+    def _coherencia(self) -> "RespuestaAdaptacion":
+        if self.status == "error":
+            if self.error is None:
+                raise ValueError("status='error' requiere el campo 'error'.")
+        else:
+            if self.contenido_adaptado is None or self.metadatos is None:
+                raise ValueError(
+                    "Una respuesta exitosa requiere contenido y metadatos."
+                )
+        return self
