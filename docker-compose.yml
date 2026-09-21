@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: ./backend
+    image: nuevamente-backend:latest
+    container_name: nuevamente-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - CHROMA_PATH=/app/data/chroma
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend/data/chroma:/app/data/chroma
+      - ./backend/data/outputs:/app/data/outputs
+      - ./backend/data/documents:/app/data/documents
+      - ${OCI_CONFIG_HOST_PATH:-~/.oci}:/root/.oci:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build: ./frontend
+    image: nuevamente-frontend:latest
+    container_name: nuevamente-frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # En la red bridge interna de Docker Compose, backend se resuelve por su nombre de servicio
+      BACKEND_URL: http://backend:8000
+    ports:
+      # Soporta tanto 8501 como 8502 vía variable FRONTEND_PORT (por defecto 8501)
+      - "${FRONTEND_PORT:-8501}:8501"
+    depends_on:
+      backend:
+        condition: service_healthy

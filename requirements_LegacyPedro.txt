@@ -1,0 +1,15 @@
+# --- Validacion y esquemas ---
+pydantic==2.9.2
+python-dotenv==1.0.1
+
+# --- RAG y orquestacion ---
+langgraph==0.2.39
+chromadb>=0.5.20
+cohere==7.1.1
+tenacity==9.0.0
+
+# --- Ingesta de documentos ---
+pypdf==5.0.1
+
+# --- Pruebas ---
+pytest==8.3.3

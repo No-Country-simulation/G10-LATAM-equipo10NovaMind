@@ -1,0 +1,8 @@
+# --- UI ---
+streamlit==1.38.0
+
+# --- Comunicación HTTP con el backend ---
+requests==2.32.3
+
+# --- Variables de entorno ---
+python-dotenv==1.0.1

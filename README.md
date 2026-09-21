@@ -1,170 +1,242 @@
-# NuevaMente — Sistema Inteligente de Adaptación y Generación de Contenido Educativo
+# 🧠 NuevaMente — Sistema Inteligente de Adaptación y Generación de Contenido Educativo
 
-Hackathon ONE G10 · Oracle Next Education & Alura · Proyecto 1
+> **Hackathon ONE G10 · Oracle Next Education & Alura · Proyecto 1**  
+> Solución integral desacoplada en **Microservicios (Backend FastAPI + Frontend Streamlit)** con orquestación multi-agente en **LangGraph**, **RAG vectorial con Cohere**, **ChromaDB**, y persistencia en **Oracle Cloud Infrastructure (OCI)**.
 
-NuevaMente ingiere documentación técnica (PDF, Markdown o texto) y genera contenido
-educativo adaptado al **perfil del destinatario**, al **nicho/sector** y al **formato
-pedagógico** elegido, anclado a la fuente original para evitar alucinaciones.
+---
 
-## Arquitectura
+## 📖 Visión General de la Integración
 
-```
-Documento ─► Ingesta ─► Agente 1 (Investigador RAG) ─► Agente 2 (Productor) ─► Agente 3 (Crítico)
-                              │  chunking + embeddings        │  LLM + RAG            │ audita fidelidad
-                              │  ChromaDB (cosine)            │  role + few-shot      │ contra los chunks
-                              ▼                               ▼                       ▼
-                        ┌───────────────────────────────────────────────────────────────┐
-                        │        Orquestador LangGraph (app/orquestador.py)             │
-                        │  valida entrada · decide reintentos · maneja errores · OCI     │
-                        └───────────────────────────────────────────────────────────────┘
-                                                    │
-                                        JSON estructurado ─► OCI Object Storage (Always Free)
-```
+Esta versión del sistema representa la **fusión arquitectónica** entre dos propuestas clave del equipo:
+1. **Infraestructura y Despliegue de Alejandro (A)**: Arquitectura de microservicios reales desacoplados, contenedorización con Docker Compose, servidor web REST con FastAPI, ingesta multi-formato (PDF, Markdown, TXT) y cliente de OCI Object Storage.
+2. **Motor de IA y Agentes de Pedro (P)**: Pipeline multi-agente en LangGraph con ciclos de feedback, prompting pedagógico adaptativo con few-shots por formato, RAG con Cohere (`command-r-plus` y `embed-multilingual-v3.0`), validación estricta de esquemas en Pydantic v2 y suite de 59+ pruebas deterministas.
 
-### Grafo de orquestación (generado desde el grafo real con `orquestador.diagrama_mermaid()`)
+---
+
+## 🏛️ Diagrama de Arquitectura y Mapa de Autoría (A vs. P)
 
 ```mermaid
-graph TD;
-    START([inicio]) --> ingestar
-    ingestar -->|ok| investigar
-    ingestar -.->|error| finalizar
-    investigar -->|ok| redactar
-    investigar -.->|error o sin contexto| finalizar
-    redactar -->|estructura valida| criticar
-    redactar -->|estructura invalida, quedan intentos| redactar
-    redactar -.->|error| finalizar
-    criticar -->|score bajo el umbral, quedan intentos, con feedback| redactar
-    criticar -->|score aprobado o sin intentos| finalizar
-    finalizar -->|exito o exito con advertencias| persistir
-    finalizar -.->|error| FIN([fin])
-    persistir --> FIN
+graph TD
+    %% Estilos de autoría
+    classDef alejandro fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#eff6ff;
+    classDef pedro fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ecfdf5;
+    classDef sinergia fill:#581c87,stroke:#c084fc,stroke-width:2px,color:#faf5ff;
+
+    %% Leyenda
+    subgraph LEYENDA ["🏷️ CÓDIGO DE COLORES"]
+        L_A["🔵 Aportado por Alejandro (A)"]:::alejandro
+        L_P["🟢 Aportado por Pedro (P)"]:::pedro
+        L_AP["🟣 Integración / Sinergia (A + P)"]:::sinergia
+    end
+
+    %% 1. Infraestructura
+    subgraph INFRA ["🐳 1. INFRAESTRUCTURA & DOCKER"]
+        COMPOSE["<b>docker-compose.yml</b><br/>• Red bridge interna<br/>• Healthcheck condicional<br/>• Puertos 8000 y 8501/8502"]:::alejandro
+        DOCK_B["<b>backend/Dockerfile</b> (Python 3.12.7-slim)"]:::alejandro
+        DOCK_F["<b>frontend/Dockerfile</b> (Python 3.12.7-slim)"]:::alejandro
+        ENV["<b>.env.example</b> (Variables unificadas)"]:::sinergia
+    end
+
+    %% 2. Frontend
+    subgraph FRONTEND ["🖥️ 2. FRONTEND (Streamlit)"]
+        UI["<b>frontend/app/streamlit_app.py</b><br/>• UI moderna y selector dinámico<br/>• Renderizadores para los 5 formatos pedagógicos"]:::sinergia
+        CLIENT["<b>frontend/app/api_client.py</b><br/>• Cliente HTTP desacoplado<br/>• Timeout de 180s y fallback"]:::alejandro
+        UI --> CLIENT
+    end
+
+    %% 3. Backend API
+    subgraph API_REST ["⚡ 3. API REST (FastAPI)"]
+        FASTAPI["<b>backend/app/main.py</b><br/>• /health, /api/v1/config/opciones, /api/v1/adaptar"]:::sinergia
+        INGEST["<b>backend/app/core/ingestion.py</b><br/>• Extractor PDF (pypdf), Markdown y TXT"]:::alejandro
+        FASTAPI --> INGEST
+    end
+
+    %% 4. Motor de IA
+    subgraph IA_CORE ["🧠 4. MOTOR DE IA Y AGENTES (LangGraph)"]
+        ORQ["<b>backend/app/orquestador.py</b><br/>• Grafo multi-agente cíclico"]:::pedro
+        AG1["<b>agente1_investigador.py</b> (RAG + ChromaDB)"]:::pedro
+        AG2["<b>agente2_productor.py</b> (Cohere Command R+)"]:::pedro
+        AG3["<b>agente3_critico.py</b> (Fact-checking & Anclaje)"]:::pedro
+        SCHEMAS["<b>core/schemas.py & prompts.py</b> (Pydantic v2)"]:::pedro
+
+        ORQ --> AG1 & AG2 & AG3
+        AG1 & AG2 & AG3 --- SCHEMAS
+    end
+
+    %% 5. Almacenamiento
+    subgraph STORAGE ["💾 5. CAPA DE ALMACENAMIENTO"]
+        MOCK_STORAGE["<b>storage/local_storage.py (ACTIVO)</b><br/>• Maqueta local en data/outputs/"]:::sinergia
+        REAL_OCI["<b>storage/oci_client.py (AISLADO)</b><br/>• Cliente OCI Object Storage SDK real"]:::alejandro
+
+        ORQ --> MOCK_STORAGE
+        ORQ -.->|Listo para conectar| REAL_OCI
+    end
+
+    CLIENT -- "HTTP REST (Multipart)" --> FASTAPI
+    INGEST --> ORQ
 ```
 
-| Nodo | Responsabilidad |
-|---|---|
-| `ingestar` | Indexa el documento (id estable por hash: no se vuelve a embeber entre escenarios). |
-| `investigar` | Recupera chunks relevantes (top-k, similitud mínima, respaldo sin umbral) y los ordena por posición. |
-| `redactar` | Llama al Agente 2 con el feedback del crítico y valida con tipado estricto los `items` del formato. |
-| `criticar` | Llama al Agente 3, registra el score y conserva el mejor intento. |
-| `finalizar` | Decide `exito`, `exito_con_advertencias` o `error` y arma la respuesta. |
-| `persistir` | Sube el resultado a OCI Object Storage mediante el almacenador inyectado. |
+---
 
-### Robustez del RAG
+## 📂 Estructura del Repositorio
 
-El Agente 1 envía embeddings en lotes de hasta 96 textos, no borra una indexación válida antes de obtener los embeddings y actualiza el Vector Store mediante `upsert`, eliminando únicamente chunks obsoletos después de aceptar el nuevo conjunto. La consulta también limita `n_results` a los elementos disponibles.
+```text
+G10-LATAM-equipo10NovaMind/
+├── docker-compose.yml             # Orquestación de servicios en Docker (puertos 8000 y 8501/8502)
+├── .env.example                   # Plantilla de variables de entorno unificada
+├── esquema_integracion_A_P.md     # Documento técnico detallado de integración
+│
+├── backend/                       # SERVICIO BACKEND (FastAPI + LangGraph + Agentes)
+│   ├── Dockerfile                 # Contenedor basado en Python 3.12.7-slim
+│   ├── requirements.txt           # Dependencias limpias (FastAPI, Cohere, ChromaDB, LangGraph)
+│   ├── pytest.ini                 # Configuración del runner de pruebas
+│   ├── tests/                     # Suite de pruebas automatizadas (63 tests)
+│   │   ├── test_api.py            # Pruebas de endpoints FastAPI
+│   │   ├── test_orquestador.py    # Pruebas unitarias de agentes y LangGraph
+│   │   └── test_integracion_offline.py # Pruebas E2E offline
+│   ├── data/                      # Persistencia de datos
+│   │   ├── chroma/                # Base vectorial persistente de ChromaDB
+│   │   ├── documents/             # Documentos cargados temporalmente
+│   │   └── outputs/               # Salidas persistidas por la maqueta de OCI
+│   └── app/
+│       ├── main.py                # Servidor FastAPI (/health, /config/opciones, /adaptar)
+│       ├── orquestador.py         # Grafo LangGraph y orquestación multi-agente
+│       ├── agentes/               # Clases independientes de los 3 agentes
+│       │   ├── agente1_investigador.py
+│       │   ├── agente2_productor.py
+│       │   └── agente3_critico.py
+│       ├── core/                  # Módulos centrales de negocio
+│       │   ├── schemas.py         # Modelos Pydantic v2 estrictos (5 formatos del brief)
+│       │   ├── prompts.py         # Prompts adaptativos y few-shots por formato
+│       │   ├── config.py          # Validación de variables de entorno
+│       │   └── ingestion.py       # Extractor multi-formato (PDF, MD, TXT)
+│       └── storage/               # Capa de almacenamiento
+│           ├── local_storage.py   # Maqueta activa (guarda en data/outputs/)
+│           └── oci_client.py      # Cliente real de OCI Object Storage
+│
+└── frontend/                      # SERVICIO FRONTEND (Streamlit)
+    ├── Dockerfile                 # Contenedor basado en Python 3.12.7-slim
+    ├── requirements.txt           # Dependencias mínimas (Streamlit, Requests)
+    └── app/
+        ├── streamlit_app.py       # Interfaz visual con renderizadores para los 5 formatos
+        └── api_client.py          # Cliente HTTP desacoplado con timeout de 180s
+```
 
-### Fidelidad a la fuente (anti-alucinación)
+---
 
-1. El Agente 2 usa role prompting, reglas explícitas de fidelidad y un ejemplo few-shot de transformación.
-2. El Agente 3 recibe el contexto real de adaptación (perfil, formato, nivel y nicho) y lista las afirmaciones técnicas
-   del contenido marcándolas como respaldadas o no por los chunks.
-3. El `anclaje_fuente_score` **se calcula en código** (`respaldadas / totales`), no lo inventa el LLM.
-4. El ciclo solo aprueba cuando el anclaje supera `MIN_ANCLAJE_FUENTE_SCORE` **y** la claridad pedagógica no es `Baja`.
-5. Si falla alguno de esos criterios, el feedback se pasa al redactor hasta `MAX_REDACCION_RETRIES` veces.
-6. Si se agotan los reintentos se entrega el **mejor intento** con `status = "exito_con_advertencias"`.
+## 🎯 Los 5 Formatos Pedagógicos Soportados
 
-### Manejo de errores
+El sistema adapta cualquier documento técnico a **5 formatos pedagógicos especializados**, validados por esquemas Pydantic estrictos y renderizados interactivamente en la interfaz:
 
-Nada lanza excepciones hacia la interfaz: `ejecutar()` siempre devuelve una `RespuestaAdaptacion`.
-Los errores llevan un `codigo` (`ENTRADA_INVALIDA`, `DOCUMENTO_VACIO`, `SIN_CONTEXTO`, `ERROR_GENERACION`,
-`ERROR_CRITICO`, `ERROR_INDEXACION`, `ERROR_INESPERADO`) y un `mensaje_amigable` en español. Los fallos
-transitorios de API (429, 5xx, timeouts) se reintentan con backoff exponencial (tenacity). Contenido
-que el crítico no pudo verificar **no se entrega**.
+1. **🗂️ Flashcards de Estudio**: Tarjetas interactivas con pregunta/frente, respuesta/reverso oculta y etiquetas de concepto clave.
+2. **📝 Quiz Interactivo con Justificaciones**: Preguntas de opción múltiple con validación inmediata de acierto y explicación técnica de por qué es correcta.
+3. **🛠️ Guía Práctica Paso a Paso (Tutorial)**: Procedimiento numerado con instrucciones de acción claras y llamadas de advertencia/tips.
+4. **📋 Resumen Ejecutivo (TL;DR)**: Puntos clave condensados con su correspondiente análisis de *¿por qué le importa al destinatario?*.
+5. **🎬 Guion de Clase / Video**: Segmentos temporizados minuto a minuto con texto de locución y apoyos visuales sugeridos.
 
-## Instalación
+---
+
+## 🚀 Despliegue y Puesta en Marcha
+
+### Requisitos Previos
+- **Python 3.12.7** (para ejecución local en entorno virtual).
+- **Docker & Docker Compose** (para despliegue en contenedores).
+- **API Key de Cohere**: Obtén tu clave en [cohere.com](https://cohere.com).
+
+---
+
+### Opción A: Despliegue con Docker Compose (Recomendado)
+
+1. **Configurar las variables de entorno**:
+   ```bash
+   cp .env.example .env
+   ```
+   Abre `.env` y coloca tu `COHERE_API_KEY`:
+   ```env
+   COHERE_API_KEY=tu_clave_aqui
+   ```
+
+2. **Compilar y levantar los contenedores**:
+   ```bash
+   docker compose up --build -d
+   ```
+
+   > **Nota sobre puertos (8501 y 8502)**:  
+   > Por defecto, el frontend se levanta en el puerto `8501`. Si ese puerto ya está ocupado en tu máquina, puedes usar el puerto `8502` sin modificar código:
+   > ```bash
+   > FRONTEND_PORT=8502 docker compose up --build -d
+   > ```
+
+3. **Acceder a los servicios**:
+   - **Frontend UI (Streamlit)**: [http://localhost:8501](http://localhost:8501) (o `http://localhost:8502`)
+   - **Swagger / Documentación Interactiva API**: [http://localhost:8000/docs](http://localhost:8000/docs)
+   - **Healthcheck del Backend**: [http://localhost:8000/health](http://localhost:8000/health)
+
+4. **Detener los servicios**:
+   ```bash
+   docker compose down
+   ```
+
+---
+
+### Opción B: Ejecución Local en Terminales Separadas
+
+1. **Activar el entorno virtual e instalar dependencias**:
+   ```bash
+   # En Windows
+   .venv\Scripts\activate
+   pip install -r backend/requirements.txt
+   pip install -r frontend/requirements.txt
+   ```
+
+2. **Terminal 1: Iniciar el Backend (FastAPI)**:
+   ```bash
+   cd backend
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+3. **Terminal 2: Iniciar el Frontend (Streamlit)**:
+   ```bash
+   cd frontend
+   streamlit run app/streamlit_app.py --server.port 8501
+   ```
+
+---
+
+## 💾 Capa de Almacenamiento: Maqueta Activa vs. OCI Real
+
+Para facilitar el desarrollo y permitir demos completas sin depender obligatoriamente de una cuenta activa de Oracle Cloud, la solución cuenta con una arquitectura de almacenamiento desacoplada:
+
+1. **Maqueta Activa (`backend/app/storage/local_storage.py`)**:
+   - Está conectada por defecto en el grafo LangGraph.
+   - Guarda los documentos originales y el JSON resultante en `backend/data/outputs/`.
+   - Simula y retorna el contrato `AlmacenamientoOCI(bucket="local-mock-storage", objeto_id=..., status_upload="completado")`.
+2. **Cliente OCI Real (`backend/app/storage/oci_client.py`)**:
+   - Desarrollado por Alejandro con el SDK oficial de OCI (`oci`).
+   - Se mantiene aislado en su propio archivo, listo para conectarse pasando sus credenciales en `.env` y activándolo en `backend/app/main.py`.
+
+---
+
+## 🧪 Pruebas Automatizadas
+
+El backend incluye una suite exhaustiva de pruebas unitarias, de regresión y de endpoints HTTP:
 
 ```bash
-git clone <url-del-repo> && cd <repo>
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env               # Windows: copy .env.example .env
-# edita .env y pega tu COHERE_API_KEY
+cd backend
+python -m pytest tests/ -v
 ```
 
-## Uso
+### Cobertura de las Pruebas:
+- **`tests/test_api.py` (4 tests)**: Valida los endpoints `/health`, `/api/v1/config/opciones` y `/api/v1/adaptar` con `TestClient`.
+- **`tests/test_integracion_offline.py` (3 tests)**: Valida el ciclo completo del grafo LangGraph con embeddings y LLM simulados.
+- **`tests/test_orquestador.py` (56 tests)**: Pruebas unitarias de los agentes, normalización de alias, robustez ante fallos transitorios, validación estricta de esquemas por formato y cálculo matemático del anclaje a fuentes.
 
-### Demo (3 escenarios sobre un mismo documento)
+**Resultado actual: 63 pasados, 0 fallidos (100% de éxito).**
 
-```bash
-python demo_orquestacion.py
-python demo_orquestacion.py --archivo mi_documento.md --titulo "Mi manual"
-```
+---
 
-### Desde código (Streamlit, API o notebook)
+## 👥 Créditos y Contribuciones
 
-```python
-from app.orquestador import crear_orquestador
-
-orquestador = crear_orquestador()            # lee .env
-respuesta = orquestador.ejecutar({
-    "documento_titulo": "Introduccion a la Arquitectura de Redes VCN en OCI",
-    "documento_contenido": "...texto extraído del PDF/MD/TXT...",
-    "perfil_destinatario": "Principiante",   # también: "Líder Técnico / Arquitecto", etc.
-    "formato_salida": "Flashcards",          # también: "Quiz Interactivo con Justificaciones", ...
-    "nicho_sector": "General",
-    "nivel_detalle": "Didáctico",
-})
-
-if respuesta.status == "error":
-    print(respuesta.error.mensaje_amigable)   # mostrar al usuario
-else:
-    print(respuesta.model_dump_json(indent=2))  # JSON del brief
-```
-
-### Integración con OCI Object Storage
-
-El orquestador recibe una función `almacenador(solicitud, respuesta) -> AlmacenamientoOCI`:
-
-```python
-from app.core.schemas import AlmacenamientoOCI
-
-def subir_a_oci(solicitud, respuesta) -> AlmacenamientoOCI:
-    # 1) sube solicitud.documento_contenido (original) y respuesta.model_dump_json()
-    # 2) devuelve dónde quedó guardado
-    return AlmacenamientoOCI(
-        bucket="nuevamente-contenidos-educativos",
-        objeto_id="contenido-vcn-principiante-flashcards-001.json",
-        status_upload="completado",
-    )
-
-orquestador = crear_orquestador(almacenador=subir_a_oci)
-```
-
-Si la subida falla, el contenido se entrega igual con `almacenamiento_oci.status_upload = "error"` y una advertencia.
-
-## Configuración (`.env`)
-
-| Variable | Defecto | Descripción |
-|---|---|---|
-| `COHERE_API_KEY` | — | Clave de Cohere (obligatoria). **Nunca la subas a Git.** |
-| `COHERE_MODEL` | `command-a-03-2025` | Modelo de generación (Agentes 2 y 3). |
-| `COHERE_EMBEDDING_MODEL` | `embed-multilingual-v3.0` | Modelo de embeddings (Agente 1). |
-| `TOP_K_CHUNKS` | `6` | Chunks recuperados por consulta. |
-| `MIN_SCORE_RETRIEVAL` | `0.60` | Similitud coseno mínima para aceptar un chunk. |
-| `MIN_ANCLAJE_FUENTE_SCORE` | `0.75` | Score mínimo de fidelidad para aprobar. Además, la claridad pedagógica no puede ser `Baja`. |
-| `MAX_REDACCION_RETRIES` | `2` | Reintentos de redacción (intentos totales = 1 + valor). |
-| `API_REINTENTOS` / `API_ESPERA_BASE_SEGUNDOS` | `3` / `1.0` | Reintentos con backoff ante fallos transitorios. |
-
-## Pruebas
-
-```bash
-python -m pytest tests -v
-```
-
-Corren **sin red ni API key**: agentes falsos para el orquestador y un Cohere simulado para la
-integración completa (Agentes 1, 2, 3 reales + ChromaDB real).
-
-## Estructura
-
-```
-agente1_investigador.py   Agente 1 · RAG (chunking, embeddings, ChromaDB)
-agente2_productor.py      Agente 2 · Productor de contenido (LLM)
-agente3_critico.py        Agente 3 · Crítico / Revisor
-app/core/schemas.py       Contratos Pydantic compartidos (entrada, salida, evaluación)
-app/core/prompts.py       Prompts del Productor y Crítico (role prompting + few-shot)
-app/core/config.py        Configuración validada desde el entorno
-app/orquestador.py        Orquestador LangGraph
-demo_orquestacion.py      Demo de 3 escenarios
-tests/                    Pruebas unitarias e integración offline
-```
+- **Alejandro**: Arquitectura de microservicios, contenedorización Docker Compose, servidor REST FastAPI, módulo de ingesta multi-formato y cliente de OCI Object Storage.
+- **Pedro**: Lógica multi-agente en LangGraph, prompting pedagógico, RAG con Cohere y ChromaDB, contratos de datos Pydantic v2 y suite de pruebas unitarias.
+- **Equipo NovaMind**: Sinergia, pruebas de integración, renderizadores temáticos en Streamlit y calibración de umbrales de calidad.

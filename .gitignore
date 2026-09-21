@@ -15,6 +15,7 @@ __pycache__/
 
 # Chroma local del Agente 1
 chroma_db/
+data/chroma/
 
 # Documentos locales usados para pruebas
 data/documents/*
