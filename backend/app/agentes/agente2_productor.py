@@ -26,7 +26,10 @@ from typing import Dict, List, Optional
 import cohere
 from pydantic import ValidationError
 
-from agente1_investigador import ChunkResultado
+try:
+    from app.agentes.agente1_investigador import ChunkResultado
+except ImportError:
+    from agente1_investigador import ChunkResultado
 from app.core.prompts import obtener_ejemplo_few_shot
 from app.core.schemas import (
     ContenidoAdaptado,

@@ -893,12 +893,24 @@ def crear_orquestador(
             (firma: (solicitud, respuesta) -> AlmacenamientoOCI).
     """
     # Imports locales: así los tests con agentes falsos no necesitan Cohere/Chroma.
-    from agente1_investigador import AgenteInvestigadorRAG
-    from agente2_productor import AgenteProductorContenido
-    from agente3_critico import AgenteCriticoContenido
+    try:
+        from app.agentes.agente1_investigador import AgenteInvestigadorRAG
+        from app.agentes.agente2_productor import AgenteProductorContenido
+        from app.agentes.agente3_critico import AgenteCriticoContenido
+    except ImportError:
+        from agente1_investigador import AgenteInvestigadorRAG
+        from agente2_productor import AgenteProductorContenido
+        from agente3_critico import AgenteCriticoContenido
+
+    try:
+        from app.storage.local_storage import almacenador_local
+    except ImportError:
+        almacenador_local = None
 
     cfg = config or Config.desde_entorno()
     clave = cfg.exigir_cohere()
+
+    almacenador_final = almacenador if almacenador is not None else almacenador_local
 
     return OrquestadorNuevaMente(
         investigador=AgenteInvestigadorRAG(
@@ -910,5 +922,5 @@ def crear_orquestador(
         productor=AgenteProductorContenido(api_key=clave, modelo=cfg.cohere_model),
         critico=AgenteCriticoContenido(api_key=clave, modelo=cfg.cohere_model),
         config=cfg,
-        almacenador=almacenador,
+        almacenador=almacenador_final,
     )

@@ -1,7 +1,7 @@
 """
 Ingesta y extracción de texto de documentos técnicos.
 
-Soporta los tres formatos exigidos por el whitepaper: PDF, Markdown y texto plano.
+Soporta los tres formatos exigidos: PDF, Markdown y texto plano.
 """
 
 from __future__ import annotations
@@ -34,8 +34,7 @@ _HEADER_FOOTER_PATTERN = re.compile(
 def _limpiar_headers_repetidos(texto: str) -> str:
     """
     Elimina headers/footers repetidos página a página (típico en PDFs
-    institucionales, como el propio whitepaper de este proyecto), para
-    que no contaminen los chunks ni infeln el conteo de tokens.
+    institucionales), para que no contaminen los chunks ni inflen tokens.
     """
     return _HEADER_FOOTER_PATTERN.sub("", texto).strip()
 
@@ -58,8 +57,7 @@ def _extraer_pdf(path: Path) -> str:
     texto_crudo = "\n".join(paginas)
     if not texto_crudo.strip():
         raise IngestionError(
-            f"El PDF '{path.name}' no contiene texto extraíble "
-            "(¿es un escaneo sin OCR?)."
+            f"El PDF '{path.name}' no contiene texto extraíble (¿es un escaneo sin OCR?)."
         )
     return _limpiar_headers_repetidos(texto_crudo)
 
@@ -103,9 +101,8 @@ def cargar_documento_desde_bytes(
     contenido: bytes, nombre_archivo: str, titulo: str | None = None
 ) -> DocumentoIngresado:
     """
-    Variante para documentos recibidos directamente como bytes en memoria.
-    Persiste el contenido temporalmente para reutilizar la misma lógica
-    de carga y extracción.
+    Variante para uso desde endpoints HTTP / subida de archivos (bytes en memoria).
+    Persiste en backend/data/documents para trazabilidad y extrae el texto.
     """
     destino_dir = Path("data/documents")
     destino_dir.mkdir(parents=True, exist_ok=True)
