@@ -1,0 +1,11 @@
+# --- UI ---
+streamlit==1.38.0
+
+# --- Comunicación HTTP con el backend ---
+requests==2.32.3
+
+# Nota: este archivo NO incluye langchain, chromadb, oci-sdk, pypdf, etc.
+# Ese es justamente el punto de separar los servicios: la imagen del
+# frontend es liviana y no necesita ninguna de las dependencias pesadas
+# de RAG/LLM, que solo vive del lado del backend.
+python-dotenv==1.0.1
