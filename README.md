@@ -147,61 +147,10 @@ El sistema adapta cualquier documento técnico a **5 formatos pedagógicos espec
 
 ### Opción A: Despliegue con Docker Compose (Recomendado)
 
-1. **Configurar las variables de entorno**:
-   ```bash
-   cp .env.example .env
-   ```
-   Abre `.env` y coloca tu `COHERE_API_KEY`:
-   ```env
-   COHERE_API_KEY=tu_clave_aqui
-   ```
 
-2. **Compilar y levantar los contenedores**:
-   ```bash
-   docker compose up --build -d
-   ```
-
-   > **Nota sobre puertos (8501 y 8502)**:  
-   > Por defecto, el frontend se levanta en el puerto `8501`. Si ese puerto ya está ocupado en tu máquina, puedes usar el puerto `8502` sin modificar código:
-   > ```bash
-   > FRONTEND_PORT=8502 docker compose up --build -d
-   > ```
-
-3. **Acceder a los servicios**:
-   - **Frontend UI (Streamlit)**: [http://localhost:8501](http://localhost:8501) (o `http://localhost:8502`)
-   - **Swagger / Documentación Interactiva API**: [http://localhost:8000/docs](http://localhost:8000/docs)
-   - **Healthcheck del Backend**: [http://localhost:8000/health](http://localhost:8000/health)
-
-4. **Detener los servicios**:
-   ```bash
-   docker compose down
-   ```
-
----
 
 ### Opción B: Ejecución Local en Terminales Separadas
 
-1. **Activar el entorno virtual e instalar dependencias**:
-   ```bash
-   # En Windows
-   .venv\Scripts\activate
-   pip install -r backend/requirements.txt
-   pip install -r frontend/requirements.txt
-   ```
-
-2. **Terminal 1: Iniciar el Backend (FastAPI)**:
-   ```bash
-   cd backend
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-3. **Terminal 2: Iniciar el Frontend (Streamlit)**:
-   ```bash
-   cd frontend
-   streamlit run app/streamlit_app.py --server.port 8501
-   ```
-
----
 
 ## 💾 Capa de Almacenamiento: Maqueta Activa vs. OCI Real
 
