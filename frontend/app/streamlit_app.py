@@ -1,11 +1,14 @@
 """
 Interfaz de Usuario en Streamlit — NuevaMente
 Sistema Inteligente de Adaptación y Generación de Contenido Educativo.
+Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 """
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any, Dict
 
 import streamlit as st
@@ -41,16 +44,18 @@ def _render_flashcards(items: list[dict]):
 
 
 def _render_quiz(items: list[dict]):
-    st.subheader("📝 Quiz Interactivo")
+    st.subheader("📝 Quiz Interactivo con Justificaciones")
     for i, item in enumerate(items):
         with st.container(border=True):
-            st.markdown(f"**Pregunta #{i + 1}:** {item.get('pregunta', '')}")
+            pregunta = item.get("pregunta", "")
+            st.markdown(f"**Pregunta #{i + 1}:** {pregunta}")
             opciones = item.get("opciones", [])
             resp_correcta = item.get("respuesta_correcta", "")
+            q_hash = abs(hash(pregunta)) % 1000000
             eleccion = st.radio(
                 f"Selecciona una opción para la pregunta #{i + 1}:",
                 opciones,
-                key=f"quiz_q_{i}",
+                key=f"quiz_q_{i}_{q_hash}",
                 index=None,
             )
             if eleccion is not None:
@@ -58,7 +63,7 @@ def _render_quiz(items: list[dict]):
                     st.success(f"✅ ¡Correcto! {eleccion}")
                 else:
                     st.error(f"❌ Incorrecto. La respuesta correcta es: **{resp_correcta}**")
-                if "justificacion" in item:
+                if "justificacion" in item and item["justificacion"]:
                     st.markdown(f"💡 **Justificación:** *{item['justificacion']}*")
 
 
@@ -135,14 +140,41 @@ else:
 opciones = client.obtener_opciones()
 
 st.sidebar.header("1. Documento Fuente")
-archivo_subido = st.sidebar.file_uploader(
-    "Sube un archivo técnico (PDF, Markdown o TXT)",
-    type=["pdf", "md", "txt", "markdown"],
+
+DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "documents"
+docs_disponibles = []
+if DOCS_DIR.exists():
+    docs_disponibles = sorted([f.name for f in DOCS_DIR.iterdir() if f.is_file() and f.name != ".gitkeep"])
+
+modo_fuente = st.sidebar.radio(
+    "Selecciona el origen del documento:",
+    ["📚 Documentos de Prueba (Precargados)", "📂 Subir archivo propio (PDF/MD/TXT)", "✍️ Ingresar texto directo"],
+    index=0 if docs_disponibles else 1,
 )
 
-usar_texto_directo = st.sidebar.checkbox("O ingresar texto directamente", value=False)
+archivo_bytes = None
+nombre_archivo = None
 texto_directo = ""
-if usar_texto_directo:
+
+if modo_fuente == "📚 Documentos de Prueba (Precargados)":
+    if docs_disponibles:
+        doc_elegido = st.sidebar.selectbox("Documento disponible en el repo:", docs_disponibles)
+        ruta_completa = DOCS_DIR / doc_elegido
+        tam_kb = ruta_completa.stat().st_size / 1024
+        st.sidebar.success(f"✅ Archivo listo: `{doc_elegido}` ({tam_kb:.1f} KB)")
+        archivo_bytes = ruta_completa.read_bytes()
+        nombre_archivo = doc_elegido
+    else:
+        st.sidebar.warning("No se encontraron documentos en data/documents/")
+elif modo_fuente == "📂 Subir archivo propio (PDF/MD/TXT)":
+    archivo_subido = st.sidebar.file_uploader(
+        "Sube un archivo técnico (PDF, Markdown o TXT)",
+        type=["pdf", "md", "txt", "markdown"],
+    )
+    if archivo_subido:
+        archivo_bytes = archivo_subido.read()
+        nombre_archivo = archivo_subido.name
+else:
     texto_directo = st.sidebar.text_area("Pega aquí el contenido técnico:", height=150)
 
 st.sidebar.header("2. Parámetros Pedagógicos")
@@ -164,14 +196,14 @@ nivel_sel = st.sidebar.selectbox(
 )
 tema_consulta = st.sidebar.text_input(
     "Pregunta / Foco de búsqueda (Opcional):",
-    placeholder="Ej: arquitectura de subredes VCN",
+    placeholder="Ej: conceptos clave, ideas principales o dudas específicas",
 )
 
 boton_generar = st.sidebar.button("🚀 Adaptar Contenido", type="primary", use_container_width=True)
 
 
 # ----------------------------------------------------------------------
-# Panel Principal
+# Panel Principal con Persistencia de Estado
 # ----------------------------------------------------------------------
 
 st.title("🧠 NuevaMente — Sistema de Adaptación Educativa")
@@ -179,35 +211,57 @@ st.caption(
     "Transformación pedagógica guiada por Agentes Inteligentes (RAG + LangGraph + Fact-Checking)"
 )
 
-if boton_generar:
-    if not archivo_subido and not texto_directo.strip():
-        st.error("⚠️ Debes subir un archivo o ingresar texto para adaptar.")
-    else:
-        archivo_bytes = archivo_subido.read() if archivo_subido else None
-        nombre_archivo = archivo_subido.name if archivo_subido else None
+# Inicialización de estado para que las interacciones del usuario (como Quizzes) no reinicien la vista
+if "resultado_actual" not in st.session_state:
+    st.session_state["resultado_actual"] = None
+if "formato_actual" not in st.session_state:
+    st.session_state["formato_actual"] = None
 
-        with st.status("Ejecutando orquestación multi-agente...", expanded=True) as status:
-            st.write("📄 Extrayendo documento e indexando chunks...")
-            st.write(f"🤖 Agente Productor generando formato '{formato_sel}'...")
-            st.write("🔍 Agente Crítico auditando anclaje y veracidad...")
+tab_adaptar, tab_historial = st.tabs(["✨ Adaptador Educativo", "📚 Historial de Paquetes Guardados"])
 
-            resultado = client.adaptar_contenido(
-                archivo_bytes=archivo_bytes,
-                nombre_archivo=nombre_archivo,
-                texto_directo=texto_directo,
-                titulo=nombre_archivo or "Documento Técnico",
-                perfil=perfil_sel,
-                formato=formato_sel,
-                nicho=nicho_sel,
-                nivel=nivel_sel,
-                tema_consulta=tema_consulta or None,
-            )
-            status.update(label="¡Adaptación completada!", state="complete", expanded=False)
+with tab_adaptar:
+    if boton_generar:
+        if not archivo_bytes and not texto_directo.strip():
+            st.error("⚠️ Debes seleccionar un documento de prueba, subir un archivo o ingresar texto para adaptar.")
+        else:
+            with st.status("Ejecutando orquestación multi-agente...", expanded=True) as status:
+                st.write("📄 Extrayendo documento e indexando chunks...")
+                st.write(f"🤖 Agente Productor generando formato '{formato_sel}'...")
+                st.write("🔍 Agente Crítico auditando anclaje y veracidad...")
 
+                resultado = client.adaptar_contenido(
+                    archivo_bytes=archivo_bytes,
+                    nombre_archivo=nombre_archivo,
+                    texto_directo=texto_directo,
+                    titulo=nombre_archivo or "Documento Técnico",
+                    perfil=perfil_sel,
+                    formato=formato_sel,
+                    nicho=nicho_sel,
+                    nivel=nivel_sel,
+                    tema_consulta=tema_consulta or None,
+                )
+                status.update(label="¡Adaptación completada!", state="complete", expanded=False)
+
+            st.session_state["resultado_actual"] = resultado
+            st.session_state["formato_actual"] = formato_sel
+
+    resultado = st.session_state.get("resultado_actual")
+    formato_activo = st.session_state.get("formato_actual") or formato_sel
+
+    if resultado:
         if resultado.get("status") == "error":
             error_data = resultado.get("error", {})
             st.error(f"❌ Error: {error_data.get('mensaje_amigable', 'Ocurrió un error inesperado')}")
+            if st.button("🔄 Intentar Nuevamente"):
+                st.session_state["resultado_actual"] = None
+                st.rerun()
         else:
+            col_top_l, col_top_r = st.columns([4, 1])
+            with col_top_r:
+                if st.button("🔄 Nueva Adaptación", use_container_width=True):
+                    st.session_state["resultado_actual"] = None
+                    st.rerun()
+
             contenido = resultado.get("contenido_adaptado")
             orq = resultado.get("orquestacion", {})
             calidad = resultado.get("evaluacion_calidad", {})
@@ -231,15 +285,51 @@ if boton_generar:
 
             # Renderizado temático
             if contenido:
-                render_contenido_adaptado(formato_sel, contenido)
+                render_contenido_adaptado(formato_activo, contenido)
 
             # Opciones de descarga
             st.divider()
             st.download_button(
                 label="📥 Descargar Resultado Completo (JSON)",
                 data=json.dumps(resultado, ensure_ascii=False, indent=2),
-                file_name=f"adaptacion_{formato_sel.lower().replace(' ', '_')}.json",
+                file_name=f"adaptacion_{formato_activo.lower().replace(' ', '_')}.json",
                 mime="application/json",
             )
-else:
-    st.info("👈 Configura los parámetros en el menú lateral y haz clic en **Adaptar Contenido** para comenzar.")
+    else:
+        st.info("👈 Configura los parámetros en el menú lateral y haz clic en **Adaptar Contenido** para comenzar.")
+
+with tab_historial:
+    st.subheader("📚 Paquetes Guardados en Almacenamiento")
+    st.caption("Contenidos generados y persistidos en el almacenamiento local o en OCI Object Storage.")
+
+    if st.button("🔄 Actualizar Lista"):
+        st.rerun()
+
+    info_paquetes = client.listar_paquetes()
+    paquetes = info_paquetes.get("paquetes", [])
+    origen = info_paquetes.get("origen", "desconocido")
+
+    if not paquetes:
+        st.info("No hay paquetes generados aún. Genera tu primer contenido en la pestaña 'Adaptador Educativo'.")
+    else:
+        st.write(f"**Origen de persistencia:** `{origen}` · **Total paquetes:** {len(paquetes)}")
+        for pkg in paquetes:
+            nombre = pkg.get("nombre", "")
+            tam = pkg.get("tamanio_bytes", 0)
+            tam_kb = f"{tam / 1024:.1f} KB" if tam else "N/A"
+            with st.container(border=True):
+                col_p1, col_p2 = st.columns([3, 1])
+                with col_p1:
+                    st.markdown(f"📄 **`{nombre}`** ({tam_kb})")
+                with col_p2:
+                    if st.button("👁️ Cargar en Visor", key=f"btn_pkg_{nombre}"):
+                        datos_pkg = client.descargar_paquete(nombre)
+                        if datos_pkg:
+                            formato_guardado = datos_pkg.get("metadatos", {}).get("formato_salida") or datos_pkg.get("solicitud", {}).get("formato") or "Flashcards"
+                            st.session_state["resultado_actual"] = datos_pkg
+                            st.session_state["formato_actual"] = formato_guardado
+                            st.success(f"¡Paquete `{nombre}` cargado! Abre la pestaña 'Adaptador Educativo' para verlo.")
+                            st.rerun()
+
+st.divider()
+st.caption("🚀 Desarrollado por el **Equipo 10 (G10 - NovaMind)** para **No-Country** · Simulación Hackathon ONE G10")

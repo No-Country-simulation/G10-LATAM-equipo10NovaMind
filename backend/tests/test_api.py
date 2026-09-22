@@ -123,3 +123,13 @@ def test_adaptar_valida_esquema_con_texto_directo():
         assert len(resultado["contenido_adaptado"]["items"]) == 5
         assert resultado["evaluacion_calidad"]["anclaje_fuente_score"] == 1.0
         assert resultado["almacenamiento_oci"]["status_upload"] == "completado"
+
+
+def test_listar_paquetes_endpoint():
+    response = client.get("/api/v1/paquetes")
+    assert response.status_code == 200
+    data = response.json()
+    assert "origen" in data
+    assert "paquetes" in data
+    assert isinstance(data["paquetes"], list)
+

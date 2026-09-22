@@ -1,5 +1,7 @@
 """
 Orquestador LangGraph de NuevaMente.
+Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Coordina los tres agentes y decide qué pasa después de cada paso:
 
@@ -28,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import time
 from typing import (
     Any,
@@ -902,15 +905,24 @@ def crear_orquestador(
         from agente2_productor import AgenteProductorContenido
         from agente3_critico import AgenteCriticoContenido
 
-    try:
-        from app.storage.local_storage import almacenador_local
-    except ImportError:
-        almacenador_local = None
+    almacenador_final = almacenador
+    if almacenador_final is None:
+        if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
+            try:
+                from app.storage.oci_client import almacenador_oci
+                almacenador_final = almacenador_oci
+            except Exception:
+                almacenador_final = None
+
+    if almacenador_final is None:
+        try:
+            from app.storage.local_storage import almacenador_local
+            almacenador_final = almacenador_local
+        except ImportError:
+            almacenador_final = None
 
     cfg = config or Config.desde_entorno()
     clave = cfg.exigir_cohere()
-
-    almacenador_final = almacenador if almacenador is not None else almacenador_local
 
     return OrquestadorNuevaMente(
         investigador=AgenteInvestigadorRAG(

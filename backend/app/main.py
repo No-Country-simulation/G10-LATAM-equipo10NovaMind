@@ -1,5 +1,7 @@
 """
 Backend de NuevaMente — API REST (FastAPI).
+Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Expone los servicios de adaptación educativa mediante LangGraph, Agentes y RAG.
 Desacoplado del frontend Streamlit.
@@ -7,7 +9,9 @@ Desacoplado del frontend Streamlit.
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
@@ -165,9 +169,13 @@ async def adaptar_contenido(
             }
         )
     except ValidationError as exc:
+        detalles = [
+            f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+            for err in exc.errors()
+        ]
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=exc.errors(),
+            detail="; ".join(detalles),
         ) from exc
 
     # 3. Ejecución de la Orquestación
@@ -195,3 +203,47 @@ def handle_ingestion_error(_, exc: IngestionError) -> JSONResponse:
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"status": "error", "mensaje": str(exc)},
     )
+
+
+@app.get("/api/v1/paquetes", tags=["Persistencia OCI"])
+def listar_paquetes() -> Dict[str, Any]:
+    """Lista los paquetes generados en OCI Object Storage o almacenamiento local."""
+    if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
+        try:
+            from app.storage.oci_client import OCIObjectStorageClient
+            cliente = OCIObjectStorageClient()
+            return {"origen": "oci", "paquetes": cliente.listar_contenidos_generados()}
+        except Exception as exc:
+            logger.warning("Fallo al listar paquetes desde OCI: %s", exc)
+
+    from pathlib import Path
+    dir_gen = Path("data/outputs/contenidos_generados")
+    archivos = []
+    if dir_gen.exists():
+        for f in dir_gen.glob("*.json"):
+            archivos.append({
+                "nombre": f.name,
+                "tamanio_bytes": f.stat().st_size,
+                "creado_en": str(f.stat().st_mtime),
+            })
+    return {"origen": "local", "paquetes": archivos}
+
+
+@app.get("/api/v1/paquetes/{objeto_id:path}", tags=["Persistencia OCI"])
+def descargar_paquete(objeto_id: str) -> Dict[str, Any]:
+    """Descarga el contenido JSON de un paquete generado."""
+    if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
+        try:
+            from app.storage.oci_client import OCIObjectStorageClient
+            cliente = OCIObjectStorageClient()
+            datos = cliente.descargar_objeto(objeto_id)
+            return json.loads(datos.decode("utf-8"))
+        except Exception as exc:
+            logger.warning("Fallo al descargar paquete desde OCI: %s", exc)
+
+    from pathlib import Path
+    archivo = Path("data/outputs/contenidos_generados") / Path(objeto_id).name
+    if archivo.exists():
+        return json.loads(archivo.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paquete no encontrado.")
+
