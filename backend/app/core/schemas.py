@@ -1,5 +1,7 @@
 """
 Contratos de datos de NuevaMente (tipado estricto con Pydantic).
+Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Este módulo es la ÚNICA fuente de verdad de los esquemas que comparten:
 - el Agente 1 (Investigador RAG)

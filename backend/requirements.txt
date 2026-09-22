@@ -10,6 +10,7 @@ python-dotenv==1.0.1
 # --- RAG y Orquestación ---
 langgraph==0.2.39
 chromadb>=0.5.20
+googleapis-common-protos==1.65.0
 cohere==7.1.1
 tenacity==9.0.0
 

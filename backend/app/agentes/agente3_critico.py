@@ -1,6 +1,7 @@
 """
 Agente 3 - Crítico / Revisor
-NuevaMente - Hackathon ONE G10
+Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Responsable de:
 1. Auditar el contenido generado por el Agente 2.

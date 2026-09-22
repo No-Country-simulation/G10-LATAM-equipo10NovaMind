@@ -1,5 +1,7 @@
 """
-Cliente HTTP del frontend hacia la API REST del backend.
+Cliente HTTP del frontend hacia la API REST del backend — NuevaMente.
+Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Totalmente desacoplado de la lógica de agentes, bases vectoriales o SDKs pesados.
 """
@@ -14,9 +16,9 @@ import requests
 
 logger = logging.getLogger("nuevamente.frontend.client")
 
-# Por defecto en red de Docker Compose resuelve a http://backend:8000;
-# en ejecución local resuelve a http://localhost:8000.
-DEFAULT_BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+# Soporta BACKEND_API_URL (convención OCI / VM separada) o BACKEND_URL (convención local / Docker)
+DEFAULT_BACKEND_URL = os.getenv("BACKEND_API_URL") or os.getenv("BACKEND_URL") or "http://localhost:8000"
+
 
 # Opciones por defecto como fallback si el backend aún está iniciando
 OPCIONES_FALLBACK: Dict[str, list[str]] = {
@@ -140,3 +142,26 @@ class BackendAPIClient:
                 "status": "error",
                 "error": {"mensaje_amigable": f"Error inesperado al contactar al backend: {exc}"},
             }
+
+    def listar_paquetes(self) -> Dict[str, Any]:
+        """Consulta los paquetes generados en el backend (guardados en OCI Object Storage o local)."""
+        try:
+            resp = requests.get(f"{self.base_url}/api/v1/paquetes", timeout=5)
+            if resp.status_code == 200:
+                return resp.json()
+            return {"origen": "error", "paquetes": []}
+        except Exception as exc:
+            logger.warning("Fallo al listar paquetes desde backend: %s", exc)
+            return {"origen": "desconectado", "paquetes": []}
+
+    def descargar_paquete(self, nombre_objeto: str) -> Optional[Dict[str, Any]]:
+        """Descarga el contenido JSON de un paquete desde el backend."""
+        try:
+            resp = requests.get(f"{self.base_url}/api/v1/paquetes/{nombre_objeto}", timeout=10)
+            if resp.status_code == 200:
+                return resp.json()
+            return None
+        except Exception as exc:
+            logger.warning("Fallo al descargar paquete '%s': %s", nombre_objeto, exc)
+            return None
+

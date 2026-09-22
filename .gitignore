@@ -16,6 +16,8 @@ __pycache__/
 # Chroma local del Agente 1
 chroma_db/
 data/chroma/
+backend/data/
+**/outputs/
 
 # Documentos locales usados para pruebas
 data/documents/*
@@ -24,3 +26,13 @@ data/documents/*
 # Herramientas
 .pytest_cache/
 .mypy_cache/
+
+# Archivos confidenciales de infraestructura y despliegue OCI
+*_PRIVADO.md
+*PRIVATE*.md
+.oci_private/
+deploy/
+
+# Bitácoras y registros internos locales
+HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md
+PROMPT_CONTEXTO_AGENTE.md
