@@ -242,7 +242,7 @@ sequenceDiagram
     Storage-->>Orquestador: Metadatos de persistencia (status_upload)
     Orquestador-->>API: RespuestaAdaptacion completa
     API-->>UI: JSON HTTP 200 (producto + metadatos + evaluacion_calidad)
-    UI->>Usuario: Dibuja el formato interactivo (Flashcards, Quiz, Tutorial, TL;DR o Guion)
+    UI->>Usuario: Dibuja el formato interactivo (Flashcards, Quiz, Tutorial, TLDR o Guion)
 ```
 
 ---
