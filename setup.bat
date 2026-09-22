@@ -6,24 +6,28 @@ echo    Instalacion Automatica del Entorno - NuevaMente
 echo =======================================================
 echo.
 
-REM 1. Verificar si Python esta instalado
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Python no esta instalado o no se encuentra en el PATH.
-    echo Por favor, instala Python 3.12.7 y marca "Add Python to PATH".
+REM 1. Detectar exactamente Python 3.12.7
+set "PYTHON_CMD="
+py -3.12 -c "import sys; raise SystemExit(0 if sys.version_info[:3] == (3, 12, 7) else 1)" >nul 2>&1
+if not errorlevel 1 set "PYTHON_CMD=py -3.12"
+
+if not defined PYTHON_CMD (
+    echo [ERROR] Se requiere exactamente Python 3.12.7.
+    echo Instala Python 3.12.7 y asegurate de que el launcher py lo detecte.
+    echo Descarga oficial: https://www.python.org/downloads/release/python-3127/
     echo.
     pause
     exit /b 1
 )
 
-echo [OK] Python detectado:
-python --version
+echo [OK] Python seleccionado:
+%PYTHON_CMD% --version
 echo.
 
 REM 2. Crear entorno virtual .venv si no existe
 if not exist ".venv" (
     echo [1/4] Creando entorno virtual en .venv...
-    python -m venv .venv
+    %PYTHON_CMD% -m venv .venv
 ) else (
     echo [1/4] El entorno virtual .venv ya existe.
 )
@@ -43,7 +47,7 @@ call .venv\Scripts\activate.bat
 REM 4. Actualizar pip e instalar dependencias
 echo [3/4] Actualizando pip e instalando dependencias de requirements.txt...
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 if errorlevel 1 (
     echo.
     echo [ERROR] Ocurrio un error al instalar los paquetes de requirements.txt.
@@ -80,7 +84,7 @@ echo.
 echo Para ejecutar el Frontend (Streamlit):
 echo   cd frontend ^&^& streamlit run app/streamlit_app.py
 echo.
-echo Para ejecutar las pruebas automatizadas (63 tests):
+echo Para ejecutar las pruebas automatizadas (64 tests):
 echo   python -m pytest backend/tests -v
 echo.
 pause
