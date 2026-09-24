@@ -22,6 +22,9 @@ backend/data/
 # Documentos locales usados para pruebas
 data/documents/*
 !data/documents/.gitkeep
+!data/documents/ENISA Threat Landscape 2026_Final.pdf
+!data/documents/apache_kafka_introduction.md
+!data/documents/Snowflake_SIGMOD.pdf
 
 # Herramientas
 .pytest_cache/
@@ -35,4 +38,4 @@ deploy/
 
 # Bitácoras y registros internos locales
 HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md
-PROMPT_CONTEXTO_AGENTE.md
+PROMPT_CONTEXTO_AGENTE.md
