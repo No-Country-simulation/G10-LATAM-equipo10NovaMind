@@ -5,6 +5,7 @@ import { Header } from './components/Header/Header';
 import { Stepper } from './components/Stepper/Stepper';
 import { IngestView } from './components/IngestView/IngestView';
 import { ViewerView } from './components/ViewerView/ViewerView';
+import { MetricsView } from './components/MetricsView/MetricsView';
 import { fetchOpcionesConfig, MOCK_RESPUESTA_ADAPTACION } from './services/api';
 import type { ConfigOpciones, RespuestaAdaptacion } from './types/api';
 import styles from './App.module.css';
@@ -87,10 +88,10 @@ export default function App() {
           />
         )}
         {currentStep === 2 && (
-          <div className={styles.placeholderWorkspace}>
-            <h2>Auditoría y Métricas OCI</h2>
-            <p>Paso 3 en construcción...</p>
-          </div>
+          <MetricsView
+            data={adaptationResult}
+            onBack={() => setCurrentStep(1)}
+          />
         )}
       </main>
 
