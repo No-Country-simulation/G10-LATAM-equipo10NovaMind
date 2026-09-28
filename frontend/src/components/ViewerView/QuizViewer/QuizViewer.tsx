@@ -17,9 +17,9 @@ export const QuizViewer: React.FC<QuizViewerProps> = ({
     'Conectar automáticamente la nube con un cable físico local.',
   ],
   correctIndex = 1,
-  explanation = '¡Correcto! Las Security Lists funcionan como reglas de cortafuegos supervisando las entradas (ingress) y salidas (egress) del tráfico en la subred.',
+  explanation = '¡Correcto! Las Security Lists funcionan como reglas de cortafuegos supervisando las entradas y salidas del tráfico.',
 }) => {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [answer, setAnswer] = useState<number | null>(null);
 
   return (
     <div className={styles.quizWrap}>
@@ -30,31 +30,30 @@ export const QuizViewer: React.FC<QuizViewerProps> = ({
 
       <h2 className={styles.questionTitle}>{question}</h2>
 
-      <div className={styles.optionsGrid}>
-        {options.map((opt, index) => {
-          const isSelected = selected === index;
-          const isCorrect = index === correctIndex;
-
-          let optionStyle = styles.optionButton;
-          if (isSelected) {
-            optionStyle = `${styles.optionButton} ${
-              isCorrect ? styles.correct : styles.incorrect
-            }`;
+      <div className={styles.quizOptions}>
+        {options.map((option, index) => {
+          let btnClass = styles.quizOption;
+          if (answer === index) {
+            btnClass += ` ${index === correctIndex ? styles.correct : styles.incorrect}`;
           }
 
           return (
             <button
-              key={opt}
+              key={option}
               type="button"
-              className={optionStyle}
-              onClick={() => setSelected(index)}
+              className={btnClass}
+              onClick={() => setAnswer(index)}
             >
               <span>
-                {String.fromCharCode(65 + index)}) {opt}
+                {String.fromCharCode(65 + index)}) {option}
               </span>
-              {isSelected && (
+              {answer === index && (
                 <span>
-                  {isCorrect ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
+                  {index === correctIndex ? (
+                    <CheckCircle2 size={17} />
+                  ) : (
+                    <XCircle size={17} />
+                  )}
                 </span>
               )}
             </button>
@@ -62,21 +61,21 @@ export const QuizViewer: React.FC<QuizViewerProps> = ({
         })}
       </div>
 
-      {selected !== null && (
+      {answer !== null && (
         <div
           className={`${styles.feedback} ${
-            selected === correctIndex ? styles.success : styles.error
+            answer === correctIndex ? styles.success : styles.error
           }`}
         >
-          {selected === correctIndex ? (
-            <CheckCircle2 size={16} />
+          {answer === correctIndex ? (
+            <CheckCircle2 size={15} />
           ) : (
-            <XCircle size={16} />
+            <XCircle size={15} />
           )}
           <span>
-            {selected === correctIndex
+            {answer === correctIndex
               ? explanation
-              : 'Incorrecto. Revisa el concepto de Security Lists y reglas de ingress/egress en la sección anterior.'}
+              : 'Incorrecto. Revisa la definición de Security Lists en la tarjeta de Flashcards.'}
           </span>
         </div>
       )}

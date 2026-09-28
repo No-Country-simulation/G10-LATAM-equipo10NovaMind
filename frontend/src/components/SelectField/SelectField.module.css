@@ -1,13 +1,10 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.label {
-  font-size: 0.85rem;
+  gap: 7px;
+  color: #8e99ad;
+  font-size: 10px;
   font-weight: 500;
-  color: var(--text-muted);
 }
 
 .selectWrap {
@@ -20,35 +17,34 @@
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
-  background: rgba(17, 24, 39, 0.7);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 2.5rem 0.75rem 1rem;
-  color: var(--text-main);
+  padding: 10px 30px 10px 11px;
+  color: #e1e4ef;
+  font-size: 11px;
   font-family: inherit;
-  font-size: 0.9rem;
-  transition: var(--transition);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  outline: none;
+  background: #151a28;
   cursor: pointer;
+  transition: border-color 0.2s ease;
 }
 
 .select:hover {
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: rgba(123, 111, 255, 0.4);
 }
 
 .select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  border-color: #7061f5;
 }
 
 .select option {
-  background-color: var(--bg-card);
-  color: var(--text-main);
+  background: #151a28;
+  color: #e1e4ef;
 }
 
 .icon {
   position: absolute;
-  right: 1rem;
-  color: var(--text-dim);
+  right: 10px;
+  color: #737f95;
   pointer-events: none;
 }

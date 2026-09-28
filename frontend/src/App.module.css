@@ -1,34 +1,38 @@
 .appShell {
   min-height: 100vh;
   position: relative;
-  background-color: var(--bg-primary);
-  color: var(--text-main);
-  overflow-x: hidden;
+  overflow: hidden;
+  padding: 14px clamp(16px, 3.6vw, 48px) 26px;
+  background: radial-gradient(ellipse at 46% 40%, rgba(52, 47, 112, 0.13), transparent 42%), #080b14;
   display: flex;
   flex-direction: column;
 }
 
 .ambientOne {
-  position: fixed;
-  top: -150px;
-  left: 20%;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  position: absolute;
   pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.34;
+  border-radius: 50%;
+  width: 380px;
+  height: 300px;
+  background: #272070;
+  left: -140px;
+  top: 140px;
   z-index: 0;
 }
 
 .ambientTwo {
-  position: fixed;
-  top: 40%;
-  right: -100px;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+  position: absolute;
   pointer-events: none;
+  filter: blur(80px);
+  border-radius: 50%;
+  width: 280px;
+  height: 350px;
+  background: #113f66;
+  right: -120px;
+  bottom: 80px;
+  opacity: 0.18;
   z-index: 0;
 }
 
@@ -36,40 +40,31 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
   flex: 1;
-}
-
-.placeholderWorkspace {
-  padding: 3rem 2rem;
-  border: 1px dashed var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: rgba(17, 24, 39, 0.4);
-  text-align: center;
-  color: var(--text-muted);
-  margin-top: 1.5rem;
 }
 
 .footer {
   position: relative;
   z-index: 1;
+  max-width: 1060px;
+  width: 100%;
+  margin: 42px auto 0;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 2rem;
-  border-top: 1px solid var(--border-subtle);
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  background: rgba(10, 14, 23, 0.8);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #4c586d;
+  font-size: 9px;
+  border: 0;
+  background: transparent;
 }
 
 .footerDot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
+  background: #6c61e9;
   border-radius: 50%;
-  background: var(--accent-cyan);
-  margin-right: 0.5rem;
+  margin-right: 6px;
 }

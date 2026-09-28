@@ -21,7 +21,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ cards }) => {
 
   const current = cards[cardIndex] || {
     frente: '¿Qué controla una VCN dentro del cloud?',
-    dorso: 'Es tu red privada y personalizable dentro de OCI.',
+    dorso: 'Es tu red privada y personalizable dentro de OCI: el espacio donde defines subredes, rutas y reglas de tráfico.',
     concept: 'CONCEPTO',
     body: 'Una red virtual definida por software en Oracle Cloud.',
     pista_didactica: 'Piensa en ella como tu propio barrio privado dentro de la nube.',
@@ -95,29 +95,29 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ cards }) => {
           onClick={handlePrev}
           disabled={cardIndex === 0}
         >
-          <ArrowLeft size={15} /> Anterior
+          <ArrowLeft size={14} /> Anterior
         </button>
         <button
           type="button"
           className={styles.turnButton}
           onClick={() => setFlipped(!flipped)}
         >
-          <RotateCcw size={15} /> {flipped ? 'Ver frente' : 'Girar tarjeta'}
+          <RotateCcw size={14} /> {flipped ? 'Ver frente' : 'Girar tarjeta'}
         </button>
         <button
           type="button"
           className={styles.secondaryButton}
           onClick={handleNext}
         >
-          Siguiente <ArrowRight size={15} />
+          Siguiente <ArrowRight size={14} />
         </button>
       </div>
 
       <div className={styles.selfCheck}>
-        <button type="button">
+        <button type="button" className={styles.checkButtonWarn}>
           <CircleHelp size={15} /> Necesito repasar
         </button>
-        <button type="button">
+        <button type="button" className={styles.checkButtonSuccess}>
           <CheckCircle2 size={15} /> Entendido
         </button>
       </div>

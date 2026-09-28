@@ -2,41 +2,27 @@ import React from 'react';
 import { Zap } from 'lucide-react';
 import styles from './SummaryViewer.module.css';
 
-interface SummaryViewerProps {
-  title?: string;
-  points?: string[];
-}
-
-const DEFAULT_POINTS = [
-  'Una VCN es tu red privada virtual en Oracle Cloud Infrastructure, análoga a un centro de datos on-premise.',
-  'Las subredes dividen la carga para aislar tráfico expuesto a Internet del almacenamiento crítico.',
-  'Las Security Lists proveen inspección de paquetes con reglas de ingress y egress obligatorias.',
-];
-
-export const SummaryViewer: React.FC<SummaryViewerProps> = ({
-  title = 'Arquitectura VCN en OCI',
-  points = DEFAULT_POINTS,
-}) => {
+export const SummaryViewer: React.FC = () => {
   return (
-    <div className={styles.summaryWrap}>
+    <div className={styles.summary}>
       <div className={styles.surfaceTop}>
-        <span>RESUMEN EJECUTIVO (TL;DR)</span>
+        <span>RESUMEN EJECUTIVO</span>
         <span className={styles.sourceAnchor}>
-          <Zap size={13} /> LECTURA: 1 MIN
+          <Zap size={12} /> LECTURA: 1 MIN
         </span>
       </div>
 
-      <div className={styles.summaryHeader}>
-        <span>Formato: Síntesis breve para toma de decisiones</span>
-        <h2>{title}</h2>
+      <div className={styles.summaryTitle}>
+        <span>Formato: Síntesis breve</span>
+        <h2>Arquitectura VCN en OCI</h2>
       </div>
 
-      <div className={styles.highlightBox}>
+      <div className={styles.sixty}>
         <h3>Lo que debes saber en 60 segundos</h3>
         <ul>
-          {points.map((pt, i) => (
-            <li key={i}>{pt}</li>
-          ))}
+          <li>Una VCN es tu red privada y personalizable dentro de Oracle Cloud.</li>
+          <li>Las subredes organizan tus recursos en espacios públicos y privados.</li>
+          <li>Security Lists controlan de forma granular el tráfico permitido.</li>
         </ul>
       </div>
 
@@ -46,7 +32,7 @@ export const SummaryViewer: React.FC<SummaryViewerProps> = ({
           <b className={styles.greenText}>Bajo (Aislado)</b>
         </div>
         <div className={styles.impactCard}>
-          <span>TIEMPO ESTIMADO</span>
+          <span>TIEMPO DE DESPLIEGUE</span>
           <b>&lt; 5 minutos</b>
         </div>
         <div className={styles.impactCard}>

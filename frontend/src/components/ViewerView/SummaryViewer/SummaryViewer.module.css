@@ -1,117 +1,114 @@
-.summaryWrap {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.summary {
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .surfaceTop {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
+  color: #737f94;
+  font-size: 9px;
+  letter-spacing: 0.13em;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
 }
 
 .sourceAnchor {
   display: inline-flex;
+  gap: 5px;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.75rem;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.25);
-  border-radius: 9999px;
-  color: var(--accent-cyan);
-  font-size: 0.75rem;
+  color: #41d6b3;
+  font-size: 9px;
+  letter-spacing: 0.06em;
 }
 
-.summaryHeader span {
-  font-size: 0.75rem;
+.summaryTitle {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.summaryTitle span {
+  display: block;
+  color: #c1d84c;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.summaryTitle h2 {
+  margin: 7px 0 0;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--accent-cyan);
-  letter-spacing: 0.05em;
+  letter-spacing: -0.03em;
+  color: #ffffff;
 }
 
-.summaryHeader h2 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-top: 0.25rem;
+/* Caja Azul Destacada (60 segundos) */
+.sixty {
+  margin-top: 13px;
+  padding: 17px 19px;
+  border: 1px solid rgba(67, 148, 215, 0.27);
+  border-radius: 10px;
+  background: #092743;
 }
 
-.highlightBox {
-  background: rgba(10, 14, 23, 0.6);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 1.25rem 1.5rem;
+.sixty h3 {
+  margin: 0 0 10px;
+  color: #8ed3ff;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.highlightBox h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 0.75rem;
+.sixty ul {
+  margin: 0;
+  padding-left: 15px;
+  color: #c6d2df;
+  font-size: 11px;
+  line-height: 1.7;
 }
 
-.highlightBox ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+.sixty li {
+  margin-bottom: 2px;
 }
 
-.highlightBox li {
-  position: relative;
-  padding-left: 1.25rem;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.highlightBox li::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--accent-cyan);
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
+/* Grilla de Métricas de Impacto */
 .impactGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 10px;
+  margin-top: 12px;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 600px) {
   .impactGrid {
     grid-template-columns: 1fr;
   }
 }
 
 .impactCard {
-  background: rgba(17, 24, 39, 0.7);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .impactCard span {
-  font-size: 0.7rem;
+  display: block;
+  color: #6f7b91;
+  font-size: 8px;
+  letter-spacing: 0.08em;
   font-weight: 700;
-  color: var(--text-dim);
-  letter-spacing: 0.05em;
 }
 
 .impactCard b {
-  font-size: 1.05rem;
-  color: var(--text-main);
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .greenText {
-  color: var(--color-success) !important;
+  color: #4cdfb4 !important;
 }
