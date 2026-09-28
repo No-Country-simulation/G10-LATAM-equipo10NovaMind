@@ -1,6 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Lenis from '@studio-freight/lenis';
+import gsap from 'gsap';
 import { Header } from './components/Header/Header';
 import { Stepper } from './components/Stepper/Stepper';
+import { IngestView } from './components/IngestView/IngestView';
+import { fetchOpcionesConfig } from './services/api';
+import type { ConfigOpciones } from './types/api';
 import styles from './App.module.css';
 
 const STEPS = [
@@ -11,32 +16,82 @@ const STEPS = [
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [config, setConfig] = useState<ConfigOpciones>({
+    perfiles_destinatario: [
+      'Principiante / Transición de Carrera',
+      'Desarrollador Junior / Semi Senior',
+      'Líder Técnico / Arquitecto',
+      'Gestor / Ejecutivo (No Técnico)',
+    ],
+    formatos_salida: [
+      'Flashcards',
+      'Quiz Interactivo con Justificaciones',
+      'Guía Práctica Paso a Paso (Tutorial)',
+      'Resumen Ejecutivo (TL;DR)',
+      'Guion de Clase / Video',
+    ],
+    nichos_sector: ['General', 'Fintech', 'Salud', 'E-commerce'],
+    niveles_detalle: ['Didáctico', 'Intermedio', 'Profundo'],
+  });
+
+  // Configuración de Lenis integrada con el ticker de GSAP
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+
+    function updateLenis(time: number) {
+      lenis.raf(time * 1000);
+    }
+
+    gsap.ticker.add(updateLenis);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      gsap.ticker.remove(updateLenis);
+      lenis.destroy();
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchOpcionesConfig().then(setConfig);
+  }, []);
 
   return (
     <div className={styles.appShell}>
-      {/* Resplandores de luz ambiental */}
       <div className={styles.ambientOne} />
       <div className={styles.ambientTwo} />
 
-      {/* Barra superior / Navbar */}
       <Header documentTitle="Arquitectura de Redes VCN en Cloud" />
 
-      {/* Stepper de navegación entre fases */}
       <Stepper
         steps={STEPS}
         currentStep={currentStep}
         onSelectStep={setCurrentStep}
       />
 
-      {/* Contenedor central */}
       <main className={styles.mainContent}>
-        <div className={styles.placeholderWorkspace}>
-          <h2>{STEPS[currentStep]}</h2>
-          <p>Paso {currentStep + 1} de {STEPS.length}</p>
-        </div>
+        {currentStep === 0 && (
+          <IngestView
+            config={config}
+            onGenerate={() => setCurrentStep(1)}
+          />
+        )}
+        {currentStep === 1 && (
+          <div className={styles.placeholderWorkspace}>
+            <h2>Visualizador de Resultados</h2>
+            <p>Paso 2 en construcción...</p>
+          </div>
+        )}
+        {currentStep === 2 && (
+          <div className={styles.placeholderWorkspace}>
+            <h2>Auditoría y Métricas OCI</h2>
+            <p>Paso 3 en construcción...</p>
+          </div>
+        )}
       </main>
 
-      {/* Footer corporativo */}
       <footer className={styles.footer}>
         <span>
           <span className={styles.footerDot} />
