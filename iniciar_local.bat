@@ -24,7 +24,7 @@ timeout /t 3 /nobreak >nul
 
 REM 3. Iniciar Frontend Streamlit en ventana propia
 echo [2/2] Levantando Frontend (Streamlit) en http://127.0.0.1:8501 ...
-start "NuevaMente - Frontend Streamlit (Puerto 8501)" cmd /k "title Frontend Streamlit && cd /d "%~dp0frontend" && ..\.venv\Scripts\python.exe -m streamlit run app/streamlit_app.py --server.port 8501"
+start "NuevaMente - Frontend Streamlit (Puerto 8501)" cmd /k "title Frontend Streamlit && cd /d "%~dp0frontend" && ..\.venv\Scripts\python.exe -m streamlit run app/streamlit_app.py --server.port 8501 --server.headless true"
 
 echo.
 echo =======================================================

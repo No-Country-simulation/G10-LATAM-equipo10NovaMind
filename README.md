@@ -13,7 +13,7 @@
 ### La Fusión Arquitectónica (Alejandro + Pedro)
 Este sistema consolida la integración técnica de dos líneas de trabajo del equipo:
 1. **Infraestructura y Despliegue (Alejandro)**: Arquitectura de microservicios reales desacoplados, servidor web REST en FastAPI, ingesta multi-formato (PDF con extracción limpia, Markdown, TXT), cliente SDK de OCI Object Storage y despliegue modular de bajo consumo.
-2. **Motor de IA y Agentes (Pedro)**: Grafo cíclico multi-agente en LangGraph con feedback correctivo, prompting adaptativo con few-shots específicos por formato, RAG con Cohere (`command-r-plus` y `embed-multilingual-v3.0`), validación estricta de esquemas con Pydantic v2 y suite determinista de 64 pruebas automatizadas.
+2. **Motor de IA y Agentes (Pedro)**: Grafo cíclico multi-agente en LangGraph con feedback correctivo, prompting adaptativo con few-shots específicos por formato, RAG con Cohere (`command-r-plus` y `embed-multilingual-v3.0`), validación estricta de esquemas con Pydantic v2 y suite determinista de 65 pruebas automatizadas.
 
 ---
 
@@ -66,12 +66,12 @@ graph TD
     %% CAPA DE ALMACENAMIENTO
     subgraph CAPA_DATOS ["💾 CAPA DE PERSISTENCIA Y DATOS"]
         CHROMA_DB[("<b>ChromaDB Nativo</b><br/>• Colección nuevamente_documentos<br/>• Persistencia en disco local")]:::storage
-        STORAGE_ROUTER{"<b>Router de Persistencia</b><br/>(Protocolo Almacenador)"}:::storage
-        LOCAL_OUTPUTS[("<b>Maqueta Local Activa</b><br/>backend/data/outputs/")]:::storage
-        OCI_BUCKET[("<b>OCI Object Storage (SDK Real)</b><br/>Bucket: nuevamente-contenidos-educativos")]:::storage
+        STORAGE_ROUTER{"<b>Almacenador Híbrido Resiliente</b><br/>(Prioridad OCI + Fallback Local)"}:::storage
+        LOCAL_OUTPUTS[("<b>Almacenamiento Local</b><br/>backend/data/outputs/<br/>(Activo como fallback/offline)")]:::storage
+        OCI_BUCKET[("<b>OCI Object Storage (Capa Always Free)</b><br/>Bucket: nuevamente-contenidos-educativos<br/>(sa-santiago-1)")]:::storage
 
-        STORAGE_ROUTER --> LOCAL_OUTPUTS
-        STORAGE_ROUTER -.->|Con credenciales| OCI_BUCKET
+        STORAGE_ROUTER -->|Principal (Online)| OCI_BUCKET
+        STORAGE_ROUTER -.->|Fallback (Offline/Error)| LOCAL_OUTPUTS
     end
 
     %% CONEXIONES INTER-CAPAS
@@ -361,19 +361,19 @@ streamlit run app/streamlit_app.py --server.port 8501
 
 ## 🧪 7. Suite de Pruebas Automatizadas
 
-El backend cuenta con una suite rigurosa de **64 pruebas automatizadas** que validan la API REST, la lógica del orquestador LangGraph, la normalización de alias, el batching de embeddings y la robustez ante fallos.
+El backend cuenta con una suite rigurosa de **65 pruebas automatizadas** que validan la API REST, la lógica del orquestador LangGraph, la normalización de alias, el batching de embeddings, la persistencia resiliente y la robustez ante fallos.
 
-## 💾 Capa de Almacenamiento: Maqueta Activa vs. OCI Real
+## 💾 Capa de Almacenamiento: Arquitectura Híbrida Resiliente (OCI Cloud + Fallback Local)
 
-Para facilitar el desarrollo y permitir demos completas sin depender obligatoriamente de una cuenta activa de Oracle Cloud, la solución cuenta con una arquitectura de almacenamiento desacoplada:
+El sistema implementa una arquitectura de almacenamiento desacoplada y de alta disponibilidad:
 
-1. **Maqueta Activa (`backend/app/storage/local_storage.py`)**:
-   - Está conectada por defecto en el grafo LangGraph.
-   - Guarda los documentos originales y el JSON resultante en `backend/data/outputs/`.
-   - Simula y retorna el contrato `AlmacenamientoOCI(bucket="local-mock-storage", objeto_id=..., status_upload="completado")`.
-2. **Cliente OCI Real (`backend/app/storage/oci_client.py`)**:
-   - Desarrollado por Alejandro con el SDK oficial de OCI (`oci`).
-   - Se mantiene aislado en su propio archivo, listo para conectarse pasando sus credenciales en `.env` y activándolo en `backend/app/main.py`.
+1. **Almacenamiento Cloud OCI (`backend/app/storage/oci_client.py`)**:
+   - Integrado con Oracle Cloud Infrastructure (OCI Object Storage Always Free).
+   - Bucket: `nuevamente-contenidos-educativos` (región `sa-santiago-1`).
+   - Persiste documentos originales en `documentos-originales/{doc_id}.txt` y paquetes educativos en `contenidos-generados/{doc_id}-{perfil}-{formato}.json`.
+2. **Fallback Automático Local (`backend/app/storage/local_storage.py`)**:
+   - Respaldo automático e inmediato en `backend/data/outputs/` si OCI no está configurado, si falla la red o si las credenciales no están presentes.
+   - Garantiza cero interrupciones en la entrega pedagógica al estudiante.
 
 ---
 
@@ -385,7 +385,7 @@ pytest tests/ -v
 ```
 
 ### Distribución de la Cobertura:
-* **`tests/test_api.py` (5 tests):** Validación con `TestClient` de `/health`, `/api/v1/config/opciones`, `/api/v1/adaptar` (multipart y texto) y `/api/v1/paquetes`.
+* **`tests/test_api.py` (6 tests):** Validación con `TestClient` de `/health`, `/api/v1/config/opciones`, `/api/v1/adaptar` (multipart y texto), `/api/v1/paquetes` y manejo de 404 en descarga de paquetes.
 * **`tests/test_integracion_offline.py` (3 tests):** Validación del ciclo E2E con embeddings y LLMs simulados, verificación de reutilización del índice vectorial y adaptación con feedback correctivo.
 * **`tests/test_orquestador.py` (56 tests):** Pruebas unitarias de:
   - Puerta de calidad (`anclaje_fuente_score` y claridad pedagógica).
@@ -394,7 +394,7 @@ pytest tests/ -v
   - Límite de lote de embeddings en llamadas a Cohere (máx. 96 textos).
   - Manejo resiliente de caídas transitorias de API con reintentos exponenciales.
 
-**Estado actual de la suite:** 🟢 **64 pasadas, 0 fallidas (100% de éxito).**
+**Estado actual de la suite:** 🟢 **65 pasadas, 0 fallidas (100% de éxito).**
 
 ---
 

@@ -64,14 +64,28 @@ class OCIObjectStorageClient:
                 "user": os.getenv("OCI_USER"),
                 "tenancy": os.getenv("OCI_TENANCY"),
                 "fingerprint": os.getenv("OCI_FINGERPRINT"),
-                "region": os.getenv("OCI_REGION", "sa-saopaulo-1"),
+                "region": os.getenv("OCI_REGION", "sa-santiago-1"),
             }
+            if key_file and not os.path.exists(key_file):
+                from pathlib import Path
+
+                posibles = [
+                    Path(__file__).resolve().parent.parent.parent.parent / key_file,
+                    Path("..") / key_file,
+                ]
+                for p in posibles:
+                    if p.exists():
+                        key_file = str(p.resolve())
+                        break
+
             if key_file and os.path.exists(key_file):
                 config["key_file"] = key_file
             elif key_content:
                 config["key_content"] = key_content
             else:
-                raise ValueError("Se requiere OCI_KEY_FILE o OCI_KEY_CONTENT para autenticación OCI sin config file.")
+                raise ValueError(
+                    f"Se requiere OCI_KEY_FILE o OCI_KEY_CONTENT válido. Ruta buscada: '{key_file}'."
+                )
         else:
             raise ValueError(
                 f"No se encontró archivo de configuración OCI en '{config_file}' "

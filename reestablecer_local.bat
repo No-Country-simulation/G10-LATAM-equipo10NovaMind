@@ -3,22 +3,29 @@ setlocal
 title NuevaMente - Restablecer Estado Cero (Zero-State)
 
 echo =======================================================
-echo    Restablecimiento de Entorno Local - NuevaMente
+echo    Restablecimiento de Entorno a Estado Cero
+echo                     NuevaMente
 echo =======================================================
 echo.
 
-REM Verificar si existe entorno virtual .venv
-if exist ".venv\Scripts\python.exe" (
-    .venv\Scripts\python.exe scripts\reestablecer_local.py
-) else (
-    python scripts\reestablecer_local.py
+if not exist ".venv\Scripts\python.exe" (
+    echo [ERROR] No se encontro el entorno virtual .venv.
+    echo Ejecuta primero setup.bat para instalar las dependencias.
+    pause
+    exit /b 1
 )
 
+.venv\Scripts\python.exe scripts\reestablecer_local.py %*
+
 if errorlevel 1 (
+    echo.
     echo [ERROR] Ocurrio un fallo durante el restablecimiento.
 ) else (
     echo.
-    echo [OK] Proceso terminado.
+    echo =======================================================
+    echo Para iniciar tu prueba limpia desde cero ejecuta:
+    echo   iniciar_local.bat
+    echo =======================================================
 )
 
 echo.

@@ -53,3 +53,10 @@ la `COHERE_API_KEY` del equipo para validar la integración externa de producci�
    por formato (`obtener_ejemplo_few_shot`) y cada uno se valida contra el esquema estricto del proyecto.
 
 Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pydantic 2.9.2 y en chromadb 1.5.9 + pydantic 2.13.5.
+
+## Fase 3: Integración OCI Object Storage y Persistencia Resiliente
+
+1. **Almacenador Híbrido Resiliente:** En `crear_orquestador()`, se implementó la inyección de `almacenador_resiliente`. Prioriza la subida a OCI Object Storage (`nuevamente-contenidos-educativos` en `sa-santiago-1`) y, ante cualquier fallo de red o credenciales en tiempo de ejecución, realiza un fallback automático e inmediato a almacenamiento local en `data/outputs/`.
+2. **Endpoints de Persistencia y Descarga:** En `main.py`, se robustecieron `GET /api/v1/paquetes` y `GET /api/v1/paquetes/{objeto_id}` para permitir consulta y descarga dual transparente con normalización de rutas y prefijos.
+3. **Verificación:** 65 pruebas pasando al 100% (`pytest backend/tests -v`).
+

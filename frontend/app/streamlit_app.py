@@ -281,7 +281,16 @@ with tab_adaptar:
                     st.caption(f"• {adv}")
 
             if storage and storage.get("status_upload") == "completado":
-                st.success(f"💾 Almacenado en: `{storage.get('objeto_id', 'N/A')}`")
+                bucket_name = storage.get("bucket", "")
+                obj_id = storage.get("objeto_id", "N/A")
+                if bucket_name and "local" not in bucket_name.lower():
+                    st.success(
+                        f"☁️ **Persistido en OCI Object Storage** · Bucket: `{bucket_name}` · Objeto: `{obj_id}`"
+                    )
+                else:
+                    st.info(f"💾 **Persistido Localmente (Fallback)** · Objeto: `{obj_id}`")
+            elif storage and storage.get("status_upload") == "error":
+                st.warning("⚠️ **Persistencia Cloud:** No se pudo completar la subida al bucket (se mantiene en memoria).")
 
             # Renderizado temático
             if contenido:
@@ -302,8 +311,10 @@ with tab_historial:
     st.subheader("📚 Paquetes Guardados en Almacenamiento")
     st.caption("Contenidos generados y persistidos en el almacenamiento local o en OCI Object Storage.")
 
-    if st.button("🔄 Actualizar Lista"):
-        st.rerun()
+    col_h1, col_h2 = st.columns([1, 4])
+    with col_h1:
+        if st.button("🔄 Actualizar Lista", use_container_width=True):
+            st.rerun()
 
     info_paquetes = client.listar_paquetes()
     paquetes = info_paquetes.get("paquetes", [])
@@ -312,24 +323,53 @@ with tab_historial:
     if not paquetes:
         st.info("No hay paquetes generados aún. Genera tu primer contenido en la pestaña 'Adaptador Educativo'.")
     else:
-        st.write(f"**Origen de persistencia:** `{origen}` · **Total paquetes:** {len(paquetes)}")
+        if origen == "oci":
+            st.success(
+                f"☁️ **Conexión Cloud Activa:** `Oracle Cloud Infrastructure (OCI Object Storage)` · **Total:** {len(paquetes)} paquete(s) en el bucket"
+            )
+        else:
+            st.info(f"💾 **Origen de Persistencia:** `{origen.upper()}` · **Total:** {len(paquetes)} paquete(s)")
+
         for pkg in paquetes:
             nombre = pkg.get("nombre", "")
             tam = pkg.get("tamanio_bytes", 0)
             tam_kb = f"{tam / 1024:.1f} KB" if tam else "N/A"
             with st.container(border=True):
-                col_p1, col_p2 = st.columns([3, 1])
+                col_p1, col_p2, col_p3 = st.columns([3, 1, 1])
                 with col_p1:
                     st.markdown(f"📄 **`{nombre}`** ({tam_kb})")
                 with col_p2:
-                    if st.button("👁️ Cargar en Visor", key=f"btn_pkg_{nombre}"):
+                    if st.button("👁️ Cargar en Visor", key=f"btn_pkg_{nombre}", use_container_width=True):
                         datos_pkg = client.descargar_paquete(nombre)
                         if datos_pkg:
-                            formato_guardado = datos_pkg.get("metadatos", {}).get("formato_salida") or datos_pkg.get("solicitud", {}).get("formato") or "Flashcards"
+                            formato_guardado = (
+                                datos_pkg.get("metadatos", {}).get("formato_salida")
+                                or datos_pkg.get("solicitud", {}).get("formato")
+                                or "Flashcards"
+                            )
+                            # Asegurar que el badge de OCI se visualice en el visor pedagógico
+                            if "almacenamiento_oci" not in datos_pkg or not datos_pkg.get("almacenamiento_oci"):
+                                datos_pkg["almacenamiento_oci"] = {
+                                    "bucket": "nuevamente-contenidos-educativos" if origen == "oci" else "local-mock-storage",
+                                    "objeto_id": f"contenidos-generados/{nombre}" if origen == "oci" else f"contenidos_generados/{nombre}",
+                                    "status_upload": "completado",
+                                }
                             st.session_state["resultado_actual"] = datos_pkg
                             st.session_state["formato_actual"] = formato_guardado
-                            st.success(f"¡Paquete `{nombre}` cargado! Abre la pestaña 'Adaptador Educativo' para verlo.")
+                            st.success(f"¡Paquete `{nombre}` cargado! Abre la pestaña 'Adaptador Educativo' para interactuar con él.")
                             st.rerun()
+                with col_p3:
+                    # Descarga directa desde OCI / almacenamiento
+                    datos_descarga = client.descargar_paquete(nombre)
+                    if datos_descarga:
+                        st.download_button(
+                            label="📥 Descargar",
+                            data=json.dumps(datos_descarga, ensure_ascii=False, indent=2),
+                            file_name=nombre,
+                            mime="application/json",
+                            key=f"dl_pkg_{nombre}",
+                            use_container_width=True,
+                        )
 
 st.divider()
 st.caption("🚀 Desarrollado por el **Equipo 10 (G10 - NovaMind)** para **No-Country** · Simulación Hackathon ONE G10")

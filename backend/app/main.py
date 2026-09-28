@@ -217,9 +217,14 @@ def listar_paquetes() -> Dict[str, Any]:
             logger.warning("Fallo al listar paquetes desde OCI: %s", exc)
 
     from pathlib import Path
-    dir_gen = Path("data/outputs/contenidos_generados")
+
+    posibles_dirs = [
+        Path("data/outputs/contenidos_generados"),
+        Path("backend/data/outputs/contenidos_generados"),
+    ]
     archivos = []
-    if dir_gen.exists():
+    dir_gen = next((d for d in posibles_dirs if d.exists()), None)
+    if dir_gen:
         for f in dir_gen.glob("*.json"):
             archivos.append({
                 "nombre": f.name,
@@ -235,15 +240,29 @@ def descargar_paquete(objeto_id: str) -> Dict[str, Any]:
     if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
         try:
             from app.storage.oci_client import OCIObjectStorageClient
+
             cliente = OCIObjectStorageClient()
-            datos = cliente.descargar_objeto(objeto_id)
+            prefijo = "contenidos-generados/"
+            nombre_objeto_oci = (
+                objeto_id if objeto_id.startswith(prefijo) else f"{prefijo}{objeto_id}"
+            )
+            try:
+                datos = cliente.descargar_objeto(nombre_objeto_oci)
+            except Exception:
+                datos = cliente.descargar_objeto(objeto_id)
             return json.loads(datos.decode("utf-8"))
         except Exception as exc:
             logger.warning("Fallo al descargar paquete desde OCI: %s", exc)
 
     from pathlib import Path
-    archivo = Path("data/outputs/contenidos_generados") / Path(objeto_id).name
-    if archivo.exists():
-        return json.loads(archivo.read_text(encoding="utf-8"))
+
+    nombre_limpio = Path(objeto_id).name
+    posibles_rutas = [
+        Path("data/outputs/contenidos_generados") / nombre_limpio,
+        Path("backend/data/outputs/contenidos_generados") / nombre_limpio,
+    ]
+    for archivo in posibles_rutas:
+        if archivo.exists():
+            return json.loads(archivo.read_text(encoding="utf-8"))
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paquete no encontrado.")
 

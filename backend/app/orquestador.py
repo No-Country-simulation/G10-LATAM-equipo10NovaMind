@@ -907,19 +907,45 @@ def crear_orquestador(
 
     almacenador_final = almacenador
     if almacenador_final is None:
-        if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
-            try:
-                from app.storage.oci_client import almacenador_oci
-                almacenador_final = almacenador_oci
-            except Exception:
-                almacenador_final = None
 
-    if almacenador_final is None:
-        try:
-            from app.storage.local_storage import almacenador_local
-            almacenador_final = almacenador_local
-        except ImportError:
-            almacenador_final = None
+        def almacenador_resiliente(
+            solicitud: SolicitudAdaptacion, respuesta: RespuestaAdaptacion
+        ) -> AlmacenamientoOCI:
+            """
+            Almacenador híbrido de producción:
+            Intenta persistir en OCI Object Storage si las variables están configuradas.
+            Si OCI falla o no está disponible, realiza un fallback transparente a almacenamiento local.
+            """
+            if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
+                try:
+                    from app.storage.oci_client import almacenador_oci
+
+                    resultado_oci = almacenador_oci(solicitud, respuesta)
+                    if resultado_oci.status_upload == "completado":
+                        return resultado_oci
+                    logger.warning(
+                        "[persistir] OCI devolvió status '%s'. Activando fallback a almacenamiento local.",
+                        resultado_oci.status_upload,
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "[persistir] Excepción durante subida a OCI: %s. Activando fallback a almacenamiento local.",
+                        exc,
+                    )
+
+            try:
+                from app.storage.local_storage import almacenador_local
+
+                return almacenador_local(solicitud, respuesta)
+            except Exception as exc_local:
+                logger.error("[persistir] Falló tanto OCI como el almacenamiento local: %s", exc_local)
+                return AlmacenamientoOCI(
+                    bucket=os.getenv("OCI_BUCKET_NAME"),
+                    objeto_id=None,
+                    status_upload="error",
+                )
+
+        almacenador_final = almacenador_resiliente
 
     cfg = config or Config.desde_entorno()
     clave = cfg.exigir_cohere()

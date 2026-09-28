@@ -1,0 +1,178 @@
+NUEVAMENTE - INSTALACION Y PRUEBAS EN WINDOWS
+================================================
+
+1. REQUISITOS
+-------------
+- Windows 10/11
+- Git
+- Python 3.12.7
+- API key de Cohere para probar la generacion real
+
+Comprobar Python:
+
+py -3.12 --version
+
+Debe mostrar:
+
+Python 3.12.7
+
+
+2. CLONAR EL REPOSITORIO
+------------------------
+
+Desde PowerShell:
+
+git clone -b Propuesta-Microservicios https://github.com/No-Country-simulation/G10-LATAM-equipo10NovaMind.git
+cd G10-LATAM-equipo10NovaMind
+code .
+
+
+3. INSTALAR EL PROYECTO
+-----------------------
+
+Ejecutar normalmente, sin redireccionar la entrada:
+
+.\setup.bat
+
+El instalador debe terminar mostrando:
+
+[OK] Todas las dependencias se instalaron correctamente.
+Instalacion completada con exito!
+
+No usar este comando:
+
+cmd /c "setup.bat < nul"
+
+
+4. CONFIGURAR COHERE
+--------------------
+
+Crear el archivo de configuracion del backend:
+
+Copy-Item .env.example backend\.env
+notepad backend\.env
+
+En backend\.env, completar:
+
+COHERE_API_KEY=TU_API_KEY_DE_COHERE
+
+Guardar el archivo. No subir ni compartir la API key.
+
+
+5. INSTALAR EL INDICE VECTORIAL OPCIONAL
+----------------------------------------
+
+Este paso evita volver a vectorizar el PDF de prueba.
+
+Copiar personalmente el archivo:
+
+paquete_pruebas_vectorizado.zip
+
+al directorio backend\ del proyecto.
+
+Desde la raiz del proyecto:
+
+cd backend
+Expand-Archive .\paquete_pruebas_vectorizado.zip -DestinationPath . -Force
+cd ..
+
+Deben existir estas rutas:
+
+backend\chroma_db\
+backend\data\documents\El caballero de la armadura oxidada - Robert-Fisher.pdf
+
+Si no se dispone del ZIP, el sistema puede probarse cargando un documento desde la interfaz.
+
+
+6. EJECUTAR LAS PRUEBAS AUTOMATIZADAS
+-------------------------------------
+
+Desde la raiz del proyecto:
+
+.\.venv\Scripts\python.exe -m pytest backend/tests -q
+
+Resultado esperado:
+
+65 passed
+
+
+7. COMPROBAR LA COMPILACION
+---------------------------
+
+.\.venv\Scripts\python.exe -m compileall -q backend/app backend/tests frontend/app
+
+Si no aparece ningun mensaje, la compilacion fue correcta.
+
+
+8. INICIAR EL SISTEMA COMPLETO
+------------------------------
+
+Desde la raiz del proyecto:
+
+.\iniciar_local.bat
+
+Se abriran dos ventanas:
+
+Backend:  http://127.0.0.1:8000
+Frontend: http://localhost:8501
+Swagger:  http://127.0.0.1:8000/docs
+
+Abrir el frontend en el navegador:
+
+start http://localhost:8501
+
+
+9. VERIFICAR EL BACKEND
+-----------------------
+
+En otra ventana de PowerShell:
+
+Invoke-RestMethod http://127.0.0.1:8000/health
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/config/opciones
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/paquetes
+
+La primera respuesta debe indicar:
+
+status: ok
+
+
+10. PRUEBA FUNCIONAL
+--------------------
+
+1. Abrir http://localhost:8501
+2. Seleccionar perfil, formato, nicho y nivel de detalle.
+3. Cargar un PDF, MD o TXT.
+4. Pulsar el boton de generar/adaptar contenido.
+5. Revisar el contenido generado y la evaluacion de calidad.
+
+La generacion real requiere COHERE_API_KEY.
+Las pruebas automatizadas usan simulaciones y no requieren una API key valida.
+
+
+11. DETENER EL SISTEMA
+----------------------
+
+Cerrar las ventanas del Backend y Frontend, o pulsar CTRL+C en cada ventana.
+
+
+12. SOLUCION RAPIDA DE PROBLEMAS
+--------------------------------
+
+Ver version de Python:
+
+py -3.12 --version
+
+Recrear el entorno si la instalacion quedo incompleta:
+
+Remove-Item -Recurse -Force .venv
+.\setup.bat
+
+Comprobar dependencias instaladas:
+
+.\.venv\Scripts\python.exe -m pip check
+
+Si aparece un conflicto con tenacity y Streamlit, confirmar que backend\requirements.txt contiene:
+
+tenacity==8.5.0
+
+No usar tenacity 9.x con streamlit 1.38.0.

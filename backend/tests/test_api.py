@@ -133,3 +133,9 @@ def test_listar_paquetes_endpoint():
     assert "paquetes" in data
     assert isinstance(data["paquetes"], list)
 
+
+def test_descargar_paquete_no_encontrado():
+    response = client.get("/api/v1/paquetes/objeto_inexistente_12345.json")
+    assert response.status_code == 404
+
+
