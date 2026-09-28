@@ -4,8 +4,9 @@ import gsap from 'gsap';
 import { Header } from './components/Header/Header';
 import { Stepper } from './components/Stepper/Stepper';
 import { IngestView } from './components/IngestView/IngestView';
-import { fetchOpcionesConfig } from './services/api';
-import type { ConfigOpciones } from './types/api';
+import { ViewerView } from './components/ViewerView/ViewerView';
+import { fetchOpcionesConfig, MOCK_RESPUESTA_ADAPTACION } from './services/api';
+import type { ConfigOpciones, RespuestaAdaptacion } from './types/api';
 import styles from './App.module.css';
 
 const STEPS = [
@@ -16,6 +17,7 @@ const STEPS = [
 
 export default function App() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [adaptationResult] = useState<RespuestaAdaptacion>(MOCK_RESPUESTA_ADAPTACION);
   const [config, setConfig] = useState<ConfigOpciones>({
     perfiles_destinatario: [
       'Principiante / Transición de Carrera',
@@ -34,7 +36,6 @@ export default function App() {
     niveles_detalle: ['Didáctico', 'Intermedio', 'Profundo'],
   });
 
-  // Configuración de Lenis integrada con el ticker de GSAP
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -79,10 +80,11 @@ export default function App() {
           />
         )}
         {currentStep === 1 && (
-          <div className={styles.placeholderWorkspace}>
-            <h2>Visualizador de Resultados</h2>
-            <p>Paso 2 en construcción...</p>
-          </div>
+          <ViewerView
+            data={adaptationResult}
+            onMetrics={() => setCurrentStep(2)}
+            onBack={() => setCurrentStep(0)}
+          />
         )}
         {currentStep === 2 && (
           <div className={styles.placeholderWorkspace}>
