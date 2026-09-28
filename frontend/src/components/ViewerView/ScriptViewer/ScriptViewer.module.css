@@ -1,0 +1,98 @@
+.scriptWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.surfaceTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.sourceAnchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: 9999px;
+  color: #f97316;
+  font-size: 0.75rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sceneCard {
+  display: grid;
+  grid-template-columns: 160px 1fr 1fr;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  align-items: flex-start;
+}
+
+@media (max-width: 820px) {
+  .sceneCard {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.timeBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.timeTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.pulseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.timeBlock b {
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.columnBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.columnBlock span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.columnBlock p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

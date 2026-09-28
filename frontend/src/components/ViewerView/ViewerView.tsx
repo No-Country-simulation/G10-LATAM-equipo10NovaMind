@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { FlashcardViewer } from './FlashcardViewer/FlashcardViewer';
 import { QuizViewer } from './QuizViewer/QuizViewer';
+import { TutorialViewer } from './TutorialViewer/TutorialViewer';
+import { SummaryViewer } from './SummaryViewer/SummaryViewer';
+import { ScriptViewer } from './ScriptViewer/ScriptViewer';
 import type { RespuestaAdaptacion } from '../../types/api';
 import styles from './ViewerView.module.css';
 
@@ -16,6 +19,7 @@ const FORMAT_TABS = [
   'Quiz interactivo',
   'Guía / Tutorial',
   'Resumen ejecutivo',
+  'Guion / Video',
 ];
 
 const CARDS_DEMO = [
@@ -65,7 +69,7 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         <div className={styles.liveBadge}>LIVE PREVIEW · MODO ESTUDIANTE</div>
       </section>
 
-      {/* Meta Bar */}
+      {/* Barra de metadatos pedagógicos */}
       <section className={styles.metaBar}>
         <div className={styles.metaItem}>
           <span className={styles.metaLabel}>PERFIL APLICADO</span>
@@ -104,18 +108,16 @@ export const ViewerView: React.FC<ViewerViewProps> = ({
         ))}
       </div>
 
-      {/* Superficie de visualización */}
+      {/* Superficie de visualización según formato */}
       <section className={styles.viewerSurface}>
         {currentFormat === 'Flashcards' && <FlashcardViewer cards={CARDS_DEMO} />}
         {currentFormat === 'Quiz interactivo' && <QuizViewer />}
-        {currentFormat !== 'Flashcards' && currentFormat !== 'Quiz interactivo' && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-            <p>Visualizador de {currentFormat} disponible en el siguiente subcomponente.</p>
-          </div>
-        )}
+        {currentFormat === 'Guía / Tutorial' && <TutorialViewer />}
+        {currentFormat === 'Resumen ejecutivo' && <SummaryViewer />}
+        {currentFormat === 'Guion / Video' && <ScriptViewer />}
       </section>
 
-      {/* Botones de navegación de pasos */}
+      {/* Botones de navegación */}
       <div className={styles.bottomActions}>
         <button type="button" className={styles.secondaryButton} onClick={onBack}>
           <ArrowLeft size={15} /> Regresar al Paso 1
