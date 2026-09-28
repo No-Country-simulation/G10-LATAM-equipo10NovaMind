@@ -1,0 +1,92 @@
+.stepperContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 0.5rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.stepWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.stepButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.stepButton:hover {
+  color: var(--text-muted);
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+/* Estado activo */
+.stepButton.active {
+  color: var(--text-main);
+}
+
+.stepButton.active .stepNumber {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.45);
+}
+
+/* Estado completado */
+.stepButton.complete {
+  color: var(--text-muted);
+}
+
+.stepButton.complete .stepNumber {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+/* Línea conectora entre pasos */
+.stepLine {
+  width: 60px;
+  height: 2px;
+  background: var(--border-subtle);
+  margin: 0 0.5rem;
+  transition: var(--transition);
+}
+
+.stepLine.filled {
+  background: var(--color-success);
+}
+
+@media (max-width: 680px) {
+  .stepButton span:not(.stepNumber) {
+    display: none;
+  }
+  .stepLine {
+    width: 30px;
+  }
+}
