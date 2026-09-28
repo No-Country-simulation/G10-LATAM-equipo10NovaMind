@@ -1,0 +1,38 @@
+:root {
+  /* Fondo y Superficies */
+  --bg-primary: #0a0e17;
+  --bg-surface: #111827;
+  --bg-card: #1a2234;
+  --bg-card-hover: #222d42;
+  
+  /* Bordes */
+  --border-subtle: #2d3748;
+  --border-focus: #6366f1;
+
+  /* Acentos y Gradientes */
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-cyan: #06b6d4;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+
+  /* Textos */
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --text-dim: #64748b;
+
+  /* Estados de Métricas OCI / Calidad */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Radios y Sombras */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+
+  /* Tipografía y Transición */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
