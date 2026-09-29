@@ -6,21 +6,25 @@
 ## Healthcheck
 `GET /health` devuelve `{"status":"ok","service":"nuevamente-backend"}`. Es un chequeo básico de disponibilidad HTTP; no prueba dependencias externas.
 
-## Diagnóstico frecuente
-- **Falta `COHERE_API_KEY`:** revisar `.env`, el directorio de ejecución y la carga de `python-dotenv`.
-- **No conecta el frontend:** revisar `BACKEND_URL` o `BACKEND_API_URL`, host/puerto y estado de `/health`.
-- **No se extrae texto PDF:** el extractor usa `pypdf`; PDF escaneado sin capa textual requiere OCR externo, que no se observa implementado.
-- **Sin resultados RAG:** confirmar ruta/colección Chroma, documento indexado, filtros y umbral de recuperación.
-- **Error OCI:** revisar namespace, bucket, perfil/archivo de configuración y permisos de Object Storage; el flujo puede caer a almacenamiento local en determinados endpoints.
-- **Paquete no encontrado:** verificar `data/outputs/contenidos_generados` y el identificador solicitado.
+## Diagnóstico Frecuente
+- **Falta `COHERE_API_KEY`:** revisar `.env`, el directorio de ejecución y la carga de variables.
+- **No conecta el frontend React con el backend:** verificar que FastAPI esté corriendo en el puerto 8000 y que `/health` responda HTTP 200. Verificar que el frontend consulte a `http://localhost:8000`.
+- **Error CORS:** verificar que el origen del frontend (ej: `http://localhost:5173`) esté incluido en `CORSMiddleware` en `backend/app/main.py`.
+- **No se extrae texto PDF:** el extractor usa `pypdf` con sanitización de cabeceras; PDFs escaneados sin capa de texto seleccionable requieren OCR previo.
+- **Sin resultados RAG o anclaje bajo:** confirmar ruta y colección de ChromaDB (`nuevamente_documentos`), que el texto ingresado tenga más de 40 caracteres y revisar la similitud del contenido con el tema consultado.
+- **Error OCI:** ejecutar `python scripts/test_oci_conexion.py` para validar conexión, namespace, bucket y credenciales. Recordar que si OCI falla, el sistema activa automáticamente el fallback local sin lanzar excepción al usuario.
+- **Paquete no encontrado (404):** verificar que el `objeto_id` solicitado exista en el bucket OCI o en `data/outputs/contenidos_generados/`.
 
-## Mantenimiento
-1. Respaldar datos Chroma y salidas locales con el servicio detenido o con procedimiento consistente.
-2. No borrar el índice vectorial sin evaluar impacto sobre documentos ya indexados.
-3. Revisar cambios en esquemas Pydantic y sincronizar opciones frontend/backend.
-4. Mantener dependencias, ejecutar pruebas y revisar avisos de seguridad.
-5. Definir retención para documentos originales y paquetes.
-6. Verificar logs y espacio en disco; no se identificó un sistema de métricas/alertas integrado.
+## Mantenimiento y Herramientas Operativas
+1. **Restablecer a Estado Cero (Zero-State):**
+   Ejecutar `.\reestablecer_local.bat` (o `python scripts/reestablecer_local.py`) para purgar de manera segura las colecciones temporales de ChromaDB y los archivos de prueba en `data/outputs/`.
+2. **Diagnóstico de Conectividad Cloud OCI:**
+   Ejecutar `python scripts/test_oci_conexion.py` para realizar una prueba end-to-end de autenticación, lectura de namespace y subida/descarga de un objeto de prueba.
+3. **Verificación de Pruebas Automatizadas:**
+   Ejecutar `pytest backend/tests -v` tras cualquier actualización de código para asegurar que los 65 tests de regresión continúen en verde.
+4. **Respaldos de Datos:**
+   Respaldar periódicamente las salidas en `data/outputs/` y el directorio `data/chroma/` con el servicio detenido.
 
 ## Incidentes
-No se encontró un runbook de producción ni una política de recuperación ante desastres formal. Definir responsables, severidades, backups, RPO/RTO y procedimiento de rollback antes de operar en producción.
+Para entornos de demostración y desarrollo local, los incidentes comunes se resuelven mediante el script de restablecimiento y reiniciando con `iniciar_local.bat`. Para entornos de producción, se recomienda configurar monitoreo de systemd (`deploy/systemd/`) y alertas de consumo en la consola de Oracle Cloud.
+

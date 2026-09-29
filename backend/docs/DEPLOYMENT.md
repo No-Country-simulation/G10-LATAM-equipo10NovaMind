@@ -1,30 +1,50 @@
 # Instalación, configuración y despliegue
 
-## Requisitos identificados
-- Python 3.12.7 indicado en la documentación del repositorio.
-- Dependencias backend en `backend/requirements.txt`; dependencias frontend en `frontend/requirements.txt`; `requirements.txt` raíz incluye ambos.
-- Clave de Cohere para los componentes que la exijan.
-- Persistencia local Chroma y carpetas de datos.
-- Credenciales OCI únicamente si se habilita el cliente real.
+## Requisitos Identificados
+- **Python 3.12.7** (estándar oficial del proyecto).
+- **Node.js 18+ y npm** (para la interfaz web React 19 + Vite).
+- Clave de API de Cohere (`COHERE_API_KEY`) para embeddings (`embed-multilingual-v3.0`) y generación LLM (`command-r-plus-08-2024`).
+- Persistencia local ChromaDB y directorios de datos (`data/chroma/`, `data/outputs/`).
+- Credenciales de Oracle Cloud Infrastructure (OCI) únicamente para habilitar el bucket cloud Always Free.
 
-## Instalación local (PowerShell)
+## Opción 1: Lanzamiento Rápido Automático (1 Clic)
+El proyecto incluye un script lanzador concurrente:
 ```powershell
+.\iniciar_local.bat
+```
+Este script:
+1. Valida el entorno virtual `.venv`.
+2. Inicia el backend FastAPI en [http://127.0.0.1:8000](http://127.0.0.1:8000).
+3. Inicia el frontend React (Vite) en [http://localhost:5173](http://localhost:5173).
+4. Abre la aplicación en el navegador predeterminado.
+
+## Opción 2: Instalación y Ejecución Manual por Terminales
+
+### Preparación del Entorno
+```powershell
+# Crear y activar entorno virtual
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+
+# Configurar variables de entorno
 Copy-Item .env.example .env
 ```
-Completar la configuración necesaria en `.env`. Para ejecutar el backend desde la raíz:
+
+### Terminal 1 — Backend FastAPI:
 ```powershell
-$env:PYTHONPATH = "$PWD\backend"
-python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+cd backend
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-Frontend:
+
+### Terminal 2 — Frontend React (Vite):
 ```powershell
-$env:BACKEND_URL = "http://127.0.0.1:8000"
-python -m streamlit run frontend/app/streamlit_app.py
+cd frontend
+npm install
+npm run dev
 ```
+
 
 ## Variables de entorno observadas
 
@@ -55,10 +75,14 @@ python -m streamlit run frontend/app/streamlit_app.py
 | `OCI_CONFIG_FILE` | Archivo de config OCI | `~/.oci/config` |
 | `OCI_CONFIG_PROFILE` | Perfil OCI | `DEFAULT` |
 | `OCI_USER`, `OCI_TENANCY`, `OCI_FINGERPRINT`, `OCI_KEY_FILE`, `OCI_KEY_CONTENT`, `OCI_REGION` | Autenticación OCI | Usar credenciales válidas y no versionarlas |
-| `BACKEND_PORT`, `FRONTEND_PORT` | Scripts/plantilla | `8000` y `8501`; confirmar consumo real en scripts |
-| `BACKEND_URL`, `BACKEND_API_URL` | Cliente frontend | `http://localhost:8000` si no se define |
+| `BACKEND_PORT`, `FRONTEND_PORT` | Scripts y lanzador | `8000` (FastAPI) y `5173` (Vite) |
+| `BACKEND_URL`, `BACKEND_API_URL` | Cliente frontend React | `http://localhost:8000` por defecto |
 
-**Importante:** `.env.example` no coincide plenamente con los nombres consumidos por los módulos. Consultar `PROJECT_AUDIT.md`; esta tabla refleja nombres hallados en el código y plantillas, no una configuración unificada validada.
+**Nota de Armonización:** La configuración fue armonizada y centralizada en `backend/app/core/config.py`, soportando nombres canónicos y alias habituales de entorno (`COHERE_MODEL`, `COHERE_EMBEDDING_MODEL`, `OCI_*`). Para más información sobre el despliegue en nube privada, consultar los documentos en `deploy/` y `historial_progreso/`.
 
-## Despliegue
-El repositorio incluye scripts `.bat` y un cliente OCI, pero esta documentación no confirma una configuración de producción lista para usar. No se identificó un Dockerfile/Compose en el inventario de archivos analizado. Para producción, configurar servidor ASGI, proxy TLS, secretos, límites, logs, persistencia y monitorización; restringir CORS y proteger los endpoints.
+## Despliegue en Servidor / Nube
+Para despliegues en instancias de nube (ej: Oracle Cloud Infrastructure Compute Always Free), consultar:
+- `deploy/README_DESPLIEGUE_OCI.md`: Guía de arquitectura para instancias Ubuntu.
+- `deploy/systemd/`: Archivos de servicio para gestión de demonios en background de FastAPI y Vite/Node.
+- `iniciar_local.bat`: Para ejecución local concurrente en entornos de desarrollo Windows.
+

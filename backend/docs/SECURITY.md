@@ -7,18 +7,21 @@
 - Integración OCI basada en archivo de configuración o variables de entorno.
 - Mensajes de error amigables en varios caminos del orquestador.
 
-## Hallazgos relevantes
-1. **CORS permisivo:** `main.py` establece `allow_origins=["*"]`, `allow_methods=["*"]`, `allow_headers=["*"]` y `allow_credentials=True`. Restringir orígenes y revisar la combinación con credenciales antes de despliegue.
-2. **Sin autenticación visible:** los endpoints de adaptación y paquetes no muestran dependencia de autenticación ni autorización. Si el servicio se expone fuera de un entorno confiable, incorporar autenticación, autorización y controles de abuso.
-3. **Subida de archivos sin límite explícito de tamaño:** el endpoint lee el archivo completo en memoria y lo guarda en disco. Aplicar límite de tamaño, límites de tiempo y controles de almacenamiento.
-4. **Nombre de archivo de entrada:** la ingesta forma el destino local con el nombre recibido. Revisar normalización/aislamiento de rutas y validar nombres para evitar traversal o colisiones.
-5. **Datos sensibles en documentos:** los documentos originales y los paquetes se persisten localmente o en OCI. Definir retención, control de acceso, cifrado y eliminación según la sensibilidad de los datos.
-6. **Errores y logs:** revisar que excepciones de proveedores o infraestructura no expongan información sensible en respuestas/logs.
-7. **Dependencias:** realizar escaneo de vulnerabilidades y mantener versiones actualizadas, con pruebas de regresión.
+## Controles Implementados y Mitigaciones Recientes
+- **CORS Restringido a Entorno Local:** Se eliminó la política global `allow_origins=["*"]`. En `backend/app/main.py`, CORS autoriza únicamente los orígenes del frontend (`http://localhost:5173`, `http://127.0.0.1:5173`) y herramientas locales con `allow_origin_regex`.
+- **Purga y Saneamiento de Git:** Se ejecutó una reescritura completa del historial con `git-filter-repo` para eliminar cualquier mención de namespaces de OCI reales o identificadores sensibles de todos los commits anteriores.
+- **Exclusión de Secretos en `.gitignore`:** Archivos `.env`, claves `.pem`, bitácoras de incidencias internas y manuales privados (`*_PRIVADO.md`) están ignorados global y recursivamente.
+- **Validación Estricta de Entradas:** Contratos Pydantic v2 en `backend/app/core/schemas.py` con validación de tipos, longitud mínima de 40 caracteres y normalización de alias.
+- **Sanitización de Ingesta:** Extracción segura con `pypdf` limpiando encabezados y validando extensiones autorizadas (.pdf, .md, .txt).
 
-## Recomendaciones priorizadas
-- **P0 antes de exposición pública:** autenticación/autorización, CORS restrictivo, límites de tamaño y protección de endpoints de paquetes.
-- **P1:** validar nombres de archivo, aplicar cuotas/rate limiting, configurar HTTPS y revisar gestión de secretos.
-- **P2:** políticas de retención, auditoría de accesos, escaneo de dependencias y pruebas de seguridad automatizadas.
+## Hallazgos y Buenas Prácticas para Producción
+1. **Autenticación en Endpoints:** En la fase de hackathon/desarrollo local, los endpoints operan sin autenticación previa. Antes de exponer el servicio a redes públicas, se debe incorporar autenticación (OAuth2 / JWT / API Keys).
+2. **Límites de Carga:** Imponer límites de tamaño de archivo (`UploadFile` en FastAPI) y rate-limiting por IP para prevenir ataques de denegación de servicio o sobrecostes en llamadas a Cohere.
+3. **Cifrado en Reposo:** Para almacenamiento en OCI, Object Storage aplica cifrado nativo del lado del servidor (SSE) en la capa Always Free. Para persistencia local, asegurar permisos de lectura restringidos en `data/outputs/`.
+4. **Dependencias:** Mantener dependencias fijadas y ejecutar periódicamente `pip audit` o escaneos automáticos de dependencias en CI/CD.
 
-Este documento es una revisión estática del repositorio, no una auditoría de penetración.
+## Recomendaciones Priorizadas para Despliegue Abierto
+- **P0 antes de exposición a Internet:** Autenticación de endpoints, rate limiting y proxy inverso TLS (Nginx/Traefik).
+- **P1:** Límites de tamaño máximo en subida de archivos (ej: máx. 10 MB) y aislamiento en contenedores no privilegiados.
+- **P2:** Integración con Vault de OCI para rotación periódica de credenciales de API.
+

@@ -88,5 +88,22 @@ Devuelve `{"origen":"oci"|"local","paquetes":[...]}`. En modo local cada element
 ## `GET /api/v1/paquetes/{objeto_id:path}`
 Devuelve el JSON del paquete. En modo local busca el nombre final dentro de `data/outputs/contenidos_generados`; si no existe, responde `404` con `Paquete no encontrado.`. En OCI intenta descargar el objeto y decodificar JSON; ante excepción, prueba el respaldo local.
 
+## CORS y Conectividad Frontend
+
+FastAPI implementa `CORSMiddleware` configurado con orígenes y regex para desarrollo local y producción:
+- **Orígenes autorizados:**
+  - `http://localhost:5173` y `http://127.0.0.1:5173` (Frontend React 19 + Vite)
+  - `http://localhost:8501` y `http://127.0.0.1:8501` (Dashboard auxiliar)
+  - `http://localhost:8000` y `http://127.0.0.1:8000` (Swagger UI y self-calls)
+- **Regex tolerante a puertos locales:** `^https?://(localhost|127\.0\.0\.1)(:\d+)?$`
+- **Cabeceras y métodos:** `allow_methods=["*"]`, `allow_headers=["*"]`, `allow_credentials=True`.
+
+### Consumo desde Frontend React (`frontend/src/services/api.ts`)
+El cliente Axios de la SPA interactúa de la siguiente forma:
+1. Consulta `GET /api/v1/config/opciones` en la carga inicial para poblar los selectores sin código estático duplicado.
+2. Al enviar la adaptación, genera un `FormData` adjuntando el archivo (`archivo`) o el texto manual mapeado al campo `texto_directo`.
+3. Recibe la respuesta con `status`, `contenido_adaptado`, `evaluacion_calidad` (con `anclaje_fuente_score`) y `almacenamiento_oci` (con `objeto_id` y `status_upload`).
+
 ## Autenticación, límites y paginación
-No se identificó autenticación/autorización en estos endpoints. No se observó paginación de API para paquetes; el cliente OCI lista hasta 50 objetos por defecto. No se documenta un límite explícito de tamaño de archivo en el endpoint. Consultar SECURITY y PROJECT_AUDIT antes de publicar.
+En la fase actual de prototipo para hackathon, los endpoints no requieren autenticación Bearer/API Key externa para facilitar las pruebas locales. No se observó paginación pesada; el cliente OCI lista hasta 50 objetos por lote. Se recomienda incorporar middleware de autenticación (JWT/API Keys) y rate limiting antes de una publicación a producción abierta. Consultar `SECURITY.md` y `PROJECT_AUDIT.md`.
+

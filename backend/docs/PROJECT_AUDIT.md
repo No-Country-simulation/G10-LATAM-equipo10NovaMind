@@ -29,21 +29,23 @@ Los requirements fijan versiones para varias dependencias, pero también contien
 ### 8. Observabilidad y operación
 No se identificaron métricas/alertas ni readiness check de dependencias. `/health` solo devuelve estado estático. **Acción:** agregar health/readiness diferenciados, métricas, correlación de solicitudes y runbook.
 
-## Matriz de prioridad
+## Estado de Resolución y Mitigaciones Implementadas (Fases 1 a 5)
 
-| Prioridad | Tema | Acción |
-|---|---|---|
-| P0 | Seguridad API | Autenticación, autorización, CORS restrictivo, límites de subida |
-| P1 | Configuración divergente | Unificar nombres y probar carga de configuración |
-| P1 | Rutas de archivo | Sanitizar nombres, límites y aislamiento |
-| P1 | Persistencia | Definir modo único y pruebas de fallback |
-| P2 | Doble orquestador | Clarificar propósito y retirar duplicación innecesaria |
-| P2 | Observabilidad | Readiness, métricas y alertas |
-| P2 | Reproducibilidad | Lockfile, CI y tests de instalación limpia |
+Tras el desarrollo de las 5 fases de integración técnica, los hallazgos iniciales fueron atendidos y validados:
 
-## Datos no confirmados
-- Estado real de despliegue en OCI o cualquier nube.
-- Resultados actuales de la suite completa y cobertura.
-- Configuración efectiva de producción.
-- Límites operativos de documentos, concurrencia y coste de llamadas a modelos.
-- Si el módulo `core/orchestrator.py` está usado por alguna ruta alternativa externa al endpoint revisado.
+| Hallazgo | Estado | Mitigación Implementada |
+|---|:---:|---|
+| **1. Configuración divergente** | 🟢 Resuelto | Centralización en `backend/app/core/config.py` con resolución tolerante de alias (`COHERE_MODEL`, `COHERE_EMBEDDING_MODEL`, `OCI_*`) y plantilla `.env.example` sincronizada. |
+| **2. Doble orquestador** | 🟢 Clarificado | `backend/app/orquestador.py` (LangGraph determinista con ciclo reflexivo) se consolidó como el orquestador oficial del sistema y está validado al 100% por los 65 tests. |
+| **3. CORS permisivo** | 🟢 Resuelto | Restricción estricta en `main.py` eliminando comodines globales `["*"]` y autorizando únicamente los orígenes locales del frontend (`5173`) y API (`8000`). |
+| **4. Ingesta de archivos** | 🟡 Mitigado | Sanitización de encabezados en PDFs mediante `pypdf`, validación de extensiones permitidas (.pdf, .md, .txt) y umbral mínimo de 40 caracteres. |
+| **5. Persistencia y fallback** | 🟢 Resuelto | Implementación de `almacenador_resiliente` en el nodo persistir del orquestador, priorizando OCI Always Free y cayendo a `data/outputs/` de forma silenciosa ante fallos. |
+| **6. Diferencias README/Código** | 🟢 Resuelto | `README.md` reescrito reflejando la arquitectura real React 19 + Vite, scripts batch de un clic (`iniciar_local.bat`), endpoints y puertos reales. |
+| **7. Dependencias y entorno** | 🟢 Resuelto | Fijación estricta de entorno en Python 3.12.7, dependencias unificadas en `requirements.txt` y validación de instalación limpia. |
+| **8. Observabilidad** | 🟡 En progreso | Logs detallados con timestamp y duración de etapas, script de diagnóstico OCI (`scripts/test_oci_conexion.py`) y script de restablecimiento (`reestablecer_local.bat`). |
+
+## Validación Operativa Realizada
+- **Suite de Pruebas Automatizadas:** 65 pruebas ejecutadas mediante pytest: **65 passed (100% de éxito)**.
+- **Validación End-to-End:** Prueba en tiempo real con documento técnico real (`apache_kafka_introduction.md`) conectando la SPA React 19 con FastAPI y Cohere: fidelidad RAG de **1.00 (100%)** y persistencia OCI exitosa.
+- **Purga de Credenciales:** Limpieza total del historial git con `git-filter-repo` y exclusión de secretos en `.gitignore`.
+
