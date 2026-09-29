@@ -101,28 +101,26 @@ graph LR
 
     %% BACKEND
     ROOT --> B_DIR["📁 backend/"]:::dir
-    B_DIR --> B_APP["📁 app/"]:::dir
-    B_APP --> B_MAIN["📄 main.py (Servidor FastAPI)"]:::file
-    B_APP --> B_ORQ["📄 orquestador.py (LangGraph)"]:::file
-    B_APP --> B_AG["📁 agentes/ (Agentes 1, 2 y 3)"]:::file
-    B_APP --> B_CORE["📁 core/ (schemas, prompts, config, ingestion)"]:::file
-    B_APP --> B_STOR["📁 storage/ (local_storage.py, oci_client.py)"]:::file
-    B_DIR --> B_TESTS["📁 tests/ (Suite de 64 pruebas unitarias)"]:::dir
+    B_DIR --> B_APP["📁 app/ (main.py, orquestador.py, agentes, core, storage)"]:::dir
+    B_DIR --> B_DOCS["📁 docs/ (9 docs de arquitectura, API y auditoría)"]:::dir
+    B_DIR --> B_TESTS["📁 tests/ (Suite de 65 pruebas unitarias e integrales)"]:::dir
     B_DIR --> B_DATA["📁 data/ (chroma/, outputs/, documents/)"]:::dir
-    B_DIR --> B_REQ["📄 requirements.txt (FastAPI, Cohere, Chroma, LangGraph)"]:::file
+    B_DIR --> B_REQ["📄 requirements.txt"]:::file
     B_DIR --> B_INI["📄 pytest.ini"]:::file
 
     %% FRONTEND
     ROOT --> F_DIR["📁 frontend/"]:::dir
-    F_DIR --> F_APP["📁 app/"]:::dir
-    F_APP --> F_STREAMLIT["📄 streamlit_app.py (UI y renderizadores)"]:::file
-    F_APP --> F_CLIENT["📄 api_client.py (Cliente HTTP)"]:::file
-    F_DIR --> F_REQ["📄 requirements.txt (Streamlit, Requests)"]:::file
+    F_DIR --> F_APP["📁 app/ (streamlit_app.py, api_client.py)"]:::dir
+    F_DIR --> F_REQ["📄 requirements.txt"]:::file
+
+    %% DEPLOY & SCRIPTS
+    ROOT --> D_DIR["📁 deploy/ (Scripts OCI, systemd y guías de nube)"]:::dir
+    ROOT --> S_DIR["📁 scripts/ (Diagnóstico OCI y restablecimiento local)"]:::dir
 
     %% RAÍZ
     ROOT --> R_ENV["📄 .env.example (Plantilla pública unificada)"]:::file
-    ROOT --> R_DOC["📄 esquema_integracion_A_P.md (Mapeo de integración)"]:::file
-    ROOT --> R_BAT["📄 setup.bat (Script de automatización Windows)"]:::file
+    ROOT --> R_BAT["📄 Scripts .bat (iniciar_local, reestablecer_local, setup)"]:::file
+    ROOT --> R_DOC["📄 Documentación Raíz (HISTORIAL, INFORME OCI, PROMPTS)"]:::file
     ROOT --> R_GIT["📄 .gitignore (Reglas de exclusión)"]:::file
 ```
 
@@ -130,42 +128,72 @@ graph LR
 
 ```text
 G10-LATAM-equipo10NovaMind/
-├── .env.example                   # Plantilla de variables de entorno (Cohere, OCI, Chroma)
-├── esquema_integracion_A_P.md     # Mapeo detallado de autorías técnicas (Alejandro vs. Pedro)
-├── setup.bat                      # Script para arranque local asistido en Windows
+├── .env.example                       # Plantilla de variables de entorno (Cohere, OCI, ChromaDB)
+├── .gitignore                         # Exclusiones estrictas (.env, *.pem, __pycache__, .venv)
+├── CAMBIOS.md                         # Bitácora detallada de versiones y cambios del proyecto
+├── CONTRIBUTING.md                    # Normas de contribución y flujo de ramas de Git
+├── HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md # Base de conocimiento con incidencias y soluciones técnicas
+├── INFORME_INTEGRACION_OCI_FASE3.md   # Informe de arquitectura y validación de persistencia en OCI
+├── INSTRUCCIONES_INSTALACION_PRUEBAS.txt # Guía rápida en texto plano para instalación y tests
+├── PROMPT_CONTEXTO_AGENTE.md          # Contexto técnico para asistencia con modelos de IA
+├── PROMPT_DESPLIEGUE_OCI_PRIVADO.md   # Guía paso a paso para despliegue en instancias de Oracle Cloud
+├── README.md                          # Documentación maestra y manual general del proyecto
+├── esquema_integracion_A_P.md         # Mapeo de autorías y responsabilidades de integración (Alejandro vs. Pedro)
+├── iniciar_local.bat                  # Script para arranque concurrente (FastAPI + Streamlit)
+├── reestablecer_local.bat             # Script de restablecimiento y limpieza de entorno local
+├── setup.bat                          # Asistente de verificación e instalación de dependencias
 │
-├── backend/                       # MICROSERVICIO BACKEND (FastAPI + LangGraph + Agentes)
-│   ├── requirements.txt           # Dependencias limpias fijadas para Python 3.12.7
-│   ├── pytest.ini                 # Configuración de pytest (testpaths = tests)
-│   ├── tests/                     # Suite de pruebas deterministas (64 tests pasando)
-│   │   ├── test_api.py            # Validación de endpoints REST con TestClient
-│   │   ├── test_orquestador.py    # Pruebas unitarias de agentes, contratos y feedback
-│   │   └── test_integracion_offline.py # Pipeline E2E con dependencias simuladas
-│   ├── data/                      # Directorio de persistencia
-│   │   ├── chroma/                # Base vectorial nativa persistente de ChromaDB
-│   │   ├── documents/             # Archivos fuente cargados para pruebas
-│   │   └── outputs/               # Salidas persistidas por la maqueta de OCI
-│   └── app/                       # Código de la aplicación
-│       ├── main.py                # Servidor FastAPI (/health, /opciones, /adaptar, /paquetes)
-│       ├── orquestador.py         # Grafo de ejecución LangGraph y control de ciclo
-│       ├── agentes/               # Clases independientes de los 3 agentes pedagógicos
-│       │   ├── agente1_investigador.py # Ingesta, chunking y búsqueda semántica
-│       │   ├── agente2_productor.py    # Generación adaptativa con few-shots
-│       │   └── agente3_critico.py      # Fact-checking y evaluación de anclaje
-│       ├── core/                  # Módulos centrales de lógica de negocio
-│       │   ├── schemas.py         # Modelos Pydantic v2 de los 5 formatos y validadores
-│       │   ├── prompts.py         # Prompts de sistema y ejemplos estructurados
-│       │   ├── config.py          # Validación de variables de entorno y fallbacks
-│       │   └── ingestion.py       # Extractor multi-formato (PDF, Markdown, TXT)
-│       └── storage/               # Capa de almacenamiento
-│           ├── local_storage.py   # Maqueta activa (guarda en data/outputs/)
-│           └── oci_client.py      # Cliente real con SDK oficial de Oracle Cloud
+├── backend/                           # MICROSERVICIO BACKEND (FastAPI + LangGraph + Agentes)
+│   ├── requirements.txt               # Dependencias limpias fijadas para Python 3.12.7
+│   ├── pytest.ini                     # Configuración de pytest (testpaths = tests)
+│   ├── docs/                          # Paquete de documentación técnica y auditoría
+│   │   ├── API.md                     # Referencia exhaustiva de endpoints REST y contratos
+│   │   ├── ARCHITECTURE.md            # Diagramas de secuencia y flujo Mermaid del backend
+│   │   ├── CHANGELOG.md               # Registro de versiones técnicas del backend
+│   │   ├── DATABASE.md                # Persistencia (ChromaDB vectorial, Local y OCI)
+│   │   ├── DEPLOYMENT.md              # Manual de configuración, variables y despliegue
+│   │   ├── OPERATIONS.md              # Observabilidad, logs, healthcheck y diagnóstico
+│   │   ├── PROJECT_AUDIT.md           # Informe de auditoría estática y matriz de prioridades
+│   │   ├── SECURITY.md                # Evaluación de controles y seguridad preventiva
+│   │   └── TESTING.md                 # Estrategia de testing y pruebas unitarias/integrales
+│   ├── tests/                         # Suite de pruebas deterministas (65 tests pasando - 100%)
+│   │   ├── test_api.py                # Validación de endpoints REST con TestClient
+│   │   ├── test_orquestador.py        # Pruebas unitarias de agentes, contratos y feedback
+│   │   └── test_integracion_offline.py# Pipeline E2E con dependencias simuladas
+│   ├── data/                          # Directorio de persistencia
+│   │   ├── chroma/                    # Base vectorial persistente de ChromaDB
+│   │   ├── documents/                 # Archivos fuente temporales y documentos cargados
+│   │   └── outputs/                   # Salidas persistidas por la maqueta local de OCI
+│   └── app/                           # Código fuente de la aplicación
+│       ├── main.py                    # Servidor FastAPI (/health, /opciones, /adaptar, /paquetes)
+│       ├── orquestador.py             # Grafo de ejecución LangGraph y control de ciclo pedagógico
+│       ├── agentes/                   # Clases independientes de los 3 agentes pedagógicos
+│       │   ├── agente1_investigador.py# Ingesta, chunking y búsqueda semántica RAG
+│       │   ├── agente2_productor.py   # Generación adaptativa con few-shots y formatos
+│       │   └── agente3_critico.py     # Fact-checking y evaluación de anclaje a fuentes
+│       ├── core/                      # Módulos centrales de lógica de negocio
+│       │   ├── schemas.py             # Modelos Pydantic v2 de los 5 formatos y validadores
+│       │   ├── prompts.py             # Prompts de sistema y ejemplos estructurados
+│       │   ├── config.py              # Validación de variables de entorno y fallbacks
+│       │   └── ingestion.py           # Extractor multi-formato (PDF, Markdown, TXT)
+│       └── storage/                   # Capa de almacenamiento y persistencia híbrida
+│           ├── local_storage.py       # Almacenamiento local estructurado (data/outputs/)
+│           └── oci_client.py          # Cliente oficial con SDK de Oracle Cloud Object Storage
 │
-└── frontend/                      # MICROSERVICIO FRONTEND (Streamlit)
-    ├── requirements.txt           # Dependencias mínimas de UI (Streamlit, Requests)
-    └── app/
-        ├── streamlit_app.py       # Interfaz visual con renderizadores para los 5 formatos
-        └── api_client.py          # Cliente HTTP desacoplado con timeout de 180s
+├── frontend/                          # MICROSERVICIO FRONTEND (Streamlit)
+│   ├── requirements.txt               # Dependencias de interfaz visual (Streamlit, Requests)
+│   └── app/
+│       ├── streamlit_app.py           # UI interactiva con renderizadores para los 5 formatos
+│       └── api_client.py              # Cliente HTTP desacoplado con timeouts y reintentos
+│
+├── deploy/                            # CONFIGURACIONES Y DESPLIEGUE EN NUBE (OCI)
+│   ├── README_DESPLIEGUE_OCI.md       # Guía de arquitectura y provisión en Oracle Cloud
+│   ├── scripts/                       # Scripts de configuración y despliegue para Linux/Ubuntu
+│   └── systemd/                       # Unidades systemd para demonios de Backend y Frontend
+│
+└── scripts/                           # SCRIPTS AUXILIARES DE MANTENIMIENTO Y DIAGNÓSTICO
+    ├── reestablecer_local.py          # Lógica Python de limpieza profunda de cache y entornos
+    └── test_oci_conexion.py           # Script CLI de diagnóstico de conexión y subida a OCI
 ```
 
 ---
