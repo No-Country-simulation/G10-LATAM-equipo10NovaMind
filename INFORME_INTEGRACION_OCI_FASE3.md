@@ -25,7 +25,7 @@ La persistencia en OCI Object Storage respeta de forma estricta la partición de
 
 * **Bucket:** `nuevamente-contenidos-educativos` (Tier Standard, Always Free).
 * **Región:** `sa-santiago-1`.
-* **Namespace:** `<tu-tenancy-namespace>`.
+* **Namespace:** Definido en `.env` vía `OCI_NAMESPACE` (ej: `<tu-tenancy-namespace>`).
 * **Estructura Jerárquica de Objetos:**
   * **Documentos Fuente:**  
     `documentos-originales/{doc_id}.txt`  
