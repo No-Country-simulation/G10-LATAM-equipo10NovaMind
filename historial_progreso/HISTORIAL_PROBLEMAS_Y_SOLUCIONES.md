@@ -282,6 +282,37 @@ El desarrollo de **NuevaMente** enfrentó una serie de desafíos arquitectónico
 
 ---
 
+### 27. Sobrecarga y Desorganización de Archivos en la Raíz del Repositorio
+* **Problema:** La raíz del repositorio acumulaba más de 15 archivos Markdown, imágenes PNG/SVG de prototipos anteriores y requisitos legacy, dificultando la navegación rápida para nuevos evaluadores, mentores del hackathon y desarrolladores.
+* **Impacto:** Falta de claridad en la estructura del proyecto, confusión entre código productivo y artefactos de experimentación preliminar, y riesgo de modificar accidentalmente archivos obsoletos.
+* **Solución Técnica:**
+  - Se crearon las carpetas especializadas `historial_progreso/` (para bitácoras, informes de avance, guías de contexto y base de conocimiento) y `legado/` (para artefactos preliminares, esquemas gráficos previos y requirements legacy de Alejandro y Pedro).
+  - Cada carpeta se dotó de su propio `README.md` explicativo para garantizar trazabilidad histórica sin saturar la raíz.
+  - Se limpió la raíz dejando únicamente los archivos esenciales de configuración (`.env.example`, `.gitignore`, `requirements.txt`), manuales maestros (`README.md`, `CONTRIBUTING.md`) y scripts de ejecución (`iniciar_local.bat`, `setup.bat`, `reestablecer_local.bat`).
+  - Se actualizaron todos los enlaces relativos y rutas de documentación en el proyecto.
+
+---
+
+### 28. Riesgo de Exposición de Credenciales, Claves Criptográficas y Namespaces en Git
+* **Problema:** En commits previos del desarrollo existían referencias a identificadores de infraestructura y la regla de exclusión de `.gitignore` solo contemplaba `.env` genérico, sin reglas explícitas para extensiones criptográficas (`*.pem`, `*.key`, `*.crt`).
+* **Impacto:** Riesgo de filtración de metadatos o claves en repositorios remotos si un desarrollador guardaba una clave fuera del directorio `deploy/`.
+* **Solución Técnica:**
+  - Se ejecutó un proceso de saneamiento y reescritura profunda del historial en todas las ramas mediante `git-filter-repo`, eliminando cualquier rastro de namespaces de OCI de todos los commits pasados.
+  - Se reforzó y blindó `.gitignore` añadiendo bloqueos explícitos para claves criptográficas y certificados (`*.pem`, `*.key`, `*.crt`, `*.cert`, `*.pfx`, `*.p12`), variantes de entorno (`.env.*` preservando `!.env.example`) y archivos de log (`*.log`).
+  - Se realizó una auditoría de seguridad automatizada verificando 0 claves privadas en el historial y 0 secretos en los archivos rastreados.
+
+---
+
+### 29. Desalineación de los Diagramas de Arquitectura con el Flujo Multirama del Equipo
+* **Problema:** Los diagramas en `README.md` mostraban una arquitectura estática sin clarificar qué componentes procedían de cada rama de Git del equipo (`origin/frontEnd`, `origin/backend`, `origin/feature/agents-langgraph`, `origin/project-manager`).
+* **Impacto:** Ambigüedad durante la revisión técnica del hackathon sobre la autoría, sinergia e integración de las contribuciones especializadas del equipo.
+* **Solución Técnica:**
+  - Se actualizaron todos los diagramas Mermaid en `README.md` (Arquitectura General, Carpetas con orígenes, Flujo Secuencial Multirama, Base de Datos Backend).
+  - Se incorporó un nuevo diagrama de topología Gitflow ilustrando la convergencia de las ramas hacia el hub `integracion` y su posterior promoción a `main` con el tag `v1.0-demo`.
+  - Se añadió una matriz técnica de contribución por rama con roles, componentes clave y estado actual de integración.
+
+---
+
 ## 📊 Resumen Cuantitativo del Estado Actual
 
 | Métrica / Dimensión | Estado Inicial | Estado Actual Integrado |
@@ -294,6 +325,9 @@ El desarrollo de **NuevaMente** enfrentó una serie de desafíos arquitectónico
 | **Manejo de Errores de Red / API** | Tracebacks directos | **Backoff exponencial + clasificación de causas transitorias** |
 | **Soporte de Formatos Pedagógicos** | Solo Flashcards genéricas | **5 formatos pedagógicos dinámicos con few-shots y validación de esquema** |
 | **Experiencia de Usuario en Frontend**| UI estática sin interactividad avanzada | **React 19 SPA con Flashcards 3D, Quiz multi-pregunta, Stepper, GSAP y Lenis** |
+| **Organización del Repositorio** | Raíz saturada de bitácoras y borradores | **Raíz limpia y minimalista, con segregación en `historial_progreso/` y `legado/`** |
+| **Seguridad de Secretos y Git** | .gitignore básico y metadatos en historial | **Historial purgado con `git-filter-repo` y .gitignore blindado para .pem, .key, certs y logs** |
+| **Trazabilidad Multirama** | Ramas aisladas sin topología visual | **Topología Gitflow Mermaid + mapeo explícito de capas y componentes a sus ramas** |
 | **Herramientas de Mantenimiento Local**| Scripts parciales con bloqueos de puertos | **`iniciar_local.bat` (dual 8000/5173) y `reestablecer_local.bat` a prueba de fallos** |
 | **Estrategia de Despliegue en VM OCI**| Fallos por falta de memoria RAM (Docker) | **Servicios nativos `systemd` + 4GB Swap + Cloudflare Zero Trust** |
 
@@ -301,12 +335,13 @@ El desarrollo de **NuevaMente** enfrentó una serie de desafíos arquitectónico
 
 ## ✍️ Certificación y Auditoría
 
-Este documento certifica que los 26 problemas descritos han sido diagnosticados, documentados y resueltos, manteniendo intacta la integridad funcional, la suite de pruebas del backend y el despliegue del nuevo frontend.
+Este documento certifica que los **29 problemas descritos** han sido diagnosticados, documentados y resueltos, manteniendo intacta la integridad funcional, la suite de pruebas del backend y el despliegue del nuevo frontend.
 
 **Firmado por:**  
 🤖 **Modelo de IA: Gemini 3.8**  
 *Arquitectura de Soluciones Cloud OCI & DevOps Senior*  
 *Fecha: 29 de Septiembre de 2026*
+
 
 
 

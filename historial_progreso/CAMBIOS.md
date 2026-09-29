@@ -87,6 +87,35 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
 6. **Verificación:**
    - Backend: 65/65 tests pasando (`pytest backend/tests -v`).
    - Frontend: `npm run build` (`tsc -b && vite build`) completado con 0 errores.
+   - Navegador E2E: Ejecución validada con anclaje RAG de 1.00 (100% verificado contra documentos fuente).
+
+## Fase 6: Reestructuración y Limpieza del Repositorio (Organización Raíz, Historial y Legado)
+
+1. **Segregación Limpia de la Raíz:**
+   - Creación de la carpeta `historial_progreso/` con su propio `README.md` descriptivo para alojar bitácoras de incidentes, informes de avance (`INFORME_INTEGRACION_*.md`), manuales de prompts y especificaciones.
+   - Creación de la carpeta `legado/` con su `README.md` explicativo para preservar prototipos previos, requisitos históricos (`requirements_Legacy*.txt`) y bocetos de arquitectura (`esquema_integracion_A_P.*`, `pedro_squema1.png`).
+2. **Purga Completa de Metadatos Sensibles en Git:**
+   - Saneamiento del árbol e historial de commits mediante `git-filter-repo` para purgar referencias reales a namespaces de Oracle Cloud en todas las ramas locales y remotas.
+3. **Sincronización del Paquete de Documentación Técnica:**
+   - Actualización completa de los 9 documentos en `backend/docs/` (`API.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `DATABASE.md`, `DEPLOYMENT.md`, `OPERATIONS.md`, `PROJECT_AUDIT.md`, `SECURITY.md`, `TESTING.md`) a la versión v2.0.0.
+   - Actualización de `frontend/README.md` documentando la arquitectura React 19, componentes pedagógicos, pruebas E2E y enlaces a documentación.
+
+## Fase 7: Topología Multirama y Blindaje de Seguridad
+
+1. **Actualización de Diagramas en `README.md` (Integración Multirama):**
+   - **Diagrama de Arquitectura General:** Mapeo explícito de capas a sus ramas de desarrollo (`frontEnd`, `backend`, `feature/agents-langgraph`, `project-manager`).
+   - **Topología Gitflow:** Incorporación del diagrama Mermaid que ilustra la convergencia de ramas en el hub `integracion` y su promoción a `main` (`v1.0-demo`), acompañado de una matriz técnica de contribución por rama.
+   - **Diagrama de Carpetas:** Inclusión de `historial_progreso/` y `legado/` con indicación de origen por rama.
+   - **Diagrama de Secuencia E2E:** Anotación de componentes y notas según la rama proveedora.
+   - **Diagrama de Capa Backend y Persistencia:** Subgrafos etiquetados por rama de origen.
+2. **Blindaje de Seguridad en `.gitignore`:**
+   - Incorporación de reglas restrictivas para claves criptográficas y certificados (`*.pem`, `*.key`, `*.crt`, `*.cert`, `*.pfx`, `*.p12`).
+   - Bloqueo de variantes `.env.*` (preservando únicamente `.env.example`).
+   - Exclusión de logs (`*.log`) y archivos de sistema (`.DS_Store`, `Thumbs.db`).
+3. **Verificación Determinista:**
+   - Suite de backend: 65/65 tests pasando (`100% de éxito` en `backend/tests`).
+   - Compilación frontend: `npm run build` sin advertencias ni errores de TypeScript.
+
 
 
 
