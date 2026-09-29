@@ -3,25 +3,25 @@
   justify-content: space-between;
   align-items: center;
   color: #737f94;
-  font-size: clamp(8px, 0.7vw, 10px);
+  font-size: 9px;
   letter-spacing: 0.13em;
   font-weight: 700;
 }
 
 .sourceAnchor {
   display: inline-flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
   color: #41d6b3;
   letter-spacing: 0.06em;
 }
 
 .flipScene {
   perspective: 1200px;
-  width: 100%;
   max-width: 560px;
-  height: clamp(260px, 32vw, 300px);
-  margin: clamp(14px, 2vw, 22px) auto clamp(12px, 1.8vw, 18px);
+  width: 100%;
+  height: clamp(250px, 34vw, 270px);
+  margin: 21px auto 18px;
   cursor: pointer;
 }
 
@@ -44,7 +44,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 19px;
   backface-visibility: hidden;
-  background: var(--bg-card-face);
+  background: linear-gradient(145deg, #222730, #181e28);
   box-shadow: 0 24px 45px rgba(0, 0, 0, 0.22);
   display: flex;
   flex-direction: column;
@@ -63,7 +63,7 @@
 .typeChip {
   padding: 4px 7px;
   color: #9fa7ff;
-  font-size: clamp(8px, 0.7vw, 9px);
+  font-size: 9px;
   border: 1px solid rgba(109, 98, 240, 0.28);
   border-radius: 5px;
   background: rgba(99, 86, 219, 0.1);
@@ -85,21 +85,21 @@
 
 .cardFace h2 {
   margin: 14px 0 6px;
-  font-size: clamp(18px, 2vw, 22px);
+  font-size: clamp(18px, 2.2vw, 22px);
   letter-spacing: -0.04em;
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .cardFace p {
   margin: 0;
   color: #909aae;
-  font-size: clamp(11px, 1.1vw, 13px);
-  line-height: 1.5;
+  font-size: clamp(11px, 1.2vw, 13px);
+  line-height: 1.45;
 }
 
 .questionBox {
   margin-top: auto;
-  padding: clamp(10px, 1.3vw, 14px);
+  padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 11px;
   background: rgba(255, 255, 255, 0.045);
@@ -115,14 +115,14 @@
 }
 
 .questionBox strong {
-  font-size: clamp(11px, 1vw, 13px);
-  color: var(--text-main);
+  font-size: 12px;
+  color: #ffffff;
 }
 
 .cardFace.back h3 {
-  margin-top: clamp(14px, 2.5vw, 28px);
+  margin-top: 20px;
   color: #e4e7f0;
-  font-size: clamp(14px, 1.6vw, 18px);
+  font-size: clamp(14px, 1.8vw, 18px);
   line-height: 1.5;
   font-weight: 500;
 }
@@ -132,9 +132,9 @@
   align-items: flex-start;
   gap: 8px;
   margin-top: auto;
-  padding: 11px;
+  padding: 10px;
   color: #a7b0c4;
-  font-size: var(--font-xs);
+  font-size: 11px;
   border: 1px solid rgba(169, 191, 45, 0.26);
   border-radius: 8px;
   background: rgba(169, 191, 45, 0.08);
@@ -148,7 +148,7 @@
 
 .hintBox b {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   color: #c5d648;
   font-size: 9px;
 }
@@ -164,27 +164,46 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 16px;
+  padding: 10px 16px;
   color: #202334;
   background: #f3f4f8;
   border: 0;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-xs);
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s;
+  white-space: nowrap;
 }
 
 .turnButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  color: #9ca8bc;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .selfCheck {
   display: flex;
   gap: 9px;
   justify-content: center;
-  flex-wrap: wrap;
   margin-top: 20px;
 }
 
@@ -194,19 +213,18 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  width: clamp(160px, 25vw, 210px);
+  width: 210px;
   padding: 10px;
-  font-size: var(--font-xs);
+  font-size: 11px;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
-  transition: opacity 0.2s;
 }
 
 .checkButtonWarn {
-  color: var(--color-review-warn);
-  border: 1px solid var(--border-review-warn);
-  background: var(--bg-review-warn);
+  color: #e8bd45;
+  border: 1px solid rgba(195, 150, 35, 0.35);
+  background: rgba(176, 126, 29, 0.12);
 }
 
 .checkButtonSuccess {
@@ -215,7 +233,43 @@
   background: rgba(16, 185, 129, 0.1);
 }
 
-.checkButtonWarn:hover,
-.checkButtonSuccess:hover {
-  opacity: 0.88;
+/* Ajustes Mobile (< 720px) */
+@media (max-width: 720px) {
+  .flipScene {
+    height: 290px;
+  }
+
+  .cardFace h2 {
+    font-size: 17px;
+  }
+
+  .viewerControls {
+    gap: 8px;
+    width: 100%;
+  }
+
+  .viewerControls .secondaryButton {
+    flex: 1;
+    font-size: 10px;
+    padding: 9px 6px;
+  }
+
+  .turnButton {
+    flex: 1.4;
+    font-size: 10px;
+    padding: 10px 8px;
+    justify-content: center;
+  }
+
+  .selfCheck {
+    width: 100%;
+  }
+
+  .checkButtonWarn,
+  .checkButtonSuccess {
+    flex: 1;
+    width: auto;
+    font-size: 10px;
+    padding: 10px 6px;
+  }
 }

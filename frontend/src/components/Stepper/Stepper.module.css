@@ -6,24 +6,22 @@
   align-items: center;
   width: 100%;
   max-width: 780px;
-  margin: clamp(20px, 2.5vw, 30px) auto clamp(25px, 3vw, 39px);
-  padding: 0 clamp(8px, 1.5vw, 16px);
-  overflow-x: auto;
+  margin: 30px auto 39px;
+  padding: 0 10px;
 }
 
 .stepWrapper {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
 }
 
 .stepButton {
   display: flex;
   align-items: center;
-  gap: clamp(6px, 0.8vw, 9px);
+  gap: 9px;
   padding: 0;
-  color: var(--text-dim);
-  font-size: var(--font-xs);
+  color: #657087;
+  font-size: 11px;
   background: none;
   border: 0;
   white-space: nowrap;
@@ -42,11 +40,10 @@
   background: #161b29;
   font-size: 11px;
   font-weight: 600;
-  transition: all 0.25s ease;
   flex-shrink: 0;
+  transition: all 0.25s ease;
 }
 
-/* Paso Activo */
 .stepButton.active {
   color: #f7f8ff;
   font-weight: 600;
@@ -54,14 +51,13 @@
 
 .stepButton.active .stepNumber {
   color: #ffffff;
-  border-color: var(--border-active-step);
+  border-color: #7870ff;
   background: #6758ec;
-  box-shadow: var(--shadow-step-glow);
+  box-shadow: 0 0 20px rgba(109, 94, 255, 0.5);
 }
 
-/* Paso Completado */
 .stepButton.complete {
-  color: var(--text-muted);
+  color: #8e99ae;
 }
 
 .stepButton.complete .stepNumber {
@@ -70,16 +66,39 @@
   background: #12bc88;
 }
 
-/* Línea conectora fluida entre pasos */
 .stepLine {
-  width: clamp(28px, 6vw, 100px);
+  width: clamp(26px, 8vw, 100px);
   height: 1px;
-  margin: 0 clamp(6px, 1vw, 14px);
+  margin: 0 clamp(5px, 1.2vw, 14px);
   background: rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
   transition: background 0.3s ease;
 }
 
 .stepLine.filled {
-  background: var(--gradient-step-line);
+  background: linear-gradient(90deg, #12bc88, #6e60fa);
+}
+
+/* Coreografía Mobile Awaaards (< 720px) */
+@media (max-width: 720px) {
+  .stepperContainer {
+    justify-content: space-between;
+    margin: 24px 0 30px;
+    padding: 0 4px;
+  }
+
+  .stepButton {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+    font-size: 9px;
+    max-width: 75px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .stepLine {
+    width: 26px;
+    margin: 0 5px;
+  }
 }

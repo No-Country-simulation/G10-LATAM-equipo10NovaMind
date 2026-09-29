@@ -11,8 +11,7 @@
   align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 22px;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
 .eyebrow {
@@ -25,7 +24,7 @@
 
 .headingTitle {
   margin: 0;
-  font-size: 26px;
+  font-size: clamp(22px, 3.5vw, 26px);
   font-weight: 700;
   letter-spacing: -0.045em;
   color: #ffffff;
@@ -36,6 +35,7 @@
   color: #8290a7;
   font-size: 12px;
   max-width: 600px;
+  line-height: 1.45;
 }
 
 .headingStat {
@@ -49,6 +49,7 @@
   border-radius: 8px;
   background: rgba(90, 78, 204, 0.09);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .headingStat svg {
@@ -63,6 +64,7 @@
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  margin-bottom: 14px;
 }
 
 .ingestCard {
@@ -156,6 +158,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #ffffff;
+  word-break: break-all;
 }
 
 .dropMeta {
@@ -183,6 +186,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 7px;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
@@ -233,6 +237,7 @@
   padding: 10px 20px 16px;
   color: #69758c;
   font-size: 10px;
+  flex-wrap: wrap;
 }
 
 .dropHint button {
@@ -257,19 +262,12 @@
   padding: 0 20px 20px;
 }
 
-@media (max-width: 720px) {
-  .fieldsGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
 .formFooter {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 13px 20px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
-  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -336,7 +334,6 @@
   }
 }
 
-/* Loading Track de los Agentes */
 .loadingTrack {
   padding: 0 20px 18px;
 }
@@ -389,4 +386,49 @@
   color: #ffffff;
   border-color: #7364f4;
   background: #5f50de;
+}
+
+/* Coreografía Mobile Awaaards (< 720px) */
+@media (max-width: 720px) {
+  .pageHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .fieldsGrid {
+    grid-template-columns: 1fr;
+    padding: 0 14px 16px;
+  }
+
+  .dropzone {
+    margin: 0 14px;
+    flex-wrap: wrap;
+  }
+
+  .ghostButton {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .formFooter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 14px 18px;
+  }
+
+  .formFooter .primaryButton {
+    width: 100%;
+  }
+
+  .privacyNote {
+    justify-content: center;
+  }
+
+  .loadingSteps {
+    flex-direction: column;
+    gap: 6px;
+  }
 }

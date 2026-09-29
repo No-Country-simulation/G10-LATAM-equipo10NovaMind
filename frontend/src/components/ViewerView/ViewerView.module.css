@@ -1,7 +1,6 @@
 .contentGrid {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(14px, 2vw, 24px);
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 1060px;
   margin: 0 auto;
@@ -11,30 +10,32 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: clamp(10px, 1.5vw, 16px);
-  margin-bottom: clamp(12px, 1.8vw, 22px);
+  margin-bottom: 22px;
+  gap: 14px;
 }
 
 .eyebrow {
-  margin: 0 0 6px;
-  color: var(--purple-light);
-  font-size: var(--font-xs);
+  margin: 0 0 8px;
+  color: #7e74fa;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.16em;
 }
 
 .headingTitle {
   margin: 0;
-  font-size: var(--font-heading);
+  font-size: clamp(22px, 3.5vw, 26px);
+  font-weight: 700;
   letter-spacing: -0.045em;
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .subheading {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: var(--font-xs);
+  margin: 7px 0 0;
+  color: #8290a7;
+  font-size: 12px;
+  max-width: 600px;
+  line-height: 1.45;
 }
 
 .liveBadge {
@@ -42,14 +43,15 @@
   align-items: center;
   gap: 8px;
   color: #49dcb4;
-  font-size: clamp(8px, 0.7vw, 10px);
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border: 1px solid rgba(104, 94, 236, 0.26);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   background: rgba(90, 78, 204, 0.09);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .liveBadge span {
@@ -65,13 +67,14 @@
   display: flex;
   align-items: center;
   gap: clamp(14px, 2.5vw, 28px);
-  padding: clamp(12px, 1.5vw, 16px) clamp(14px, 1.8vw, 20px);
-  margin-bottom: 10px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-capsule);
-  background: var(--bg-card-glass);
+  padding: 16px 19px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(16px);
-  flex-wrap: wrap;
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .metaItem {
@@ -81,68 +84,89 @@
 
 .metaLabel {
   display: block;
-  margin-bottom: 6px;
-  color: var(--text-dim);
-  font-size: clamp(8px, 0.65vw, 9px);
+  margin-bottom: 7px;
+  color: #69758b;
+  font-size: 8px;
   letter-spacing: 0.11em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .metaItem strong {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: var(--font-xs);
-  color: var(--text-main);
+  font-size: 11px;
+  color: #ffffff;
 }
 
 .timeDot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--color-time-dot);
+  background: #a9be35;
   box-shadow: inset 0 -3px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
 .conceptBlock {
   flex: 1;
-  min-width: 220px;
 }
 
 .tagRow {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .tagRow span {
-  padding: 3px 7px;
+  padding: 4px 7px;
   color: #9fa7ff;
-  font-size: clamp(8px, 0.7vw, 10px);
+  font-size: 9px;
   border: 1px solid rgba(109, 98, 240, 0.28);
   border-radius: 5px;
   background: rgba(99, 86, 219, 0.1);
 }
 
-/* Tabs de formato */
+.fidelity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  color: #38d5ac;
+  flex-shrink: 0;
+}
+
+.fidelity strong {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fidelity small {
+  display: block;
+  color: #6d7c91;
+  font-size: 8px;
+  font-weight: 600;
+}
+
+/* Tabs de formato sin scroll horizontal */
 .formatTabs {
   display: flex;
   gap: 4px;
   padding: 4px;
-  margin-bottom: 13px;
+  margin-bottom: 14px;
   width: max-content;
   max-width: 100%;
-  overflow-x: auto;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.035);
 }
 
 .tabButton {
-  padding: clamp(6px, 0.8vw, 8px) clamp(9px, 1.1vw, 12px);
+  padding: 8px 12px;
   color: #78849a;
-  font-size: var(--font-xs);
+  font-size: 10px;
+  font-weight: 600;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -152,54 +176,50 @@
 }
 
 .tabButton:hover {
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .tabButton.selected {
   color: #e8e9f5;
-  background: var(--bg-tab-active);
+  background: #34394a;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 /* Superficie de visualización */
 .viewerSurface {
   min-height: 410px;
-  padding: clamp(16px, 2.5vw, 26px) clamp(16px, 2.8vw, 28px);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-capsule);
-  background: var(--bg-card-glass);
-  box-shadow: var(--shadow-card);
+  padding: clamp(16px, 2.5vw, 24px) clamp(16px, 2.8vw, 28px);
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .bottomActions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   margin-top: 17px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.primaryButton,
-.secondaryButton {
+.primaryButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-xs);
-  font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-
-.primaryButton {
-  padding: 10px 16px;
-  color: #ffffff;
+  padding: 11px 15px;
+  color: white;
   border: 1px solid rgba(157, 146, 255, 0.38);
-  background: var(--gradient-primary-btn);
-  box-shadow: var(--shadow-primary-btn);
+  border-radius: 8px;
+  background: linear-gradient(110deg, #6354de, #8359ee 55%, #14b6d2);
+  box-shadow: 0 8px 22px rgba(95, 79, 226, 0.24);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .primaryButton:hover {
@@ -208,13 +228,85 @@
 }
 
 .secondaryButton {
-  padding: 9px 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
   color: #9ca8bc;
-  border: 1px solid var(--border-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .secondaryButton:hover {
   color: #e8eafb;
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================
+   ADAPTACIÓN MOBILE (< 720px) — Elimina el scroll horizontal
+========================================================== */
+@media (max-width: 720px) {
+  .pageHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .metaBar {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 14px 16px;
+  }
+
+  .conceptBlock {
+    min-width: 100%;
+    order: 3;
+  }
+
+  .fidelity {
+    margin-left: auto;
+  }
+
+  /* Formato en grilla en lugar de barra recortada con scroll */
+  .formatTabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  /* El quinto elemento (Guion / Video) ocupa el ancho completo para balancear */
+  .tabButton:last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
+
+  .tabButton {
+    text-align: center;
+    padding: 10px 8px;
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  .viewerSurface {
+    padding: 20px 14px;
+  }
+
+  .bottomActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .bottomActions .primaryButton,
+  .bottomActions .secondaryButton {
+    width: 100%;
+  }
 }
