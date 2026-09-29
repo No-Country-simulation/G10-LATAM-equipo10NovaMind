@@ -1,29 +1,35 @@
 import React, { useState } from 'react';
 import { BookOpen, Check, ChevronDown } from 'lucide-react';
+import type { TutorialItem } from '../../../types/api';
 import styles from './TutorialViewer.module.css';
 
-interface TutorialItem {
-  title: string;
-  desc: string;
+interface TutorialViewerProps {
+  items?: TutorialItem[];
+  title?: string;
 }
 
 const DEFAULT_ITEMS: TutorialItem[] = [
   {
-    title: 'Define el perímetro',
-    desc: 'Crea una VCN y asigna un rango CIDR para tu entorno.',
+    titulo: 'Define el perímetro',
+    instruccion: 'Crea una VCN y asigna un rango CIDR para tu entorno.',
   },
   {
-    title: 'Divide los espacios en sectores',
-    desc: 'Crea subredes públicas y privadas para organizar tus recursos.',
+    titulo: 'Divide los espacios en sectores',
+    instruccion: 'Crea subredes públicas y privadas para organizar tus recursos.',
   },
   {
-    title: 'Asigna las guardias de seguridad',
-    desc: 'Configura Security Lists para controlar ingress y egress.',
+    titulo: 'Asigna las guardias de seguridad',
+    instruccion: 'Configura Security Lists para controlar ingress y egress.',
   },
 ];
 
-export const TutorialViewer: React.FC = () => {
+export const TutorialViewer: React.FC<TutorialViewerProps> = ({
+  items,
+  title = 'Domina redes en la nube desde cero',
+}) => {
   const [checked, setChecked] = useState<number[]>([]);
+
+  const stepList = (items && items.length > 0) ? items : DEFAULT_ITEMS;
 
   const toggleStep = (index: number) => {
     setChecked((prev) =>
@@ -34,29 +40,33 @@ export const TutorialViewer: React.FC = () => {
   return (
     <div className={styles.tutorial}>
       <div className={styles.surfaceTop}>
-        <span>GUÍA PRÁCTICA · 3 PASOS</span>
+        <span>GUÍA PRÁCTICA · {stepList.length} PASOS</span>
         <span className={styles.sourceAnchor}>
           <BookOpen size={12} /> CONCEPTOS APLICADOS
         </span>
       </div>
 
-      <h2 className={styles.title}>Domina redes en la nube desde cero</h2>
+      <h2 className={styles.title}>{title}</h2>
 
-      {DEFAULT_ITEMS.map((item, index) => {
+      {stepList.map((item, index) => {
+        const stepNum = item.numero_paso ?? index + 1;
+        const stepTitle = item.titulo || item.title || `Paso ${stepNum}`;
+        const stepDesc = item.instruccion || item.desc || '';
         const isDone = checked.includes(index);
+
         return (
           <button
-            key={item.title}
+            key={`${index}-${stepTitle}`}
             type="button"
             className={`${styles.tutorialStep} ${isDone ? styles.done : ''}`}
             onClick={() => toggleStep(index)}
           >
             <span className={styles.stepCheck}>
-              {isDone ? <Check size={13} /> : index + 1}
+              {isDone ? <Check size={13} /> : stepNum}
             </span>
             <span className={styles.stepContent}>
-              <b>Paso {index + 1} · {item.title}</b>
-              <small>{item.desc}</small>
+              <b>Paso {stepNum} · {stepTitle}</b>
+              {stepDesc && <small>{stepDesc}</small>}
             </span>
             <ChevronDown size={15} className={styles.chevronIcon} />
           </button>

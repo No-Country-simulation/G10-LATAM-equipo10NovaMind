@@ -12,24 +12,47 @@ import type { FlashcardItem } from '../../../types/api';
 import styles from './FlashcardViewer.module.css';
 
 interface FlashcardViewerProps {
-  cards: (FlashcardItem & { concept?: string; body?: string })[];
+  cards?: (FlashcardItem & { concept?: string; body?: string })[];
 }
+
+const DEFAULT_CARDS: (FlashcardItem & { concept?: string; body?: string })[] = [
+  {
+    concept: 'CONCEPTO',
+    frente: '¿Qué es una VCN en Oracle Cloud?',
+    dorso:
+      'Es tu red privada y personalizable dentro de OCI: el espacio donde defines subredes, rutas y reglas de tráfico.',
+    body: 'Una red virtual definida por software en Oracle Cloud Infrastructure.',
+    pista_didactica: 'Piensa en ella como tu propio barrio privado dentro de la nube.',
+  },
+  {
+    concept: 'CONCEPTO CLAVE',
+    frente: '¿Por qué separar una subred pública de una privada?',
+    dorso:
+      'La separación limita la superficie de exposición: los recursos privados no reciben tráfico directo desde Internet.',
+    body: 'Segmentos lógicos que organizan los recursos de tu red.',
+    pista_didactica: 'Como separar la recepción de una oficina del archivo interno confidencial.',
+  },
+  {
+    concept: 'SEGURIDAD',
+    frente: '¿Qué función cumple una Security List?',
+    dorso:
+      'Actúa como un cortafuegos virtual que define qué tráfico ingress (entrada) y egress (salida) está permitido.',
+    body: 'Reglas virtuales para controlar el tráfico de red de forma granular.',
+    pista_didactica: 'Son los guardias que revisan cada paquete de datos entrante y saliente.',
+  },
+];
 
 export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ cards }) => {
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
-  const current = cards[cardIndex] || {
-    frente: '¿Qué controla una VCN dentro del cloud?',
-    dorso: 'Es tu red privada y personalizable dentro de OCI: el espacio donde defines subredes, rutas y reglas de tráfico.',
-    concept: 'CONCEPTO',
-    body: 'Una red virtual definida por software en Oracle Cloud.',
-    pista_didactica: 'Piensa en ella como tu propio barrio privado dentro de la nube.',
-  };
+  const activeCards = (cards && cards.length > 0) ? cards : DEFAULT_CARDS;
+  const safeIndex = Math.min(cardIndex, activeCards.length - 1);
+  const current = activeCards[safeIndex] || DEFAULT_CARDS[0];
 
   const handleNext = () => {
     setFlipped(false);
-    setCardIndex((prev) => (prev + 1) % cards.length);
+    setCardIndex((prev) => (prev + 1) % activeCards.length);
   };
 
   const handlePrev = () => {
@@ -41,10 +64,10 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ cards }) => {
     <div>
       <div className={styles.surfaceTop}>
         <span>
-          FLASHCARD {cardIndex + 1} DE {cards.length}
+          FLASHCARD {safeIndex + 1} DE {activeCards.length}
         </span>
         <span className={styles.sourceAnchor}>
-          <GitBranch size={13} /> ANCLADO A 6 CHUNKS
+          <GitBranch size={13} /> ANCLADO A RAG CHROMA
         </span>
       </div>
 
@@ -93,7 +116,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ cards }) => {
           type="button"
           className={styles.secondaryButton}
           onClick={handlePrev}
-          disabled={cardIndex === 0}
+          disabled={safeIndex === 0}
         >
           <ArrowLeft size={14} /> Anterior
         </button>
@@ -108,6 +131,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ cards }) => {
           type="button"
           className={styles.secondaryButton}
           onClick={handleNext}
+          disabled={safeIndex === activeCards.length - 1}
         >
           Siguiente <ArrowRight size={14} />
         </button>
