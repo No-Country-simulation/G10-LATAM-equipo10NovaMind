@@ -36,9 +36,13 @@ data/documents/*
 # Archivos confidenciales de infraestructura y despliegue OCI
 *_PRIVADO.md
 *PRIVATE*.md
+**/*_PRIVADO.md
 .oci_private/
 deploy/
 
 # Bitácoras y registros internos locales
 HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md
+**/HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md
 PROMPT_CONTEXTO_AGENTE.md
+**/PROMPT_CONTEXTO_AGENTE.md
+

@@ -130,18 +130,32 @@ graph LR
 G10-LATAM-equipo10NovaMind/
 ├── .env.example                       # Plantilla de variables de entorno (Cohere, OCI, ChromaDB)
 ├── .gitignore                         # Exclusiones estrictas (.env, *.pem, __pycache__, .venv)
-├── CAMBIOS.md                         # Bitácora detallada de versiones y cambios del proyecto
 ├── CONTRIBUTING.md                    # Normas de contribución y flujo de ramas de Git
-├── HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md # Base de conocimiento con incidencias y soluciones técnicas
-├── INFORME_INTEGRACION_OCI_FASE3.md   # Informe de arquitectura y validación de persistencia en OCI
-├── INSTRUCCIONES_INSTALACION_PRUEBAS.txt # Guía rápida en texto plano para instalación y tests
-├── PROMPT_CONTEXTO_AGENTE.md          # Contexto técnico para asistencia con modelos de IA
-├── PROMPT_DESPLIEGUE_OCI_PRIVADO.md   # Guía paso a paso para despliegue en instancias de Oracle Cloud
 ├── README.md                          # Documentación maestra y manual general del proyecto
-├── esquema_integracion_A_P.md         # Mapeo de autorías y responsabilidades de integración (Alejandro vs. Pedro)
+├── requirements.txt                   # Dependencias principales unificadas de Python (FastAPI + LangGraph)
 ├── iniciar_local.bat                  # Script para arranque concurrente (FastAPI :8000 + React Vite :5173)
 ├── reestablecer_local.bat             # Script de restablecimiento y limpieza de entorno local
 ├── setup.bat                          # Asistente de verificación e instalación de dependencias
+│
+├── historial_progreso/                # 📚 BITÁCORAS, REPORTES DE INTEGRACIÓN Y ARQUITECTURA
+│   ├── README.md                      # Índice descriptivo del contenido de la carpeta
+│   ├── CAMBIOS.md                     # Bitácora detallada de versiones y cambios del proyecto
+│   ├── ESQUEMA_INTEGRACION_FULLSTACK.md # Especificación técnica y diagramas Backend + Frontend + OCI
+│   ├── HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md # Base de conocimiento con 21 incidencias resueltas
+│   ├── INFORME_INTEGRACION_OCI_FASE3.md # Informe de arquitectura y persistencia híbrida en OCI
+│   ├── INFORME_INTEGRACION_FRONTEND_REACT.md # Informe de conexión de la UI React con FastAPI
+│   ├── INSTRUCCIONES_INSTALACION_PRUEBAS.txt # Guía rápida en texto plano para instalación y tests
+│   ├── PROMPT_CONTEXTO_AGENTE.md      # Contexto técnico para asistencia con modelos de IA
+│   └── PROMPT_DESPLIEGUE_OCI_PRIVADO.md # Guía paso a paso para despliegue en instancias de Oracle Cloud
+│
+├── legado/                            # 🏛️ ARTEFACTOS PRELIMINARES Y PROPUESTAS HISTÓRICAS
+│   ├── README.md                      # Explicación histórica de archivos preservados
+│   ├── requirements_LegacyAlejandro.txt # Dependencias del prototipo inicial (Alejandro)
+│   ├── requirements_LegacyPedro.txt   # Dependencias de la propuesta previa (Pedro)
+│   ├── pedro_squema1.png              # Primer boceto de arquitectura propuesto por Pedro
+│   ├── esquema_integracion_A_P.md     # Mapeo comparativo preliminar Alejandro vs. Pedro
+│   ├── esquema_integracion_A_P.png    # Diagrama gráfico de la propuesta preliminar
+│   └── esquema_integracion_A_P.svg    # Diagrama vectorial preliminar
 │
 ├── backend/                           # MICROSERVICIO BACKEND (FastAPI + LangGraph + Agentes)
 │   ├── requirements.txt               # Dependencias limpias fijadas para Python 3.12.7
