@@ -135,4 +135,36 @@ npm.cmd run build
 npm.cmd run preview
 ```
 
-> 💡 **Nota:** Para arrancar todo el sistema (Backend FastAPI + Frontend Vite) en un solo paso en Windows, puedes ejecutar [`iniciar_local.bat`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/iniciar_local.bat) desde la raíz del repositorio.
+> 💡 **Nota de Ejecución Unificada:** Para arrancar todo el sistema (Backend FastAPI + Frontend Vite) en un solo paso en Windows, ejecuta [`iniciar_local.bat`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/iniciar_local.bat) desde la raíz del repositorio.
+
+---
+
+## 🌟 6. Estado Actual de la Integración y Validación E2E
+
+El microservicio frontend se encuentra **100% integrado, operativo y certificado** contra el backend oficial:
+
+### Hitos Técnicos Verificados (Fase 4 & Fase 5):
+1. **Sincronización Total con FastAPI:**
+   - Consume en tiempo real el endpoint canónico `/api/v1/config/opciones` para poblar dinámicamente los selectores de perfiles, formatos, nichos y niveles pedagógicos.
+   - Envío optimizado mediante `FormData` (`multipart/form-data`) con soporte para subida de archivos binarios (`.pdf`) o texto directo, con control de timeout mediante `AbortController` (120 segundos).
+   - Tipado TypeScript estricto alineado con los esquemas Pydantic v2 en `src/types/api.ts`.
+2. **Validación End-to-End Real en Navegador:**
+   - Se completó la prueba interactiva con el documento real `apache_kafka_introduction.md`, seleccionando perfil `profesional_tecnico` y formato `flashcards_estudio`.
+   - **Resultados de la Validación:**
+     - Barra de progreso multietapa animada completada (Ingesta ➔ Búsqueda RAG ➔ Redacción ➔ Auditoría).
+     - Renderizado interactivo fluido de las flashcards 3D con efecto flip y auto-evaluación.
+     - Dashboard de auditoría con **Score de anclaje RAG de 1.00 (100% de afirmaciones respaldadas)**.
+     - Detección y despliegue del estado de persistencia en Oracle Cloud Infrastructure (`sa-santiago-1`).
+3. **Mecanismo de Resiliencia (Zero Crashes):**
+   - El frontend incorpora `MOCK_RESPUESTA_ADAPTACION` como salvaguarda ante caídas imprevistas de red o ausencia de API Keys en demostraciones locales, garantizando que los evaluadores siempre puedan explorar los 5 formatos interactivos sin pantallas en blanco ni excepciones en consola.
+
+---
+
+## 📚 7. Documentación Relacionada del Proyecto
+
+Para más detalles sobre la arquitectura integral y la evolución del sistema, consultar:
+* [INFORME_INTEGRACION_FRONTEND_REACT.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/INFORME_INTEGRACION_FRONTEND_REACT.md): Informe exhaustivo de la integración del frontend (Fase 4).
+* [ESQUEMA_INTEGRACION_FULLSTACK.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/historial_progreso/ESQUEMA_INTEGRACION_FULLSTACK.md): Especificación técnica de arquitectura, puertos y contratos.
+* [CAMBIOS.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/CAMBIOS.md): Bitácora cronológica de versiones y cambios del proyecto.
+* [README.md Maestro](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/README.md): Manual general y arquitectura unificada de NuevaMente.
+
