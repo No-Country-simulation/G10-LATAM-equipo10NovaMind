@@ -231,7 +231,7 @@ El ciclo completo de transformación y auditoría pedagógica sigue una máquina
 sequenceDiagram
     autonumber
     actor Usuario
-    participant UI as Frontend (Streamlit)
+    participant UI as Frontend (React 19 + Vite)
     participant API as Backend API (FastAPI)
     participant Ingestion as Ingestion Engine
     participant Orquestador as LangGraph Engine
@@ -295,7 +295,7 @@ sequenceDiagram
     Storage-->>Orquestador: Metadatos de persistencia (status_upload)
     Orquestador-->>API: RespuestaAdaptacion completa
     API-->>UI: JSON HTTP 200 (producto + metadatos + evaluacion_calidad)
-    UI->>Usuario: Dibuja el formato interactivo (Flashcards, Quiz, Tutorial, TLDR o Guion)
+    UI->>Usuario: Dibuja el formato interactivo (Flashcards 3D, Quiz, Tutorial, TLDR o Guion) y métricas RAG
 ```
 
 ---
@@ -347,15 +347,15 @@ graph TD
 
 ## 🎯 5. Los 5 Formatos Pedagógicos Soportados
 
-El sistema adapta cualquier documento técnico a **5 formatos pedagógicos especializados**, validados por esquemas Pydantic estrictos y renderizados interactivamente en la interfaz:
+El sistema adapta cualquier documento técnico a **5 formatos pedagógicos especializados**, validados por esquemas Pydantic estrictos y renderizados interactivamente en la interfaz web de React:
 
-| Formato Pedagógico | Modelo Pydantic | Características Principales | Renderizado en Streamlit |
+| Formato Pedagógico | Modelo Pydantic | Características Principales | Renderizado en Frontend (React 19 + Vite) |
 | :--- | :--- | :--- | :--- |
-| **🗂️ Flashcards de Estudio** | `ContenidoFlashcards` | Pares de pregunta/respuesta atómicas, concepto clave y nivel de dificultad. | Tarjetas interactivas con efecto reverso y revelado con un clic. |
-| **📝 Quiz Interactivo** | `ContenidoQuiz` | Preguntas de opción múltiple con 4 alternativas y justificación técnica razonada. | Botones de radio con verificación instantánea de acierto y explicación. |
-| **🛠️ Guía Paso a Paso (Tutorial)** | `ContenidoGuiaTutorial` | Procedimiento secuencial ordenado con prerrequisitos, pasos de acción y advertencias. | Pasos numerados con tarjetas de advertencia (*tips / caveats*). |
-| **📋 Resumen Ejecutivo (TL;DR)** | `ContenidoResumenTLDR` | Síntesis concisa de alto impacto con análisis de *¿por qué le importa al destinatario?*. | Métricas clave en tarjetas expansibles y llamado a la acción. |
-| **🎬 Guion de Clase / Video** | `ContenidoGuionVideo` | Guion estructurado por minutos con gancho inicial, contenido central y apoyos visuales. | Bloques temporizados con indicador de tiempo estimado y notas de pantalla. |
+| **🗂️ Flashcards de Estudio** | `ContenidoFlashcards` | Pares de pregunta/respuesta atómicas, concepto clave y nivel de dificultad. | Tarjetas interactivas con efecto 3D flip card, contador de tarjetas y botones de revelación. |
+| **📝 Quiz Interactivo** | `ContenidoQuiz` | Preguntas de opción múltiple con 4 alternativas y justificación técnica razonada. | Cuestionario interactivo con feedback instantáneo de acierto/error y justificación explicativa. |
+| **🛠️ Guía Paso a Paso (Tutorial)** | `ContenidoGuiaTutorial` | Procedimiento secuencial ordenado con prerrequisitos, pasos de acción y advertencias. | Stepper interactivo con bloques de comandos de terminal y tarjetas de advertencia/tips. |
+| **📋 Resumen Ejecutivo (TL;DR)** | `ContenidoResumenTLDR` | Síntesis concisa de alto impacto con análisis de *¿por qué le importa al destinatario?*. | Tarjetas de síntesis, métricas clave expandibles y sección de relevancia práctica. |
+| **🎬 Guion de Clase / Video** | `ContenidoGuionVideo` | Guion estructurado por minutos con gancho inicial, contenido central y apoyos visuales. | Timeline secuencial con minutaje por bloque, notas de producción y apoyos visuales. |
 
 ---
 
@@ -363,78 +363,120 @@ El sistema adapta cualquier documento técnico a **5 formatos pedagógicos espec
 
 ### Requisitos Previos
 - **Python 3.12.7** (versión oficial estandarizada del proyecto).
-- **API Key de Cohere**: Regístrate y obtén tu clave en [cohere.com](https://cohere.com).
+- **Node.js 18+ y npm** (para la interfaz web React 19).
+- **API Key de Cohere**: Regístrate y obtén tu clave gratuita en [cohere.com](https://cohere.com).
+- *(Opcional)* Credenciales de Oracle Cloud si se desea persistencia en OCI Object Storage.
 
-### Paso 1: Configurar Variables de Entorno
-Copia la plantilla `.env.example` tanto en la raíz como en `backend/`:
+### Configurar Variables de Entorno
+Copia la plantilla `.env.example` en la raíz como `.env`:
 ```bash
-cp .env.example backend/.env
+cp .env.example .env
 ```
-Edita `backend/.env` y configura tu API Key:
+Edita `.env` y configura tu API Key de Cohere:
 ```env
 COHERE_API_KEY=tu_api_key_de_cohere
 COHERE_MODEL=command-r-plus-08-2024
 EMBEDDING_MODEL=embed-multilingual-v3.0
 ```
 
-### Paso 2: Crear el Entorno Virtual e Instalar Dependencias
+---
+
+### Opción A: Inicio Rápido Automático (Recomendado en Windows)
+
+Ejecuta el script unificado que inicializa ambos microservicios en ventanas independientes:
+```powershell
+.\iniciar_local.bat
+```
+* **Backend FastAPI:** Inicia en segundo plano en [http://127.0.0.1:8000](http://127.0.0.1:8000).
+* **Frontend React (Vite):** Inicia en [http://localhost:5173](http://localhost:5173).
+* Abre automáticamente la aplicación en tu navegador web predeterminado.
+
+---
+
+### Opción B: Arranque Manual por Terminales
+
+#### Terminal 1 — Backend FastAPI:
 ```bash
-# Crear el entorno virtual en la raíz
+# 1. Crear y activar entorno virtual
 python -m venv .venv
-
-# Activar en Windows
-.venv\Scripts\activate
-
-# Activar en Linux/macOS
+# Windows:
+.\.venv\Scripts\activate
+# Linux/macOS:
 source .venv/bin/activate
 
-# Instalar dependencias completas
-pip install -r backend/requirements.txt
-pip install -r frontend/requirements.txt
-```
+# 2. Instalar dependencias
+pip install -r requirements.txt
 
-### Paso 3: Ejecución de Servicios
-
-#### Terminal 1 — Iniciar el Backend (FastAPI):
-```bash
+# 3. Iniciar servidor FastAPI
 cd backend
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-* Swagger interactivo: [http://localhost:8000/docs](http://localhost:8000/docs)
-* Healthcheck: [http://localhost:8000/health](http://localhost:8000/health)
+* **API Swagger interactivo:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+* **Healthcheck:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
-#### Terminal 2 — Iniciar el Frontend (Streamlit):
+#### Terminal 2 — Frontend React (Vite):
 ```bash
 cd frontend
-streamlit run app/streamlit_app.py --server.port 8501
+npm install
+npm run dev
 ```
-* Acceso web: [http://localhost:8501](http://localhost:8501)
+* **Interfaz Web SPA:** [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## 🧪 7. Suite de Pruebas Automatizadas
+## 🌟 7. Estado Actual de la Integración Full Stack
 
-El backend cuenta con una suite rigurosa de **65 pruebas automatizadas** que validan la API REST, la lógica del orquestador LangGraph, la normalización de alias, el batching de embeddings, la persistencia resiliente y la robustez ante fallos.
+El proyecto ha completado de manera exitosa y verificada las **5 fases de integración técnica**, consolidando un sistema 100% operativo y desacoplado:
 
-## 💾 Capa de Almacenamiento: Arquitectura Híbrida Resiliente (OCI Cloud + Fallback Local)
-
-El sistema implementa una arquitectura de almacenamiento desacoplada y de alta disponibilidad:
-
-1. **Almacenamiento Cloud OCI (`backend/app/storage/oci_client.py`)**:
-   - Integrado con Oracle Cloud Infrastructure (OCI Object Storage Always Free).
-   - Bucket: `nuevamente-contenidos-educativos` (región `sa-santiago-1`).
-   - Persiste documentos originales en `documentos-originales/{doc_id}.txt` y paquetes educativos en `contenidos-generados/{doc_id}-{perfil}-{formato}.json`.
-2. **Fallback Automático Local (`backend/app/storage/local_storage.py`)**:
-   - Respaldo automático e inmediato en `backend/data/outputs/` si OCI no está configurado, si falla la red o si las credenciales no están presentes.
-   - Garantiza cero interrupciones en la entrega pedagógica al estudiante.
+| Fase | Hito Técnico | Estado | Verificación |
+| :--- | :--- | :---: | :--- |
+| **Fase 1** | **Armonización de Entorno y Contratos** | 🟢 Completada | Dependencias fijadas para Python 3.12.7, esquemas Pydantic v2 unificados y normalización estricta de alias y formatos. |
+| **Fase 2** | **Motor Multi-Agente LangGraph** | 🟢 Completada | Grafo cíclico de 3 agentes (RAG ➔ Productor ➔ Crítico) con cálculo de `anclaje_fuente_score` y bucle reflexivo de reintentos. |
+| **Fase 3** | **Persistencia Híbrida y Cloud OCI** | 🟢 Completada | Conexión con OCI Object Storage Always Free (bucket: `nuevamente-contenidos-educativos`, región `sa-santiago-1`) y fallback local transparente a `data/outputs/`. |
+| **Fase 4** | **Integración Fullstack React 19** | 🟢 Completada | Cliente web React 19 + Vite + TypeScript conectado a FastAPI con Axios, soporte multipart, CORS adaptativo y visualizadores dinámicos. |
+| **Fase 5** | **Validación E2E y Pruebas del Sistema** | 🟢 Completada | Suite automatizada de **65/65 pruebas pasando (100%)** y prueba End-to-End en navegador completada con anclaje RAG de **1.00 (100% de respaldo)**. |
 
 ---
 
-El backend incluye una suite exhaustiva de pruebas unitarias, de regresión y de endpoints HTTP:
+## ⚙️ 8. Consideraciones Técnicas Clave para la Integración Full Stack
+
+Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben tenerse en cuenta las siguientes consideraciones:
+
+### 1. Política CORS y Mapeo de Puertos
+* El backend FastAPI corre por defecto en el puerto `8000` (`http://127.0.0.1:8000`), mientras que el frontend Vite se ejecuta en el puerto `5173` (`http://localhost:5173`).
+* El backend implementa `CORSMiddleware` en [backend/app/main.py](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/backend/app/main.py) autorizando explícitamente los orígenes `http://localhost:5173`, `http://127.0.0.1:5173` y `http://localhost:8501`. Si se despliega en un puerto o dominio alternativo, debe actualizarse la lista `allow_origins`.
+
+### 2. Contratos Dinámicos de Configuración
+* La interfaz de usuario no hardcodea los perfiles ni los formatos pedagógicos. En su lugar, consume al inicio el endpoint `GET /api/v1/config/opciones`.
+* Esto permite agregar nuevos perfiles o formatos en el backend (vía Pydantic y prompts) sin necesidad de modificar el código del frontend.
+
+### 3. Ingesta Híbrida (`multipart/form-data`)
+* El endpoint `POST /api/v1/adaptar` recibe peticiones en formato multipart.
+* Soporta subida de archivos binarios (`.pdf`, `.md`, `.txt`) mediante el campo `archivo`, o texto directo ingresado por el usuario mediante `texto_manual`.
+* El motor `ingestion.py` limpia automáticamente los encabezados, pies de página y números de página de los PDFs antes de enviarlos a chunking.
+
+### 4. Persistencia Híbrida y Desacoplamiento de Almacenamiento
+* El payload completo del contenido pedagógico adaptado se devuelve de inmediato en el cuerpo de la respuesta HTTP 200, garantizando renderizado instantáneo en la UI sin esperas adicionales.
+* Simultáneamente, el `almacenador_resiliente` persiste el resultado en OCI Object Storage (o en `data/outputs/` como fallback local si las credenciales OCI no están presentes). El frontend recibe los metadatos de persistencia (`objeto_id` y `status_upload`) permitiendo su consulta posterior vía `GET /api/v1/paquetes/{objeto_id}`.
+
+### 5. Manejo Seguro de Secretos y Variables de Entorno
+* El archivo `.env` está excluido del control de versiones mediante `.gitignore`.
+* Toda referencia a credenciales, namespaces de OCI, tenancies y API Keys debe manejarse exclusivamente a través de variables de entorno, usando `.env.example` como referencia pública sanitizada.
+
+### 6. Organización Limpia del Repositorio
+* La raíz del repositorio se mantiene minimalista con los archivos esenciales de configuración y ejecución.
+* Toda la documentación de avance, bitácoras de incidentes y especificaciones técnicas se encuentra en [historial_progreso/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso).
+* Todos los bocetos preliminares y requisitos de prototipado se conservan para trazabilidad en [legado/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/legado).
+
+---
+
+## 🧪 9. Suite de Pruebas Automatizadas
+
+El backend cuenta con una suite rigurosa de **65 pruebas automatizadas** que validan la API REST, la lógica del orquestador LangGraph, la normalización de alias, el batching de embeddings, la persistencia resiliente y la robustez ante fallos:
 
 ```bash
-cd backend
-pytest tests/ -v
+# Ejecutar desde la raíz con el entorno virtual activo:
+pytest backend/tests -v
 ```
 
 ### Distribución de la Cobertura:
@@ -451,8 +493,9 @@ pytest tests/ -v
 
 ---
 
-## 👥 8. Créditos y Autores del Proyecto
+## 👥 10. Créditos y Autores del Proyecto
 
 * **Alejandro**: Arquitectura de microservicios, contenedorización Docker inicial, servidor REST en FastAPI, módulo de ingesta multi-formato con pypdf y cliente oficial de OCI Object Storage SDK.
 * **Pedro**: Motor multi-agente en LangGraph, prompting pedagógico, RAG vectorial con Cohere y ChromaDB, validación de contratos Pydantic v2 y suite de pruebas unitarias.
-* **Equipo NovaMind**: Sinergia técnica de integración, calibración de umbrales de anclaje, cliente HTTP desacoplado y renderizadores visuales interactivos en Streamlit.
+* **Equipo NovaMind**: Sinergia técnica de integración, calibración de umbrales de anclaje, cliente HTTP desacoplado en React 19 + Vite, diseño de componentes interactivos y visualizadores dinámicos.
+
