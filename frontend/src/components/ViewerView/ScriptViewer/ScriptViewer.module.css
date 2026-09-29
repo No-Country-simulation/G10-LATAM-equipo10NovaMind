@@ -1,0 +1,91 @@
+.script {
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.surfaceTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #737f94;
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.sourceAnchor {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  color: #41d6b3;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+.scriptRow {
+  display: grid;
+  grid-template-columns: 130px 1fr 1fr;
+  gap: 16px;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.scriptRow:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 650px) {
+  .scriptRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.scriptTime {
+  color: #d5d9e5;
+  font-size: 10px;
+}
+
+.scriptTime span {
+  display: flex;
+  align-items: center;
+  color: #d5d9e5;
+  font-size: 10px;
+}
+
+.scriptTime b {
+  display: block;
+  margin-top: 8px;
+  color: #a6a0ff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.pulseDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #a8c632;
+  box-shadow: 0 0 6px #a8c632;
+  flex-shrink: 0;
+}
+
+.scriptCol span {
+  display: block;
+  color: #6f7b91;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.scriptCol p {
+  margin: 7px 0 0;
+  color: #a9b2c2;
+  font-size: 10px;
+  line-height: 1.45;
+}

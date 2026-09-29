@@ -1,0 +1,50 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #8e99ad;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.selectWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 10px 30px 10px 11px;
+  color: #e1e4ef;
+  font-size: 11px;
+  font-family: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  outline: none;
+  background: #151a28;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.select:hover {
+  border-color: rgba(123, 111, 255, 0.4);
+}
+
+.select:focus {
+  border-color: #7061f5;
+}
+
+.select option {
+  background: #151a28;
+  color: #e1e4ef;
+}
+
+.icon {
+  position: absolute;
+  right: 10px;
+  color: #737f95;
+  pointer-events: none;
+}

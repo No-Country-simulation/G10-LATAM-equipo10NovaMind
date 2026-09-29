@@ -22,9 +22,9 @@ start "NuevaMente - Backend FastAPI (Puerto 8000)" cmd /k "title Backend FastAPI
 echo Esperando 3 segundos a que inicialice el Backend...
 timeout /t 3 /nobreak >nul
 
-REM 3. Iniciar Frontend Streamlit en ventana propia
-echo [2/2] Levantando Frontend (Streamlit) en http://127.0.0.1:8501 ...
-start "NuevaMente - Frontend Streamlit (Puerto 8501)" cmd /k "title Frontend Streamlit && cd /d "%~dp0frontend" && ..\.venv\Scripts\python.exe -m streamlit run app/streamlit_app.py --server.port 8501 --server.headless true"
+REM 3. Iniciar Frontend React + Vite en ventana propia
+echo [2/2] Levantando Frontend (React + Vite) en http://localhost:5173 ...
+start "NuevaMente - Frontend React Vite" cmd /k "title Frontend React Vite && cd /d "%~dp0frontend" && npm.cmd run dev"
 
 echo.
 echo =======================================================
@@ -32,11 +32,11 @@ echo   Servicios Iniciados!
 echo =======================================================
 echo  - Backend API: http://127.0.0.1:8000
 echo  - Documentacion Swagger: http://127.0.0.1:8000/docs
-echo  - Interfaz Web Streamlit: http://localhost:8501
+echo  - Interfaz Web React (Vite): http://localhost:5173
 echo =======================================================
 echo.
 echo Abriendo la aplicacion en tu navegador...
-start http://localhost:8501
+start http://localhost:5173
 echo.
 echo Puedes cerrar esta ventana. Los servicios quedan corriendo en sus ventanas individuales.
 pause

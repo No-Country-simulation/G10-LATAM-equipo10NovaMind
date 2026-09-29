@@ -1,0 +1,146 @@
+.quizWrap {
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.surfaceTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #737f94;
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  font-weight: 700;
+}
+
+.levelChip {
+  color: #d1e85a;
+  border: 1px solid #aac137;
+  background: rgba(176, 194, 38, 0.15);
+  padding: 4px 7px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.questionTitle {
+  margin: 22px 0 18px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+.quizOptions {
+  display: grid;
+  gap: 8px;
+}
+
+.quizOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 12px 14px;
+  color: #b9c1cf;
+  text-align: left;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quizOption:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.quizOption.correct {
+  color: #54e1bb;
+  border-color: #16ba89;
+  background: rgba(16, 185, 129, 0.16);
+}
+
+.quizOption.incorrect {
+  color: #ff9696;
+  border-color: #ef5555;
+  background: rgba(239, 68, 68, 0.13);
+}
+
+.feedback {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 11px;
+  font-size: 10px;
+  line-height: 1.5;
+  border-radius: 7px;
+}
+
+.feedback.success {
+  color: #83e9cb;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.feedback.error {
+  color: #ffb0b0;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.quizFoot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 15px;
+  color: #ffffff;
+  border: 1px solid rgba(157, 146, 255, 0.38);
+  border-radius: 8px;
+  background: linear-gradient(110deg, #6354de, #8359ee 55%, #14b6d2);
+  box-shadow: 0 8px 22px rgba(95, 79, 226, 0.24);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(98, 82, 236, 0.34);
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  color: #9ca8bc;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  color: #e8eafb;
+  background: rgba(255, 255, 255, 0.08);
+}

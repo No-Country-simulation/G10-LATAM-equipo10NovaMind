@@ -1,0 +1,85 @@
+.stepperContainer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 780px;
+  margin: clamp(20px, 2.5vw, 30px) auto clamp(25px, 3vw, 39px);
+  padding: 0 clamp(8px, 1.5vw, 16px);
+  overflow-x: auto;
+}
+
+.stepWrapper {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.stepButton {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 0.8vw, 9px);
+  padding: 0;
+  color: var(--text-dim);
+  font-size: var(--font-xs);
+  background: none;
+  border: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.stepNumber {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: #8e99ae;
+  background: #161b29;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+/* Paso Activo */
+.stepButton.active {
+  color: #f7f8ff;
+  font-weight: 600;
+}
+
+.stepButton.active .stepNumber {
+  color: #ffffff;
+  border-color: var(--border-active-step);
+  background: #6758ec;
+  box-shadow: var(--shadow-step-glow);
+}
+
+/* Paso Completado */
+.stepButton.complete {
+  color: var(--text-muted);
+}
+
+.stepButton.complete .stepNumber {
+  color: #08110e;
+  border-color: #16c794;
+  background: #12bc88;
+}
+
+/* Línea conectora fluida entre pasos */
+.stepLine {
+  width: clamp(28px, 6vw, 100px);
+  height: 1px;
+  margin: 0 clamp(6px, 1vw, 14px);
+  background: rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+.stepLine.filled {
+  background: var(--gradient-step-line);
+}

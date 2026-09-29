@@ -1,6 +1,9 @@
 # Entornos virtuales
 venv/
 .venv/
+node_modules/
+dist/
+dist-ssr/
 
 # Variables de entorno / secretos
 .env

@@ -1,0 +1,87 @@
+:root {
+  color-scheme: dark;
+
+  /* --- Fondos y Superficies Exactas de v0 --- */
+  --bg-primary: #080b14;
+  --bg-topbar: rgba(21, 25, 38, 0.73);
+  --bg-card-glass: linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018));
+  --bg-dropzone: rgba(85, 73, 202, 0.08);
+  --bg-input: #151a28;
+
+  /* --- Textos --- */
+  --text-main: #f7f8ff;
+  --text-sub: #d8dced;
+  --text-muted: #8290a7;
+  --text-dim: #657087;
+
+  /* --- Bordes --- */
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-dropzone: rgba(123, 111, 255, 0.62);
+  --border-active-step: #7870ff;
+
+  /* --- Acentos y Dots --- */
+  --purple-main: #7061f5;
+  --purple-light: #7e74fa;
+  --green-oci: #10b981;
+  --green-badge: #36d5a5;
+  --cyan-status: #18c5e5;
+  --orange-accent: #f4aa65;
+
+  /* --- Gradientes Específicos --- */
+  --gradient-logo: linear-gradient(135deg, #7764ff, #4233c6);
+  --gradient-step-line: linear-gradient(90deg, #12bc88, #6e60fa);
+  --gradient-primary-btn: linear-gradient(110deg, #6354de, #8359ee 55%, #14b6d2);
+  --gradient-track: linear-gradient(90deg, #6959ef, #13bccc);
+
+  /* --- Tipografía Fluida con clamp() (360px -> 1920px) --- */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --font-xs: clamp(0.65rem, 0.6rem + 0.25vw, 0.75rem);    /* ~10px a 12px */
+  --font-sm: clamp(0.75rem, 0.7rem + 0.3vw, 0.85rem);     /* ~11px a 13px */
+  --font-base: clamp(0.85rem, 0.8rem + 0.35vw, 0.95rem);  /* ~13px a 15px */
+  --font-heading: clamp(1.25rem, 1rem + 1.2vw, 1.65rem);  /* ~20px a 26px */
+
+  /* --- Espaciados y Radios Fluidos --- */
+  --pad-page-inline: clamp(12px, 3.6vw, 50px);
+  --radius-capsule: 15px;
+  --radius-pill: 18px;
+  --radius-sm: 8px;
+
+  /* --- Sombras --- */
+  --shadow-card: 0 22px 60px rgba(0, 0, 0, 0.16);
+  --shadow-primary-btn: 0 8px 22px rgba(95, 79, 226, 0.24);
+  --shadow-step-glow: 0 0 20px rgba(109, 94, 255, 0.5);
+
+  /* --- Tokens Extraídos del Visor Educativo --- */
+  --color-time-dot: #a9be35;
+  --color-pulse-dot: #a8c632;
+  --color-review-warn: #e8bd45;
+  --bg-review-warn: rgba(176, 126, 29, 0.12);
+  --border-review-warn: rgba(195, 150, 35, 0.35);
+
+  --bg-card-face: linear-gradient(145deg, #222730, #181e28);
+  --bg-sixty-box: #092743;
+  --border-sixty-box: rgba(67, 148, 215, 0.27);
+  --text-sixty-title: #8ed3ff;
+
+  --bg-tab-active: #34394a;
+
+  /* --- Tokens Extraídos de Métricas y OCI Cloud --- */
+  --green-oci-gauge: #13c19b;
+  --bg-gauge-track: #253448;
+  --bg-gauge-center: #131a27;
+  --text-gauge-sub: #5a7180;
+
+  --bg-mini-track: #293443;
+  --color-mini-fill: #14bd98;
+
+  --bg-json-terminal: #0b111b;
+  --text-json-code: #a5dba8;
+  --color-json-active-btn: #9eb3ff;
+  --bg-json-active-btn: rgba(100, 86, 218, 0.11);
+  --border-json-active-btn: rgba(108, 97, 238, 0.28);
+
+  --color-footer-dot: #6c61e9;
+  --text-footer: #4c586d;
+}

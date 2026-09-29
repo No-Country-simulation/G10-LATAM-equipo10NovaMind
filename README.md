@@ -110,8 +110,8 @@ graph LR
 
     %% FRONTEND
     ROOT --> F_DIR["📁 frontend/"]:::dir
-    F_DIR --> F_APP["📁 app/ (streamlit_app.py, api_client.py)"]:::dir
-    F_DIR --> F_REQ["📄 requirements.txt"]:::file
+    F_DIR --> F_SRC["📁 src/ (App.tsx, components, services, styles, types)"]:::dir
+    F_DIR --> F_PKG["📄 package.json & vite.config.ts"]:::file
 
     %% DEPLOY & SCRIPTS
     ROOT --> D_DIR["📁 deploy/ (Scripts OCI, systemd y guías de nube)"]:::dir
@@ -180,11 +180,22 @@ G10-LATAM-equipo10NovaMind/
 │           ├── local_storage.py       # Almacenamiento local estructurado (data/outputs/)
 │           └── oci_client.py          # Cliente oficial con SDK de Oracle Cloud Object Storage
 │
-├── frontend/                          # MICROSERVICIO FRONTEND (Streamlit)
-│   ├── requirements.txt               # Dependencias de interfaz visual (Streamlit, Requests)
-│   └── app/
-│       ├── streamlit_app.py           # UI interactiva con renderizadores para los 5 formatos
-│       └── api_client.py              # Cliente HTTP desacoplado con timeouts y reintentos
+├── frontend/                          # MICROSERVICIO FRONTEND (React + Vite + TypeScript)
+│   ├── package.json                   # Dependencias de UI (React 19, GSAP, Lenis, Lucide)
+│   ├── vite.config.ts                 # Configuración del empaquetador Vite
+│   ├── index.html                     # Entrypoint HTML de la aplicación web
+│   └── src/                           # Código fuente TypeScript / TSX
+│       ├── App.tsx                    # Componente raíz con orquestación de vistas y estado
+│       ├── main.tsx                   # Punto de montaje del DOM en React 19
+│       ├── components/                # Componentes modulares de interfaz
+│       │   ├── Header/                # Encabezado con estado y título del documento
+│       │   ├── Stepper/               # Indicador de progreso pedagógico de 3 pasos
+│       │   ├── IngestView/            # Formulario de subida de archivos y selección de perfiles
+│       │   ├── ViewerView/            # Visualizadores interactivos (Flashcards 3D, Quiz, Tutorial)
+│       │   └── MetricsView/           # Dashboard de anclaje RAG, métricas y estado OCI
+│       ├── services/api.ts            # Cliente HTTP para endpoints FastAPI (/adaptar, /opciones)
+│       ├── styles/                    # Design tokens y estilos globales CSS
+│       └── types/api.ts               # Contratos e interfaces TypeScript de la API
 │
 ├── deploy/                            # CONFIGURACIONES Y DESPLIEGUE EN NUBE (OCI)
 │   ├── README_DESPLIEGUE_OCI.md       # Guía de arquitectura y provisión en Oracle Cloud
