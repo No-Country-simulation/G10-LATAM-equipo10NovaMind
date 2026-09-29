@@ -10,16 +10,20 @@
 
 **NuevaMente** es una plataforma diseñada para democratizar y personalizar el aprendizaje técnico. Transforma documentos complejos (manuales de ingeniería, guías de arquitectura, documentación de APIs) en **5 formatos pedagógicos adaptados** al perfil del estudiante, nivel de profundidad y sector laboral.
 
-### La Fusión Arquitectónica (Alejandro + Pedro)
-Este sistema consolida la integración técnica de dos líneas de trabajo del equipo:
-1. **Infraestructura y Despliegue (Alejandro)**: Arquitectura de microservicios reales desacoplados, servidor web REST en FastAPI, ingesta multi-formato (PDF con extracción limpia, Markdown, TXT), cliente SDK de OCI Object Storage y despliegue modular de bajo consumo.
-2. **Motor de IA y Agentes (Pedro)**: Grafo cíclico multi-agente en LangGraph con feedback correctivo, prompting adaptativo con few-shots específicos por formato, RAG con Cohere (`command-r-plus` y `embed-multilingual-v3.0`), validación estricta de esquemas con Pydantic v2 y suite determinista de 65 pruebas automatizadas.
+### La Fusión Multidisciplinaria del Equipo NovaMind (Integración Multirama)
+Este sistema consolida la integración técnica de las diferentes ramas y roles de trabajo del equipo:
+1. **Gobernanza y Planificación (`origin/project-manager`)**: Definición del alcance pedagógico, matriz de requerimientos del Hackathon ONE G10, actas y criterios de aceptación.
+2. **Microservicio Frontend (`origin/frontEnd`)**: Interfaz web reactiva (React 19 + TypeScript + Vite) con visualizadores pedagógicos dinámicos (Flashcards 3D, Quiz, Tutorial, TL;DR, Guión) y dashboard de auditoría RAG.
+3. **Infraestructura y Despliegue (`origin/backend` / `Propuesta-Microservicios` - Alejandro)**: Arquitectura de microservicios reales desacoplados, servidor web REST en FastAPI, ingesta multi-formato (PDF con extracción limpia, Markdown, TXT), cliente SDK de OCI Object Storage Always Free y despliegue modular.
+4. **Motor de IA y Agentes (`feature/agents-langgraph` - Pedro)**: Grafo cíclico multi-agente en LangGraph con feedback reflexivo, prompting adaptativo con few-shots específicos por formato, RAG con Cohere (`command-r-plus` y `embed-multilingual-v3.0`), validación estricta de esquemas con Pydantic v2 y suite determinista de 65 pruebas automatizadas.
+5. **Hub de Integración Continua (`origin/integracion` - HEAD actual)**: Rama central donde convergen todos los módulos, se resuelven contratos HTTP/JSON, se unifican scripts de despliegue local (`iniciar_local.bat`), se organiza el repositorio (`historial_progreso/` y `legado/`) y se ejecutan las pruebas E2E antes del merge final a `main`.
+6. **Rama de Producción y Release (`origin/main`)**: Rama troncal protegida para entrega final y demo estable (`v1.0-demo`).
 
 ---
 
-## 🏛️ 1. Diagrama de Arquitectura General
+## 🏛️ 1. Diagrama de Arquitectura General y Mapeo de Ramas
 
-El sistema opera bajo un modelo cliente-servidor desacoplado mediante contratos HTTP REST:
+El sistema opera bajo un modelo cliente-servidor desacoplado mediante contratos HTTP REST, donde cada capa arquitectónica proviene de su respectiva rama especializada:
 
 ```mermaid
 graph TD
@@ -31,21 +35,21 @@ graph TD
     classDef external fill:#1f2937,stroke:#9ca3af,stroke-width:1.5px,color:#f9fafb;
 
     %% CAPA CLIENTE / FRONTEND
-    subgraph CAPA_FRONTEND ["🖥️ CAPA DE PRESENTACIÓN (React 19 + Vite)"]
+    subgraph CAPA_FRONTEND ["🖥️ CAPA DE PRESENTACIÓN (React 19 + Vite) · Rama: frontEnd"]
         UI["<b>Interfaz Web SPA (React + TypeScript)</b><br/>• Selector dinámico de opciones<br/>• Ingesta drag & drop (PDF, MD, TXT)<br/>• Renderizadores dinámicos de los 5 formatos<br/>• Dashboard de métricas y OCI"]:::client
         HTTP_CLIENT["<b>Cliente API (services/api.ts)</b><br/>• Fetch multipart/form-data desacoplado<br/>• Conexión viva a FastAPI y fallback resiliente"]:::client
         UI --> HTTP_CLIENT
     end
 
     %% CAPA SERVICIO / BACKEND
-    subgraph CAPA_BACKEND ["⚡ CAPA DE SERVICIO Y API REST (FastAPI)"]
+    subgraph CAPA_BACKEND ["⚡ CAPA DE SERVICIO Y API REST (FastAPI) · Rama: backend / Propuesta-Microservicios"]
         API_ROUTER["<b>FastAPI Router (main.py)</b><br/>• GET /health<br/>• GET /api/v1/config/opciones<br/>• POST /api/v1/adaptar (multipart)<br/>• GET /api/v1/paquetes"]:::api
         INGESTION_ENGINE["<b>Motor de Ingesta (ingestion.py)</b><br/>• Extractor PDF (pypdf con limpieza)<br/>• Extractor Markdown / TXT (UTF-8)"]:::api
         API_ROUTER --> INGESTION_ENGINE
     end
 
     %% CAPA MOTOR DE IA
-    subgraph CAPA_IA ["🧠 MOTOR DE IA MULTI-AGENTE (LangGraph)"]
+    subgraph CAPA_IA ["🧠 MOTOR DE IA MULTI-AGENTE (LangGraph) · Rama: feature/agents-langgraph"]
         ORQUESTADOR["<b>Orquestador de Estados (orquestador.py)</b><br/>• Ciclo de feedback y reintentos (MAX_RETRIES)<br/>• Selección del mejor intento verificado"]:::agent
         
         AG1["<b>Agente 1: Investigador RAG</b><br/>• Chunking narrativo con solapamiento<br/>• Embeddings Cohere en lotes"]:::agent
@@ -58,15 +62,15 @@ graph TD
     end
 
     %% CAPA EXTERNA DE IA
-    subgraph SERVICIOS_EXTERNOS ["🌐 SERVICIOS COHERE AI (Nube)"]
+    subgraph SERVICIOS_EXTERNOS ["🌐 SERVICIOS COHERE AI (Nube Externa)"]
         COHERE_EMBED["<b>Cohere Embed API</b><br/>embed-multilingual-v3.0 (1024 dims)"]:::external
         COHERE_CHAT["<b>Cohere Chat API</b><br/>command-r-plus-08-2024"]:::external
     end
 
     %% CAPA DE ALMACENAMIENTO
-    subgraph CAPA_DATOS ["💾 CAPA DE PERSISTENCIA Y DATOS"]
-        CHROMA_DB[("<b>ChromaDB Nativo</b><br/>• Colección nuevamente_documentos<br/>• Persistencia en disco local")]:::storage
-        STORAGE_ROUTER{"<b>Almacenador Híbrido Resiliente</b><br/>(Prioridad OCI + Fallback Local)"}:::storage
+    subgraph CAPA_DATOS ["💾 CAPA DE PERSISTENCIA Y CLOUD · Ramas: backend & feature/agents-langgraph"]
+        CHROMA_DB[("<b>ChromaDB Nativo</b><br/>• Colección nuevamente_documentos<br/>• Persistencia en disco local<br/><i>(Rama: feature/agents-langgraph)</i>")]:::storage
+        STORAGE_ROUTER{"<b>Almacenador Híbrido Resiliente</b><br/>(Prioridad OCI + Fallback Local)<br/><i>(Rama: backend)</i>"}:::storage
         LOCAL_OUTPUTS[("<b>Almacenamiento Local</b><br/>backend/data/outputs/<br/>(Activo como fallback/offline)")]:::storage
         OCI_BUCKET[("<b>OCI Object Storage (Capa Always Free)</b><br/>Bucket: nuevamente-contenidos-educativos<br/>(sa-santiago-1)")]:::storage
 
@@ -75,7 +79,7 @@ graph TD
     end
 
     %% CONEXIONES INTER-CAPAS
-    HTTP_CLIENT -- "HTTP POST (Multipart)" --> API_ROUTER
+    HTTP_CLIENT -- "HTTP POST (Multipart) [Contrato API]" --> API_ROUTER
     INGESTION_ENGINE -- "Texto limpio normalizado" --> ORQUESTADOR
     AG1 <--> COHERE_EMBED
     AG1 <--> CHROMA_DB
@@ -86,9 +90,59 @@ graph TD
 
 ---
 
-## 📂 2. Diagrama de Estructura de Carpetas
+### 🌿 1.1 Topología de Integración de Ramas y Flujo Git (Gitflow del Proyecto)
 
-La arquitectura del repositorio sigue una estricta separación de responsabilidades para aislar el frontend, la API de servicio y el motor multi-agente:
+El siguiente diagrama detalla cómo convergen las distintas ramas de trabajo del equipo en la rama hub `integracion` antes de su promoción a la rama troncal `main`:
+
+```mermaid
+graph TD
+    %% Estilos de Nodos
+    classDef pm fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#e0e7ff;
+    classDef front fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#eff6ff;
+    classDef back fill:#581c87,stroke:#c084fc,stroke-width:2px,color:#faf5ff;
+    classDef agent fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ecfdf5;
+    classDef hub fill:#0f172a,stroke:#38bdf8,stroke-width:3px,color:#38bdf8;
+    classDef prod fill:#14532d,stroke:#22c55e,stroke-width:3px,color:#f0fdf4;
+
+    subgraph RAMAS_ORIGEN ["🌿 RAMAS DE DESARROLLO ESPECIALIZADAS"]
+        B_PM["<b>origin/project-manager</b><br/>• Gobernanza y alcance del proyecto<br/>• Cronograma, actas y requerimientos<br/>• Alineación con Hackathon ONE G10"]:::pm
+        B_FE["<b>origin/frontEnd</b><br/>• Microservicio frontend/ (React 19 + Vite)<br/>• Visualizadores interactivos (5 formatos)<br/>• Dashboard RAG y métricas OCI"]:::front
+        B_BE["<b>origin/backend</b><br/><i>(y Propuesta-Microservicios)</i><br/>• Servidor REST FastAPI desacoplado<br/>• Ingesta multi-formato (pypdf/MD/TXT)<br/>• Persistencia híbrida OCI Object Storage"]:::back
+        B_AI["<b>origin/feature/agents-langgraph</b><br/>• Orquestador LangGraph multi-agente<br/>• Agente 1 (RAG) + Agente 2 + Agente 3<br/>• Esquemas Pydantic v2 y 65 tests"]:::agent
+    end
+
+    subgraph HUB_INTEGRACION ["🚀 RAMA HUB CENTRAL: integracion (HEAD Actual)"]
+        INT_CORE["<b>origin/integracion</b><br/>═══════════════════════════════════════<br/>🔗 <b>Unificación Full Stack:</b> Backend + Frontend + IA<br/>🧪 <b>Testing Unificado:</b> 65/65 tests deterministas (100%)<br/>🌐 <b>Validación E2E:</b> Score RAG 1.00 verificado en browser<br/>🛠️ <b>Scripts Rápidos:</b> iniciar_local.bat, setup.bat, reestablecer_local.bat<br/>📂 <b>Organización Limpia:</b> historial_progreso/ y legado/"]:::hub
+    end
+
+    subgraph RAMA_RELEASE ["🏆 RAMA DE PRODUCCIÓN Y ENTREGA"]
+        MAIN["<b>origin/main</b><br/>• Release oficial del Hackathon ONE G10<br/>• Código auditado, sanitizado y documentado<br/>• Tag de release estable: v1.0-demo"]:::prod
+    end
+
+    B_PM -->|"Alineación funcional y requerimientos"| INT_CORE
+    B_FE -->|"Microservicio frontend/ (React 19 + Vite)"| INT_CORE
+    B_BE -->|"Microservicio backend/ (FastAPI + OCI + Ingesta)"| INT_CORE
+    B_AI -->|"Motor IA (LangGraph + Pydantic v2 + Tests)"| INT_CORE
+
+    INT_CORE -->|"Pull Request auditado (Squash & Merge)"| MAIN
+```
+
+#### Matriz de Contribución por Rama
+
+| Rama Git | Área / Responsabilidad | Componentes Clave en el Repositorio | Estado en `integracion` |
+| :--- | :--- | :--- | :---: |
+| `origin/project-manager` | Gobernanza y Producto | Documentación de objetivos, actas de acuerdos y alineación Hackathon | 🟢 Consolidado en docs |
+| `origin/frontEnd` | Microservicio Frontend | `frontend/` (React 19, TypeScript, Vite, Tailwind tokens, Lucide, visualizadores) | 🟢 Integrado y conectado |
+| `origin/backend` | Microservicio Backend | `backend/app/main.py`, `ingestion.py`, `storage/oci_client.py`, `deploy/` | 🟢 Desacoplado vía REST |
+| `origin/feature/agents-langgraph` | Inteligencia Artificial | `backend/app/orquestador.py`, `agentes/`, `core/schemas.py`, suite de 65 tests | 🟢 100% tests pasando |
+| `origin/integracion` *(HEAD)* | Hub de Integración Continua | Scripts `.bat`, `historial_progreso/`, `legado/`, CI local, validación E2E | 🚀 Activa y sincronizada |
+| `origin/main` | Producción / Demo Final | Entrega evaluable final consolidada mediante Squash & Merge | 🏁 Destino de release |
+
+---
+
+## 📂 2. Diagrama de Estructura de Carpetas y Mapeo de Origen
+
+La arquitectura del repositorio sigue una estricta separación de responsabilidades para aislar el frontend, la API de servicio, el motor multi-agente, la base de conocimiento y los artefactos históricos:
 
 ```mermaid
 graph LR
@@ -99,8 +153,12 @@ graph LR
 
     ROOT["📁 G10-LATAM-equipo10NovaMind"]:::root
 
+    %% HISTORIAL Y LEGADO
+    ROOT --> HP_DIR["📁 historial_progreso/<br/><i>(Ramas: integracion + project-manager)</i><br/>• Bitácoras, reportes OCI/React y problemas"]:::dir
+    ROOT --> LEG_DIR["📁 legado/<br/><i>(Rama: integracion)</i><br/>• Artefactos preliminares y bocetos históricos"]:::dir
+
     %% BACKEND
-    ROOT --> B_DIR["📁 backend/"]:::dir
+    ROOT --> B_DIR["📁 backend/<br/><i>(Ramas: backend + feature/agents-langgraph)</i>"]:::dir
     B_DIR --> B_APP["📁 app/ (main.py, orquestador.py, agentes, core, storage)"]:::dir
     B_DIR --> B_DOCS["📁 docs/ (9 docs de arquitectura, API y auditoría)"]:::dir
     B_DIR --> B_TESTS["📁 tests/ (Suite de 65 pruebas unitarias e integrales)"]:::dir
@@ -109,7 +167,7 @@ graph LR
     B_DIR --> B_INI["📄 pytest.ini"]:::file
 
     %% FRONTEND
-    ROOT --> F_DIR["📁 frontend/"]:::dir
+    ROOT --> F_DIR["📁 frontend/<br/><i>(Rama: frontEnd)</i>"]:::dir
     F_DIR --> F_SRC["📁 src/ (App.tsx, components, services, styles, types)"]:::dir
     F_DIR --> F_PKG["📄 package.json & vite.config.ts"]:::file
 
@@ -120,7 +178,7 @@ graph LR
     %% RAÍZ
     ROOT --> R_ENV["📄 .env.example (Plantilla pública unificada)"]:::file
     ROOT --> R_BAT["📄 Scripts .bat (iniciar_local, reestablecer_local, setup)"]:::file
-    ROOT --> R_DOC["📄 Documentación Raíz (HISTORIAL, INFORME OCI, PROMPTS)"]:::file
+    ROOT --> R_DOC["📄 Documentación Raíz (CONTRIBUTING, README)"]:::file
     ROOT --> R_GIT["📄 .gitignore (Reglas de exclusión)"]:::file
 ```
 
@@ -223,35 +281,35 @@ G10-LATAM-equipo10NovaMind/
 
 ---
 
-## 🔄 3. Diagrama de Flujo de Datos y Proceso End-to-End
+## 🔄 3. Diagrama de Flujo de Datos y Proceso End-to-End Multirama
 
-El ciclo completo de transformación y auditoría pedagógica sigue una máquina de estados determinista gobernada por LangGraph:
+El ciclo completo de transformación y auditoría pedagógica sigue una máquina de estados determinista gobernada por LangGraph, orquestando componentes provenientes de `frontEnd`, `backend` y `feature/agents-langgraph`:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Usuario
-    participant UI as Frontend (React 19 + Vite)
-    participant API as Backend API (FastAPI)
-    participant Ingestion as Ingestion Engine
-    participant Orquestador as LangGraph Engine
-    participant Ag1 as Agente 1 (Investigador)
-    participant Chroma as ChromaDB Vector Store
-    participant Ag2 as Agente 2 (Productor)
-    participant Ag3 as Agente 3 (Crítico)
-    participant Storage as Almacenamiento (OCI / Local)
+    participant UI as Frontend (React 19 · frontEnd)
+    participant API as Backend REST (FastAPI · backend)
+    participant Ingestion as Ingestion Engine (pypdf · backend)
+    participant Orquestador as LangGraph Engine (feature/agents-langgraph)
+    participant Ag1 as Agente 1 Investigador (feature/agents-langgraph)
+    participant Chroma as ChromaDB Vector Store (feature/agents-langgraph)
+    participant Ag2 as Agente 2 Productor (feature/agents-langgraph)
+    participant Ag3 as Agente 3 Crítico (feature/agents-langgraph)
+    participant Storage as Persistencia Híbrida (OCI / Local · backend)
 
     %% 1. ENTRADA Y VALIDACIÓN
     Usuario->>UI: Sube documento (PDF/MD/TXT) y selecciona parámetros
-    Note over UI: Valida tamaño y tipo de archivo
+    Note over UI: Valida tamaño y tipo de archivo (Rama: frontEnd)
     UI->>API: HTTP POST /api/v1/adaptar (Multipart: archivo + perfil + formato + detalle)
     API->>Ingestion: extraer_texto(archivo_bytes, extension)
-    Ingestion-->>API: Texto limpio sin encabezados repetidos
+    Ingestion-->>API: Texto limpio sin encabezados repetidos (Rama: backend)
     API->>Orquestador: ejecutar(DocumentoIngresado, SolicitudAdaptacion)
 
     %% 2. PIPELINE MULTI-AGENTE
     rect rgb(240, 253, 244)
-        Note over Orquestador, Chroma: FASE 1: Ingesta y Recuperación RAG
+        Note over Orquestador, Chroma: FASE 1: Ingesta y Recuperación RAG (Rama: feature/agents-langgraph)
         Orquestador->>Ag1: ingestar_documento(texto, doc_id)
         Ag1->>Ag1: Chunking narrativo con solapamiento
         Ag1->>Ag1: Generar Embeddings con Cohere (lotes <= 96)
@@ -263,7 +321,7 @@ sequenceDiagram
     end
 
     rect rgb(254, 243, 199)
-        Note over Orquestador, Ag2: FASE 2: Producción Pedagógica
+        Note over Orquestador, Ag2: FASE 2: Producción Pedagógica (Rama: feature/agents-langgraph)
         Orquestador->>Ag2: generar_contenido(chunks, perfil, formato, detalle)
         Note over Ag2: Inyecta Few-Shot específico para el formato pedido
         Ag2->>Ag2: Llamada a Cohere Command R+ (JSON mode)
@@ -271,7 +329,7 @@ sequenceDiagram
     end
 
     rect rgb(254, 242, 242)
-        Note over Orquestador, Ag3: FASE 3: Fact-Checking y Auditoría de Calidad
+        Note over Orquestador, Ag3: FASE 3: Fact-Checking y Auditoría de Calidad (Rama: feature/agents-langgraph)
         Orquestador->>Ag3: evaluar_contenido(borrador, chunks_fuente, perfil, formato)
         Ag3->>Ag3: Audita cada afirmación individualmente contra los chunks
         Ag3->>Ag3: Calcula anclaje_fuente_score = afirmaciones_respaldadas / total
@@ -292,6 +350,7 @@ sequenceDiagram
 
     %% 4. PERSISTENCIA Y RESPUESTA
     Orquestador->>Storage: guardar_original_y_generado(doc_id, producto_json)
+    Note over Storage: Persistencia OCI Object Storage / Local (Rama: backend)
     Storage-->>Orquestador: Metadatos de persistencia (status_upload)
     Orquestador-->>API: RespuestaAdaptacion completa
     API-->>UI: JSON HTTP 200 (producto + metadatos + evaluacion_calidad)
@@ -302,7 +361,7 @@ sequenceDiagram
 
 ## 🗄️ 4. Repositorios de Base de Datos y Capa Backend
 
-La capa Backend se compone de tres motores de almacenamiento y persistencia claramente delimitados:
+La capa Backend se compone de tres motores de almacenamiento y persistencia claramente delimitados según su rama de origen:
 
 ```mermaid
 graph TD
@@ -312,23 +371,23 @@ graph TD
     classDef schema fill:#831843,stroke:#f472b6,stroke-width:2px,color:#ffffff;
     classDef storage fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#ffffff;
 
-    subgraph API_SURFACE ["⚡ SUPERFICIE DE ENTRADA (FastAPI)"]
+    subgraph API_SURFACE ["⚡ SUPERFICIE DE ENTRADA (FastAPI) · Rama: backend"]
         ENDPOINTS["<b>Endpoints REST (backend/app/main.py)</b><br/>• GET /health<br/>• GET /api/v1/config/opciones<br/>• POST /api/v1/adaptar<br/>• GET /api/v1/paquetes<br/>• GET /api/v1/paquetes/{objeto_id}"]:::api
     end
 
-    subgraph VECTOR_ENGINE ["🔍 MOTOR VECTORIAL (ChromaDB)"]
+    subgraph VECTOR_ENGINE ["🔍 MOTOR VECTORIAL (ChromaDB) · Rama: feature/agents-langgraph"]
         CHROMA_PERSIST["<b>Base Vectorial Local Persistente</b><br/>• Directorio: backend/data/chroma/<br/>• Colección: nuevamente_documentos<br/>• Métrica espacial: Cosine Distance (hnsw:space = cosine)"]:::vector
         CHROMA_META["<b>Metadatos por Chunk:</b><br/>• doc_id (hash MD5 estable)<br/>• chunk_index (orden narrativo)<br/>• total_chunks<br/>• preview (primeras 80 letras)"]:::vector
         CHROMA_PERSIST --- CHROMA_META
     end
 
-    subgraph CONTRACTS ["📜 MODELOS DE DATOS Y ESQUEMAS (Pydantic v2)"]
+    subgraph CONTRACTS ["📜 MODELOS DE DATOS Y ESQUEMAS (Pydantic v2) · Ramas: feature/agents-langgraph & backend"]
         SCHEMA_CORE["<b>backend/app/core/schemas.py</b><br/>• SolicitudAdaptacion<br/>• RespuestaAdaptacion<br/>• EvaluacionCalidad & AfirmacionEvaluada"]:::schema
         SCHEMA_FORMATS["<b>Los 5 Esquemas Pedagógicos Estrictos:</b><br/>1. ContenidoFlashcards (frente, dorso, concepto)<br/>2. ContenidoQuiz (pregunta, opciones, respuesta, justificación)<br/>3. ContenidoGuiaTutorial (objetivo, requisitos, pasos, tips)<br/>4. ContenidoResumenTLDR (tldr, puntos_clave, porque_importa)<br/>5. ContenidoGuionVideo (titulo, gancho, segmentos temporizados)"]:::schema
         SCHEMA_CORE --- SCHEMA_FORMATS
     end
 
-    subgraph OBJECT_STORAGE ["💾 ALMACENAMIENTO DE OBJETOS (OCI Object Storage)"]
+    subgraph OBJECT_STORAGE ["💾 ALMACENAMIENTO DE OBJETOS (OCI Object Storage) · Rama: backend"]
         INTERFACE["<b>Protocolo Almacenador (storage/)</b><br/>• guardar_documento_original()<br/>• guardar_contenido_generado()<br/>• listar_contenidos_generados()<br/>• descargar_objeto()"]:::storage
         
         MOCK_IMPL["<b>1. local_storage.py (Desarrollo / Demo)</b><br/>• Directorio: backend/data/outputs/<br/>• Retorna status_upload: completado"]:::storage
@@ -495,6 +554,9 @@ pytest backend/tests -v
 
 ## 👥 10. Créditos y Autores del Proyecto
 
-* **Alejandro**: Arquitectura de microservicios, contenedorización Docker inicial, servidor REST en FastAPI, módulo de ingesta multi-formato con pypdf y cliente oficial de OCI Object Storage SDK.
-* **Pedro**: Motor multi-agente en LangGraph, prompting pedagógico, RAG vectorial con Cohere y ChromaDB, validación de contratos Pydantic v2 y suite de pruebas unitarias.
-* **Equipo NovaMind**: Sinergia técnica de integración, calibración de umbrales de anclaje, cliente HTTP desacoplado en React 19 + Vite, diseño de componentes interactivos y visualizadores dinámicos.
+* **Alejandro (`origin/backend` / `Propuesta-Microservicios`)**: Arquitectura de microservicios, servidor REST en FastAPI, módulo de ingesta multi-formato con pypdf, cliente oficial de OCI Object Storage SDK y guías de despliegue en Oracle Cloud.
+* **Pedro (`origin/feature/agents-langgraph`)**: Motor multi-agente en LangGraph, prompting pedagógico adaptativo, RAG vectorial con Cohere y ChromaDB, validación de contratos Pydantic v2 y suite determinista de 65 pruebas automatizadas.
+* **Frontend Lead (`origin/frontEnd`)**: Microservicio web cliente en React 19 + TypeScript + Vite, cliente HTTP desacoplado con soporte multipart, visualizadores interactivos de los 5 formatos pedagógicos (Flashcards 3D, Quiz, Tutorial, TL;DR, Guión) y dashboard de métricas RAG.
+* **Project Manager (`origin/project-manager`)**: Gobernanza, definición funcional de requerimientos, cronograma de trabajo, actas de acuerdos y alineación estratégica con los objetivos del Hackathon ONE G10.
+* **Equipo NovaMind (`origin/integracion` ➔ `origin/main`)**: Sinergia técnica de integración continua, armonización de contratos, scripts unificados de ejecución local (`iniciar_local.bat`), validación End-to-End con score de anclaje RAG de 1.00 y empaquetado para release final.
+
