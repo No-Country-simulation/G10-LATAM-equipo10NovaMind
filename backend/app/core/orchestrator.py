@@ -1,17 +1,10 @@
 """
+[MÓDULO PROTOTIPO / ALTERNATIVO]
+NOTA: El orquestador oficial, activo y conectado a la API de FastAPI es:
+      `app.orquestador` (clase `OrquestadorNuevaMente`).
+Este archivo se conserva como referencia experimental para backends alternativos.
+
 Orquestación multi-agente con LangGraph.
-
-Grafo:
-
-    investigador -> redactor -> critico --(score OK)--> END
-                        ^                |
-                        |                | (score bajo y quedan reintentos)
-                        +----------------+
-
-El ciclo redactor<->critico es la pieza que justifica LangGraph por sobre una
-chain lineal de LangChain: permite reescritura automática cuando el Agente
-Crítico detecta baja fidelidad a la fuente (anclaje_fuente_score bajo el
-umbral configurado), en vez de devolver contenido alucinado sin corrección.
 """
 
 from __future__ import annotations

@@ -19,8 +19,16 @@ class ConfigError(Exception):
     """Configuración ausente o inválida."""
 
 
-def _leer_float(nombre: str, defecto: float, minimo: float, maximo: float) -> float:
+def _leer_float(
+    nombre: str,
+    defecto: float,
+    minimo: float,
+    maximo: float,
+    nombre_alternativo: Optional[str] = None,
+) -> float:
     bruto = os.getenv(nombre)
+    if (bruto is None or not bruto.strip()) and nombre_alternativo:
+        bruto = os.getenv(nombre_alternativo)
     if bruto is None or not bruto.strip():
         return defecto
     try:
@@ -32,8 +40,16 @@ def _leer_float(nombre: str, defecto: float, minimo: float, maximo: float) -> fl
     return valor
 
 
-def _leer_int(nombre: str, defecto: int, minimo: int, maximo: int) -> int:
+def _leer_int(
+    nombre: str,
+    defecto: int,
+    minimo: int,
+    maximo: int,
+    nombre_alternativo: Optional[str] = None,
+) -> int:
     bruto = os.getenv(nombre)
+    if (bruto is None or not bruto.strip()) and nombre_alternativo:
+        bruto = os.getenv(nombre_alternativo)
     if bruto is None or not bruto.strip():
         return defecto
     try:
@@ -72,10 +88,22 @@ class Config:
         return cls(
             cohere_api_key=os.getenv("COHERE_API_KEY") or None,
             cohere_model=os.getenv("COHERE_MODEL", "command-a-03-2025"),
-            embedding_model=os.getenv("COHERE_EMBEDDING_MODEL", "embed-multilingual-v3.0"),
-            chroma_path=os.getenv("AGENTE1_CHROMA_PATH", "./chroma_db"),
-            collection_name=os.getenv("AGENTE1_COLLECTION_NAME", "nuevamente_documentos"),
-            top_k=_leer_int("TOP_K_CHUNKS", 6, 1, 30),
+            embedding_model=(
+                os.getenv("COHERE_EMBEDDING_MODEL")
+                or os.getenv("EMBEDDING_MODEL")
+                or "embed-multilingual-v3.0"
+            ),
+            chroma_path=(
+                os.getenv("AGENTE1_CHROMA_PATH")
+                or os.getenv("CHROMA_PATH")
+                or "./chroma_db"
+            ),
+            collection_name=(
+                os.getenv("AGENTE1_COLLECTION_NAME")
+                or os.getenv("CHROMA_COLLECTION_NAME")
+                or "nuevamente_documentos"
+            ),
+            top_k=_leer_int("TOP_K_CHUNKS", 6, 1, 30, nombre_alternativo="TOP_K"),
             min_score_retrieval=_leer_float("MIN_SCORE_RETRIEVAL", 0.60, 0.0, 1.0),
             min_anclaje_fuente_score=_leer_float("MIN_ANCLAJE_FUENTE_SCORE", 0.75, 0.0, 1.0),
             max_redaccion_retries=_leer_int("MAX_REDACCION_RETRIES", 2, 0, 5),

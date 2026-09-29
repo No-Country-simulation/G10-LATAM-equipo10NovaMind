@@ -40,14 +40,23 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# CORS habilitado para flexibilidad
+# CORS habilitado con soporte explícito para desarrollo local (Vite/Streamlit) y producción
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8501",
+        "http://127.0.0.1:8501",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 _orquestador_singleton: Optional[OrquestadorNuevaMente] = None
 
