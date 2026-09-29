@@ -69,18 +69,18 @@ graph TD
 
     %% CAPA DE ALMACENAMIENTO
     subgraph CAPA_DATOS ["💾 CAPA DE PERSISTENCIA Y CLOUD · Ramas: backend & feature/agents-langgraph"]
-        CHROMA_DB[("<b>ChromaDB Nativo</b><br/>• Colección nuevamente_documentos<br/>• Persistencia en disco local<br/><i>(Rama: feature/agents-langgraph)</i>")]:::storage
-        STORAGE_ROUTER{"<b>Almacenador Híbrido Resiliente</b><br/>(Prioridad OCI + Fallback Local)<br/><i>(Rama: backend)</i>"}:::storage
-        LOCAL_OUTPUTS[("<b>Almacenamiento Local</b><br/>backend/data/outputs/<br/>(Activo como fallback/offline)")]:::storage
-        OCI_BUCKET[("<b>OCI Object Storage (Capa Always Free)</b><br/>Bucket: nuevamente-contenidos-educativos<br/>(sa-santiago-1)")]:::storage
+        CHROMA_DB[("<b>ChromaDB Nativo</b><br/>• Colección nuevamente_documentos<br/>• Persistencia en disco local<br/><i>Rama: feature/agents-langgraph</i>")]:::storage
+        STORAGE_ROUTER["<b>Almacenador Híbrido Resiliente</b><br/>Prioridad OCI + Fallback Local<br/><i>Rama: backend</i>"]:::storage
+        LOCAL_OUTPUTS[("<b>Almacenamiento Local</b><br/>backend/data/outputs/<br/>Activo como fallback offline")]:::storage
+        OCI_BUCKET[("<b>OCI Object Storage Always Free</b><br/>Bucket: nuevamente-contenidos-educativos<br/>sa-santiago-1")]:::storage
 
-        STORAGE_ROUTER -->|Principal (Online)| OCI_BUCKET
-        STORAGE_ROUTER -.->|Fallback (Offline/Error)| LOCAL_OUTPUTS
+        STORAGE_ROUTER -->|"Principal - Online"| OCI_BUCKET
+        STORAGE_ROUTER -.->|"Fallback - Local"| LOCAL_OUTPUTS
     end
 
     %% CONEXIONES INTER-CAPAS
-    HTTP_CLIENT -- "HTTP POST (Multipart) [Contrato API]" --> API_ROUTER
-    INGESTION_ENGINE -- "Texto limpio normalizado" --> ORQUESTADOR
+    HTTP_CLIENT -->|"HTTP POST Multipart · Contrato API"| API_ROUTER
+    INGESTION_ENGINE -->|"Texto limpio normalizado"| ORQUESTADOR
     AG1 <--> COHERE_EMBED
     AG1 <--> CHROMA_DB
     AG2 <--> COHERE_CHAT
