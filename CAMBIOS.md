@@ -60,3 +60,13 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
 2. **Endpoints de Persistencia y Descarga:** En `main.py`, se robustecieron `GET /api/v1/paquetes` y `GET /api/v1/paquetes/{objeto_id}` para permitir consulta y descarga dual transparente con normalización de rutas y prefijos.
 3. **Verificación:** 65 pruebas pasando al 100% (`pytest backend/tests -v`).
 
+## Fase 4: Integración Full-Stack en la Rama `integracion` (Frontend React 19 + Vite + TypeScript)
+
+1. **Rama Unificada `integracion`:** Creada para consolidar la arquitectura desacoplada de microservicios sin los riesgos destructivos observados en `origin/frontEnd`.
+2. **Adopción Oficial de React 19 + Vite:** Se sustituyó la UI provisional de Streamlit por la aplicación SPA completa en `frontend/` (TypeScript, GSAP, Lenis, Lucide, CSS Modules).
+3. **Renderizadores Interactivos por Formato:** Visualizadores especializados para Flashcards con giro 3D, Quizzes interactivos con justificación en tiempo real, Tutoriales técnicos, Resúmenes ejecutivos y Guiones.
+4. **Dashboard de Métricas y Persistencia:** Componente `MetricsView` con indicadores visuales del score de anclaje RAG (LangGraph), evaluación de calidad y persistencia en OCI Cloud.
+5. **Sincronización de Lanzadores:** Actualización de `iniciar_local.bat` para arranque concurrente de FastAPI (:8000) y Vite (:5173).
+6. **Verificación Dual:** Build de producción de frontend completado en 1.21s (`npm run build` con 0 errores TypeScript) y suite de backend al 100% (65/65 tests en `backend/tests`).
+
+

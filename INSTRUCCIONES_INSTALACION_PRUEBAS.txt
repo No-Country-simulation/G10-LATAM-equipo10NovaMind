@@ -6,42 +6,45 @@ NUEVAMENTE - INSTALACION Y PRUEBAS EN WINDOWS
 - Windows 10/11
 - Git
 - Python 3.12.7
+- Node.js v18+ y npm (para el Frontend React + Vite)
 - API key de Cohere para probar la generacion real
 
-Comprobar Python:
+Comprobar versiones:
 
 py -3.12 --version
+node --version
+npm.cmd --version
 
-Debe mostrar:
-
-Python 3.12.7
+Debe mostrar Python 3.12.7 y Node v18+ (ej. v24.x).
 
 
-2. CLONAR EL REPOSITORIO
-------------------------
+2. CLONAR Y POSICIONARSE EN LA RAMA DE INTEGRACION
+--------------------------------------------------
 
 Desde PowerShell:
 
-git clone -b Propuesta-Microservicios https://github.com/No-Country-simulation/G10-LATAM-equipo10NovaMind.git
+git clone https://github.com/No-Country-simulation/G10-LATAM-equipo10NovaMind.git
 cd G10-LATAM-equipo10NovaMind
+git checkout integracion
 code .
 
 
 3. INSTALAR EL PROYECTO
 -----------------------
 
+A) Dependencias de Python (Backend):
 Ejecutar normalmente, sin redireccionar la entrada:
 
 .\setup.bat
 
 El instalador debe terminar mostrando:
-
 [OK] Todas las dependencias se instalaron correctamente.
 Instalacion completada con exito!
 
-No usar este comando:
-
-cmd /c "setup.bat < nul"
+B) Dependencias de Node.js (Frontend React + Vite):
+cd frontend
+npm.cmd install
+cd ..
 
 
 4. CONFIGURAR COHERE
@@ -99,9 +102,15 @@ Resultado esperado:
 7. COMPROBAR LA COMPILACION
 ---------------------------
 
-.\.venv\Scripts\python.exe -m compileall -q backend/app backend/tests frontend/app
-
+A) Backend (Python 3.12.7):
+.\.venv\Scripts\python.exe -m compileall -q backend/app backend/tests
 Si no aparece ningun mensaje, la compilacion fue correcta.
+
+B) Frontend (TypeScript + Vite):
+cd frontend
+npm.cmd run build
+cd ..
+Debe compilar sin errores en ~1-2 segundos.
 
 
 8. INICIAR EL SISTEMA COMPLETO
@@ -111,15 +120,15 @@ Desde la raiz del proyecto:
 
 .\iniciar_local.bat
 
-Se abriran dos ventanas:
+Se abriran dos ventanas de consola:
 
-Backend:  http://127.0.0.1:8000
-Frontend: http://localhost:8501
-Swagger:  http://127.0.0.1:8000/docs
+Backend (FastAPI):     http://127.0.0.1:8000
+Frontend (React Vite): http://localhost:5173
+Swagger / OpenAPI:     http://127.0.0.1:8000/docs
 
-Abrir el frontend en el navegador:
+La aplicacion se abrira automaticamente en el navegador:
 
-start http://localhost:8501
+start http://localhost:5173
 
 
 9. VERIFICAR EL BACKEND
@@ -139,11 +148,12 @@ status: ok
 10. PRUEBA FUNCIONAL
 --------------------
 
-1. Abrir http://localhost:8501
-2. Seleccionar perfil, formato, nicho y nivel de detalle.
-3. Cargar un PDF, MD o TXT.
-4. Pulsar el boton de generar/adaptar contenido.
-5. Revisar el contenido generado y la evaluacion de calidad.
+1. Abrir http://localhost:5173 en tu navegador.
+2. Seleccionar perfil de destinatario, formato de salida deseado, nicho y nivel de detalle.
+3. Cargar un documento (PDF, MD o TXT) o ingresar texto directo en IngestView.
+4. Pulsar el boton "Generar Material".
+5. Revisar el contenido interactivo adaptado en ViewerView (Flashcards 3D, Quiz interactivo, Tutorial, etc.).
+6. Revisar el panel MetricsView con la evaluacion de anclaje RAG y persistencia en OCI Cloud.
 
 La generacion real requiere COHERE_API_KEY.
 Las pruebas automatizadas usan simulaciones y no requieren una API key valida.
