@@ -2,7 +2,7 @@
 
 > **Desarrollado por el Equipo 10 (G10 - NovaMind) para No-Country**  
 > **Hackathon ONE G10 · Oracle Next Education & Alura · Proyecto 1**  
-> Solución integral desacoplada en **Microservicios (Backend FastAPI + Frontend Streamlit)** con orquestación multi-agente en **LangGraph**, **RAG vectorial con Cohere**, **ChromaDB**, y persistencia modular.
+> Solución integral desacoplada en **Microservicios (Backend FastAPI + Frontend React 19 + Vite)** con orquestación multi-agente en **LangGraph**, **RAG vectorial con Cohere**, **ChromaDB**, y persistencia modular.
 
 ---
 
@@ -31,9 +31,9 @@ graph TD
     classDef external fill:#1f2937,stroke:#9ca3af,stroke-width:1.5px,color:#f9fafb;
 
     %% CAPA CLIENTE / FRONTEND
-    subgraph CAPA_FRONTEND ["🖥️ CAPA DE PRESENTACIÓN (Streamlit)"]
-        UI["<b>Interfaz Streamlit</b><br/>• Selector dinámico de opciones<br/>• File Uploader (PDF, MD, TXT)<br/>• Renderizadores interactivos de los 5 formatos"]:::client
-        HTTP_CLIENT["<b>Cliente HTTP (api_client.py)</b><br/>• Requests desacoplado<br/>• Timeout de 180s y fallback resiliente"]:::client
+    subgraph CAPA_FRONTEND ["🖥️ CAPA DE PRESENTACIÓN (React 19 + Vite)"]
+        UI["<b>Interfaz Web SPA (React + TypeScript)</b><br/>• Selector dinámico de opciones<br/>• Ingesta drag & drop (PDF, MD, TXT)<br/>• Renderizadores dinámicos de los 5 formatos<br/>• Dashboard de métricas y OCI"]:::client
+        HTTP_CLIENT["<b>Cliente API (services/api.ts)</b><br/>• Fetch multipart/form-data desacoplado<br/>• Conexión viva a FastAPI y fallback resiliente"]:::client
         UI --> HTTP_CLIENT
     end
 
@@ -139,7 +139,7 @@ G10-LATAM-equipo10NovaMind/
 ├── PROMPT_DESPLIEGUE_OCI_PRIVADO.md   # Guía paso a paso para despliegue en instancias de Oracle Cloud
 ├── README.md                          # Documentación maestra y manual general del proyecto
 ├── esquema_integracion_A_P.md         # Mapeo de autorías y responsabilidades de integración (Alejandro vs. Pedro)
-├── iniciar_local.bat                  # Script para arranque concurrente (FastAPI + Streamlit)
+├── iniciar_local.bat                  # Script para arranque concurrente (FastAPI :8000 + React Vite :5173)
 ├── reestablecer_local.bat             # Script de restablecimiento y limpieza de entorno local
 ├── setup.bat                          # Asistente de verificación e instalación de dependencias
 │

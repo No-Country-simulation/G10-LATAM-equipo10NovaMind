@@ -143,3 +143,25 @@ Tras culminar la integración, se realizaron pruebas automatizadas de extremo a 
    * 🖥️ **Aplicación Web (React + Vite):** [http://localhost:5173](http://localhost:5173)
    * ⚙️ **API REST (FastAPI):** [http://127.0.0.1:8000](http://127.0.0.1:8000)
    * 📖 **Documentación Swagger / OpenAPI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+---
+
+## ⚡ 8. Dinamización Real End-to-End (Fase 5 Completada)
+
+Para pasar de una maqueta con temporizadores a una plataforma viva integrada con el backend de IA:
+
+1. **Ingesta Real de Archivos y Texto Libre:**
+   - `IngestView` dispone de selector de archivos nativo y drag & drop para `.pdf`, `.md`, `.txt`, permitiendo además alternar a un editor de texto directo (mínimo 40 caracteres).
+2. **Llamada Asíncrona `POST /api/v1/adaptar`:**
+   - `App.tsx` invoca `enviarAdaptacion(payload)` enviando un formulario multipart a FastAPI.
+   - Estado dinámico `adaptationResult` y sincronización del título en la cabecera.
+   - En caso de desconexión del backend local, conmuta a modo demostrativo con aviso amigable sin interrumpir la experiencia.
+3. **Renderizado de los 5 Formatos Pedagógicos:**
+   - **Flashcards:** Visualiza las tarjetas generadas con sus pistas didácticas y anclaje a fuentes.
+   - **Quiz Interactivo:** Soporte multi-pregunta dinámico con selección de opciones, retroalimentación inmediata y justificación técnica.
+   - **Guía Práctica:** Pasos interactivos numerados con checklist y código/instrucciones.
+   - **Resumen Ejecutivo:** Puntos clave, introducción contextualizada y justificación de impacto.
+   - **Guion:** Escenas temporizadas con minutaje, narración y apoyos visuales.
+4. **Métricas de Orquestación y Nube:**
+   - `MetricsView` muestra datos reales de LangGraph (`chunks_recuperados`, `intentos_redaccion`, `duracion_segundos`) y persistencia en OCI Object Storage Always Free.
+

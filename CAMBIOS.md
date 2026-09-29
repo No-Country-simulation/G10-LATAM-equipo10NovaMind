@@ -69,4 +69,24 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
 5. **Sincronización de Lanzadores:** Actualización de `iniciar_local.bat` para arranque concurrente de FastAPI (:8000) y Vite (:5173).
 6. **Verificación Dual:** Build de producción de frontend completado en 1.21s (`npm run build` con 0 errores TypeScript) y suite de backend al 100% (65/65 tests en `backend/tests`).
 
+## Fase 5: Conexión Real End-to-End Backend FastAPI y Frontend React
+
+1. **Armonización de Backend y CORS:**
+   - En `backend/app/core/config.py`: Soporte de alias en variables de entorno para compatibilidad total con `.env.example` (`CHROMA_PATH` / `AGENTE1_CHROMA_PATH`, `TOP_K` / `TOP_K_CHUNKS`, `EMBEDDING_MODEL` / `COHERE_EMBEDDING_MODEL`).
+   - En `backend/app/main.py`: Configuración explícita de CORS para el dev server de Vite (`http://localhost:5173`, `http://127.0.0.1:5173`) y puertos dinámicos localhost con credenciales habilitadas.
+2. **Ingesta Real de Archivos y Texto en Frontend:**
+   - `IngestView.tsx` actualizado con input de archivos nativo oculto y drag & drop para `.pdf`, `.md`, `.txt`, más modo de texto directo editable (mínimo 40 caracteres).
+3. **Conexión Live Asíncrona:**
+   - `App.tsx` conectado asíncronamente con `enviarAdaptacion(payload)` de `frontend/src/services/api.ts` hacia `POST /api/v1/adaptar`.
+   - Estado dinámico `adaptationResult`, sincronización del título del documento en `Header` y manejo resiliente de fallback en caso de desconexión.
+4. **Visualizadores Dinámicos Conectados:**
+   - Visualizadores de los 5 formatos (`FlashcardViewer`, `QuizViewer`, `TutorialViewer`, `SummaryViewer`, `ScriptViewer`) actualizados para consumir los ítems generados en tiempo real por el Agente 2.
+   - `QuizViewer` ampliado con soporte multi-pregunta interactivo, navegación anterior/siguiente y retroalimentación pedagógica instantánea.
+5. **Auditoría Dinámica:**
+   - `MetricsView.tsx` sincronizado con las métricas de orquestación de LangGraph (`chunks_recuperados`, `intentos_redaccion`, `duracion_segundos`) y metadatos de persistencia en OCI Object Storage.
+6. **Verificación:**
+   - Backend: 65/65 tests pasando (`pytest backend/tests -v`).
+   - Frontend: `npm run build` (`tsc -b && vite build`) completado con 0 errores.
+
+
 
