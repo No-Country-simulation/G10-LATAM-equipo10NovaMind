@@ -1,128 +1,177 @@
-.topbar {
-  position: relative;
-  z-index: 10;
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   width: 100%;
-  max-width: 1260px;
-  min-height: 51px;
+  background-color: rgba(7, 9, 14, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  transition: all var(--transition-base);
+}
+
+.container {
+  max-width: 80rem;
   margin: 0 auto;
-  padding: 0 clamp(10px, 1.5vw, 15px);
+  padding: 0 1rem;
+  height: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-capsule);
-  background: var(--bg-topbar);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  transition: all 0.3s ease;
+  gap: 1rem;
 }
 
-.logo {
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+
+/* Brand Link */
+.brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  gap: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
 }
 
-.logoMark {
-  width: 29px;
-  height: 29px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  color: #ffffff;
-  background: var(--gradient-logo);
-  box-shadow: 0 4px 16px rgba(103, 83, 255, 0.45);
+.brandIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-violet-500) 0%, var(--color-fuchsia-500) 50%, var(--color-amber-500) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px var(--color-violet-border);
 }
 
-.logoText {
-  font-size: 15px;
-  font-weight: 600;
+.brandLetter {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 0.8125rem;
+  color: #fff;
+}
+
+.brandInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.brandTitle {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--text-main);
+  color: var(--color-text-primary);
+  line-height: 1;
+  transition: color var(--transition-fast);
 }
 
-.documentPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 14px;
-  margin-left: clamp(10px, 4vw, 80px);
-  color: var(--text-sub);
-  font-size: 12px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.035);
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.brand:hover .brandTitle {
+  color: var(--color-violet-300);
 }
 
-.documentPill svg {
-  color: #8278f6;
-  flex-shrink: 0;
+.brandTagline {
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
 }
 
-.systemStatus {
+/* Nav Stepper */
+.nav {
   display: flex;
   align-items: center;
-  gap: 15px;
-  flex-shrink: 0;
+  gap: 0.375rem;
 }
 
-.statusPill {
-  display: inline-flex;
+@media (min-width: 640px) {
+  .nav {
+    gap: 0.5rem;
+  }
+}
+
+.stepButton {
+  display: flex;
   align-items: center;
-  gap: 7px;
-  color: #b9c1d1;
-  font-size: 11px;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
   white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--border-subtle);
+  background: var(--color-card-subtle);
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
 }
 
-.statusDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.stepButton:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-card-hover);
 }
 
-.statusDot.green {
-  background: var(--green-oci);
-  box-shadow: 0 0 8px var(--green-oci);
+/* Active Step */
+.stepButtonActive {
+  background: var(--color-violet-bg);
+  color: var(--color-violet-300);
+  border-color: var(--color-violet-border);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
 }
 
-.statusDot.cyan {
-  background: var(--cyan-status);
-  box-shadow: 0 0 8px var(--cyan-status);
+/* Completed Step */
+.stepButtonPassed {
+  background: var(--color-emerald-bg);
+  border-color: var(--color-emerald-border);
+  color: var(--color-emerald-300);
 }
 
-/* Coreografía Mobile Awaaards (< 720px) */
-@media (max-width: 720px) {
-  .topbar {
-    height: auto;
-    min-height: 52px;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px 12px;
-  }
+.stepButtonPassed:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
 
-  .documentPill {
-    order: 3;
-    width: 100%;
-    margin-left: 0;
-    justify-content: center;
-    font-size: 11px;
-    padding: 6px 10px;
-  }
+/* Badge Circle */
+.stepBadge {
+  width: 1rem;
+  height: 1rem;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-subtle);
+}
 
-  .systemStatus {
-    gap: 8px;
-  }
+.stepBadgeActive {
+  background: var(--color-violet-500);
+  color: #fff;
+}
 
-  .statusPill {
-    font-size: 9px;
-    gap: 5px;
+.stepBadgePassed {
+  background: var(--color-emerald-500);
+  color: #07090e;
+}
+
+/* Stepper Divider Line */
+.stepDivider {
+  width: 0.75rem;
+  height: 1px;
+  background: var(--border-subtle);
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .stepDivider {
+    display: block;
   }
 }
