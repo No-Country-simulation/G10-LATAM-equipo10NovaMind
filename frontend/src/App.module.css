@@ -1,70 +1,117 @@
-.appShell {
+.appWrapper {
   min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-  padding: 14px clamp(16px, 3.6vw, 48px) 26px;
-  background: radial-gradient(ellipse at 46% 40%, rgba(52, 47, 112, 0.13), transparent 42%), #080b14;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
   display: flex;
   flex-direction: column;
 }
 
-.ambientOne {
-  position: absolute;
-  pointer-events: none;
-  filter: blur(80px);
-  opacity: 0.34;
-  border-radius: 50%;
-  width: 380px;
-  height: 300px;
-  background: #272070;
-  left: -140px;
-  top: 140px;
-  z-index: 0;
-}
-
-.ambientTwo {
-  position: absolute;
-  pointer-events: none;
-  filter: blur(80px);
-  border-radius: 50%;
-  width: 280px;
-  height: 350px;
-  background: #113f66;
-  right: -120px;
-  bottom: 80px;
-  opacity: 0.18;
-  z-index: 0;
-}
-
 .mainContent {
-  position: relative;
-  z-index: 1;
-  width: 100%;
   flex: 1;
-}
-
-.footer {
-  position: relative;
-  z-index: 1;
-  max-width: 1060px;
+  max-width: 80rem;
   width: 100%;
-  margin: 42px auto 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: #4c586d;
-  font-size: 9px;
-  border: 0;
-  background: transparent;
+  margin: 0 auto;
+  padding: 2rem 1rem;
 }
 
-.footerDot {
+@media (min-width: 640px) {
+  .mainContent {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mainContent {
+    padding: 2.5rem 2rem;
+  }
+}
+
+/* Placeholder temporal para steps no modularizados */
+.previewPlaceholder {
+  border-radius: var(--radius-xl);
+  background: var(--color-card);
+  border: 1px dashed var(--border-default);
+  padding: 3rem 1.5rem;
+  text-align: center;
+  backdrop-filter: blur(12px);
+}
+
+.placeholderTag {
   display: inline-block;
-  width: 5px;
-  height: 5px;
-  background: #6c61e9;
-  border-radius: 50%;
-  margin-right: 6px;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-violet-bg);
+  color: var(--color-violet-300);
+  border: 1px solid var(--color-violet-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.placeholderTitle {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.placeholderText {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+/* Footer Global */
+.footer {
+  width: 100%;
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--color-bg-base);
+  padding: 1.5rem 0;
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+}
+
+.footerContainer {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .footerContainer {
+    flex-direction: row;
+    padding: 0 1.5rem;
+  }
+}
+
+.brandSign {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.footerLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.trophyLink {
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.trophyLink:hover {
+  color: var(--color-amber-400);
 }
