@@ -1,0 +1,368 @@
+.stationWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Header & Barra Superior */
+.headerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .headerContainer {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.stationTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background-color: rgba(217, 70, 239, 0.15);
+  color: #f0abfc;
+  border: 1px solid rgba(217, 70, 239, 0.3);
+}
+
+.completedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-emerald-300);
+  background-color: var(--color-emerald-bg);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-emerald-border);
+}
+
+.stationTitle {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 640px) {
+  .stationTitle {
+    font-size: 1.5rem;
+  }
+}
+
+.stationSubtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+@media (min-width: 640px) {
+  .stationSubtitle {
+    font-size: 0.875rem;
+  }
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.badgeShowcaseBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-amber-bg);
+  border: 1px solid var(--color-amber-border);
+  color: var(--color-amber-300);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.badgeShowcaseBtn:hover {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+
+.progressStats {
+  text-align: right;
+}
+
+.progressLabel {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.progressRatio {
+  font-size: 0.875rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: #f0abfc;
+}
+
+.progressRatioPassed {
+  color: var(--color-emerald-400);
+}
+
+/* Tira de Escenas / Storyboard Strip */
+.sceneStrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .sceneStrip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sceneButton {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--color-card-subtle);
+  color: var(--color-text-muted);
+  text-align: left;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sceneButton:hover {
+  background-color: var(--color-card-hover);
+}
+
+.sceneButtonActive {
+  background-color: rgba(217, 70, 239, 0.12);
+  border-color: rgba(217, 70, 239, 0.5);
+  box-shadow: 0 4px 15px rgba(217, 70, 239, 0.15);
+}
+
+.sceneButtonViewed {
+  background-color: var(--color-card-subtle);
+  border-color: var(--border-default);
+  color: var(--color-text-secondary);
+}
+
+.sceneMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sceneTag {
+  font-size: 0.625rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #e879f9;
+  letter-spacing: 0.05em;
+}
+
+.sceneTitleText {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sceneIconBox {
+  flex-shrink: 0;
+}
+
+/* Estudio Principal (Doble Panel) */
+.studioViewport {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .studioViewport {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.teleprompterCard {
+  border-radius: var(--radius-xl);
+  background-color: var(--color-card);
+  border: 1px solid var(--border-subtle);
+  padding: 1.25rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .teleprompterCard {
+    padding: 1.5rem;
+  }
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
+}
+
+.panelTitleFuchsia {
+  font-size: 0.75rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #e879f9;
+}
+
+.panelTitleCyan {
+  font-size: 0.75rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-cyan-400);
+}
+
+.sceneTimeBadge {
+  font-size: 0.75rem;
+  font-family: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+.scriptBox {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  font-style: italic;
+  background-color: rgba(0, 0, 0, 0.35);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 640px) {
+  .scriptBox {
+    font-size: 1rem;
+  }
+}
+
+.pedagogyTip {
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: rgba(217, 70, 239, 0.1);
+  border: 1px solid rgba(217, 70, 239, 0.3);
+  font-size: 0.75rem;
+  color: #f5d0fe;
+  line-height: 1.5;
+}
+
+.storyboardCard {
+  border-radius: var(--radius-xl);
+  background-color: var(--color-card);
+  border: 1px solid var(--border-subtle);
+  padding: 1.25rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .storyboardCard {
+    padding: 1.5rem;
+  }
+}
+
+.storyboardVisualContent {
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #0e1424 0%, #07090e 100%);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .storyboardVisualContent {
+    font-size: 0.875rem;
+  }
+}
+
+.playbackNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+}
+
+.navButton {
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-card-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navButton:hover:not(:disabled) {
+  color: #fff;
+  background-color: var(--color-card-hover);
+}
+
+.navButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.navCount {
+  font-size: 0.75rem;
+  font-family: var(--font-code);
+  color: var(--color-text-muted);
+}
