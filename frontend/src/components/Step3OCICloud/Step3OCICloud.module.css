@@ -1,0 +1,492 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Banner Superior */
+.topBanner {
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #0d1424 0%, #0d111a 50%, #120e24 100%);
+  border: 1px solid var(--border-subtle);
+  padding: 1.5rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+@media (min-width: 640px) {
+  .topBanner {
+    padding: 2rem;
+  }
+}
+
+.bannerContent {
+  max-width: 48rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bannerTagRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bannerTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: var(--color-emerald-bg);
+  border: 1px solid var(--color-emerald-border);
+  color: var(--color-emerald-300);
+}
+
+.bannerStepSign {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.bannerTitle {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 640px) {
+  .bannerTitle {
+    font-size: 1.875rem;
+  }
+}
+
+.bannerDescription {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* Grilla Principal (Auditoría + Object Storage) */
+.dualGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .dualGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.auditCard {
+  border-radius: var(--radius-xl);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-emerald-border);
+  padding: 1.5rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+.ociStorageCard {
+  border-radius: var(--radius-xl);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-cyan-border);
+  padding: 1.5rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(6, 182, 212, 0.1);
+}
+
+.cardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
+}
+
+.cardHeaderTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cardHeaderTitle {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.verifiedPill {
+  padding: 0.125rem 0.625rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  background-color: var(--color-emerald-bg);
+  color: var(--color-emerald-300);
+  border: 1px solid var(--color-emerald-border);
+}
+
+.syncPill {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--color-cyan-300);
+}
+
+.pulseCyanDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-cyan-400);
+  box-shadow: 0 0 8px var(--color-cyan-400);
+}
+
+/* Gauge / Medidor de Grounding */
+.scoreGaugeBox {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+}
+
+.gaugeCircle {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-emerald-bg);
+  border: 1px solid var(--color-emerald-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gaugeValue {
+  font-family: var(--font-code);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-emerald-400);
+}
+
+.gaugeTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gaugeLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.gaugeSubtext {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* Grillas de detalles internos */
+.auditDetailsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.metricTile {
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-card-subtle);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metricTileLabel {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.metricTileValue {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.agentObservationBox {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-emerald-bg);
+  border: 1px solid var(--color-emerald-border);
+  font-size: 0.75rem;
+  color: var(--color-emerald-200);
+  line-height: 1.5;
+}
+
+/* OCI Metadata List */
+.ociMetaStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.ociHighlightBlock {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ociBlockLabel {
+  font-size: 0.6875rem;
+  font-family: var(--font-code);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.ociBucketName {
+  font-family: var(--font-code);
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #fff;
+}
+
+.ociObjectId {
+  font-family: var(--font-code);
+  color: var(--color-cyan-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.75rem;
+}
+
+.ociUrlDownloadRow {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-cyan-bg);
+  border: 1px solid var(--color-cyan-border);
+  font-size: 0.75rem;
+  color: var(--color-cyan-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ociUrlText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-code);
+  font-size: 0.6875rem;
+}
+
+.downloadIconBtn {
+  color: var(--color-cyan-300);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  transition: color var(--transition-fast);
+}
+
+.downloadIconBtn:hover {
+  color: #fff;
+}
+
+/* Inspector de Payload JSON */
+.jsonInspectorCard {
+  border-radius: var(--radius-xl);
+  background-color: var(--color-card);
+  border: 1px solid var(--border-subtle);
+  padding: 1.5rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .jsonInspectorCard {
+    padding: 2rem;
+  }
+}
+
+.inspectorHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .inspectorHeader {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.inspectorTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.inspectorIconBox {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-violet-bg);
+  border: 1px solid var(--color-violet-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-violet-400);
+  flex-shrink: 0;
+}
+
+.inspectorTitle {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.inspectorSubtext {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.exportButtonsGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.actionBtnSecondary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-card-subtle);
+  border: 1px solid var(--border-default);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionBtnSecondary:hover {
+  background-color: var(--color-card-hover);
+  color: #fff;
+}
+
+.actionBtnPrimary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-violet-600);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionBtnPrimary:hover {
+  background-color: var(--color-violet-500);
+  transform: translateY(-1px);
+}
+
+.toggleViewerBtn {
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-card-subtle);
+  border: 1px solid var(--border-default);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.toggleViewerBtn:hover {
+  color: #fff;
+  background-color: var(--color-card-hover);
+}
+
+/* Terminal Viewer del JSON */
+.jsonViewerBox {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background-color: #07090e;
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
+}
+
+.jsonViewerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background-color: rgba(13, 17, 26, 0.7);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  font-family: var(--font-code);
+  color: var(--color-text-muted);
+}
+
+.jsonPreTag {
+  padding: 1.25rem;
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  overflow-x: auto;
+  max-height: 28rem;
+  line-height: 1.6;
+  user-select: text;
+  margin: 0;
+}
