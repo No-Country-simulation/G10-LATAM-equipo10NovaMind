@@ -7,61 +7,31 @@ import { useState } from "react";
 import { Header } from "./components/Header/Header";
 import { PlayerHUD } from "./components/PlayerHUD/PlayerHUD";
 import { BadgeModal } from "./components/BadgeModal/BadgeModal";
+import { Station1ResumenNinja } from "./components/stations/Station1ResumenNinja/Station1ResumenNinja";
+import { SCENARIOS, INITIAL_ACHIEVEMENTS } from "./data/mockScenarios";
 import type { Achievement } from "./types/types";
 import styles from "./App.module.css";
 
-const INITIAL_MOCK_BADGES: Achievement[] = [
-  {
-    id: "ninja",
-    titulo: "Intuición Ninja",
-    descripcion: "Asimilaste la analogía técnica y los conceptos clave de la infraestructura.",
-    icono: "🥷",
-    desbloqueado: true,
-    fecha: new Date().toISOString(),
-    categoria: "ninja",
-  },
-  {
-    id: "streak",
-    titulo: "Memoria Activa",
-    descripcion: "Completaste las tarjetas de estudio espaciado con Active Recall.",
-    icono: "⚡",
-    desbloqueado: false,
-    categoria: "streak",
-  },
-  {
-    id: "builder",
-    titulo: "Arquitecto Práctico",
-    descripcion: "Ejecutaste el laboratorio de comandos en la nube de Oracle.",
-    icono: "🛠️",
-    desbloqueado: false,
-    categoria: "builder",
-  },
-  {
-    id: "master",
-    titulo: "Maestría en Nube OCI",
-    descripcion: "Superaste el examen técnico de anclaje RAG con 100% de precisión.",
-    icono: "👑",
-    desbloqueado: false,
-    categoria: "master",
-  },
-];
-
 export default function App() {
-  // Stepper workflow principal: 1 = Ingesta, 2 = Knowledge Quest, 3 = Métricas OCI
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(2);
 
-  // Estado del Player HUD
-  const [xp, setXp] = useState<number>(120);
+  // Escenario activo (por defecto el primero: VCN Networks)
+  const [currentScenario] = useState(SCENARIOS[0]);
+
+  // Gamification HUD State
+  const [xp, setXp] = useState<number>(0);
   const [streakDays] = useState<number>(3);
-  const [cognitiveShields, setCognitiveShields] = useState<number>(3);
+  const [cognitiveShields] = useState<number>(3);
   const [recentXpGain, setRecentXpGain] = useState<number | null>(null);
 
-  // Estado de Medallas
-  const [achievements] = useState<Achievement[]>(INITIAL_MOCK_BADGES);
+  // Estado de la Estación 1
+  const [isStation1Completed, setIsStation1Completed] = useState<boolean>(false);
+
+  // Medallas
+  const [achievements, setAchievements] = useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
   const [isTrophyModalOpen, setIsTrophyModalOpen] = useState<boolean>(false);
   const [selectedBadgeForModal, setSelectedBadgeForModal] = useState<Achievement | null>(null);
 
-  // Helper para sumar XP
   const addXp = (amount: number) => {
     setXp((prev) => prev + amount);
     setRecentXpGain(amount);
@@ -70,16 +40,31 @@ export default function App() {
     }, 2500);
   };
 
-  // Helper para simular daño a escudos
-  const handleTestShield = () => {
-    setCognitiveShields((prev) => (prev > 0 ? prev - 1 : 3));
+  const handleCompleteStation1 = (xpAmount: number) => {
+    if (!isStation1Completed) {
+      setIsStation1Completed(true);
+      addXp(xpAmount);
+    }
+  };
+
+  const handleOpenNinjaBadge = () => {
+    setAchievements((prev) =>
+      prev.map((b) =>
+        b.id === "ninja"
+          ? { ...b, desbloqueado: true, fecha: new Date().toISOString() }
+          : b
+      )
+    );
+    const ninjaBadge = achievements.find((b) => b.id === "ninja") || INITIAL_ACHIEVEMENTS[0];
+    setSelectedBadgeForModal({ ...ninjaBadge, desbloqueado: true });
+    setIsTrophyModalOpen(true);
   };
 
   const unlockedBadgesCount = achievements.filter((a) => a.desbloqueado).length;
 
   return (
     <div className={styles.appWrapper}>
-      {/* 1. Global Stepper Workflow Header */}
+      {/* 1. Global Header */}
       <Header
         currentStep={currentStep}
         onSelectStep={(step) => setCurrentStep(step)}
@@ -92,7 +77,7 @@ export default function App() {
           streakDays={streakDays}
           cognitiveShields={cognitiveShields}
           maxShields={3}
-          completedStationsCount={1}
+          completedStationsCount={isStation1Completed ? 1 : 0}
           totalStations={5}
           recentXpGain={recentXpGain}
           unlockedBadgesCount={unlockedBadgesCount}
@@ -111,52 +96,19 @@ export default function App() {
             <span className={styles.placeholderTag}>Paso 01 · Configuración e Ingesta</span>
             <h2 className={styles.placeholderTitle}>Ingesta RAG en Construcción</h2>
             <p className={styles.placeholderText}>
-              Selecciona <strong>"02 Visualizar Resultados RAG"</strong> en la barra superior para explorar el HUD gamificado interactivo.
+              Selecciona <strong>"02 Visualizar Resultados RAG"</strong> en la barra superior para explorar la primera estación y el HUD.
             </p>
           </div>
         )}
 
         {currentStep === 2 && (
-          <div className={styles.previewPlaceholder}>
-            <span className={styles.placeholderTag}>Paso 02 · Circuito Gamificado</span>
-            <h2 className={styles.placeholderTitle}>Knowledge Quest & Estaciones</h2>
-            <p className={styles.placeholderText}>
-              Haz clic abajo para probar la respuesta interactiva del HUD:
-            </p>
-            <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-              <button
-                type="button"
-                onClick={() => addXp(50)}
-                style={{
-                  padding: "0.6rem 1.2rem",
-                  borderRadius: "10px",
-                  background: "var(--color-violet-bg)",
-                  border: "1px solid var(--color-violet-border)",
-                  color: "var(--color-violet-300)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                }}
-              >
-                +50 XP
-              </button>
-              <button
-                type="button"
-                onClick={handleTestShield}
-                style={{
-                  padding: "0.6rem 1.2rem",
-                  borderRadius: "10px",
-                  background: "var(--color-rose-bg)",
-                  border: "1px solid var(--color-rose-border)",
-                  color: "var(--color-rose-300)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                }}
-              >
-                Probar Escudo (-1)
-              </button>
-            </div>
+          <div>
+            <Station1ResumenNinja
+              data={currentScenario.data.contenido_adaptado.resumen_ninja}
+              isCompleted={isStation1Completed}
+              onCompleteStation={handleCompleteStation1}
+              onOpenNinjaBadge={handleOpenNinjaBadge}
+            />
           </div>
         )}
 
