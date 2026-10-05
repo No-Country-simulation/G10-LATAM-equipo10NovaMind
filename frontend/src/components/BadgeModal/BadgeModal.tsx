@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, Award, CheckCircle2, Sparkles, Flame, Shield, Calendar } from 'lucide-react';
-import { Achievement } from '../../types';
+import type { Achievement } from '../../types/types';
 import styles from './BadgeModal.module.css';
 
 interface BadgeModalProps {
