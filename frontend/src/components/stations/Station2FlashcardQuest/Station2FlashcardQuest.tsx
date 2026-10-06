@@ -1,7 +1,7 @@
 import { useState, type MouseEvent } from 'react';
 import { RotateCw, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight, HelpCircle, Sparkles, BookOpen, Award } from 'lucide-react';
 import type { FlashcardItem } from '../../../types/types';
-// import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
+import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
 import styles from './Station2FlashcardQuest.module.css';
 
 interface Station2Props {
@@ -14,7 +14,7 @@ interface Station2Props {
 export const Station2FlashcardQuest = ({
   cards = [],
   isCompleted,
-//   onCompleteStation,
+  onCompleteStation,
   onOpenStreakBadge,
 }: Station2Props) => {
   const [prevCards, setPrevCards] = useState(cards);
@@ -71,27 +71,27 @@ export const Station2FlashcardQuest = ({
     setCurrentIndex((prev) => (prev - 1 + safeCards.length) % safeCards.length);
   };
 
-//   const handleMasterCard = () => {
-//     const newMastered = { ...masteredCards, [cardId]: true };
-//     setMasteredCards(newMastered);
-//     triggerSmallConfetti();
+  const handleMasterCard = () => {
+    const newMastered = { ...masteredCards, [cardId]: true };
+    setMasteredCards(newMastered);
+    triggerSmallConfetti();
 
-//     const totalMastered = Object.values(newMastered).filter(Boolean).length;
+    const totalMastered = Object.values(newMastered).filter(Boolean).length;
 
-//     if (totalMastered >= minRequired) {
-//       if (!isCompleted) {
-//         onCompleteStation(50);
-//       }
-//       triggerLevelUpConfetti();
-//       if (onOpenStreakBadge) {
-//         onOpenStreakBadge();
-//       }
-//     }
+    if (totalMastered >= minRequired) {
+      if (!isCompleted) {
+        onCompleteStation(50);
+      }
+      triggerLevelUpConfetti();
+      if (onOpenStreakBadge) {
+        onOpenStreakBadge();
+      }
+    }
 
-//     setTimeout(() => {
-//       handleNext();
-//     }, 350);
-//   };
+    setTimeout(() => {
+      handleNext();
+    }, 350);
+  };
 
   const handleNeedReview = () => {
     setMasteredCards((prev) => ({ ...prev, [cardId]: false }));
@@ -269,7 +269,7 @@ export const Station2FlashcardQuest = ({
           ) : (
             <button
               type="button"
-            //   onClick={handleMasterCard}
+              onClick={handleMasterCard}
               className={`${styles.masterButton} ${isCurrentMastered ? styles.masterButtonActive : ''}`}
             >
               {isCurrentMastered ? (

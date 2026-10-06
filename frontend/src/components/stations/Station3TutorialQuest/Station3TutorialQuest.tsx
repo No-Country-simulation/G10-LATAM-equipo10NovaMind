@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Terminal, Copy, Check, CheckCircle2, ShieldCheck, ArrowRight, Sparkles, Award } from 'lucide-react';
 import type { TutorialStep } from '../../../types/types';
-// import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
+import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
 import styles from './Station3TutorialQuest.module.css';
 
 interface Station3Props {
@@ -55,7 +55,7 @@ export const Station3TutorialQuest = ({
   };
 
   const handleValidateCheckpoint = () => {
-    // triggerSmallConfetti();
+    triggerSmallConfetti();
     const newCompleted = { ...completedSteps, [stepId]: true };
     setCompletedSteps(newCompleted);
 
@@ -64,7 +64,7 @@ export const Station3TutorialQuest = ({
       if (!isCompleted) {
         onCompleteStation(75);
       }
-    //   triggerLevelUpConfetti();
+      triggerLevelUpConfetti();
       if (onOpenBuilderBadge) {
         onOpenBuilderBadge();
       }

@@ -13,7 +13,7 @@ import {
   Compass,
 } from 'lucide-react';
 import type { QuizQuestion } from '../../../types/types';
-// import { triggerCelebrationConfetti } from '../../../utils/confetti';
+import { triggerCelebrationConfetti } from '../../../utils/confetti';
 import styles from './Station5Quiz.module.css';
 
 interface Station5Props {
@@ -209,7 +209,7 @@ export const Station5FinalTrial = ({
       const correctCount = Object.values(userAnswers).filter(Boolean).length;
 
       if (correctCount >= minRequiredToPass) {
-        // triggerCelebrationConfetti();
+        triggerCelebrationConfetti();
         onCompleteStation(100);
         onOpenMasterBadge();
       }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Clapperboard, CheckCircle2, ChevronLeft, ChevronRight, Eye, Video, Award } from 'lucide-react';
 import type { DirectorScene } from '../../../types/types';
-// import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
+import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
 import styles from './Station4DirectorCut.module.css';
 
 interface Station4Props {
@@ -51,8 +51,8 @@ export const Station4DirectorCut = ({
 
     const viewedCount = Object.values(updated).filter(Boolean).length;
     if (viewedCount >= minRequired && !isCompleted) {
-    //   triggerSmallConfetti();
-    //   triggerLevelUpConfetti();
+      triggerSmallConfetti();
+      triggerLevelUpConfetti();
       onCompleteStation(50);
       onOpenDirectorBadge();
     }
