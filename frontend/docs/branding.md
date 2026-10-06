@@ -58,3 +58,14 @@ El resplandor difuso perimetral que emana del isotipo simboliza el momento del *
 ## 5. Elevador Pitch de Branding
 
 "El branding de NuevaMente trasciende la estética para convertirse en una síntesis de su ingeniería: un isotipo en cinta continua de Möbius que entrelaza la 'N' con la sinapsis del aprendizaje adaptativo, equilibrado sobre un modo oscuro riguroso y una tipografía Syne de precisión escultórica. Comunica solidez en cloud e inteligencia artificial sin sacrificar la cercanía pedagógica que define a una EdTech de vanguardia."
+
+
+
+<img width="108" height="111" alt="image" src="https://github.com/user-attachments/assets/79c41da9-daf4-41bc-a277-4c34522abeba" />
+
+<img width="338" height="104" alt="image" src="https://github.com/user-attachments/assets/1a39c60d-a253-499f-8ae1-0a5a1a271ee2" />
+
+<img width="225" height="82" alt="image" src="https://github.com/user-attachments/assets/76bf82b5-e666-4ef1-840c-d3feaa04c91e" />
+
+
+
