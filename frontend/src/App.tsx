@@ -4,6 +4,8 @@
  */
 
 import { useState } from "react";
+import { AuthModal } from "./components/AuthModal/AuthModal";
+import type { AuthUser } from "./components/AuthModal/AuthModal";
 import { Header } from "./components/Header/Header";
 import { PlayerHUD } from "./components/PlayerHUD/PlayerHUD";
 import { Step1Ingestion } from "./components/Step1Ingestion/Step1Ingestion";
@@ -25,6 +27,10 @@ import { uploadToOCIObjectStorage } from "./utils/ociStorage";
 import styles from "./App.module.css";
 
 export default function App() {
+  // Autenticación
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+
   // Stepper workflow principal: 1 = Ingesta, 2 = Knowledge Quest, 3 = Métricas & OCI
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
@@ -280,6 +286,14 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
       <Header
         currentStep={currentStep}
         onSelectStep={(step) => setCurrentStep(step)}
+        user={user}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onLogout={() => setUser(null)}
+      />
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onLoginSuccess={(loggedUser) => setUser(loggedUser)}
       />
 
       {/* 2. Gamified Player HUD */}
