@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Lock,
   Award,
@@ -11,10 +11,10 @@ import {
   AlertTriangle,
   ShieldAlert,
   Compass,
-} from 'lucide-react';
-import type { QuizQuestion } from '../../../types/types';
-import { triggerCelebrationConfetti } from '../../../utils/confetti';
-import styles from './Station5Quiz.module.css';
+} from "lucide-react";
+import type { QuizQuestion } from "../../../types/types";
+import { triggerCelebrationConfetti } from "../../../utils/confetti";
+import styles from "./Station5Quiz.module.css";
 
 interface Station5Props {
   questions: QuizQuestion[];
@@ -58,16 +58,24 @@ export const Station5FinalTrial = ({
     setIsQuizCompleted(false);
   }
 
-  const safeQuestions = questions.length > 0 ? questions : [
-    {
-      id: 'quiz-fallback-1',
-      pregunta: '¿Cuál es el propósito central del contenido analizado?',
-      opciones: ['Comprensión profunda de los conceptos clave', 'Memorización sin contexto', 'Ignorar las fuentes'],
-      respuesta_correcta: 0,
-      justificacion_rag: 'El objetivo principal de la adaptación pedagógica es asimilar los principios clave sin alucinaciones.',
-      cita_fuente: 'Documento procesado'
-    }
-  ];
+  const safeQuestions =
+    questions.length > 0
+      ? questions
+      : [
+          {
+            id: "quiz-fallback-1",
+            pregunta: "¿Cuál es el propósito central del contenido analizado?",
+            opciones: [
+              "Comprensión profunda de los conceptos clave",
+              "Memorización sin contexto",
+              "Ignorar las fuentes",
+            ],
+            respuesta_correcta: 0,
+            justificacion_rag:
+              "El objetivo principal de la adaptación pedagógica es asimilar los principios clave sin alucinaciones.",
+            cita_fuente: "Documento procesado",
+          },
+        ];
 
   const totalQuestions = safeQuestions.length;
   const minRequiredToPass = Math.max(1, Math.ceil(totalQuestions * 0.6));
@@ -89,25 +97,36 @@ export const Station5FinalTrial = ({
             <span className={styles.lockedTag}>
               The Final Trial · Examen Capstone
             </span>
-            <h3 className={styles.lockedTitle}>
-              Estación 05 Bloqueada
-            </h3>
+            <h3 className={styles.lockedTitle}>Estación 05 Bloqueada</h3>
             <p className={styles.lockedDesc}>
-              Completa al menos <strong style={{ color: 'var(--color-amber-300)' }}>2 estaciones previas</strong> para desbloquear la prueba de dominio sin alucinaciones.
+              Completa al menos{" "}
+              <strong style={{ color: "var(--color-amber-300)" }}>
+                2 estaciones previas
+              </strong>{" "}
+              para desbloquear la prueba de dominio sin alucinaciones.
             </p>
           </div>
 
           <div className={styles.lockedProgressBox}>
             <div className={styles.lockedProgressLabels}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Requisito de Desbloqueo:</span>
-              <strong style={{ color: 'var(--color-amber-300)', fontFamily: 'var(--font-code)' }}>
+              <span style={{ color: "var(--color-text-muted)" }}>
+                Requisito de Desbloqueo:
+              </span>
+              <strong
+                style={{
+                  color: "var(--color-amber-300)",
+                  fontFamily: "var(--font-code)",
+                }}
+              >
                 {completedStationsCount} de 2 Estaciones Completadas
               </strong>
             </div>
             <div className={styles.lockedProgressBarBg}>
               <div
                 className={styles.lockedProgressBarFill}
-                style={{ width: `${Math.min(100, (completedStationsCount / 2) * 100)}%` }}
+                style={{
+                  width: `${Math.min(100, (completedStationsCount / 2) * 100)}%`,
+                }}
               />
             </div>
           </div>
@@ -148,25 +167,48 @@ export const Station5FinalTrial = ({
           <ShieldAlert size={40} />
         </div>
 
-        <div style={{ maxWidth: '32rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div
+          style={{
+            maxWidth: "32rem",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.75rem",
+          }}
+        >
           <div>
             <span className={styles.dangerTag}>
               Escudos Cognitivos Agotados (0/3)
             </span>
           </div>
 
-          <h3 className={styles.dangerTitle}>
-            El error es parte del dominio
-          </h3>
+          <h3 className={styles.dangerTitle}>El error es parte del dominio</h3>
 
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            Consumiste tus 3 reservas de atención frente a conceptos no consolidados. En la ciencia cognitiva, la curva del olvido se vence mediante la repetición espaciada, no forzando respuestas al azar.
+          <p
+            style={{
+              color: "var(--color-text-secondary)",
+              fontSize: "0.875rem",
+              lineHeight: 1.6,
+            }}
+          >
+            Consumiste tus 3 reservas de atención frente a conceptos no
+            consolidados. En la ciencia cognitiva, la curva del olvido se vence
+            mediante la repetición espaciada, no forzando respuestas al azar.
           </p>
 
           <div className={styles.dangerNotice}>
-            <Compass size={20} style={{ color: 'var(--color-amber-400)', flexShrink: 0, marginTop: '2px' }} />
+            <Compass
+              size={20}
+              style={{
+                color: "var(--color-amber-400)",
+                flexShrink: 0,
+                marginTop: "2px",
+              }}
+            />
             <p>
-              Recuperaremos tus <strong>3 escudos al 100%</strong> y reiniciaremos el recorrido desde la <strong>Estación 01</strong> para que reconstruyas la intuición con una base sólida.
+              Recuperaremos tus <strong>3 escudos al 100%</strong> y
+              reiniciaremos el recorrido desde la <strong>Estación 01</strong>{" "}
+              para que reconstruyas la intuición con una base sólida.
             </p>
           </div>
         </div>
@@ -225,29 +267,54 @@ export const Station5FinalTrial = ({
   };
 
   const correctAnswersCount = Object.values(userAnswers).filter(Boolean).length;
-  const userScorePercentage = Math.round((correctAnswersCount / totalQuestions) * 100);
+  const userScorePercentage = Math.round(
+    (correctAnswersCount / totalQuestions) * 100,
+  );
   const isSuccess = correctAnswersCount >= minRequiredToPass;
 
   // 4. Pantalla: Resultado Final
   if (isQuizCompleted) {
     return (
-      <div className={`${styles.resultCard} ${isSuccess ? styles.resultSuccess : styles.resultFailed}`}>
-        <div className={`${styles.resultIconBox} ${isSuccess ? styles.resultIconSuccess : styles.resultIconFailed}`}>
+      <div
+        className={`${styles.resultCard} ${isSuccess ? styles.resultSuccess : styles.resultFailed}`}
+      >
+        <div
+          className={`${styles.resultIconBox} ${isSuccess ? styles.resultIconSuccess : styles.resultIconFailed}`}
+        >
           {isSuccess ? <Award size={40} /> : <AlertTriangle size={40} />}
         </div>
 
-        <div style={{ maxWidth: '28rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div
+          style={{
+            maxWidth: "28rem",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
           <div>
-            <span className={isSuccess ? styles.examApprovalPill : styles.dangerTag}>
-              {isSuccess ? '¡Evaluación Capstone Aprobada!' : 'Evaluación No Superada'}
+            <span
+              className={isSuccess ? styles.examApprovalPill : styles.dangerTag}
+            >
+              {isSuccess
+                ? "¡Evaluación Capstone Aprobada!"
+                : "Evaluación No Superada"}
             </span>
           </div>
 
           <h3 className={styles.lockedTitle}>
-            {correctAnswersCount} de {totalQuestions} Aciertos ({userScorePercentage}%)
+            {correctAnswersCount} de {totalQuestions} Aciertos (
+            {userScorePercentage}%)
           </h3>
 
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+          <p
+            style={{
+              color: "var(--color-text-secondary)",
+              fontSize: "0.875rem",
+              lineHeight: 1.6,
+            }}
+          >
             {isSuccess
               ? `Has superado el umbral requerido (mínimo ${minRequiredToPass} de ${totalQuestions} - ${minPercentage}%) demostrando anclaje conceptual riguroso.`
               : `Se requieren al menos ${minRequiredToPass} respuestas correctas (${minPercentage}%) para superar la estación y reclamar la Medalla Master.`}
@@ -260,19 +327,30 @@ export const Station5FinalTrial = ({
             onClick={handleRestartQuiz}
             className={styles.lockedNavBtn}
           >
-            <RotateCcw size={14} style={{ marginRight: '0.25rem' }} />
+            <RotateCcw size={14} style={{ marginRight: "0.25rem" }} />
             Reintentar Examen
           </button>
 
           {isSuccess && (
-            <button
-              type="button"
-              onClick={onDownloadArtifact}
-              className={styles.downloadArtifactBtn}
-            >
-              <Download size={14} />
-              Descargar Artefacto JSON
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onDownloadArtifact}
+                className={styles.downloadArtifactBtn}
+              >
+                <Download size={14} />
+                Descargar Artefacto JSON
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onSelectStation(0)}
+                className={styles.lockedNavBtn}
+              >
+                <BookOpen size={14} style={{ marginRight: "0.25rem" }} />
+                Repasar desde Estación 1
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -284,26 +362,54 @@ export const Station5FinalTrial = ({
     <div className={styles.stationWrapper}>
       <div className={styles.headerContainer}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              marginBottom: "0.25rem",
+            }}
+          >
             <span className={styles.examTitleTag}>
               <Award size={12} color="var(--color-amber-400)" />
               Estación 05 · The Final Trial (Quiz Capstone)
             </span>
             <span className={styles.examApprovalPill}>
-              Aprobación: ≥{minRequiredToPass}/{totalQuestions} ({minPercentage}%)
+              Aprobación: ≥{minRequiredToPass}/{totalQuestions} ({minPercentage}
+              %)
             </span>
           </div>
-          <h3 className={styles.lockedTitle} style={{ fontSize: '1.5rem', textAlign: 'left' }}>
+          <h3
+            className={styles.lockedTitle}
+            style={{ fontSize: "1.5rem", textAlign: "left" }}
+          >
             Examen Interactivo con Justificación RAG
           </h3>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-            Cada respuesta se contrasta con el material de origen para verificar la comprensión sin alucinaciones.
+          <p
+            style={{
+              color: "var(--color-text-secondary)",
+              fontSize: "0.875rem",
+            }}
+          >
+            Cada respuesta se contrasta con el material de origen para verificar
+            la comprensión sin alucinaciones.
           </p>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>Pregunta</div>
-          <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-code)', fontWeight: 700, color: 'var(--color-amber-400)' }}>
+        <div style={{ textAlign: "right" }}>
+          <div
+            style={{ fontSize: "0.6875rem", color: "var(--color-text-muted)" }}
+          >
+            Pregunta
+          </div>
+          <div
+            style={{
+              fontSize: "0.875rem",
+              fontFamily: "var(--font-code)",
+              fontWeight: 700,
+              color: "var(--color-amber-400)",
+            }}
+          >
             {currentQuestionIndex + 1} de {totalQuestions}
           </div>
         </div>
@@ -311,12 +417,18 @@ export const Station5FinalTrial = ({
 
       <div className={styles.questionCard}>
         <div>
-          <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-code)', color: 'var(--color-violet-400)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              fontFamily: "var(--font-code)",
+              color: "var(--color-violet-400)",
+              textTransform: "uppercase",
+              marginBottom: "0.25rem",
+            }}
+          >
             Desafío 0{currentQuestionIndex + 1}
           </div>
-          <h4 className={styles.questionTitle}>
-            {currentQ.pregunta}
-          </h4>
+          <h4 className={styles.questionTitle}>{currentQ.pregunta}</h4>
         </div>
 
         <div className={styles.optionsList}>
@@ -347,7 +459,10 @@ export const Station5FinalTrial = ({
                 {isEvaluated && (
                   <span>
                     {isCorrectAnswer ? (
-                      <CheckCircle2 size={20} color="var(--color-emerald-400)" />
+                      <CheckCircle2
+                        size={20}
+                        color="var(--color-emerald-400)"
+                      />
                     ) : isSelected ? (
                       <XCircle size={20} color="var(--color-rose-400)" />
                     ) : null}
@@ -371,7 +486,10 @@ export const Station5FinalTrial = ({
 
             {currentQ.cita_fuente && (
               <div className={styles.ragCitation}>
-                <strong style={{ color: 'var(--color-violet-300)' }}>Cita textual fuente:</strong> {currentQ.cita_fuente}
+                <strong style={{ color: "var(--color-violet-300)" }}>
+                  Cita textual fuente:
+                </strong>{" "}
+                {currentQ.cita_fuente}
               </div>
             )}
 
@@ -380,7 +498,11 @@ export const Station5FinalTrial = ({
               onClick={handleNextQuestion}
               className={styles.nextQuestionBtn}
             >
-              <span>{currentQuestionIndex < totalQuestions - 1 ? 'Siguiente Pregunta' : 'Finalizar Examen'}</span>
+              <span>
+                {currentQuestionIndex < totalQuestions - 1
+                  ? "Siguiente Pregunta"
+                  : "Finalizar Examen"}
+              </span>
               <ArrowRight size={14} />
             </button>
           </div>

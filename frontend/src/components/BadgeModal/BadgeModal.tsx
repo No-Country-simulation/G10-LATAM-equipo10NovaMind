@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Award, CheckCircle2, Sparkles, Flame, Shield, Calendar } from 'lucide-react';
+import { X, Award, CheckCircle2, Sparkles, Flame, Shield, Calendar, RotateCcw, Check } from 'lucide-react';
 import type { Achievement } from '../../types/types';
 import styles from './BadgeModal.module.css';
 
@@ -11,6 +11,8 @@ interface BadgeModalProps {
   xp: number;
   streakDays: number;
   onContinueQuest?: () => void;
+  onRestartToStation1?: () => void;
+  onReviewStations?: () => void;
 }
 
 export const BadgeModal: React.FC<BadgeModalProps> = ({
@@ -21,8 +23,9 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
   xp,
   streakDays,
   onContinueQuest,
+  onRestartToStation1,
+  onReviewStations,
 }) => {
-  // Cierre accesible con tecla Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -45,10 +48,26 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   const unlockedCount = allBadges.filter((b) => b.desbloqueado).length;
 
-  const handleContinue = () => {
+  // Detección de si es la medalla capstone/final
+  const isCapstoneFinalBadge =
+    Boolean(singleBadge?.id?.toLowerCase().includes('master') ||
+    singleBadge?.titulo?.toLowerCase().includes('master') ||
+    onRestartToStation1 ||
+    onReviewStations);
+
+  const handleFinish = () => {
     onClose();
-    if (onContinueQuest) {
+    if (onReviewStations) {
+      onReviewStations();
+    } else if (onContinueQuest) {
       onContinueQuest();
+    }
+  };
+
+  const handleRestartToStart = () => {
+    onClose();
+    if (onRestartToStation1) {
+      onRestartToStation1();
     }
   };
 
@@ -91,13 +110,37 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleContinue}
-              className={styles.ctaContinueButton}
-            >
-              ¡Continuar Ruta Cognitiva!
-            </button>
+            {isCapstoneFinalBadge ? (
+              <div className={styles.finalActionsContainer}>
+                <button
+                  type="button"
+                  onClick={handleFinish}
+                  className={styles.ctaContinueButton}
+                >
+                  <Check size={16} />
+                  <span>Finalizar y Repasar Estaciones</span>
+                </button>
+
+                {onRestartToStation1 && (
+                  <button
+                    type="button"
+                    onClick={handleRestartToStart}
+                    className={styles.restartLinkButton}
+                  >
+                    <RotateCcw size={13} />
+                    <span>Reiniciar Recorrido desde la Estación 1</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleFinish}
+                className={styles.ctaContinueButton}
+              >
+                ¡Continuar Ruta Cognitiva!
+              </button>
+            )}
           </div>
         ) : (
           /* Vitrina completa de trofeos */
