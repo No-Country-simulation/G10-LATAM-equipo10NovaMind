@@ -92,7 +92,7 @@ export default function App() {
 
   // Desbloqueo y apertura de modal para una medalla
   const handleUnlockBadge = (badgeId: string) => {
-    const timestamp = '2026-10-05T00:00:00.000Z';
+    const timestamp = "2026-10-05T00:00:00.000Z";
     setAchievements((prev) =>
       prev.map((b) => {
         if (b.id === badgeId) {
@@ -170,7 +170,7 @@ export default function App() {
             ...matched.data.metadatos,
             perfil_aplicado: profile,
             formato_generado: format,
-            fecha_generacion: '2026-10-05T00:00:00.000Z',
+            fecha_generacion: "2026-10-05T00:00:00.000Z",
           },
         };
       }
@@ -344,7 +344,14 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
       {/* Footer */}
       <footer className={styles.footer}>
         <div className={styles.footerContainer}>
-          <div>
+          <div className={styles.footerBrand}>
+            <div className={styles.isologoFooter}>
+              <img
+                src="/IsotipoMonocromo.svg"
+                alt=""
+                className={styles.brandLetter}
+              />
+            </div>
             <span className={styles.brandSign}>NuevaMente</span>
             <span> · Hackathon ONE G10 (Oracle Next Education & Alura)</span>
           </div>
@@ -361,7 +368,12 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
                 setIsTrophyModalOpen(true);
               }}
               className={styles.trophyLink}
-              style={{ background: "none", border: "none", font: "inherit", cursor: "pointer" }}
+              style={{
+                background: "none",
+                border: "none",
+                font: "inherit",
+                cursor: "pointer",
+              }}
             >
               Medallas ({unlockedBadgesCount}/{achievements.length})
             </button>
@@ -381,6 +393,16 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
         xp={xp}
         streakDays={streakDays}
         onContinueQuest={handleContinueAfterBadge}
+        onReviewStations={() => {
+          // Te lleva al paso 2 y a la primera estación para repasar
+          setCurrentStep(2);
+          setActiveStationIndex(0);
+        }}
+        onRestartToStation1={() => {
+          // Vuelve al inicio del recorrido
+          setCurrentStep(2);
+          setActiveStationIndex(0);
+        }}
       />
     </div>
   );

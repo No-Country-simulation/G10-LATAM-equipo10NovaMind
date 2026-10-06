@@ -27,10 +27,13 @@ export const Header: React.FC<HeaderProps> = ({
           className={styles.brand}
         >
           <div className={styles.brandIcon}>
-            <span className={styles.brandLetter}>N</span>
+            <img src="/Isotipo.svg" alt="Logo" className={styles.brandLetter} />
           </div>
           <div className={styles.brandInfo}>
-            <span className={styles.brandTitle}>NuevaMente</span>
+            <span className={styles.brandTitle}>
+  <span className={styles.brandLight}>Nueva</span>
+  <span className={styles.brandBold}>Mente</span>
+</span>
             <span className={styles.brandTagline}>RAG & OCI EdTech</span>
           </div>
         </button>
