@@ -272,10 +272,10 @@ export const Step1Ingestion = ({
           </div>
 
           {/* Estado de Animación del Pipeline o Botón de Acción */}
-          {isProcessing ? (
+      {isProcessing ? (
             <div className={styles.processingCard}>
               <div className={styles.processingHeader}>
-                <Cpu size={22} color="var(--color-violet-400)" style={{ animation: 'spin 2s linear infinite' }} />
+                <Cpu size={24} className={styles.spinningIcon} />
                 <span className={styles.processingStageText}>
                   {processingStage || 'Orquestando Agentes RAG & OCI...'}
                 </span>

@@ -11,6 +11,7 @@ import {
   Award,
 } from "lucide-react";
 import type { ResumenNinjaData } from "../../../types/types";
+import { triggerLevelUpConfetti } from "../../../utils/confetti";
 import styles from "./Station1ResumenNinja.module.css";
 
 interface Station1Props {
@@ -50,6 +51,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
 
   const handleAssimilation = () => {
     if (isCompleted) {
+      triggerLevelUpConfetti();
       onOpenNinjaBadge();
       return;
     }
@@ -57,6 +59,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
     if (!allChecked) return;
 
     onCompleteStation(50);
+    triggerLevelUpConfetti();
     onOpenNinjaBadge();
   };
 
