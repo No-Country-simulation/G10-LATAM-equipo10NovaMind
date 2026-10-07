@@ -5,66 +5,66 @@
 
 :root {
   /* Surfaces & Backgrounds */
-  --color-bg-base: #07090e;
-  --color-bg-surface: #0d111a;
-  --color-bg-elevated: #131826;
-  --color-bg-overlay: rgba(7, 9, 14, 0.85);
-  --color-card: rgba(13, 17, 26, 0.9);
-  --color-card-subtle: rgba(255, 255, 255, 0.02);
-  --color-card-hover: rgba(255, 255, 255, 0.04);
+  --color-bg-base: oklch(0.1398 0.0117 265.76); /* #07090e */
+  --color-bg-surface: oklch(0.178 0.0198 265.87); /* #0d111a */
+  --color-bg-elevated: oklch(0.2112 0.0289 268.78); /* #131826 */
+  --color-bg-overlay: oklch(0.1398 0.0117 265.76 / 85%); /* rgba(7, 9, 14, 0.85) */
+  --color-card: oklch(0.178 0.0198 265.87 / 90%); /* rgba(13, 17, 26, 0.9) */
+  --color-card-subtle: oklch(1 0 0 / 2%); /* rgba(255, 255, 255, 0.02) */
+  --color-card-hover: oklch(1 0 0 / 4%); /*rgba(255, 255, 255, 0.04)*/
 
   /* Borders & Dividers */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-subtle: oklch(1 0 0 / 6%); /*rgba(255, 255, 255, 0.06)*/
+  --border-default: oklch(1 0 0 / 10%); /*rgba(255, 255, 255, 0.1)*/
+  --border-strong: oklch(1 0 0 / 20%); /*rgba(255, 255, 255, 0.2)*/
 
   /* Typography Colors */
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-muted: #94a3b8;
-  --color-text-subtle: #64748b;
+  --color-text-primary: oklch(0.9842 0.0034 247.86); /*#f8fafc*/
+  --color-text-secondary: oklch(0.869 0.0198 252.89); /*#cbd5e1*/
+  --color-text-muted: oklch(0.7107 0.0351 256.79); /*#94a3b8*/
+  --color-text-subtle: oklch(0.5544 0.0407 257.42); /*#64748b*/
 
   /* Estación 01: Intuición / Resumen Ninja (Violeta) */
-  --color-violet-600: #7c3aed;
-  --color-violet-500: #8b5cf6;
-  --color-violet-400: #a78bfa;
-  --color-violet-300: #c4b5fd;
-  --color-violet-bg: rgba(139, 92, 246, 0.12);
-  --color-violet-border: rgba(139, 92, 246, 0.35);
+  --color-violet-600: oklch(0.5413 0.2466 293.01); /*#7c3aed*/
+  --color-violet-500: oklch(0.6056 0.2189 292.72); /* #8b5cf6*/
+  --color-violet-400: oklch(0.709 0.1592 293.54); /*#a78bfa;*/
+  --color-violet-300:oklch(0.8112 0.1013 293.57); /*#c4b5fd*/
+  --color-violet-bg: oklch(0.6056 0.2189 292.72 / 12%); /*rgba(139, 92, 246, 0.12)*/
+  --color-violet-border: oklch(0.6056 0.2189 292.72 / 35%); /*rgba(139, 92, 246, 0.35)*/
 
   /* Estación 02: Active Recall / Flashcards (Cian) */
-  --color-cyan-500: #06b6d4;
-  --color-cyan-400: #22d3ee;
-  --color-cyan-300: #67e8f9;
-  --color-cyan-bg: rgba(6, 182, 212, 0.12);
-  --color-cyan-border: rgba(6, 182, 212, 0.35);
+  --color-cyan-500: oklch(0.7148 0.1257 215.22); /*#06b6d4*/
+  --color-cyan-400: oklch(0.7971 0.1339 211.53); /* #22d3ee*/
+  --color-cyan-300: oklch(0.8651 0.1153 207.08); /* #67e8f9*/
+  --color-cyan-bg: oklch(0.7148 0.1257 215.22 / 12%); /*rgba(6, 182, 212, 0.12)*/
+  --color-cyan-border: oklch(0.7148 0.1257 215.22 / 35%); /*rgba(6, 182, 212, 0.35)*/
 
   /* Estación 03: Laboratorio Técnico / Tutorial (Esmeralda) */
-  --color-emerald-500: #10b981;
-  --color-emerald-400: #34d399;
-  --color-emerald-300: #6ee7b7;
-  --color-emerald-bg: rgba(16, 185, 129, 0.12);
-  --color-emerald-border: rgba(16, 185, 129, 0.35);
+  --color-emerald-500: oklch(0.6959 0.1491 162.48); /* #10b981*/
+  --color-emerald-400: oklch(0.7729 0.1535 163.22); /* #34d399*/
+  --color-emerald-300: oklch(0.8651 0.1153 207.08); /* #67e8f9*/
+  --color-emerald-bg: oklch(0.6959 0.1491 162.48 / 12%); /* rgba(16, 185, 129, 0.12)*/
+  --color-emerald-border: oklch(0.6959 0.1491 162.48 / 35%); /* rgba(16, 185, 129, 0.35)*/
 
-  /* Estación 04: Storyboard / Director Cut (Fucsia) */
-  --color-fuchsia-500: #d946ef;
-  --color-fuchsia-400: #e879f9;
-  --color-fuchsia-300: #f0abfc;
-  --color-fuchsia-bg: rgba(217, 70, 239, 0.12);
-  --color-fuchsia-border: rgba(217, 70, 239, 0.35);
+  /* Estación 04: Storyboard / Director Cut (Fucsia)  REVISAR*/
+  /*--color-fuchsia-500: oklch(0.6668 0.2591 322.15);*/ /*#d946ef*/
+  /*--color-fuchsia-400: oklch(0.7447 0.2209 322.73);*/ /* #e879f9*/
+  /*--color-fuchsia-300: oklch(0.8061 0.1741 321.72);*/ /* #f0abfc*/
+  /*--color-fuchsia-bg: oklch(0.6668 0.2591 322.15 / 12%);*/ /* rgba(217, 70, 239, 0.12)*/
+  /*--color-fuchsia-border: oklch(0.6668 0.2591 322.15 / 35%);*/ /* rgba(217, 70, 239, 0.35)*/
 
   /* Estación 05 & Gamificación: The Final Trial / Trofeos / Racha (Ámbar) */
-  --color-amber-500: #f59e0b;
-  --color-amber-400: #fbbf24;
-  --color-amber-300: #fcd34d;
-  --color-amber-bg: rgba(245, 158, 11, 0.12);
-  --color-amber-border: rgba(245, 158, 11, 0.35);
+  --color-amber-500: oklch(0.7686 0.1647 70.08); /*#f59e0b*/
+  --color-amber-400: oklch(0.8369 0.1644 84.43); /*#fbbf24*/
+  --color-amber-300: oklch(0.879 0.1534 91.61); /*#fcd34d*/
+  --color-amber-bg: oklch(0.7686 0.1647 70.08 / 12%); /* rgba(245, 158, 11, 0.12)*/
+  --color-amber-border: oklch(0.7686 0.1647 70.08 / 35%); /*rgba(245, 158, 11, 0.35)*/
 
   /* Feedback / Escudos / Error (Rosa) */
-  --color-rose-500: #f43f5e;
-  --color-rose-400: #fb7185;
-  --color-rose-bg: rgba(244, 63, 94, 0.12);
-  --color-rose-border: rgba(244, 63, 94, 0.35);
+  --color-rose-500: oklch(0.645 0.2154 16.44); /* #f43f5e*/
+  --color-rose-400: oklch(0.7192 0.169 13.43); /* #fb7185*/
+  --color-rose-bg: oklch(0.645 0.2154 16.44 / 12%); /*rgba(244, 63, 94, 0.12)*/
+  --color-rose-border: oklch(0.645 0.2154 16.44 / 35%); /*rgba(244, 63, 94, 0.35)*/
 
   /* Tipografías */
 
@@ -80,10 +80,10 @@
   --radius-full: 9999px;
 
   /* Sombras y Glows */
-  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  --shadow-glow-violet: 0 0 25px rgba(139, 92, 246, 0.25);
-  --shadow-glow-amber: 0 0 25px rgba(245, 158, 11, 0.25);
-  --shadow-glow-emerald: 0 0 25px rgba(16, 185, 129, 0.25);
+  --shadow-card: 0 10px 30px -10px oklch(0 0 0 / 50%); /*rgba(0, 0, 0, 0.5)*/
+  --shadow-glow-violet: 0 0 25px oklch(0.6056 0.2189 292.72 / 25%); /*rgba(139, 92, 246, 0.25)*/
+  --shadow-glow-amber: 0 0 25px oklch(0.7686 0.1647 70.08 / 25%); /*rgba(245, 158, 11, 0.25)*/
+    /*--shadow-glow-emerald: 0 0 25px oklch(0.6959 0.1491 162.48 / 25%);*/ /* rgba(16, 185, 129, 0.25)*/
 
   /* Transiciones */
   --transition-fast: 150ms ease;
