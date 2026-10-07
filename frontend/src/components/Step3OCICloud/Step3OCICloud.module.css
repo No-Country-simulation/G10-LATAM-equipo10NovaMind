@@ -77,12 +77,19 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+  width: 100%;
 }
 
 @media (min-width: 768px) {
   .dualGrid {
-    grid-template-columns: 1fr 1fr;
+    /* minmax(0, 1fr) garantiza 50% estricto para ambas tarjetas */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
+}
+
+.auditCard,
+.ociStorageCard {
+  min-width: 0; /* Permite que el grid no se desborde */
 }
 
 .auditCard {
@@ -299,6 +306,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  min-width: 0; /* CLAVE */
 }
 
 .ociUrlText {
@@ -307,6 +315,8 @@
   text-overflow: ellipsis;
   font-family: var(--font-code);
   font-size: 0.6875rem;
+  flex: 1; /* Permite comprimirse y mostrar los tres puntitos (...) */
+  min-width: 0; /* CLAVE */
 }
 
 .downloadIconBtn {

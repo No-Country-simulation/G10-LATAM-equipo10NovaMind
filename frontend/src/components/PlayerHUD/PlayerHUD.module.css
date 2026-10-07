@@ -8,7 +8,7 @@
   transition: all var(--transition-base);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
   position: sticky;
-  top: 3.5rem;
+  top: 4.5rem;
   z-index: 40;
 }
 
