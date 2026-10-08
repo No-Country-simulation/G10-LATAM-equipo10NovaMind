@@ -1,0 +1,273 @@
+{
+  "status": "exito",
+  "metadatos": {
+    "perfil_aplicado": "Principiante / Transición de Carrera",
+    "formato_generado": "Flashcards",
+    "nicho_aplicado": "General",
+    "tiempo_estimado_estudio_minutos": 10,
+    "conceptos_clave": [
+      "Apache Kafka",
+      "Event Streaming",
+      "Publicar y Suscribir",
+      "Almacenamiento",
+      "Procesamiento",
+      "Eventos",
+      "Clientes",
+      "APIs"
+    ],
+    "prerrequisitos": []
+  },
+  "contenido_adaptado": {
+    "titulo": "Conociendo Apache Kafka: Una Plataforma de Eventos",
+    "introduccion_contextualizada": "Apache Kafka es una herramienta poderosa para gestionar y procesar datos en tiempo real. ¡Vamos a explorar sus conceptos clave!",
+    "items": [
+      {
+        "frente": "¿Qué es Apache Kafka?",
+        "dorso": "Apache Kafka es una plataforma de streaming de eventos que te permite publicar, suscribirte y procesar flujos de datos en tiempo real.",
+        "pista_didactica": "Imagina a Kafka como un sistema que te ayuda a manejar una gran cantidad de información en movimiento constante."
+      },
+      {
+        "frente": "¿Qué significa 'streaming de eventos'?",
+        "dorso": "Es la capacidad de manejar flujos continuos de datos, como si fuera una corriente de información en tiempo real.",
+        "pista_didactica": "Piensa en una radio en línea: la música fluye constantemente, al igual que los eventos en Kafka."
+      },
+      {
+        "frente": "¿Qué hace Kafka con los eventos?",
+        "dorso": "Te permite publicarlos (escribirlos) y suscribirte (leerlos) en tiempo real, además de almacenarlos y procesarlos.",
+        "pista_didactica": "Es como un sistema de mensajería instantánea: puedes enviar y recibir mensajes, guardarlos y analizarlos."
+      },
+      {
+        "frente": "¿Cómo funciona Kafka?",
+        "dorso": "Utiliza servidores y clientes que se comunican a través de un protocolo de red de alto rendimiento.",
+        "pista_didactica": "Es como una red social: los servidores son los administradores y los clientes son los usuarios que interactúan."
+      },
+      {
+        "frente": "¿Qué son los eventos en Kafka?",
+        "dorso": "Son registros de que algo ha sucedido, como un mensaje o una acción en tu negocio.",
+        "pista_didactica": "Puedes pensar en ellos como notas que dejan tus clientes en una tienda online."
+      },
+      {
+        "frente": "¿Qué hacen los clientes de Kafka?",
+        "dorso": "Te permiten escribir aplicaciones distribuidas y microservicios que manejan eventos en paralelo, a gran escala y de manera confiable.",
+        "pista_didactica": "Son como tus empleados: trabajan juntos para gestionar las tareas de manera eficiente."
+      },
+      {
+        "frente": "¿Qué son las APIs de Kafka?",
+        "dorso": "Son interfaces de programación que te permiten gestionar y administrar Kafka, así como publicar, suscribirte y procesar eventos.",
+        "pista_didactica": "Son como las herramientas que usas para construir y mantener una casa: te ayudan a trabajar con eficacia."
+      }
+    ],
+    "resumen_ninja": null,
+    "flashcards": null,
+    "tutorial": null,
+    "director_cut": null,
+    "quiz": null
+  },
+  "fuentes_utilizadas": [
+    {
+      "documento_id": "doc-46e505f74df4bf63",
+      "chunk_id": "doc-46e505f74df4bf63_3",
+      "texto_fuente": "for data platforms, event-driven architectures, and microservices. ## Apache Kafka® is an event streaming platform. What does that mean? Kafka combines three key capabilities so you can implement [your use cases](/powered-by) for event streaming end-to-end with a single battle-tested solution: 1. To **publish** (write) and **subscribe to** (read) streams of events, including continuous import/export of your data from other systems. 2. To **store** streams of events durably and reliably for as long as you want. 3. To **process** streams of events as they occur or retrospectively. And all this functionality is provided in a distributed, highly scalable, elastic, fault-tolerant, and secure manner. Kafka can be deployed on bare-metal hardware, virtual machines, and containers, and on-premises as well as in the cloud. You can choose between self-managing your Kafka environments and using fully managed services offered by a variety of vendors. ## How does Kafka work in a nutshell? Kafka is a distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments."
+    },
+    {
+      "documento_id": "doc-46e505f74df4bf63",
+      "chunk_id": "doc-46e505f74df4bf63_5",
+      "texto_fuente": "other Kafka clusters. To let you implement mission-critical use cases, a Kafka cluster is highly scalable and fault-tolerant: if any of its servers fails, the other servers will take over their work to ensure continuous operations without any data loss. **Clients** : They allow you to write distributed applications and microservices that read, write, and process streams of events in parallel, at scale, and in a fault-tolerant manner even in the case of network problems or machine failures. Kafka ships with some such clients included, which are augmented by [dozens of clients](https://cwiki.apache.org/confluence/x/3gDVAQ) provided by the Kafka community: clients are available for Java and Scala including the higher-level [Kafka Streams](/documentation/streams/) library, for Go, Python, C/C++, and many other programming languages as well as REST APIs. ## Main Concepts and Terminology An **event** records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation. When you read or write data to Kafka, you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: * Event key: \"Alice\" * Event value: \"Made a payment of $200 to Bob\" * Event timestamp: \"Jun. 25, 2020 at 2:06 p.m.\""
+    },
+    {
+      "documento_id": "doc-46e505f74df4bf63",
+      "chunk_id": "doc-46e505f74df4bf63_10",
+      "texto_fuente": "The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. ## Kafka APIs In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala: * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. * The [Consumer API](/documentation.html#consumerapi) to subscribe to (read) one or more topics and to process the stream of events produced to them. * The [Kafka Streams API](/documentation/streams) to implement stream processing applications and microservices. It provides higher-level functions to process event streams, including transformations, stateful operations like aggregations and joins, windowing, processing based on event-time, and more. Input is read from one or more topics in order to generate output to one or more topics, effectively transforming the input streams to output streams. * The [Kafka Connect API](/documentation.html#connect) to build and run reusable data import/export connectors that consume (read) or produce (write) streams of events from and to external systems and applications so they can integrate with Kafka. For example, a connector to a relational database like PostgreSQL might capture every change to a set of tables. However, in practice, you typically don't need to implement your own connectors"
+    }
+  ],
+  "evaluacion_calidad": {
+    "anclaje_fuente_score": 1.0,
+    "claridad_pedagogica": "Alta",
+    "observaciones": "El contenido generado es fiel a los fragmentos fuente y está muy bien adaptado al perfil de principiante/transición de carrera, al formato de flashcards y al nivel didáctico. El lenguaje es claro y las pistas didácticas con analogías son apropiadas para facilitar la comprensión.",
+    "afirmaciones": [
+      {
+        "afirmacion": "Apache Kafka es una Plataforma de Eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Apache Kafka es una herramienta poderosa para gestionar y procesar datos en tiempo real.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Apache Kafka es una plataforma de streaming de eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka te permite publicar flujos de datos en tiempo real.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka te permite suscribirte a flujos de datos en tiempo real.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka te permite procesar flujos de datos en tiempo real.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Streaming de eventos es la capacidad de manejar flujos continuos de datos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Estos flujos son como una corriente de información en tiempo real.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka permite publicar (escribir) eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka permite suscribirse (leer) eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka permite almacenar eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka permite procesar eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Las acciones de publicar, suscribirse, almacenar y procesar eventos se realizan en tiempo real.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Kafka utiliza servidores y clientes.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Los servidores y clientes de Kafka se comunican a través de un protocolo de red de alto rendimiento.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_3",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Los eventos son registros de que algo ha sucedido.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_5",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Los eventos se pueden considerar como un mensaje.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_5",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Los eventos se pueden considerar como una acción en tu negocio.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_5",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Los clientes de Kafka permiten escribir aplicaciones distribuidas y microservicios.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_5",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Estas aplicaciones y microservicios manejan eventos en paralelo.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_5",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Estas aplicaciones y microservicios manejan eventos a gran escala.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_5",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Estas aplicaciones y microservicios manejan eventos de manera confiable.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_5",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Las APIs de Kafka son interfaces de programación.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_10",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Las APIs de Kafka permiten gestionar y administrar Kafka.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_10",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Las APIs de Kafka permiten publicar eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_10",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Las APIs de Kafka permiten suscribirse a eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_10",
+        "comentario": null
+      },
+      {
+        "afirmacion": "Las APIs de Kafka permiten procesar eventos.",
+        "respaldada": true,
+        "chunk_id_evidencia": "doc-46e505f74df4bf63_10",
+        "comentario": null
+      }
+    ],
+    "sugerencias_correccion": []
+  },
+  "almacenamiento_oci": {
+    "bucket": "nuevamente-contenidos-educativos",
+    "objeto_id": "contenidos-generados/doc-46e505f74df4bf63-principiante-transicion-de-carrera-flashcards.json",
+    "status_upload": "completado"
+  },
+  "advertencias": [
+    "La consulta se parece poco al documento; se usaron los fragmentos más cercanos sin umbral de similitud."
+  ],
+  "error": null,
+  "orquestacion": {
+    "intentos_redaccion": 1,
+    "scores_por_intento": [
+      1.0
+    ],
+    "umbral_anclaje": 0.75,
+    "max_reintentos": 2,
+    "duracion_segundos": 47.544,
+    "documento_id": "doc-46e505f74df4bf63",
+    "chunks_recuperados": 3
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-10-08T00:45:14Z",
+  "rafaga_health": {
+    "nombre": "GET /health",
+    "num_requests": 100,
+    "tasa_exito": 100.0,
+    "rps": 137.24277842493095,
+    "lat_min_ms": 61.833858489990234,
+    "lat_media_ms": 115.5185341835022,
+    "lat_p95_ms": 162.5664234161377,
+    "lat_p99_ms": 206.98094367980957,
+    "lat_max_ms": 206.98094367980957
+  },
+  "rafaga_config": {
+    "nombre": "GET /api/v1/config/opciones",
+    "num_requests": 50,
+    "tasa_exito": 100.0,
+    "rps": 144.32262060422545,
+    "lat_min_ms": 7.977485656738281,
+    "lat_media_ms": 21.677441596984863,
+    "lat_p95_ms": 37.28938102722168,
+    "lat_p99_ms": 38.46001625061035,
+    "lat_max_ms": 38.46001625061035
+  },
+  "desacople_inferencia": {
+    "status_inferencia": 200,
+    "duracion_inferencia_s": 71.76209354400635,
+    "muestras_health": 229,
+    "lat_media_health_ms": 9.265689350111515,
+    "lat_max_health_ms": 48.86984825134277,
+    "desacople_exitoso": true
+  }
+}

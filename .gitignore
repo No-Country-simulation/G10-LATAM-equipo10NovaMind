@@ -50,6 +50,10 @@ data/documents/*
 !data/documents/Snowflake_SIGMOD.pdf
 !data/documents/guia_optimizacion_swap_oci.md
 
+# Archivos binarios pesados en carpetas de historial
+historial_progreso/*.pdf
+
+
 # Herramientas
 .pytest_cache/
 .mypy_cache/
@@ -73,4 +77,8 @@ PROMPT_CONTEXTO_AGENTE.md
 TROUBLESHOOTING.md
 *TROUBLESHOOTING*.md
 **/TROUBLESHOOTING.md
+
+# Borradores de diseño y notas privadas
+audiovisual.md
+
 

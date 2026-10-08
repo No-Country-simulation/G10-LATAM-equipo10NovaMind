@@ -43,6 +43,7 @@ export async function solicitarAdaptacion(
     const formData = new FormData();
     if (docTitle) formData.append('titulo', docTitle);
     formData.append('documento_contenido', docContent);
+    formData.append('texto_directo', docContent);
     formData.append('perfil_destinatario', profile);
     formData.append('formato_salida', format);
     formData.append('nicho_sector', niche);

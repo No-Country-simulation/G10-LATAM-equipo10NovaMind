@@ -128,10 +128,13 @@ async def _extraer_solicitud(
     nicho_sector: str,
     nivel_detalle: str,
     tema_consulta: Optional[str],
+    documento_contenido: Optional[str] = None,
 ) -> SolicitudAdaptacion:
     """Extrae el contenido documental y valida los parámetros de la solicitud pedagógica."""
     contenido_texto = ""
     doc_titulo = titulo or "Documento Técnico"
+
+    texto_candidato = (texto_directo or "").strip() or (documento_contenido or "").strip()
 
     if archivo and archivo.filename:
         contenido_bytes = await archivo.read()
@@ -151,8 +154,8 @@ async def _extraer_solicitud(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error de ingesta: {exc}",
             ) from exc
-    elif texto_directo and texto_directo.strip():
-        contenido_texto = texto_directo.strip()
+    elif texto_candidato:
+        contenido_texto = texto_candidato
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -196,6 +199,7 @@ async def adaptar_contenido(
     nicho_sector: str = Form("General", description="Sector de contextualización"),
     nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
     tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
+    documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
 ) -> RespuestaAdaptacion:
     """
     Endpoint principal síncrono: recibe el documento y los parámetros pedagógicos,
@@ -210,6 +214,7 @@ async def adaptar_contenido(
         nicho_sector=nicho_sector,
         nivel_detalle=nivel_detalle,
         tema_consulta=tema_consulta,
+        documento_contenido=documento_contenido,
     )
 
     orquestador = get_orquestador()
@@ -245,6 +250,7 @@ async def adaptar_contenido_stream(
     nicho_sector: str = Form("General", description="Sector de contextualización"),
     nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
     tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
+    documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
 ) -> StreamingResponse:
     """
     Endpoint con Server-Sent Events (SSE) y heartbeats periódicos (cada 15s)
@@ -259,6 +265,7 @@ async def adaptar_contenido_stream(
         nicho_sector=nicho_sector,
         nivel_detalle=nivel_detalle,
         tema_consulta=tema_consulta,
+        documento_contenido=documento_contenido,
     )
 
     orquestador = get_orquestador()
