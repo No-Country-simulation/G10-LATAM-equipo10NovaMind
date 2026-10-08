@@ -48,12 +48,25 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   const unlockedCount = allBadges.filter((b) => b.desbloqueado).length;
 
-  // Detección de si es la medalla capstone/final
+  // Detección estricta: solo es la medalla capstone/final si es el quiz/evaluación final
+  const badgeId = (singleBadge?.id || '').toLowerCase();
+  const badgeTitle = (singleBadge?.titulo || '').toLowerCase();
+
   const isCapstoneFinalBadge =
-    Boolean(singleBadge?.id?.toLowerCase().includes('master') ||
-    singleBadge?.titulo?.toLowerCase().includes('master') ||
-    onRestartToStation1 ||
-    onReviewStations);
+    badgeId.includes('station5') ||
+    badgeId.includes('quiz') ||
+    badgeId.includes('evaluacion') ||
+    badgeId.includes('zero') ||
+    badgeTitle.includes('zero-hallucination') ||
+    badgeTitle.includes('evaluación final') ||
+    badgeTitle.includes('quiz');
+
+  const handleContinue = () => {
+    onClose();
+    if (onContinueQuest) {
+      onContinueQuest();
+    }
+  };
 
   const handleFinish = () => {
     onClose();
@@ -135,7 +148,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
             ) : (
               <button
                 type="button"
-                onClick={handleFinish}
+                onClick={handleContinue}
                 className={styles.ctaContinueButton}
               >
                 ¡Continuar Ruta Cognitiva!
