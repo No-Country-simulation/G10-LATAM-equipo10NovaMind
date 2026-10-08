@@ -849,3 +849,54 @@ def test_los_items_de_cada_few_shot_cumplen_el_esquema_estricto(formato):
     modelo = ESQUEMA_POR_FORMATO[formato][0]
     for item in items:
         modelo.model_validate(item)
+
+
+def test_contrato_audiovisual_escena_director_cut():
+    """Valida que EscenaDirectorCut y VideoJobSpec calculen palabras y serialicen correctamente."""
+    from app.core.schemas import (
+        EscenaDirectorCut,
+        EspecificacionVisual,
+        FuenteRAG,
+        VideoJobSpec,
+    )
+
+    fuente = FuenteRAG(
+        chunk_id="chk-01",
+        pagina=1,
+        texto_fuente="El swap de 4 GB previene el OOM Killer en OCI Always Free.",
+    )
+    visual = EspecificacionVisual(
+        tipo="diagrama_bloques",
+        titulo="Topología de Memoria Swap",
+        puntos_clave=["1 GB RAM física", "4 GB Swap NVMe", "Cero crash OOM"],
+        codigo_o_estructura="fallocate -l 4G /swapfile",
+    )
+    escena = EscenaDirectorCut(
+        id="sc-01",
+        escena=1,
+        tiempo="00:15",
+        duracion_segundos=15.0,
+        titulo="Arquitectura de Memoria",
+        guion_locutor="Para evitar que Linux mate tu proceso por falta de memoria, configuramos cuatro gigabytes de swap.",
+        storyboard_visual="Visualización esquemática de la memoria RAM expandiéndose.",
+        consejo_pedagogico="Habla con claridad y ritmo constante.",
+        visual=visual,
+        fuentes=[fuente],
+    )
+
+    # Verifica cálculo automático de estimación de palabras
+    assert escena.estimacion_palabras == 16
+    assert escena.fuentes[0].chunk_id == "chk-01"
+    assert escena.visual.tipo == "diagrama_bloques"
+
+    # Verifica construcción del contrato completo VideoJobSpec
+    job = VideoJobSpec(
+        video_job_id="vjob-test-101",
+        document_id="doc-oci-swap",
+        escenas=[escena],
+    )
+    assert job.estado == "contract_ready"
+    assert job.total_palabras == 16
+    assert job.duracion_total_estimada == round(16 / 2.3, 1)
+    assert len(job.escenas) == 1
+

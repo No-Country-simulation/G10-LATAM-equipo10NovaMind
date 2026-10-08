@@ -52,7 +52,11 @@ _INSTRUCCIONES_FORMATO: Dict[str, str] = {
         '"conceptos_clave" (lista de 3 o 4 objetos con "id", "texto", "verificado": false) y "metricas_rapidas" (objeto con "riesgo", "despliegue", "tipo_oci", "costo"). '
         '2) "flashcards": lista de mínimo 3 tarjetas con "id", "frente", "dorso" y "pista_didactica". '
         '3) "tutorial": lista de 3 o 4 pasos técnicos con "id", "paso" (número), "titulo", "descripcion", "cli_command" (comando bash/cli exacto de OCI o Linux), "completado": false, "verificacion". '
-        '4) "director_cut": lista de 2 o 3 escenas de storyboard con "id", "escena" (número), "tiempo", "titulo", "guion_locutor", "storyboard_visual", "consejo_pedagogico". '
+        '4) "director_cut": lista de 2 o 3 escenas de storyboard con "id", "escena" (número), "tiempo", "titulo", '
+        '"guion_locutor" (locución clara de 25 a 40 palabras por escena, total global de 110-125 palabras para garantizar una microclase <= 60s), '
+        '"estimacion_palabras" (conteo de palabras del guion), "storyboard_visual", "consejo_pedagogico", '
+        '"visual" (objeto con "tipo": "ppt_concepto"|"diagrama_bloques"|"palabras_clave"|"comparativa", "titulo", "puntos_clave": lista de 2 o 3 conceptos) '
+        'y "fuentes" (lista de objetos con "chunk_id" y "texto_fuente" citando textualmente el fragmento). '
         '5) "quiz": lista de 3 preguntas con "id", "pregunta", "opciones" (lista de 4 strings), "respuesta_correcta" (índice entero 0-3), "justificacion_rag", "cita_fuente". '
         'Todo debe derivarse exclusivamente de los fragmentos fuente y anclarse fielmente sin alucinaciones.'
     ),

@@ -1,6 +1,17 @@
 import { useState } from 'react';
-import { Clapperboard, CheckCircle2, ChevronLeft, ChevronRight, Eye, Video, Award } from 'lucide-react';
-import type { DirectorScene } from '../../../types/types';
+import {
+  Clapperboard,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Video,
+  Award,
+  Download,
+  BookOpen,
+  Layers,
+} from 'lucide-react';
+import type { DirectorScene, VideoJobSpec } from '../../../types/types';
 import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
 import styles from './Station4DirectorCut.module.css';
 
@@ -32,17 +43,22 @@ export const Station4DirectorCut = ({
     {
       id: 'sc-default',
       escena: 1,
-      tiempo: '01:00',
+      tiempo: '00:15',
+      duracion_segundos: 15.0,
       titulo: 'Presentación Didáctica',
       guion_locutor: 'Bienvenidos a esta sesión de aprendizaje contextualizado.',
       storyboard_visual: 'Primer plano del docente con infografía lateral ilustrativa.',
-      consejo_pedagogico: 'Mantén contacto visual y ritmo reflexivo.'
+      consejo_pedagogico: 'Mantén contacto visual y ritmo reflexivo.',
     }
   ];
 
   const totalScenes = safeScenes.length;
   const minRequired = Math.max(1, Math.ceil(totalScenes * 0.6));
   const currentScene = safeScenes[currentSceneIndex] || safeScenes[0];
+
+  const wordCount = currentScene.estimacion_palabras ||
+    currentScene.guion_locutor.trim().split(/\s+/).filter(Boolean).length;
+  const sceneDurationSec = currentScene.duracion_segundos || Math.max(5, Math.round(wordCount / 2.3));
 
   const handleSelectScene = (index: number) => {
     setCurrentSceneIndex(index);
@@ -68,6 +84,41 @@ export const Station4DirectorCut = ({
     if (currentSceneIndex > 0) {
       handleSelectScene(currentSceneIndex - 1);
     }
+  };
+
+  const handleExportContractJson = () => {
+    const totalWords = safeScenes.reduce((acc, sc) => {
+      const words = sc.estimacion_palabras || sc.guion_locutor.trim().split(/\s+/).filter(Boolean).length;
+      return acc + words;
+    }, 0);
+    const totalDuration = safeScenes.reduce((acc, sc) => {
+      const words = sc.estimacion_palabras || sc.guion_locutor.trim().split(/\s+/).filter(Boolean).length;
+      const sec = sc.duracion_segundos || Math.max(5, Math.round(words / 2.3));
+      return acc + sec;
+    }, 0);
+
+    const contract: VideoJobSpec = {
+      video_job_id: `vjob-${Date.now()}`,
+      document_id: 'doc-novamind',
+      target_duration: 50,
+      max_duration: 60,
+      aspect_ratio: '9:16',
+      idioma: 'es',
+      estado: 'contract_ready',
+      escenas: safeScenes,
+      total_palabras: totalWords,
+      duracion_total_estimada: Math.round(totalDuration * 10) / 10,
+    };
+
+    const blob = new Blob([JSON.stringify(contract, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `videojob_spec_${contract.video_job_id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const viewedCount = Object.values(viewedScenes).filter(Boolean).length;
@@ -98,6 +149,16 @@ export const Station4DirectorCut = ({
         </div>
 
         <div className={styles.headerActions}>
+          <button
+            type="button"
+            onClick={handleExportContractJson}
+            className={styles.exportContractBtn}
+            title="Exportar manifiesto VideoJobSpec JSON (~4 KB)"
+          >
+            <Download size={14} />
+            <span>Exportar Contrato JSON</span>
+          </button>
+
           {isPassed && (
             <button
               type="button"
@@ -165,18 +226,47 @@ export const Station4DirectorCut = ({
             <span className={styles.panelTitleFuchsia}>
               Teleprompter · Guion Docente
             </span>
-            <span className={styles.sceneTimeBadge}>
-              ⏱ {currentScene.tiempo}
-            </span>
+            <div className={styles.timePillsRow}>
+              <span className={`${styles.wordPill} ${styles.wordPillHighlight}`}>
+                ⏱ {sceneDurationSec}s · {wordCount} palabras
+              </span>
+              <span className={styles.sceneTimeBadge}>
+                {currentScene.tiempo}
+              </span>
+            </div>
           </div>
 
           <p className={styles.scriptBox}>
             "{currentScene.guion_locutor}"
           </p>
 
+          {currentScene.objetivo_pedagogico && (
+            <div className={styles.objectivePill}>
+              <strong>🎯 Objetivo:</strong> {currentScene.objetivo_pedagogico}
+            </div>
+          )}
+
           <div className={styles.pedagogyTip}>
             <strong style={{ color: '#f0abfc' }}>💡 Consejo Pedagógico:</strong> {currentScene.consejo_pedagogico}
           </div>
+
+          {/* Trazabilidad RAG si existen citas registradas */}
+          {currentScene.fuentes && currentScene.fuentes.length > 0 && (
+            <div className={styles.ragSection}>
+              <div className={styles.ragHeader}>
+                <BookOpen size={13} />
+                <span>Citas RAG Verificadas ({currentScene.fuentes.length})</span>
+              </div>
+              {currentScene.fuentes.map((f, i) => (
+                <div key={i} className={styles.ragCard}>
+                  <span className={styles.ragBadge}>
+                    Chunk #{f.chunk_id}{f.pagina ? ` · Pág. ${f.pagina}` : ''}
+                  </span>
+                  <p className={styles.ragText}>"{f.texto_fuente}"</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Visual Storyboard */}
@@ -184,10 +274,37 @@ export const Station4DirectorCut = ({
           <div>
             <div className={styles.panelHeader}>
               <span className={styles.panelTitleCyan}>
-                Storyboard Visual · Indicación de Escena
+                Storyboard Visual · Especificación Determinista
               </span>
               <Video size={16} color="var(--color-cyan-400)" />
             </div>
+
+            {/* Especificación visual estructurada si existe */}
+            {currentScene.visual && (
+              <div className={styles.visualSpecBox}>
+                <div className={styles.visualSpecHeader}>
+                  <Layers size={14} />
+                  <span className={styles.visualSpecType}>
+                    {currentScene.visual.tipo.replace('_', ' ')}
+                  </span>
+                  <strong>{currentScene.visual.titulo}</strong>
+                </div>
+
+                {currentScene.visual.puntos_clave && currentScene.visual.puntos_clave.length > 0 && (
+                  <ul className={styles.visualPointsList}>
+                    {currentScene.visual.puntos_clave.map((pt, pIdx) => (
+                      <li key={pIdx}>{pt}</li>
+                    ))}
+                  </ul>
+                )}
+
+                {currentScene.visual.codigo_o_estructura && (
+                  <pre className={styles.visualCode}>
+                    <code>{currentScene.visual.codigo_o_estructura}</code>
+                  </pre>
+                )}
+              </div>
+            )}
 
             <div className={styles.storyboardVisualContent}>
               {currentScene.storyboard_visual}

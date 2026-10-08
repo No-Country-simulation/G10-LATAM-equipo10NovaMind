@@ -100,29 +100,77 @@ export const SCENARIOS: TechnicalScenario[] = [
           {
             id: 'sc-swap-1',
             escena: 1,
-            tiempo: '00:00 - 01:00',
+            tiempo: '00:00 - 00:15',
+            duracion_segundos: 15.0,
             titulo: 'La Frustración del Error 137 Killed',
-            guion_locutor: '"Estás desplegando tu aplicación en la nube gratuita de Oracle, ejecutas npm run build y... ¡Killed! Tu servidor colapsó. La causa es que tienes 1 GB de RAM. La solución definitiva toma menos de 3 minutos y no cuesta ni un solo centavo."',
-            storyboard_visual: 'Una pantalla de terminal con el texto en rojo "Killed (exit code 137)", seguida por el logotipo de Oracle Cloud Always Free y un contador de tiempo iniciando.',
-            consejo_pedagogico: 'Empieza con el dolor común de todo desarrollador para enganchar la atención de inmediato.'
+            guion_locutor: 'Estás desplegando en Oracle Cloud Always Free, ejecutas npm run build y... ¡Killed! El kernel liquidó tu proceso por falta de RAM.',
+            estimacion_palabras: 21,
+            storyboard_visual: 'Pantalla de terminal con texto en rojo "Killed (exit code 137)", seguida por el logotipo de Oracle Cloud Always Free.',
+            consejo_pedagogico: 'Empieza con el dolor común de todo desarrollador para enganchar la atención de inmediato.',
+            objetivo_pedagogico: 'Identificar el disparador del OOM Killer en VMs de 1 GB de RAM.',
+            visual: {
+              tipo: 'ppt_concepto',
+              titulo: 'Diagnóstico: OOM Killer en OCI',
+              puntos_clave: ['1 GB RAM física', 'Exit Code 137', 'Vite / Next.js Build Failure'],
+              prompt_grafico: 'Terminal oscura con mensaje de kernel OOM Killer resaltado en rojo neón.'
+            },
+            fuentes: [
+              {
+                chunk_id: 'chk-oci-01',
+                pagina: 1,
+                texto_fuente: 'En instancias micro de 1 GB de RAM, procesos pesados de compilación Node.js activan el Out-Of-Memory Killer de Linux arrojando código 137.'
+              }
+            ]
           },
           {
             id: 'sc-swap-2',
             escena: 2,
-            tiempo: '01:00 - 02:30',
+            tiempo: '00:15 - 00:35',
+            duracion_segundos: 20.0,
             titulo: 'Creando 4 GB de Memoria Virtual en 4 Comandos',
-            guion_locutor: '"Con fallocate reservamos 4 GB de disco NVMe. Luego con chmod 600 blindamos el archivo para que nadie pueda leer secretos de memoria. Lo activamos con swapon y listo: tu servidor ahora tiene 5 GB de memoria efectiva."',
+            guion_locutor: 'Con fallocate reservamos 4 GB de disco NVMe. Blindamos permisos con chmod 600 y activamos con swapon. ¡Ahora tienes 5 GB de memoria efectiva!',
+            estimacion_palabras: 25,
             storyboard_visual: 'Animación esquemática donde un bloque de 1 GB RAM se expande con un bloque complementario de 4 GB etiquetado como NVMe Boot Volume.',
-            consejo_pedagogico: 'Muestra la terminal en vivo ejecutando los comandos con tipografía limpia en modo oscuro.'
+            consejo_pedagogico: 'Muestra la terminal en vivo ejecutando los comandos con tipografía limpia en modo oscuro.',
+            objetivo_pedagogico: 'Explicar la creación segura y permisos 600 de un swapfile.',
+            visual: {
+              tipo: 'diagrama_bloques',
+              titulo: 'Topología de Expansión de Memoria',
+              puntos_clave: ['1 GB RAM DDR4', '+ 4 GB Swap NVMe', '= 5 GB Memoria Total'],
+              codigo_o_estructura: 'sudo fallocate -l 4G /swapfile\nsudo chmod 600 /swapfile\nsudo mkswap /swapfile\nsudo swapon /swapfile'
+            },
+            fuentes: [
+              {
+                chunk_id: 'chk-oci-02',
+                pagina: 2,
+                texto_fuente: 'fallocate reserva 4 GB en disco NVMe local. Los permisos 600 son críticos para impedir que usuarios sin privilegios lean volcados de memoria.'
+              }
+            ]
           },
           {
             id: 'sc-swap-3',
             escena: 3,
-            tiempo: '02:30 - 03:30',
-            titulo: 'Demostración de Compilación Exitosa y Cierre',
-            guion_locutor: '"Ejecutamos nuevamente npm run build. El compilador supera 1.5 GB de memoria sin pestañear. Compilación exitosa en 12 segundos y cero dólares de factura en OCI. ¡Misión cumplida!"',
-            storyboard_visual: 'La terminal muestra Vite v8 built in 12s en verde brillante, y la consola OCI confirma costo $0.00 USD.',
-            consejo_pedagogico: 'Cerrar con el resultado victorioso: éxito técnico y costo cero garantizado.'
+            tiempo: '00:35 - 00:50',
+            duracion_segundos: 15.0,
+            titulo: 'Compilación Exitosa y Costo Cero Garantizado',
+            guion_locutor: 'Lanzamos el build nuevamente. El compilador supera 1.5 GB sin pestañear. Éxito total en 12 segundos y cero dólares de factura en OCI.',
+            estimacion_palabras: 23,
+            storyboard_visual: 'La terminal muestra Vite build in 12s en verde brillante, y la consola OCI confirma costo $0.00 USD.',
+            consejo_pedagogico: 'Cerrar con el resultado victorioso: éxito técnico y costo cero garantizado.',
+            objetivo_pedagogico: 'Validar la estabilidad del build y cero costo en OCI Always Free.',
+            visual: {
+              tipo: 'comparativa',
+              titulo: 'Antes vs Después de Swapfile',
+              puntos_clave: ['Antes: Killed 137 en 4s', 'Después: Vite Build OK en 12s', 'Factura OCI: $0.00 USD / mes'],
+              codigo_o_estructura: 'free -h  # Muestra 4.0Gi Swap disponible'
+            },
+            fuentes: [
+              {
+                chunk_id: 'chk-oci-03',
+                pagina: 3,
+                texto_fuente: 'Con 4 GB de Swap NVMe, el sistema soporta picos de memoria de compilación sin incurrir en costos de escalado vertical en OCI.'
+              }
+            ]
           }
         ],
         quiz: [

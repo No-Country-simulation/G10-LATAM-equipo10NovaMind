@@ -40,14 +40,55 @@ export interface TutorialStep {
   verificacion: string;
 }
 
+export interface FuenteRAG {
+  chunk_id: string;
+  pagina?: number;
+  texto_fuente: string;
+}
+
+export interface EspecificacionVisual {
+  tipo: 'diagrama_bloques' | 'ppt_concepto' | 'palabras_clave' | 'comparativa';
+  titulo: string;
+  puntos_clave?: string[];
+  codigo_o_estructura?: string;
+  prompt_grafico?: string;
+}
+
 export interface DirectorScene {
   id: string;
   escena: number;
   tiempo: string;
+  duracion_segundos?: number;
   titulo: string;
   guion_locutor: string;
+  estimacion_palabras?: number;
   storyboard_visual: string;
   consejo_pedagogico: string;
+  objetivo_pedagogico?: string;
+  visual?: EspecificacionVisual;
+  fuentes?: FuenteRAG[];
+}
+
+export interface VideoJobSpec {
+  video_job_id: string;
+  document_id: string;
+  target_duration: number;
+  max_duration: number;
+  aspect_ratio: '9:16' | '16:9';
+  idioma: string;
+  estado:
+    | 'queued'
+    | 'retrieving_context'
+    | 'planning'
+    | 'contract_ready'
+    | 'rendering'
+    | 'completed'
+    | 'failed';
+  escenas: DirectorScene[];
+  total_palabras: number;
+  duracion_total_estimada: number;
+  manifiesto_url_oci?: string;
+  video_url_oci?: string;
 }
 
 export interface QuizQuestion {

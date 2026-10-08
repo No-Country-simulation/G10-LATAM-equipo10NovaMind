@@ -102,10 +102,39 @@ const adaptationSchema: Schema = {
               id: { type: Type.STRING },
               escena: { type: Type.NUMBER },
               tiempo: { type: Type.STRING },
+              duracion_segundos: { type: Type.NUMBER },
+              estimacion_palabras: { type: Type.NUMBER },
               titulo: { type: Type.STRING },
               guion_locutor: { type: Type.STRING },
               storyboard_visual: { type: Type.STRING },
-              consejo_pedagogico: { type: Type.STRING }
+              consejo_pedagogico: { type: Type.STRING },
+              objetivo_pedagogico: { type: Type.STRING },
+              visual: {
+                type: Type.OBJECT,
+                properties: {
+                  tipo: {
+                    type: Type.STRING,
+                    enum: ['diagrama_bloques', 'ppt_concepto', 'palabras_clave', 'comparativa']
+                  },
+                  titulo: { type: Type.STRING },
+                  puntos_clave: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  codigo_o_estructura: { type: Type.STRING },
+                  prompt_grafico: { type: Type.STRING }
+                },
+                required: ['tipo', 'titulo']
+              },
+              fuentes: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    chunk_id: { type: Type.STRING },
+                    pagina: { type: Type.NUMBER },
+                    texto_fuente: { type: Type.STRING }
+                  },
+                  required: ['chunk_id', 'texto_fuente']
+                }
+              }
             },
             required: ['id', 'escena', 'tiempo', 'titulo', 'guion_locutor', 'storyboard_visual', 'consejo_pedagogico']
           }
@@ -212,7 +241,7 @@ export async function generatePedagogicalPackage(
 ): Promise<AdaptedContentPackage> {
   const timestamp = Date.now();
   const promptText = `
-Eres un Sistema Inteligente de Adaptación y Generación de Contenido Educativo (NuevaMente).
+Eres un Sistema Inteligente de Adaptación y Generación de Contenido Educativo (NovaMind).
 Tu misión es procesar el material ingresado (analizando el texto provisto o el archivo adjunto multimodalmente) y generar un paquete educativo completo anclado estrictamente a la fuente (RAG Grounding), mitigando cualquier alucinación.
 
 PARÁMETROS:
@@ -230,16 +259,16 @@ DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
    - resumen_ninja: analogía central pedagógica, 3 o 4 conceptos clave verificados y métricas rápidas.
    - flashcards: mínimo 3 tarjetas de active recall con pregunta (frente), respuesta (dorso) y pista didáctica analógica.
    - tutorial: 3 a 4 pasos prácticos progresivos con instrucciones reproducibles y validación técnica.
-   - director_cut: 2 o 3 escenas de storyboard para guion didáctico (teleprompter del docente e indicación visual).
+   - director_cut: 2 o 3 escenas de storyboard y teleprompter con control estricto de palabras (110 a 125 palabras en total para microclases de <= 60s), especificación visual técnica determinista (diagrama de bloques, ppt concepto, etc.) y citas exactas a la fuente (fuentes con chunk_id y texto_fuente).
    - quiz: mínimo 3 preguntas didácticas con opciones, índice de la respuesta correcta (0-indexed) y justificación referenciando citas directas.
 3. En 'almacenamiento_oci', define:
-   - bucket: "nuevamente-edtech-artifacts"
+   - bucket: "novamind-edtech-artifacts"
    - objeto_id: "artifact-${timestamp}.json"
    - status_upload: "completado"
    - region: "sa-saopaulo-1"
    - etag: "etag-md5-verified"
    - tamano_bytes: 4096
-   - url_always_free: "https://objectstorage.sa-saopaulo-1.oraclecloud.com/n/ax9k3z/b/nuevamente-edtech-artifacts/o/artifact-${timestamp}.json"
+   - url_always_free: "https://objectstorage.sa-saopaulo-1.oraclecloud.com/n/ax9k3z/b/novamind-edtech-artifacts/o/artifact-${timestamp}.json"
 `;
 
   const contents: (string | Part)[] = [];

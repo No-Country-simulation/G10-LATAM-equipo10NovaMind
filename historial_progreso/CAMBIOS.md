@@ -203,3 +203,34 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
    - **Auto-Failover y Tolerancia a Fallos:** Verificación de fallback automático ante saturación del proveedor primario (Gemini -> Groq `llama-3.3-70b-versatile`) resolviendo la auditoría en 2.1 s con Score de Anclaje de 0.86 sin caídas del servicio.
    - **Huella de Memoria RAM:** Working set de Python en **172.34 MB**, muy por debajo del límite de 1 GB físico de `VM.Standard.E2.1.Micro` de OCI Always Free.
 
+## Fase 11: Contrato Audiovisual Determinista y Trazabilidad RAG (Estación 4 / VideoJobSpec)
+
+1. **Definición del Contrato Audiovisual Ligero (`VideoJobSpec`):**
+   - Incorporación en `backend/app/core/schemas.py` de los modelos de datos canónicos:
+     - `FuenteRAG`: Identificador del fragmento (`chunk_id`), página y texto fuente exacto.
+     - `EspecificacionVisual`: Tipo de recurso visual (`diagrama_bloques`, `ppt_concepto`, `palabras_clave`, `comparativa`), título, puntos clave y código/estructura.
+     - `EscenaDirectorCut`: Identificador, orden de escena, minutaje, duración en segundos, guion del locutor con cálculo automático de palabras (`estimacion_palabras`), visual estructurado y lista de fuentes RAG.
+     - `VideoJobSpec`: Manifiesto ligero (~4 KB) en estado `contract_ready`, relacionando el `document_id`, `aspect_ratio` (9:16), recuento total de palabras y duración agregada estimada (~2.3 palabras/segundo).
+
+2. **Instrucciones Pedagógicas de Microclase en el Agente 2:**
+   - Actualización del prompt del productor pedagógico (`backend/app/agentes/agente2_productor.py`):
+     - Regla de duración estricta: microclase de narración rápida entre **110 y 125 palabras en total** para garantizar duración inferior o igual a 60 segundos.
+     - Vinculación obligatoria de `fuentes` con los `chunk_id` reales devueltos por el Agente 1 (RAG).
+     - Definición de especificaciones visuales deterministas en lugar de meras descripciones abstractas.
+
+3. **Evolución del Frontend (`Station4DirectorCut` y TypeScript):**
+   - Actualización de tipos en `frontend/src/types/types.ts` (`FuenteRAG`, `EspecificacionVisual`, `VideoJobSpec`, `DirectorScene`).
+   - Teleprompter docente con pill badges en tiempo real: conteo de palabras, duración estimada en segundos e indicador de objetivo pedagógico.
+   - Tarjetas de evidencia RAG verificada: despliegue de las citas textuales asociadas a la escena con su respectivo identificador de chunk.
+   - Especificación visual interactiva: representación de bloques de código estructurado, listas de puntos clave y tipo de recurso gráfico.
+   - Botón de un solo clic **"Exportar Contrato JSON"**: descarga directa en el navegador del manifiesto `VideoJobSpec` serializado (~4 KB) listo para integración con renderizadores externos desacoplados.
+   - Sincronización del Escenario 0 en `mockScenarios.ts` con escenas completas enriquecidas con citas y diagramas.
+
+4. **Cero Sobrecarga de Renderizado en OCI (Zero Heavy Rendering):**
+   - Principio de preservación de recursos: no se instala FFmpeg ni MoviePy en la VM `VM.Standard.E2.1.Micro` de 1 GB RAM de OCI Always Free.
+   - El contrato opera de forma desacoplada y asíncrona; el manifiesto JSON es exportable y almacenable en OCI Object Storage sin consumir ciclos de CPU de codificación de video.
+
+5. **Certificación y Pruebas Unitarias:**
+   - Backend Pytest: **71/71 pruebas pasando al 100%** con la inclusión de `test_contrato_audiovisual_escena_director_cut`.
+   - Frontend Vite: Compilación TypeScript (`tsc -b && vite build`) completada con éxito en **1.89s** con 0 advertencias o errores.
+

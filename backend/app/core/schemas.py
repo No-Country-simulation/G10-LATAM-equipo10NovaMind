@@ -298,6 +298,99 @@ class FuenteUtilizada(BaseModel):
 
 
 # ----------------------------------------------------------------------
+# Contrato Audiovisual y Trazabilidad RAG (Estación 4 / VideoJobSpec)
+# ----------------------------------------------------------------------
+
+
+class FuenteRAG(BaseModel):
+    """Cita exacta a un fragmento recuperado del RAG que respalda el guion."""
+
+    chunk_id: str = Field(..., min_length=1)
+    pagina: Optional[int] = None
+    texto_fuente: str = Field(..., min_length=1)
+
+
+class EspecificacionVisual(BaseModel):
+    """Especificación visual determinista estructurada para la escena."""
+
+    tipo: Literal["diagrama_bloques", "ppt_concepto", "palabras_clave", "comparativa"] = "ppt_concepto"
+    titulo: str = Field(..., min_length=1)
+    puntos_clave: List[str] = Field(default_factory=list)
+    codigo_o_estructura: Optional[str] = None
+    prompt_grafico: Optional[str] = None
+
+
+class EscenaDirectorCut(BaseModel):
+    """
+    Escena pedagógica del Director Cut / Storyboard con trazabilidad RAG estricta
+    y control de tiempo para microclases de narración corta (<= 60s).
+    """
+
+    id: str = Field(..., min_length=1)
+    escena: int = Field(..., ge=1)
+    tiempo: str = Field(..., min_length=1)
+    duracion_segundos: Optional[float] = Field(default=15.0, ge=3.0, le=30.0)
+    titulo: str = Field(..., min_length=1)
+    guion_locutor: str = Field(..., min_length=1)
+    estimacion_palabras: Optional[int] = None
+    storyboard_visual: str = Field(..., min_length=1)
+    consejo_pedagogico: str = Field(..., min_length=1)
+    objetivo_pedagogico: Optional[str] = None
+    visual: Optional[EspecificacionVisual] = None
+    fuentes: List[FuenteRAG] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _calcular_palabras(self) -> "EscenaDirectorCut":
+        if not self.estimacion_palabras and self.guion_locutor:
+            self.estimacion_palabras = len(self.guion_locutor.split())
+        return self
+
+
+class VideoJobSpec(BaseModel):
+    """
+    Contrato diferido de generación audiovisual (contract_ready).
+    Permite serializar el manifiesto JSON ligero (~4 KB) con trazabilidad RAG
+    sin exigir renderizado binario en la instancia OCI Always Free.
+    """
+
+    video_job_id: str
+    document_id: str
+    target_duration: int = Field(default=50, le=60)
+    max_duration: int = Field(default=60, le=60)
+    aspect_ratio: Literal["9:16", "16:9"] = "9:16"
+    idioma: str = "es"
+    estado: Literal[
+        "queued",
+        "retrieving_context",
+        "planning",
+        "contract_ready",
+        "rendering",
+        "completed",
+        "failed",
+    ] = "contract_ready"
+    escenas: List[EscenaDirectorCut] = Field(default_factory=list)
+    total_palabras: int = 0
+    duracion_total_estimada: float = 0.0
+    manifiesto_url_oci: Optional[str] = None
+    video_url_oci: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _calcular_totales(self) -> "VideoJobSpec":
+        if self.escenas:
+            calc_palabras = sum(
+                (e.estimacion_palabras or len(e.guion_locutor.split()))
+                for e in self.escenas
+            )
+            if not self.total_palabras:
+                self.total_palabras = calc_palabras
+            if not self.duracion_total_estimada:
+                # ~2.3 palabras por segundo
+                self.duracion_total_estimada = round(calc_palabras / 2.3, 1)
+        return self
+
+
+
+# ----------------------------------------------------------------------
 # Salida del Agente 3 (Crítico)
 # ----------------------------------------------------------------------
 
