@@ -9,14 +9,15 @@ Desacoplado del frontend Streamlit.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import ValidationError
 
 from app.core.config import ConfigError
@@ -59,6 +60,8 @@ app.add_middleware(
 
 
 _orquestador_singleton: Optional[OrquestadorNuevaMente] = None
+# Semáforo de concurrencia: limita ejecuciones pesadas simultáneas para proteger la RAM de 1 GB en OCI Always Free
+_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(1)
 
 
 def get_orquestador() -> OrquestadorNuevaMente:
@@ -95,6 +98,7 @@ def obtener_opciones_configuracion() -> Dict[str, List[str]]:
             "Gestor / Ejecutivo (No Técnico)",
         ],
         "formatos_salida": [
+            "Paquete Educativo Completo (5 Estaciones)",
             "Guía Práctica Paso a Paso (Tutorial)",
             "Flashcards",
             "Quiz Interactivo con Justificaciones",
@@ -115,26 +119,17 @@ def obtener_opciones_configuracion() -> Dict[str, List[str]]:
     }
 
 
-@app.post(
-    "/api/v1/adaptar",
-    response_model=RespuestaAdaptacion,
-    tags=["Adaptación Pedagógica"],
-)
-async def adaptar_contenido(
-    archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
-    texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
-    titulo: Optional[str] = Form(None, description="Título del documento"),
-    perfil_destinatario: str = Form(..., description="Perfil del estudiante"),
-    formato_salida: str = Form(..., description="Formato pedagógico deseado"),
-    nicho_sector: str = Form("General", description="Sector de contextualización"),
-    nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
-    tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
-) -> RespuestaAdaptacion:
-    """
-    Endpoint principal: recibe el documento y los parámetros pedagógicos,
-    ejecuta el grafo multi-agente y devuelve el contenido adaptado con métricas.
-    """
-    # 1. Extracción de contenido (Ingesta)
+async def _extraer_solicitud(
+    archivo: Optional[UploadFile],
+    texto_directo: Optional[str],
+    titulo: Optional[str],
+    perfil_destinatario: str,
+    formato_salida: str,
+    nicho_sector: str,
+    nivel_detalle: str,
+    tema_consulta: Optional[str],
+) -> SolicitudAdaptacion:
+    """Extrae el contenido documental y valida los parámetros de la solicitud pedagógica."""
     contenido_texto = ""
     doc_titulo = titulo or "Documento Técnico"
 
@@ -164,9 +159,8 @@ async def adaptar_contenido(
             detail="Debe proporcionar un archivo (PDF/MD/TXT) o el campo 'texto_directo'.",
         )
 
-    # 2. Validación de Solicitud (Pydantic con normalización de alias)
     try:
-        solicitud = SolicitudAdaptacion.model_validate(
+        return SolicitudAdaptacion.model_validate(
             {
                 "documento_titulo": doc_titulo,
                 "documento_contenido": contenido_texto,
@@ -187,7 +181,37 @@ async def adaptar_contenido(
             detail="; ".join(detalles),
         ) from exc
 
-    # 3. Ejecución de la Orquestación
+
+@app.post(
+    "/api/v1/adaptar",
+    response_model=RespuestaAdaptacion,
+    tags=["Adaptación Pedagógica"],
+)
+async def adaptar_contenido(
+    archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
+    texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
+    titulo: Optional[str] = Form(None, description="Título del documento"),
+    perfil_destinatario: str = Form(..., description="Perfil del estudiante"),
+    formato_salida: str = Form(..., description="Formato pedagógico deseado"),
+    nicho_sector: str = Form("General", description="Sector de contextualización"),
+    nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
+    tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
+) -> RespuestaAdaptacion:
+    """
+    Endpoint principal síncrono: recibe el documento y los parámetros pedagógicos,
+    ejecuta el grafo multi-agente en hilo no bloqueante y devuelve el contenido adaptado con métricas.
+    """
+    solicitud = await _extraer_solicitud(
+        archivo=archivo,
+        texto_directo=texto_directo,
+        titulo=titulo,
+        perfil_destinatario=perfil_destinatario,
+        formato_salida=formato_salida,
+        nicho_sector=nicho_sector,
+        nivel_detalle=nivel_detalle,
+        tema_consulta=tema_consulta,
+    )
+
     orquestador = get_orquestador()
     logger.info(
         "Iniciando orquestación: '%s' | %s | %s",
@@ -196,7 +220,9 @@ async def adaptar_contenido(
         solicitud.formato_salida,
     )
 
-    respuesta = orquestador.ejecutar(solicitud)
+    async with _SEMAFORO_CONCURRENCIA:
+        respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
+
     logger.info(
         "Orquestación finalizada con status: %s | Duración: %.2fs",
         respuesta.status,
@@ -204,6 +230,78 @@ async def adaptar_contenido(
     )
 
     return respuesta
+
+
+@app.post(
+    "/api/v1/adaptar/stream",
+    tags=["Adaptación Pedagógica"],
+)
+async def adaptar_contenido_stream(
+    archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
+    texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
+    titulo: Optional[str] = Form(None, description="Título del documento"),
+    perfil_destinatario: str = Form(..., description="Perfil del estudiante"),
+    formato_salida: str = Form(..., description="Formato pedagógico deseado"),
+    nicho_sector: str = Form("General", description="Sector de contextualización"),
+    nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
+    tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
+) -> StreamingResponse:
+    """
+    Endpoint con Server-Sent Events (SSE) y heartbeats periódicos (cada 15s)
+    para evitar el timeout 524 de Cloudflare (100s) durante orquestaciones complejas.
+    """
+    solicitud = await _extraer_solicitud(
+        archivo=archivo,
+        texto_directo=texto_directo,
+        titulo=titulo,
+        perfil_destinatario=perfil_destinatario,
+        formato_salida=formato_salida,
+        nicho_sector=nicho_sector,
+        nivel_detalle=nivel_detalle,
+        tema_consulta=tema_consulta,
+    )
+
+    orquestador = get_orquestador()
+
+    async def generador_eventos() -> AsyncGenerator[str, None]:
+        # 1. Evento inicial de conexión establecida
+        yield f"data: {json.dumps({'tipo': 'inicio', 'mensaje': 'Solicitud recibida. Iniciando orquestación pedagógica...'}, ensure_ascii=False)}\n\n"
+
+        async def _ejecutar():
+            async with _SEMAFORO_CONCURRENCIA:
+                return await asyncio.to_thread(orquestador.ejecutar, solicitud)
+
+        tarea = asyncio.create_task(_ejecutar())
+
+        # 2. Bucle de heartbeats cada 15s mientras la tarea está en curso
+        segundos_transcurridos = 0
+        while not tarea.done():
+            try:
+                await asyncio.wait_for(asyncio.shield(tarea), timeout=15.0)
+            except asyncio.TimeoutError:
+                segundos_transcurridos += 15
+                # Comentario SSE para mantener vivos proxies (Cloudflare / Nginx)
+                yield f": ping - heartbeat anti-timeout ({segundos_transcurridos}s)\n\n"
+                # Evento informativo para clientes SSE
+                yield f"data: {json.dumps({'tipo': 'heartbeat', 'segundos': segundos_transcurridos, 'mensaje': f'Orquestando agentes ({segundos_transcurridos}s transcurridos)...'}, ensure_ascii=False)}\n\n"
+
+        # 3. Emisión de resultado final o error
+        try:
+            respuesta: RespuestaAdaptacion = tarea.result()
+            yield f"data: {json.dumps({'tipo': 'resultado', 'datos': respuesta.model_dump()}, ensure_ascii=False)}\n\n"
+        except Exception as exc:
+            logger.exception("Error en orquestación vía stream: %s", exc)
+            yield f"data: {json.dumps({'tipo': 'error', 'detalle': str(exc)}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        generador_eventos(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.exception_handler(IngestionError)

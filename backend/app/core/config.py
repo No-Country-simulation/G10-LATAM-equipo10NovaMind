@@ -80,6 +80,19 @@ class Config:
     api_reintentos: int
     api_espera_base_segundos: float
 
+    # --- Multi-Proveedor & Resiliencia (Fase 9) ---
+    cohere_model_critico: str = "command-r-08-2024"
+    proveedor_critico: str = "gemini"
+    modelo_critico: str = "gemini-2.5-flash"
+    proveedor_critico_fallback: str = "groq"
+    modelo_critico_fallback: str = "qwen/qwen3.8-27b"
+    gemini_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None
+    openrouter_api_key: Optional[str] = None
+    presupuesto_tiempo_segundos: float = 75.0
+    timeout_llamada_llm: float = 25.0
+    entorno: str = "dev"
+
     @classmethod
     def desde_entorno(cls, cargar_dotenv: bool = True) -> "Config":
         if cargar_dotenv:
@@ -87,7 +100,7 @@ class Config:
 
         return cls(
             cohere_api_key=os.getenv("COHERE_API_KEY") or None,
-            cohere_model=os.getenv("COHERE_MODEL", "command-a-03-2025"),
+            cohere_model=os.getenv("COHERE_MODEL", "command-r-08-2024"),
             embedding_model=(
                 os.getenv("COHERE_EMBEDDING_MODEL")
                 or os.getenv("EMBEDDING_MODEL")
@@ -109,6 +122,17 @@ class Config:
             max_redaccion_retries=_leer_int("MAX_REDACCION_RETRIES", 2, 0, 5),
             api_reintentos=_leer_int("API_REINTENTOS", 3, 1, 6),
             api_espera_base_segundos=_leer_float("API_ESPERA_BASE_SEGUNDOS", 1.0, 0.0, 30.0),
+            cohere_model_critico=os.getenv("COHERE_MODEL_CRITICO", "command-r-08-2024"),
+            proveedor_critico=os.getenv("PROVEEDOR_CRITICO", "gemini").lower(),
+            modelo_critico=os.getenv("MODELO_CRITICO", "gemini-2.5-flash"),
+            proveedor_critico_fallback=os.getenv("PROVEEDOR_CRITICO_FALLBACK", "groq").lower(),
+            modelo_critico_fallback=os.getenv("MODELO_CRITICO_FALLBACK", "qwen/qwen3.8-27b"),
+            gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
+            groq_api_key=os.getenv("GROQ_API_KEY") or None,
+            openrouter_api_key=os.getenv("OPENROUTER_API_KEY") or None,
+            presupuesto_tiempo_segundos=_leer_float("PRESUPUESTO_TIEMPO_SEGUNDOS", 75.0, 10.0, 95.0),
+            timeout_llamada_llm=_leer_float("TIMEOUT_LLAMADA_LLM", 25.0, 5.0, 60.0),
+            entorno=os.getenv("APP_ENV", "dev").lower(),
         )
 
     def exigir_cohere(self) -> str:

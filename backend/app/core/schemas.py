@@ -46,6 +46,7 @@ PerfilDestinatario = Literal[
 ]
 
 FormatoSalida = Literal[
+    "Paquete Educativo Completo (5 Estaciones)",
     "Guía Práctica Paso a Paso (Tutorial)",
     "Flashcards",
     "Quiz Interactivo con Justificaciones",
@@ -114,6 +115,14 @@ _MAPA_PERFIL = _construir_mapa(
 
 _MAPA_FORMATO = _construir_mapa(
     {
+        "Paquete Educativo Completo (5 Estaciones)": [
+            "paquete educativo completo",
+            "5 estaciones",
+            "paquete completo",
+            "completo",
+            "todas las estaciones",
+            "circuito completo",
+        ],
         "Guía Práctica Paso a Paso (Tutorial)": [
             "guia practica paso a paso",
             "tutorial",
@@ -274,7 +283,12 @@ class MetadatosSalida(BaseModel):
 class ContenidoAdaptado(BaseModel):
     titulo: str = Field(..., min_length=1)
     introduccion_contextualizada: str = Field(..., min_length=1)
-    items: List[Dict[str, Any]] = Field(..., min_length=1)
+    items: List[Dict[str, Any]] = Field(default_factory=list)
+    resumen_ninja: Optional[Dict[str, Any]] = None
+    flashcards: Optional[List[Dict[str, Any]]] = None
+    tutorial: Optional[List[Dict[str, Any]]] = None
+    director_cut: Optional[List[Dict[str, Any]]] = None
+    quiz: Optional[List[Dict[str, Any]]] = None
 
 
 class FuenteUtilizada(BaseModel):
@@ -362,6 +376,43 @@ class ItemQuiz(_ItemBase):
     respuesta_correcta: str = Field(..., min_length=1)
     justificacion: str = Field(..., min_length=1)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalizar_quiz(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        opciones = data.get("opciones")
+        respuesta = data.get("respuesta_correcta")
+        if not isinstance(opciones, list) or not isinstance(respuesta, str):
+            return data
+
+        # Si ya coincide exactamente, no alterar nada
+        if respuesta in opciones:
+            return data
+
+        import re
+
+        def _limpiar(texto: str) -> str:
+            return re.sub(r"^[A-Da-d][\).\s]+", "", str(texto)).strip()
+
+        # Si la respuesta es una letra aislada 'A', 'B', 'C', 'D'
+        letras = ["a", "b", "c", "d"]
+        resp_lower = respuesta.strip().lower()
+        if resp_lower in letras and len(opciones) == 4:
+            idx = letras.index(resp_lower)
+            data["respuesta_correcta"] = opciones[idx]
+            return data
+
+        # Si hay discrepancia por prefijos 'A) ' en opciones o respuesta
+        opciones_limpias = [_limpiar(op) for op in opciones if isinstance(op, str)]
+        resp_limpia = _limpiar(respuesta)
+        if resp_limpia in opciones_limpias and len(opciones_limpias) == len(opciones):
+            idx = opciones_limpias.index(resp_limpia)
+            data["respuesta_correcta"] = opciones[idx]
+            return data
+
+        return data
+
     @model_validator(mode="after")
     def _respuesta_en_opciones(self) -> "ItemQuiz":
         if self.respuesta_correcta not in self.opciones:
@@ -412,6 +463,9 @@ def validar_items(
         EstructuraInvalidaError: con un mensaje pensado para que el Agente 2
             corrija su salida en el siguiente intento.
     """
+    if formato == "Paquete Educativo Completo (5 Estaciones)":
+        return items
+
     if formato not in ESQUEMA_POR_FORMATO:
         raise EstructuraInvalidaError(f"Formato desconocido: {formato}")
 

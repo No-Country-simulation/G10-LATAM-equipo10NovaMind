@@ -40,11 +40,14 @@ La suite automatizada fue ejecutada en su totalidad mediante pytest:
    - Control de lotes de embeddings para llamadas seguras a Cohere (máx. 96 chunks por lote).
    - Manejo de caídas transitorias de API mediante backoff exponencial.
 
-## Validación End-to-End (E2E) en Navegador
-Adicionalmente a los tests automatizados, se completó una prueba en tiempo real en navegador conectando la interfaz web en React 19 (puerto 5173) con el backend FastAPI (puerto 8000), Cohere y OCI Object Storage Always Free:
-- **Documento:** `apache_kafka_introduction.md`
-- **Perfil:** `profesional_tecnico` | **Formato:** `flashcards_estudio`
-- **Fidelidad RAG:** Score de anclaje de **1.00 (100% de afirmaciones verificadas)**.
-- **Calidad:** Alta.
-- **Persistencia OCI:** Completada en el bucket `nuevamente-contenidos-educativos`.
+## Validación End-to-End (E2E) en Navegador y Producción OCI
+1. **Prueba Local Fullstack:** Conexión de React 19 (puerto 5173) con FastAPI (puerto 8000), Cohere y OCI Object Storage Always Free:
+   - **Documento:** `apache_kafka_introduction.md`
+   - **Perfil:** `profesional_tecnico` | **Formato:** `flashcards_estudio`
+   - **Fidelidad RAG:** Score de anclaje de **1.00 (100% de afirmaciones verificadas)**.
+   - **Persistencia OCI:** Completada en el bucket `nuevamente-contenidos-educativos`.
+2. **Prueba HTTP en Producción Cloud (`https://novamind.techgk.cl/api/v1/adaptar`):**
+   - **Resultado:** HTTP 200 OK en **9.51 segundos totales (8.86 s backend)**.
+   - **Flujo E2E:** Tráfico perimetral por Cloudflare Tunnel ➔ Nginx (VM 2) ➔ VCN Privada ➔ FastAPI Uvicorn (VM 1) ➔ LangGraph ➔ OCI Object Storage.
+   - **Persistencia en Nube:** Verificada en el bucket `nuevamente-contenidos-educativos` (objeto `doc-d790da6b5068ee2e-...`).
 

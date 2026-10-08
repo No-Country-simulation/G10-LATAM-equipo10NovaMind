@@ -126,3 +126,62 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
 4. **Validación Integral:**
    - Suite automatizada: 65/65 pruebas aprobadas al 100% (`backend/tests/`).
    - Frontend en producción: `https://novamind.techgk.cl` respondiendo sin errores y con visualización completa de los 5 formatos interactivos.
+
+## Fase 9: Orquestación Multi-Proveedor, Resiliencia SSE y Auditoría Real (NuevaMente v2)
+
+1. **Agente Crítico Multi-Proveedor (Fábrica con Cascada de Resiliencia):**
+   - Desacople completo del Agente 3 respecto al Agente Productor mediante el patrón Fábrica/Estrategia (`ProveedorCritico`) configurable vía `.env`.
+   - Adopción de **Google Gemini (`gemini-2.5-flash`)** como proveedor primario: latencia de evaluación de **~2 segundos**, structured outputs nativos (`response_schema`) y eliminación del sesgo de autoevaluación.
+   - Cascada de resiliencia automatizada: fallback inmediato a **Groq (`qwen/qwen3.8-27b`)** o **Cohere (`command-r-08-2024`)** ante caídas de red o límites de cuota (HTTP 429), erradicando las evaluaciones mock ficticias en producción.
+   - Verificación determinista en Python de `chunk_id_evidencia` contra los fragmentos reales del Agente 1 (0 llamadas adicionales).
+2. **Desacople Asíncrono del Event Loop y Protección de Memoria (VM 1 Always Free):**
+   - Envoltorio de `orquestador.ejecutar()` mediante `await asyncio.to_thread()` en FastAPI, asegurando que `/health` y las solicitudes concurrentes nunca se congelen durante la inferencia.
+   - Implementación de `asyncio.Semaphore(1)` para encolar solicitudes concurrentes y proteger la instancia de 1 GB RAM contra saturación o terminación por OOM Killer.
+3. **Canal de Streaming Server-Sent Events (SSE) y Heartbeat Anti-Timeout Cloudflare:**
+   - Creación del endpoint `POST /api/v1/adaptar/stream` con emisión de eventos estructurados por nodo de LangGraph.
+   - Heartbeat activo cada 15 segundos (`: ping - heartbeat anti-timeout 100s\n\n`) para garantizar inmunidad total contra el error 524 de Cloudflare Free Tier (límite de 100s).
+   - Configuración proxy en Nginx (VM 2) con `proxy_buffering off;`, `proxy_read_timeout 180s;` y `Connection ''`.
+4. **Auto-reparación Defensiva del Formato Quiz:**
+   - Sanitización previa en `validar_items` de `schemas.py` para normalizar prefijos ("A) ") y alinear opciones, erradicando reintentos espurios de LLM por discrepancias sintácticas.
+5. **Entrega Masiva Progresiva y Hook de Audio (ElevenLabs):**
+   - Secuencia de emisión priorizada por menor latencia: TL;DR (18s) ➔ Flashcards ➔ Tutorial ➔ Quiz ➔ Guion, permitiendo renderizado interactivo en pantalla en menos de 20 segundos.
+   - Diseño desacoplado para síntesis de voz con ElevenLabs como tarea de fondo asíncrona (`event: audio_listo`) sin bloquear el pipeline textual.
+6. **Preservación de Embeddings (Agente 1):**
+   - Mantenimiento de Cohere `embed-multilingual-v3.0` (1024 dims) para preservar íntegra la base vectorial de ChromaDB sin necesidad de reindexación ni consumo excesivo de RAM.
+7. **Verificación y Línea Base:**
+   - Suite local: 65/65 pruebas pasando al 100% (`backend/tests/`).
+   - Producción E2E: Respuesta exitosa en **9.51 s totales (8.86 s backend)** con persistencia en OCI completada.
+
+## Fase 10: Integración Full-Stack NovaMind (Design System OKLCH, Circuito de 5 Estaciones y Guía OCI Swap)
+
+1. **Identidad Oficial de Marca (NovaMind):**
+   - Consolidación del nombre oficial **NovaMind** en toda la plataforma.
+   - Incorporación del isotipo Möbius oficial en SVG vectorial (`public/Isotipo.svg` e `IsotipoMonocromo.svg`) en la cabecera interactiva y metadatos SEO.
+
+2. **Integración del Frontend de Vanguardia y Gamificación:**
+   - Adopción integral de la paleta de tokens modernos OKLCH y tipografías Syne + Plus Jakarta Sans.
+   - Implementación de la barra de estado `PlayerHUD` con seguimiento de XP en tiempo real, racha diaria de estudio, 3 escudos cognitivos y conteo de medallas.
+   - Modales interactivos `AuthModal` (perfil) y `BadgeModal` con efectos de confeti festivo (`canvas-confetti`).
+
+3. **Circuito Pedagógico Gamificado de 5 Estaciones (`Step2KnowledgeQuest`):**
+   - **Estación 1: Resumen Ninja (TL;DR):** Analogía central de alto impacto y matriz de métricas operativas (+50 XP).
+   - **Estación 2: Flashcard Quest (3D Flip & Mastery):** Tarjetas tridimensionales interactivas con pistas didácticas y marcado de dominio (+100 XP).
+   - **Estación 3: Tutorial Quest (Laboratorio CLI Interactivo):** Guía práctica paso a paso con terminal sandbox simulada para ejecutar y verificar comandos de Linux/OCI en tiempo real (+150 XP).
+   - **Estación 4: Director Cut (Storyboard & Teleprompter):** Guion audiovisual organizado por escenas con minutaje, apoyos visuales y recomendaciones docentes (+100 XP).
+   - **Estación 5: The Final Trial (Quiz con Escudos Cognitivos):** Cuestionario interactivo con retroalimentación RAG inmediata, citas textuales y penalización de escudos cognitivos (+200 XP).
+
+4. **Guía Técnica Oficial de Aprovisionamiento Swap OCI y Modo Demo 1-Click:**
+   - Creación del documento canónico `data/documents/guia_optimizacion_swap_oci.md` documentando la arquitectura de memoria virtual en `VM.Standard.E2.1.Micro`, el riesgo del OOM Killer (error 137) y la secuencia exacta de comandos Linux (`fallocate -l 4G`, `chmod 600`, `mkswap`, `swapon`, `/etc/fstab`, `swappiness=20`, `free -h`).
+   - Inclusión en `Step1Ingestion` de un formulario limpio para carga de archivos propios junto con el botón de un solo clic: **`⚡ Cargar Guía OCI Swap (Modo Demo)`**, que precarga la guía técnica y los parámetros óptimos al instante.
+   - Definición del Escenario 0 en `mockScenarios.ts` con el dataset completo de las 5 estaciones sincronizado.
+
+5. **Actualización de Esquemas y Backend FastAPI:**
+   - Extensión de `FormatoSalida` y `_MAPA_FORMATO` en `schemas.py` con `"Paquete Educativo Completo (5 Estaciones)"`.
+   - Soporte en `agente2_productor.py` para generación de las 5 estaciones pedagógicas.
+   - Reglas de validación defensiva en `validar_items` de `schemas.py` para aceptar el formato de 5 estaciones.
+
+6. **Certificación y Pruebas E2E:**
+   - Backend Pytest: **70/70 pruebas pasando al 100%** (`backend/tests/`).
+   - Frontend Vite: Compilación TypeScript estricta exitosa en **3.07s** con 0 errores.
+   - Verificación de servicio local HTTP 200 OK.
+

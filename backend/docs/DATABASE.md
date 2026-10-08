@@ -7,9 +7,9 @@ No se identificó una base de datos relacional ni migraciones SQL. La persistenc
 3. **OCI Object Storage**: cliente de almacenamiento de objetos disponible como integración.
 
 ## ChromaDB
-`backend/app/core/rag_pipeline.py` crea un `PersistentClient`, obtiene o crea una colección y guarda fragmentos con identificadores y metadatos. Segmentación: tamaño objetivo 700 caracteres y solapamiento 100; para Markdown reconoce encabezados H1-H3 antes de dividir secciones. Metadatos de fragmento: `doc_id`, título del documento, índice de fragmento y extracto de fuente. La consulta usa similitud coseno y puede filtrar por `doc_id`.
+En el pipeline oficial de producción (`backend/app/orquestador.py`), ChromaDB opera como almacén vectorial persistente (`./chroma_db` o `data/chroma`) con similitud coseno. Los fragmentos se indexan con embeddings remotos de Cohere (`embed-multilingual-v3.0`, 1024 dimensiones en lotes de hasta 96), lo que preserva la memoria RAM de la instancia Always Free al no requerir modelos de embeddings locales pesados ni reindexaciones frecuentes. Metadatos de fragmento: `doc_id`, título del documento, índice de fragmento y extracto de fuente.
 
-Variables específicas observadas en este módulo: `CHROMA_PERSIST_DIR` (predeterminado `data/chroma`), `CHROMA_COLLECTION_NAME` (`nuevamente_docs`), `LOCAL_EMBEDDINGS_MODEL` (`intfloat/multilingual-e5-base`) y `EMBEDDINGS_PROVIDER` (`local` por defecto; alternativa de código basada en Google Generative AI que requiere `GEMINI_API_KEY`).
+Variables observadas: `AGENTE1_CHROMA_PATH` (`./chroma_db`), `AGENTE1_COLLECTION_NAME` (`nuevamente_documentos`), `COHERE_EMBEDDING_MODEL` (`embed-multilingual-v3.0`). El módulo alternativo `rag_pipeline.py` soporta opcionalmente persistencia local en `data/chroma`.
 
 ## Almacenador Híbrido Resiliente (OCI Cloud + Local)
 En `backend/app/orquestador.py`, la persistencia se gestiona mediante `almacenador_resiliente`, el cual aplica una política de **alta disponibilidad**:

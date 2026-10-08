@@ -1,0 +1,319 @@
+.hudWrapper {
+  width: 100%;
+  background-color: rgba(13, 17, 26, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.625rem 1rem;
+  transition: all var(--transition-base);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  position: sticky;
+  top: 4.5rem;
+  z-index: 40;
+}
+
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    font-size: 0.875rem;
+  }
+}
+
+.statsGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  .statsGroup {
+    gap: 1rem;
+  }
+}
+
+.xpBadge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-violet-bg);
+  border: 1px solid var(--color-violet-border);
+  color: var(--color-violet-300);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+}
+
+.levelTag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.05rem 0.375rem;
+  border-radius: var(--radius-sm);
+  background-color: rgba(139, 92, 246, 0.25);
+  font-size: 0.625rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--color-violet-300);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.xpValues {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.xpNumber {
+  font-family: var(--font-code);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 640px) {
+  .xpNumber {
+    font-size: 1.125rem;
+  }
+}
+
+.xpUnit {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-violet-400);
+  letter-spacing: 0.05em;
+}
+
+.floatingXp {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-amber-400), var(--color-amber-500));
+  color: #07090e;
+  font-size: 0.625rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px var(--color-amber-glow);
+  white-space: nowrap;
+  animation: bounce 1s infinite alternate cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+.streakBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-amber-bg);
+  border: 1px solid var(--color-amber-border);
+  color: var(--color-amber-300);
+}
+
+.flameIcon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-amber-400);
+  fill: rgba(251, 191, 36, 0.3);
+}
+
+.streakLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-amber-300);
+}
+
+.streakDays {
+  font-family: var(--font-code);
+  color: var(--color-text-primary);
+}
+
+.shieldsBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-cyan-border);
+  background-color: var(--color-cyan-bg);
+  color: var(--color-cyan-300);
+  transition: all var(--transition-base);
+}
+
+.shieldsBadgeDanger {
+  border-color: var(--color-rose-border);
+  background-color: var(--color-rose-bg);
+  color: var(--color-rose-300);
+}
+
+.shieldsLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-right: 0.25rem;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .shieldsLabel {
+    display: inline;
+  }
+}
+
+.shieldList {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.shieldIcon {
+  width: 1rem;
+  height: 1rem;
+  transition: all var(--transition-base);
+}
+
+.shieldActive {
+  color: var(--color-cyan-400);
+  fill: rgba(34, 211, 238, 0.35);
+  filter: drop-shadow(0 0 6px var(--color-cyan-glow));
+}
+
+.shieldActiveDanger {
+  color: var(--color-rose-400);
+  fill: rgba(244, 63, 94, 0.35);
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+.shieldInactive {
+  color: var(--color-text-subtle);
+  fill: transparent;
+  opacity: 0.35;
+}
+
+.shieldRatio {
+  font-size: 0.6875rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  margin-left: 0.25rem;
+  color: var(--color-cyan-300);
+}
+
+.shieldRatioDanger {
+  color: var(--color-rose-300);
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .actionGroup {
+    gap: 1rem;
+  }
+}
+
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 7.5rem;
+}
+
+@media (min-width: 640px) {
+  .progressContainer {
+    min-width: 11.25rem;
+  }
+}
+
+.progressLabel {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .progressLabel {
+    display: inline;
+  }
+}
+
+.progressBarBg {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  height: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.progressBarFill {
+  background: linear-gradient(90deg, var(--color-violet-500) 0%, var(--color-cyan-400) 50%, var(--color-emerald-400) 100%);
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.progressPercentage {
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.trophiesButton {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-amber-300);
+  background-color: var(--color-amber-bg);
+  border: 1px solid var(--color-amber-border);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.1);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.trophiesButton:hover {
+  background-color: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.trophyCount {
+  font-family: var(--font-code);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 0.05rem 0.375rem;
+  border-radius: var(--radius-sm);
+  background-color: rgba(245, 158, 11, 0.2);
+  color: var(--color-amber-200);
+  margin-left: 0.125rem;
+}

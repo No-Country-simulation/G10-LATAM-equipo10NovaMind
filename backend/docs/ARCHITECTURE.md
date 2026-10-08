@@ -12,11 +12,11 @@ flowchart LR
   ING --> ORQ["Orquestador LangGraph (orquestador.py)"]
   ORQ --> INV["Agente 1: Investigador RAG"]
   INV --> CH[("ChromaDB Vectorial")]
-  INV <--> COH_EMB["Cohere Embeddings API"]
+  INV <--> COH_EMB["Cohere Embeddings API (1024 dims)"]
   ORQ --> PROD["Agente 2: Productor"]
-  PROD <--> COH_LLM["Cohere Command R+"]
-  ORQ --> CRIT["Agente 3: Crítico"]
-  CRIT <--> COH_LLM
+  PROD <--> COH_LLM["Cohere Command R (~18s)"]
+  ORQ --> CRIT["Agente 3: Crítico Multi-Proveedor"]
+  CRIT <--> MULTI_LLM["Google Gemini 2.5 Flash (~2s)<br/>Fallback: Groq / Cohere"]
   ORQ --> STORE["Almacenador Híbrido Resiliente"]
   STORE -->|Principal| OCI[("OCI Object Storage Always Free")]
   STORE -.->|Fallback Automático| LOCAL[("Archivos Locales data/outputs/")]
@@ -34,17 +34,21 @@ flowchart LR
 - **`frontend/src/services/api.ts`**: Cliente HTTP basado en Axios configurado contra `http://localhost:8000` con manejo de multipart/form-data y fallbacks.
 
 ### 2. Capa de Servicios y API REST (Backend FastAPI)
-- **`backend/app/main.py`**: Configuración de `FastAPI`, `CORSMiddleware` para puertos `5173` y `8000`, endpoints canónicos (`/health`, `/api/v1/config/opciones`, `/api/v1/adaptar`, `/api/v1/paquetes`) y singleton del orquestador.
+- **`backend/app/main.py`**: Configuración de `FastAPI`, `CORSMiddleware`, endpoints canónicos (`/health`, `/api/v1/config/opciones`, `/api/v1/adaptar`, `/api/v1/adaptar/stream`, `/api/v1/paquetes`) y singleton del orquestador.
+- **Desacople Asíncrono (`asyncio.to_thread`):** Ejecución de la inferencia fuera del hilo principal para garantizar que `/health` responda en < 5 ms.
+- **Semáforo de Concurrencia (`asyncio.Semaphore(1)`):** Encolamiento de peticiones concurrentes para proteger la memoria RAM de la instancia Always Free (1 GB) en OCI.
+- **Canal Streaming SSE (`/api/v1/adaptar/stream`):** Emisión progresiva de chunks y heartbeats (`: ping`) cada 15s para neutralizar el timeout 524 de Cloudflare (100s).
 - **`backend/app/core/ingestion.py`**: Extractor multi-formato para PDFs (limpieza de cabeceras y paginación vía `pypdf`), Markdown y TXT.
-- **`backend/app/core/schemas.py`**: Contratos de datos estrictos en Pydantic v2 para los 5 formatos pedagógicos, solicitudes, respuestas y evaluaciones de anclaje.
-- **`backend/app/core/config.py`**: Configuración centralizada y resolución tolerante de variables de entorno (`COHERE_*`, `OCI_*`, `AGENTE1_*`).
+- **`backend/app/core/schemas.py`**: Contratos de datos estrictos en Pydantic v2 para los 5 formatos pedagógicos con auto-reparación sintáctica de Quizzes.
+- **`backend/app/core/config.py`**: Configuración centralizada multi-proveedor (`COHERE_*`, `GEMINI_*`, `GROQ_*`, `OCI_*`, `PROVEEDOR_CRITICO`).
 
 ### 3. Capa de Inteligencia Multi-Agente (LangGraph)
 - **`backend/app/orquestador.py`**: Grafo de ejecución determinista con ciclo de feedback reflexivo:
-  - **Nodo RAG**: Indexación y recuperación contextual.
-  - **Nodo Redacción**: Producción pedagógica con inyección de few-shots por formato.
-  - **Nodo Crítica**: Fact-checking contra fuentes y cálculo de `anclaje_fuente_score`.
-  - **Decisión / Bucle**: Aprobación directa si `anclaje >= 0.70`, o feedback correctivo con hasta `MAX_RETRIES = 2`.
+  - **Nodo RAG (Agente 1)**: Indexación y recuperación contextual preservando embeddings Cohere `embed-multilingual-v3.0` (1024 dims).
+  - **Nodo Redacción (Agente 2)**: Producción pedagógica con `command-r-08-2024` e inyección de few-shots por formato (~14-18s).
+  - **Nodo Crítica (Agente 3 Multi-Proveedor)**: Fact-checking neutral desacoplado mediante patrón Fábrica (`ProveedorCritico`) con **Google Gemini 2.5 Flash** (~2s, structured outputs nativos) y fallback en cascada a **Groq (`qwen/qwen3.8-27b`)** y **Cohere (`command-r-08-2024`)**.
+  - **Validación Determinista de Evidencias**: Verificación en Python de que los `chunk_id` citados por el Crítico existan en los fragmentos reales.
+  - **Decisión / Bucle**: Aprobación directa si `anclaje >= 0.70`, o feedback correctivo con presupuesto de tiempo interno (`75.0s`).
   - **Nodo Persistir**: Persistencia híbrida mediante `almacenador_resiliente`.
 
 ### 4. Capa de Persistencia y Almacenamiento
@@ -70,12 +74,13 @@ sequenceDiagram
   API->>API: Extrae texto y valida contrato Pydantic v2
   API->>ORQ: ejecutar(solicitud)
   ORQ->>RAG: Ingestar texto y recuperar fragmentos relevantes
-  ORQ->>P: Generar material adaptado (inyección de few-shots)
-  ORQ->>C: Auditar fidelidad contra fuentes (anclaje_fuente_score)
-  alt anclaje < 0.70 y quedan reintentos
+  ORQ->>P: Generar material adaptado (inyección de few-shots, command-r-08-2024)
+  ORQ->>C: Auditar fidelidad multi-proveedor neutral (Gemini 2.5 Flash ~2s)
+  C->>C: Valida chunk_id_evidencia contra chunks reales en Python
+  alt anclaje < 0.70 y quedan reintentos y tiempo disponible
     C-->>ORQ: Feedback de corrección detallado
     ORQ->>P: Regenerar con feedback crítico
-    ORQ->>C: Reevaluar calidad
+    ORQ->>C: Reevaluar calidad multi-proveedor
   end
   ORQ->>S: Persistir documento original y paquete generado
   S-->>ORQ: Metadatos de persistencia (status_upload, objeto_id)

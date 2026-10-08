@@ -1,14 +1,15 @@
 # Referencia de API
 
-**Framework:** FastAPI. **Versión declarada:** `2.0.0`. No se observó prefijo global para `/health`; el resto de endpoints funcionales usa `/api/v1`.
+**Framework:** FastAPI. **Versión declarada:** `2.1.0`. No se observó prefijo global para `/health`; el resto de endpoints funcionales usa `/api/v1`.
 
 ## Resumen de endpoints
 
 | Método | Ruta | Propósito |
 |---|---|---|
-| GET | `/health` | Healthcheck básico |
+| GET | `/health` | Healthcheck de proceso de alta velocidad (< 5 ms) |
 | GET | `/api/v1/config/opciones` | Opciones canónicas para formularios |
-| POST | `/api/v1/adaptar` | Generar material educativo desde archivo o texto |
+| POST | `/api/v1/adaptar` | Generar material educativo desde archivo o texto (REST síncrono) |
+| POST | `/api/v1/adaptar/stream` | Generar material educativo con streaming Server-Sent Events (SSE) y heartbeats anti-timeout |
 | GET | `/api/v1/paquetes` | Listar paquetes guardados |
 | GET | `/api/v1/paquetes/{objeto_id:path}` | Descargar paquete JSON por identificador/ruta de objeto |
 
@@ -81,6 +82,31 @@ Respuestas y errores observados:
 - `500`: configuración incompleta del orquestador u otros errores no controlados.
 
 La respuesta exitosa puede indicar `exito` o `exito_con_advertencias`; las estructuras exactas están definidas en `backend/app/core/schemas.py`.
+
+## `POST /api/v1/adaptar/stream` (Streaming SSE & Heartbeat Anti-Timeout)
+**Content-Type:** `multipart/form-data`. **Accept:** `text/event-stream`.
+
+Diseñado específicamente para evitar el **Error 524 (Timeout de 100 segundos)** de Cloudflare y alimentar interfaces reactivas con retroalimentación en tiempo real paso a paso.
+
+### Eventos emitidos en el stream:
+1. `event: inicio\ndata: {"status": "iniciando", "titulo": "..."}\n\n`: Metadatos iniciales del documento.
+2. `event: nodo_completado\ndata: {"nodo": "agente_1_rag", "duracion_s": 1.2}\n\n`: Notificación de avance por agente.
+3. `event: chunk_contenido\ndata: {"texto": "..."}\n\n`: Emisión progresiva de contenido textual.
+4. `event: evaluacion_calidad\ndata: {"score": 0.95, "veredicto": "Aprobado"}\n\n`: Auditoría del Agente 3 Crítico Multi-Proveedor.
+5. `event: finalizado\ndata: { ... RespuestaAdaptacion ... }\n\n`: Objeto final completo.
+6. `: ping - heartbeat anti-timeout 100s\n\n`: Comentario SSE periódico (cada 15 segundos) que mantiene activa la conexión TCP a través de proxies intermedios (Cloudflare / Nginx).
+
+### Ejemplo con curl:
+```bash
+curl -N -X POST http://localhost:8000/api/v1/adaptar/stream \
+  -F 'texto_directo=Texto técnico de prueba para adaptación pedagógica con streaming...' \
+  -F 'perfil_destinatario=Principiante' \
+  -F 'formato_salida=Flashcards'
+```
+
+## Control de Concurrencia y Event Loop
+- **Desacople en Threadpool (`asyncio.to_thread`):** La invocación del grafo LangGraph se despacha a un hilo secundario, garantizando que el event loop de FastAPI permanezca libre y `/health` responda siempre en < 5 ms.
+- **Semáforo de Inferencia (`asyncio.Semaphore(1)`):** Para entornos de recursos acotados (OCI Always Free, 1 GB RAM), las peticiones de adaptación concurrentes se encolan automáticamente, previniendo sobrecarga de memoria o terminación por OOM Killer.
 
 ## `GET /api/v1/paquetes`
 Devuelve `{"origen":"oci"|"local","paquetes":[...]}`. En modo local cada elemento incluye nombre, tamaño en bytes y marca temporal derivada del archivo. La lista OCI contiene nombre, tamaño y fecha de creación. Si OCI falla, el código continúa con listado local.

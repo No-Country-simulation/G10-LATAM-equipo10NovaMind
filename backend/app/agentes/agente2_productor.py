@@ -46,6 +46,16 @@ from app.core.schemas import (
 # ----------------------------------------------------------------------
 
 _INSTRUCCIONES_FORMATO: Dict[str, str] = {
+    "Paquete Educativo Completo (5 Estaciones)": (
+        'Genera un paquete educativo integral organizado en 5 estaciones pedagógicas: '
+        '1) "resumen_ninja": objeto con "titulo", "analogia_central" (metáfora cotidiana adaptada al perfil del estudiante), '
+        '"conceptos_clave" (lista de 3 o 4 objetos con "id", "texto", "verificado": false) y "metricas_rapidas" (objeto con "riesgo", "despliegue", "tipo_oci", "costo"). '
+        '2) "flashcards": lista de mínimo 3 tarjetas con "id", "frente", "dorso" y "pista_didactica". '
+        '3) "tutorial": lista de 3 o 4 pasos técnicos con "id", "paso" (número), "titulo", "descripcion", "cli_command" (comando bash/cli exacto de OCI o Linux), "completado": false, "verificacion". '
+        '4) "director_cut": lista de 2 o 3 escenas de storyboard con "id", "escena" (número), "tiempo", "titulo", "guion_locutor", "storyboard_visual", "consejo_pedagogico". '
+        '5) "quiz": lista de 3 preguntas con "id", "pregunta", "opciones" (lista de 4 strings), "respuesta_correcta" (índice entero 0-3), "justificacion_rag", "cita_fuente". '
+        'Todo debe derivarse exclusivamente de los fragmentos fuente y anclarse fielmente sin alucinaciones.'
+    ),
     "Flashcards": (
         'Genera "items" como una lista de tarjetas, cada una con las claves '
         '"frente" (pregunta o concepto corto), "dorso" (respuesta clara) y '

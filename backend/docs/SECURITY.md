@@ -8,7 +8,10 @@
 - Mensajes de error amigables en varios caminos del orquestador.
 
 ## Controles Implementados y Mitigaciones Recientes
-- **CORS Restringido a Entorno Local:** Se eliminó la política global `allow_origins=["*"]`. En `backend/app/main.py`, CORS autoriza únicamente los orígenes del frontend (`http://localhost:5173`, `http://127.0.0.1:5173`) y herramientas locales con `allow_origin_regex`.
+- **CORS Restringido a Entorno Local y Producción:** Se eliminó la política global `allow_origins=["*"]`. En `backend/app/main.py`, CORS autoriza únicamente los orígenes del frontend (`http://localhost:5173`, `http://127.0.0.1:5173`) y herramientas locales con `allow_origin_regex`.
+- **Arquitectura Zero Trust en Producción:** Despliegue perimetral mediante Cloudflare Tunnel (`novamind.techgk.cl`). La API en VM 1 (`puerto 8000`) no tiene puertos abiertos a Internet; solo escucha en la red privada VCN desde el proxy inverso Nginx de la VM 2.
+- **Protección contra Agotamiento de Recursos y OOM (`asyncio.Semaphore(1)`):** Control de concurrencia a nivel de aplicación que encola peticiones pesadas de LangGraph para proteger la instancia OCI Always Free (1 GB RAM) contra saturación de memoria.
+- **Validación Determinista contra Alucinaciones:** Comprobación estricta en Python de que los `chunk_id` citados por el Crítico pertenezcan efectivamente a los fragmentos del documento analizado antes de computar el score.
 - **Purga y Saneamiento de Git:** Se ejecutó una reescritura completa del historial con `git-filter-repo` para eliminar cualquier mención de namespaces de OCI reales o identificadores sensibles de todos los commits anteriores.
 - **Exclusión de Secretos en `.gitignore`:** Archivos `.env`, claves `.pem`, bitácoras de incidencias internas y manuales privados (`*_PRIVADO.md`) están ignorados global y recursivamente.
 - **Validación Estricta de Entradas:** Contratos Pydantic v2 en `backend/app/core/schemas.py` con validación de tipos, longitud mínima de 40 caracteres y normalización de alias.

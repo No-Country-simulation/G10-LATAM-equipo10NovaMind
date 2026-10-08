@@ -15,7 +15,7 @@ Este sistema consolida la integración técnica de las diferentes ramas y roles 
 1. **Gobernanza y Planificación (`origin/project-manager`)**: Definición del alcance pedagógico, matriz de requerimientos del Hackathon ONE G10, actas y criterios de aceptación.
 2. **Microservicio Frontend (`origin/frontEnd`)**: Interfaz web reactiva (React 19 + TypeScript + Vite) con visualizadores pedagógicos dinámicos (Flashcards 3D, Quiz, Tutorial, TL;DR, Guión) y dashboard de auditoría RAG.
 3. **Infraestructura y Despliegue (`origin/backend` / `Propuesta-Microservicios` - Alejandro)**: Arquitectura de microservicios reales desacoplados, servidor web REST en FastAPI, ingesta multi-formato (PDF con extracción limpia, Markdown, TXT), cliente SDK de OCI Object Storage Always Free y despliegue modular.
-4. **Motor de IA y Agentes (`feature/agents-langgraph` - Pedro)**: Grafo cíclico multi-agente en LangGraph con feedback reflexivo, prompting adaptativo con few-shots específicos por formato, RAG con Cohere (`command-r-plus` y `embed-multilingual-v3.0`), validación estricta de esquemas con Pydantic v2 y suite determinista de 65 pruebas automatizadas.
+4. **Motor de IA y Agentes (`feature/agents-langgraph` - Pedro & Fase 9)**: Grafo cíclico multi-agente en LangGraph con feedback reflexivo, prompting adaptativo con few-shots específicos por formato, RAG vectorial con Cohere (`embed-multilingual-v3.0`), redacción optimizada con Cohere (`command-r-08-2024`), auditoría multi-proveedor desacoplada (Google Gemini 2.5 Flash / Groq / Cohere fallback), streaming SSE en tiempo real con heartbeats anti-timeout, validación estricta de esquemas con Pydantic v2 y suite determinista de 70 pruebas automatizadas (100% éxito).
 5. **Hub de Integración Continua (`origin/integracion` - HEAD actual)**: Rama central donde convergen todos los módulos, se resuelven contratos HTTP/JSON, se unifican scripts de despliegue local (`iniciar_local.bat`), se organiza el repositorio (`historial_progreso/` y `legado/`) y se ejecutan las pruebas E2E antes del merge final a `main`.
 6. **Rama de Producción y Release (`origin/main`)**: Rama troncal protegida para entrega final y demo estable (`v1.0-demo`).
 
@@ -43,7 +43,7 @@ graph TD
 
     %% CAPA SERVICIO / BACKEND
     subgraph CAPA_BACKEND ["⚡ CAPA DE SERVICIO Y API REST (FastAPI) · Rama: backend / Propuesta-Microservicios"]
-        API_ROUTER["<b>FastAPI Router (main.py)</b><br/>• GET /health<br/>• GET /api/v1/config/opciones<br/>• POST /api/v1/adaptar (multipart)<br/>• GET /api/v1/paquetes"]:::api
+        API_ROUTER["<b>FastAPI Router (main.py)</b><br/>• GET /health<br/>• GET /api/v1/config/opciones<br/>• POST /api/v1/adaptar (multipart)<br/>• POST /api/v1/adaptar/stream (SSE Anti-Timeout)<br/>• GET /api/v1/paquetes"]:::api
         INGESTION_ENGINE["<b>Motor de Ingesta (ingestion.py)</b><br/>• Extractor PDF (pypdf con limpieza)<br/>• Extractor Markdown / TXT (UTF-8)"]:::api
         API_ROUTER --> INGESTION_ENGINE
     end
@@ -54,17 +54,18 @@ graph TD
         
         AG1["<b>Agente 1: Investigador RAG</b><br/>• Chunking narrativo con solapamiento<br/>• Embeddings Cohere en lotes"]:::agent
         AG2["<b>Agente 2: Productor</b><br/>• Prompts adaptativos por perfil<br/>• Few-shots específicos por formato"]:::agent
-        AG3["<b>Agente 3: Crítico de Calidad</b><br/>• Fact-checking contra chunks fuente<br/>• Cálculo de anclaje_fuente_score"]:::agent
+        AG3["<b>Agente 3: Crítico de Calidad</b><br/>• Fact-checking contra chunks fuente<br/>• Evaluación multi-proveedor neutral"]:::agent
 
         ORQUESTADOR --> AG1
         ORQUESTADOR --> AG2
         ORQUESTADOR --> AG3
     end
 
-    %% CAPA EXTERNA DE IA
-    subgraph SERVICIOS_EXTERNOS ["🌐 SERVICIOS COHERE AI (Nube Externa)"]
-        COHERE_EMBED["<b>Cohere Embed API</b><br/>embed-multilingual-v3.0 (1024 dims)"]:::external
-        COHERE_CHAT["<b>Cohere Chat API</b><br/>command-r-plus-08-2024"]:::external
+    %% CAPA EXTERNA DE IA MULTI-PROVEEDOR
+    subgraph SERVICIOS_EXTERNOS ["🌐 SERVICIOS DE IA MULTI-PROVEEDOR (Nube Externa)"]
+        COHERE_EMBED["<b>Cohere Embed API (Agente 1)</b><br/>embed-multilingual-v3.0 (1024 dims)"]:::external
+        COHERE_CHAT["<b>Cohere Chat API (Agente 2)</b><br/>command-r-08-2024 (~18s)"]:::external
+        MULTI_CRITIC["<b>Crítico Multi-Proveedor (Agente 3)</b><br/>• Primario: Google Gemini 2.5 Flash (~2s)<br/>• Fallback: Groq (qwen3.8-27b) / Cohere"]:::external
     end
 
     %% CAPA DE ALMACENAMIENTO
@@ -84,7 +85,7 @@ graph TD
     AG1 <--> COHERE_EMBED
     AG1 <--> CHROMA_DB
     AG2 <--> COHERE_CHAT
-    AG3 <--> COHERE_CHAT
+    AG3 <--> MULTI_CRITIC
     ORQUESTADOR --> STORAGE_ROUTER
 ```
 
@@ -112,7 +113,7 @@ graph TD
     end
 
     subgraph HUB_INTEGRACION ["🚀 RAMA HUB CENTRAL: integracion (HEAD Actual)"]
-        INT_CORE["<b>origin/integracion</b><br/>═══════════════════════════════════════<br/>🔗 <b>Unificación Full Stack:</b> Backend + Frontend + IA<br/>🧪 <b>Testing Unificado:</b> 65/65 tests deterministas (100%)<br/>🌐 <b>Validación E2E:</b> Score RAG 1.00 verificado en browser<br/>🛠️ <b>Scripts Rápidos:</b> iniciar_local.bat, setup.bat, reestablecer_local.bat<br/>📂 <b>Organización Limpia:</b> historial_progreso/ y legado/"]:::hub
+        INT_CORE["<b>origin/integracion</b><br/>═══════════════════════════════════════<br/>🔗 <b>Unificación Full Stack:</b> Backend + Frontend + IA<br/>🧪 <b>Testing Unificado:</b> 70/70 tests deterministas (100%)<br/>🌐 <b>Validación E2E:</b> Score RAG 1.00 verificado en browser<br/>🛠️ <b>Scripts Rápidos:</b> iniciar_local.bat, setup.bat, reestablecer_local.bat<br/>📂 <b>Organización Limpia:</b> historial_progreso/ y legado/"]:::hub
     end
 
     subgraph RAMA_RELEASE ["🏆 RAMA DE PRODUCCIÓN Y ENTREGA"]
@@ -133,8 +134,8 @@ graph TD
 | :--- | :--- | :--- | :---: |
 | `origin/project-manager` | Gobernanza y Producto | Documentación de objetivos, actas de acuerdos y alineación Hackathon | 🟢 Consolidado en docs |
 | `origin/frontEnd` | Microservicio Frontend | `frontend/` (React 19, TypeScript, Vite, Tailwind tokens, Lucide, visualizadores) | 🟢 Integrado y conectado |
-| `origin/backend` | Microservicio Backend | `backend/app/main.py`, `ingestion.py`, `storage/oci_client.py`, `deploy/` | 🟢 Desacoplado vía REST |
-| `origin/feature/agents-langgraph` | Inteligencia Artificial | `backend/app/orquestador.py`, `agentes/`, `core/schemas.py`, suite de 65 tests | 🟢 100% tests pasando |
+| `origin/backend` | Microservicio Backend | `backend/app/main.py`, `ingestion.py`, `storage/oci_client.py`, `deploy/` | 🟢 Desacoplado vía REST + SSE |
+| `origin/feature/agents-langgraph` | Inteligencia Artificial | `backend/app/orquestador.py`, `agentes/`, `core/schemas.py`, suite de 70 tests | 🟢 100% tests pasando (70/70) |
 | `origin/integracion` *(HEAD)* | Hub de Integración Continua | Scripts `.bat`, `historial_progreso/`, `legado/`, CI local, validación E2E | 🚀 Activa y sincronizada |
 | `origin/main` | Producción / Demo Final | Entrega evaluable final consolidada mediante Squash & Merge | 🏁 Destino de release |
 
@@ -161,7 +162,7 @@ graph LR
     ROOT --> B_DIR["📁 backend/<br/><i>(Ramas: backend + feature/agents-langgraph)</i>"]:::dir
     B_DIR --> B_APP["📁 app/ (main.py, orquestador.py, agentes, core, storage)"]:::dir
     B_DIR --> B_DOCS["📁 docs/ (9 docs de arquitectura, API y auditoría)"]:::dir
-    B_DIR --> B_TESTS["📁 tests/ (Suite de 65 pruebas unitarias e integrales)"]:::dir
+    B_DIR --> B_TESTS["📁 tests/ (Suite de 70 pruebas unitarias e integrales)"]:::dir
     B_DIR --> B_DATA["📁 data/ (chroma/, outputs/, documents/)"]:::dir
     B_DIR --> B_REQ["📄 requirements.txt"]:::file
     B_DIR --> B_INI["📄 pytest.ini"]:::file
@@ -228,16 +229,17 @@ G10-LATAM-equipo10NovaMind/
 │   │   ├── PROJECT_AUDIT.md           # Informe de auditoría estática y matriz de prioridades
 │   │   ├── SECURITY.md                # Evaluación de controles y seguridad preventiva
 │   │   └── TESTING.md                 # Estrategia de testing y pruebas unitarias/integrales
-│   ├── tests/                         # Suite de pruebas deterministas (65 tests pasando - 100%)
-│   │   ├── test_api.py                # Validación de endpoints REST con TestClient
-│   │   ├── test_orquestador.py        # Pruebas unitarias de agentes, contratos y feedback
-│   │   └── test_integracion_offline.py# Pipeline E2E con dependencias simuladas
+│   ├── tests/                         # Suite de pruebas deterministas (70 tests pasando - 100%)
+│   │   ├── test_api.py                # Validación de endpoints REST y SSE con TestClient (7 tests)
+│   │   ├── test_critico_multiproveedor.py # Pruebas unitarias de Gemini, Groq, fallback y sanitización (4 tests)
+│   │   ├── test_orquestador.py        # Pruebas unitarias de agentes, contratos y feedback (56 tests)
+│   │   └── test_integracion_offline.py# Pipeline E2E con dependencias simuladas (3 tests)
 │   ├── data/                          # Directorio de persistencia
 │   │   ├── chroma/                    # Base vectorial persistente de ChromaDB
 │   │   ├── documents/                 # Archivos fuente temporales y documentos cargados
 │   │   └── outputs/                   # Salidas persistidas por la maqueta local de OCI
 │   └── app/                           # Código fuente de la aplicación
-│       ├── main.py                    # Servidor FastAPI (/health, /opciones, /adaptar, /paquetes)
+│       ├── main.py                    # Servidor FastAPI (/health, /opciones, /adaptar, /adaptar/stream, /paquetes)
 │       ├── orquestador.py             # Grafo de ejecución LangGraph y control de ciclo pedagógico
 │       ├── agentes/                   # Clases independientes de los 3 agentes pedagógicos
 │       │   ├── agente1_investigador.py# Ingesta, chunking y búsqueda semántica RAG
@@ -324,15 +326,15 @@ sequenceDiagram
         Note over Orquestador, Ag2: FASE 2: Producción Pedagógica (Rama: feature/agents-langgraph)
         Orquestador->>Ag2: generar_contenido(chunks, perfil, formato, detalle)
         Note over Ag2: Inyecta Few-Shot específico para el formato pedido
-        Ag2->>Ag2: Llamada a Cohere Command R+ (JSON mode)
+        Ag2->>Ag2: Inferencia Cohere Command R (command-r-08-2024, JSON mode)
         Ag2-->>Orquestador: Borrador estructurado validado por Pydantic v2
     end
 
     rect rgb(254, 242, 242)
-        Note over Orquestador, Ag3: FASE 3: Fact-Checking y Auditoría de Calidad (Rama: feature/agents-langgraph)
+        Note over Orquestador, Ag3: FASE 3: Fact-Checking Multi-Proveedor (Rama: feature/agents-langgraph & Fase 9)
         Orquestador->>Ag3: evaluar_contenido(borrador, chunks_fuente, perfil, formato)
-        Ag3->>Ag3: Audita cada afirmación individualmente contra los chunks
-        Ag3->>Ag3: Calcula anclaje_fuente_score = afirmaciones_respaldadas / total
+        Ag3->>Ag3: Auditoría neutral con Google Gemini 2.5 Flash (~2s, fallback Groq/Cohere)
+        Ag3->>Ag3: Validación en Python: verifica chunk_id en chunks reales y calcula score
         Ag3-->>Orquestador: EvaluacionCalidad (score, veredicto, feedback correctivo)
     end
 
@@ -372,7 +374,7 @@ graph TD
     classDef storage fill:#78350f,stroke:#f59e0b,stroke-width:2px,color:#ffffff;
 
     subgraph API_SURFACE ["⚡ SUPERFICIE DE ENTRADA (FastAPI) · Rama: backend"]
-        ENDPOINTS["<b>Endpoints REST (backend/app/main.py)</b><br/>• GET /health<br/>• GET /api/v1/config/opciones<br/>• POST /api/v1/adaptar<br/>• GET /api/v1/paquetes<br/>• GET /api/v1/paquetes/{objeto_id}"]:::api
+        ENDPOINTS["<b>Endpoints REST y SSE (backend/app/main.py)</b><br/>• GET /health (no-bloqueante, <10ms)<br/>• GET /api/v1/config/opciones<br/>• POST /api/v1/adaptar (Multipart estándar)<br/>• POST /api/v1/adaptar/stream (SSE en tiempo real + Heartbeats 15s)<br/>• GET /api/v1/paquetes<br/>• GET /api/v1/paquetes/{objeto_id}"]:::api
     end
 
     subgraph VECTOR_ENGINE ["🔍 MOTOR VECTORIAL (ChromaDB) · Rama: feature/agents-langgraph"]
@@ -423,7 +425,10 @@ El sistema adapta cualquier documento técnico a **5 formatos pedagógicos espec
 ### Requisitos Previos
 - **Python 3.12.7** (versión oficial estandarizada del proyecto).
 - **Node.js 18+ y npm** (para la interfaz web React 19).
-- **API Key de Cohere**: Regístrate y obtén tu clave gratuita en [cohere.com](https://cohere.com).
+- **API Keys de LLMs**:
+  - **Cohere** (Requerida): Clave para embeddings y redacción del Agente 2 ([cohere.com](https://cohere.com)).
+  - **Google Gemini** (Requerida / Primaria): Clave gratuita para el Agente 3 Crítico ([aistudio.google.com](https://aistudio.google.com)).
+  - **Groq** (Opcional / Fallback): Clave gratuita para evaluación ultrarrápida de contingencia ([groq.com](https://groq.com)).
 - *(Opcional)* Credenciales de Oracle Cloud si se desea persistencia en OCI Object Storage.
 
 ### Configurar Variables de Entorno
@@ -431,11 +436,17 @@ Copia la plantilla `.env.example` en la raíz como `.env`:
 ```bash
 cp .env.example .env
 ```
-Edita `.env` y configura tu API Key de Cohere:
+Edita `.env` con las claves configuradas:
 ```env
 COHERE_API_KEY=tu_api_key_de_cohere
-COHERE_MODEL=command-r-plus-08-2024
+COHERE_MODEL=command-r-08-2024
 EMBEDDING_MODEL=embed-multilingual-v3.0
+
+# Multi-Proveedor Agente 3 (Crítico de Calidad)
+PROVEEDOR_CRITICO=gemini
+MODELO_CRITICO=gemini-2.5-flash
+GEMINI_API_KEY=tu_api_key_de_gemini
+GROQ_API_KEY=tu_api_key_de_groq
 ```
 
 ---
@@ -485,7 +496,7 @@ npm run dev
 
 ## 🌟 7. Estado Actual de la Integración Full Stack
 
-El proyecto ha completado de manera exitosa y verificada las **5 fases de integración técnica**, consolidando un sistema 100% operativo y desacoplado:
+El proyecto ha completado de manera exitosa y verificada las fases de integración técnica y optimización de latencia, consolidando un sistema 100% operativo, resiliente y desacoplado:
 
 | Fase | Hito Técnico | Estado | Verificación |
 | :--- | :--- | :---: | :--- |
@@ -494,6 +505,7 @@ El proyecto ha completado de manera exitosa y verificada las **5 fases de integr
 | **Fase 3** | **Persistencia Híbrida y Cloud OCI** | 🟢 Completada | Conexión con OCI Object Storage Always Free (bucket: `nuevamente-contenidos-educativos`, región `sa-santiago-1`) y fallback local transparente a `data/outputs/`. |
 | **Fase 4** | **Integración Fullstack React 19** | 🟢 Completada | Cliente web React 19 + Vite + TypeScript conectado a FastAPI con Axios, soporte multipart, CORS adaptativo y visualizadores dinámicos. |
 | **Fase 5** | **Validación E2E y Pruebas del Sistema** | 🟢 Completada | Suite automatizada de **65/65 pruebas pasando (100%)** y prueba End-to-End en navegador completada con anclaje RAG de **1.00 (100% de respaldo)**. |
+| **Fase 6** | **Orquestación Multi-Proveedor y Resiliencia SSE** | 🟢 Completada | Agente Crítico desacoplado a **Google Gemini 2.5 Flash** (~2s) y **Groq** (<1.5s), streaming SSE con heartbeats cada 15s (anti-timeout 100s Cloudflare), protección de memoria en OCI con semáforo asíncrono y suite ampliada a **70/70 pruebas (100%)**. Latencia total reducida de ~430s a **~40s** (mejora >90%). |
 
 ---
 
@@ -511,27 +523,41 @@ Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben t
 
 ### 3. Ingesta Híbrida (`multipart/form-data`)
 * El endpoint `POST /api/v1/adaptar` recibe peticiones en formato multipart.
-* Soporta subida de archivos binarios (`.pdf`, `.md`, `.txt`) mediante el campo `archivo`, o texto directo ingresado por el usuario mediante `texto_manual`.
+* Soporta subida de archivos binarios (`.pdf`, `.md`, `.txt`) mediante el campo `archivo`, o texto directo ingresado por el usuario mediante `texto_directo`.
 * El motor `ingestion.py` limpia automáticamente los encabezados, pies de página y números de página de los PDFs antes de enviarlos a chunking.
 
-### 4. Persistencia Híbrida y Desacoplamiento de Almacenamiento
-* El payload completo del contenido pedagógico adaptado se devuelve de inmediato en el cuerpo de la respuesta HTTP 200, garantizando renderizado instantáneo en la UI sin esperas adicionales.
+### 4. Streaming SSE y Heartbeats Anti-Timeout (`POST /api/v1/adaptar/stream`)
+* Para evitar el temido error **Cloudflare 524 (A timeout occurred - 100s)** en entornos de producción con proxies inversos, se incorpora el endpoint Server-Sent Events `/api/v1/adaptar/stream`.
+* Emite un evento inmediato de `inicio`, comentarios `: ping - heartbeat anti-timeout` cada 15 segundos y eventos `heartbeat` con el tiempo transcurrido, finalizando con el evento `resultado` portador del JSON pedagógico completo y validado.
+
+### 5. Protección de Memoria OCI y Concurrencia No Bloqueante
+* La instancia Always Free de OCI opera con 1 GB de memoria RAM. Para prevenir que dos ejecuciones paralelas de inferencia activen el kernel OOM Killer, [main.py](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/backend/app/main.py) implementa un semáforo asíncrono estricto `_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(1)`.
+* Cada orquestación se ejecuta en un hilo de trabajo (`asyncio.to_thread`), garantizando que el bucle de eventos principal de FastAPI permanezca 100% receptivo: el endpoint `/health` responde en **~6.6 ms promedio** incluso durante la fase de mayor carga computacional.
+
+### 6. Agente Crítico Multi-Proveedor Desacoplado
+* El Agente 3 (Auditor de Calidad Pedagógica) implementa una arquitectura multi-proveedor agnóstica:
+  - **Primario:** Google Gemini 2.5 Flash (~2s por evaluación de fidelidad).
+  - **Secundario / Fallback:** Groq con modelos Llama o Qwen (<1.5s) y Cohere `command-r-08-2024` como contingencia.
+* Conmutación automática ante timeouts (>25s) o fallos de red HTTP, con verificación determinista en Python de que los `chunk_id_evidencia` citados pertenezcan de forma real a los fragmentos del documento fuente.
+
+### 7. Persistencia Híbrida y Desacoplamiento de Almacenamiento
+* El payload completo del contenido pedagógico adaptado se devuelve de inmediato en el cuerpo de la respuesta HTTP 200 (o en el evento final SSE), garantizando renderizado instantáneo en la UI sin esperas adicionales.
 * Simultáneamente, el `almacenador_resiliente` persiste el resultado en OCI Object Storage (o en `data/outputs/` como fallback local si las credenciales OCI no están presentes). El frontend recibe los metadatos de persistencia (`objeto_id` y `status_upload`) permitiendo su consulta posterior vía `GET /api/v1/paquetes/{objeto_id}`.
 
-### 5. Manejo Seguro de Secretos y Variables de Entorno
+### 8. Manejo Seguro de Secretos y Variables de Entorno
 * El archivo `.env` está excluido del control de versiones mediante `.gitignore`.
 * Toda referencia a credenciales, namespaces de OCI, tenancies y API Keys debe manejarse exclusivamente a través de variables de entorno, usando `.env.example` como referencia pública sanitizada.
 
-### 6. Organización Limpia del Repositorio
+### 9. Organización Limpia del Repositorio
 * La raíz del repositorio se mantiene minimalista con los archivos esenciales de configuración y ejecución.
-* Toda la documentación de avance, bitácoras de incidentes y especificaciones técnicas se encuentra en [historial_progreso/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso).
-* Todos los bocetos preliminares y requisitos de prototipado se conservan para trazabilidad en [legado/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/legado).
+* Toda la documentación de avance, bitácoras de incidentes y especificaciones técnicas se encuentra en [historial_progreso/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/historial_progreso).
+* Todos los bocetos preliminares y requisitos de prototipado se conservan para trazabilidad en [legado/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/legado).
 
 ---
 
 ## 🧪 9. Suite de Pruebas Automatizadas
 
-El backend cuenta con una suite rigurosa de **65 pruebas automatizadas** que validan la API REST, la lógica del orquestador LangGraph, la normalización de alias, el batching de embeddings, la persistencia resiliente y la robustez ante fallos:
+El backend cuenta con una suite rigurosa y determinista de **70 pruebas automatizadas** que validan la API REST, la lógica del orquestador LangGraph, los agentes multi-proveedor, la normalización de alias, el batching de embeddings, la persistencia resiliente y la robustez ante fallos:
 
 ```bash
 # Ejecutar desde la raíz con el entorno virtual activo:
@@ -539,23 +565,24 @@ pytest backend/tests -v
 ```
 
 ### Distribución de la Cobertura:
-* **`tests/test_api.py` (6 tests):** Validación con `TestClient` de `/health`, `/api/v1/config/opciones`, `/api/v1/adaptar` (multipart y texto), `/api/v1/paquetes` y manejo de 404 en descarga de paquetes.
-* **`tests/test_integracion_offline.py` (3 tests):** Validación del ciclo E2E con embeddings y LLMs simulados, verificación de reutilización del índice vectorial y adaptación con feedback correctivo.
-* **`tests/test_orquestador.py` (56 tests):** Pruebas unitarias de:
+* **`tests/test_api.py` (7 tests):** Validación con `TestClient` de `/health`, `/api/v1/config/opciones`, `/api/v1/adaptar` (multipart y texto), el nuevo endpoint SSE `/api/v1/adaptar/stream`, `/api/v1/paquetes` y manejo de 404 en descarga de paquetes.
+* **`tests/test_critico_multiproveedor.py` (4 tests):** Pruebas unitarias aisladas de las llamadas REST a Google Gemini, Groq, conmutación automática por fallback ante timeouts o caídas de red, y sanitización de respuestas en bloque markdown JSON.
+* **`tests/test_integracion_offline.py` (3 tests):** Validación del ciclo E2E completo con embeddings y LLMs simulados, verificación de reutilización del índice vectorial y adaptación con feedback correctivo.
+* **`tests/test_orquestador.py` (56 tests):** Pruebas unitarias exhaustivas de:
   - Puerta de calidad (`anclaje_fuente_score` y claridad pedagógica).
   - Normalización estricta de alias del brief.
   - Inyección de few-shots según formato pedido.
   - Límite de lote de embeddings en llamadas a Cohere (máx. 96 textos).
   - Manejo resiliente de caídas transitorias de API con reintentos exponenciales.
 
-**Estado actual de la suite:** 🟢 **65 pasadas, 0 fallidas (100% de éxito).**
+**Estado actual de la suite:** 🟢 **70 pasadas, 0 fallidas (100% de éxito en 13.57s).**
 
 ---
 
 ## 👥 10. Créditos y Autores del Proyecto
 
 * **Alejandro (`origin/backend` / `Propuesta-Microservicios`)**: Arquitectura de microservicios, servidor REST en FastAPI, módulo de ingesta multi-formato con pypdf, cliente oficial de OCI Object Storage SDK y guías de despliegue en Oracle Cloud.
-* **Pedro (`origin/feature/agents-langgraph`)**: Motor multi-agente en LangGraph, prompting pedagógico adaptativo, RAG vectorial con Cohere y ChromaDB, validación de contratos Pydantic v2 y suite determinista de 65 pruebas automatizadas.
+* **Pedro (`origin/feature/agents-langgraph`)**: Motor multi-agente en LangGraph, prompting pedagógico adaptativo, RAG vectorial con Cohere y ChromaDB, validación de contratos Pydantic v2 y suite determinista de 70 pruebas automatizadas (100% éxito).
 * **Frontend Lead (`origin/frontEnd`)**: Microservicio web cliente en React 19 + TypeScript + Vite, cliente HTTP desacoplado con soporte multipart, visualizadores interactivos de los 5 formatos pedagógicos (Flashcards 3D, Quiz, Tutorial, TL;DR, Guión) y dashboard de métricas RAG.
 * **Project Manager (`origin/project-manager`)**: Gobernanza, definición funcional de requerimientos, cronograma de trabajo, actas de acuerdos y alineación estratégica con los objetivos del Hackathon ONE G10.
 * **Equipo NovaMind (`origin/integracion` ➔ `origin/main`)**: Sinergia técnica de integración continua, armonización de contratos, scripts unificados de ejecución local (`iniciar_local.bat`), validación End-to-End con score de anclaje RAG de 1.00 y empaquetado para release final.

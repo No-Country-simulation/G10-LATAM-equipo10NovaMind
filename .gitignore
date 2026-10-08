@@ -48,17 +48,23 @@ data/documents/*
 !data/documents/ENISA Threat Landscape 2026_Final.pdf
 !data/documents/apache_kafka_introduction.md
 !data/documents/Snowflake_SIGMOD.pdf
+!data/documents/guia_optimizacion_swap_oci.md
 
 # Herramientas
 .pytest_cache/
 .mypy_cache/
 
-# Archivos confidenciales de infraestructura y despliegue OCI
+# Archivos confidenciales de infraestructura, secretos y respaldos locales
 *_PRIVADO.md
 *PRIVATE*.md
 **/*_PRIVADO.md
+SECRETOS_LOCAL_ESPEJO_PRIVADO.md
+*ESPEJO*.md
+*SECRETS*.md
 .oci_private/
 deploy/
+scratch/
+**/scratch/
 
 # Bitácoras y registros internos locales
 HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md

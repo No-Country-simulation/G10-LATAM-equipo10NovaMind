@@ -29,9 +29,9 @@ Los requirements fijan versiones para varias dependencias, pero también contien
 ### 8. Observabilidad y operación
 No se identificaron métricas/alertas ni readiness check de dependencias. `/health` solo devuelve estado estático. **Acción:** agregar health/readiness diferenciados, métricas, correlación de solicitudes y runbook.
 
-## Estado de Resolución y Mitigaciones Implementadas (Fases 1 a 5)
+## Estado de Resolución y Mitigaciones Implementadas (Fases 1 a 9)
 
-Tras el desarrollo de las 5 fases de integración técnica, los hallazgos iniciales fueron atendidos y validados:
+Tras el desarrollo de las 9 fases de integración técnica y despliegue en producción, los hallazgos fueron atendidos y validados:
 
 | Hallazgo | Estado | Mitigación Implementada |
 |---|:---:|---|
@@ -42,10 +42,13 @@ Tras el desarrollo de las 5 fases de integración técnica, los hallazgos inicia
 | **5. Persistencia y fallback** | 🟢 Resuelto | Implementación de `almacenador_resiliente` en el nodo persistir del orquestador, priorizando OCI Always Free y cayendo a `data/outputs/` de forma silenciosa ante fallos. |
 | **6. Diferencias README/Código** | 🟢 Resuelto | `README.md` reescrito reflejando la arquitectura real React 19 + Vite, scripts batch de un clic (`iniciar_local.bat`), endpoints y puertos reales. |
 | **7. Dependencias y entorno** | 🟢 Resuelto | Fijación estricta de entorno en Python 3.12.7, dependencias unificadas en `requirements.txt` y validación de instalación limpia. |
-| **8. Observabilidad** | 🟡 En progreso | Logs detallados con timestamp y duración de etapas, script de diagnóstico OCI (`scripts/test_oci_conexion.py`) y script de restablecimiento (`reestablecer_local.bat`). |
+| **8. Observabilidad** | 🟢 Resuelto | Logs detallados con timestamp y duración de etapas, scripts de diagnóstico y restablecimiento a estado cero. |
+| **9. Latencia y Timeout Cloudflare (524)** | 🟢 Resuelto | Transición a `command-r-08-2024` (reduciendo redacción de 300s a 18s) e implementación de streaming SSE con heartbeats cada 15s. |
+| **10. Auditoría de Calidad Real (Agente 3)** | 🟢 Resuelto | Desacople multi-proveedor con **Google Gemini 2.5 Flash** (~2s) y Groq (`qwen3.8-27b`), erradicando mocks y verificando `chunk_id` en Python. |
+| **11. Concurrencia y Event Loop** | 🟢 Resuelto | Desacople de inferencia mediante `asyncio.to_thread` y protección de memoria en OCI (1 GB RAM) con `asyncio.Semaphore(1)`. |
 
 ## Validación Operativa Realizada
 - **Suite de Pruebas Automatizadas:** 65 pruebas ejecutadas mediante pytest: **65 passed (100% de éxito)**.
-- **Validación End-to-End:** Prueba en tiempo real con documento técnico real (`apache_kafka_introduction.md`) conectando la SPA React 19 con FastAPI y Cohere: fidelidad RAG de **1.00 (100%)** y persistencia OCI exitosa.
+- **Validación en Producción OCI (`novamind.techgk.cl`):** Respuesta HTTP E2E exitosa en **9.51 s (8.86 s backend)** con persistencia en OCI Object Storage verificada en tiempo real.
 - **Purga de Credenciales:** Limpieza total del historial git con `git-filter-repo` y exclusión de secretos en `.gitignore`.
 

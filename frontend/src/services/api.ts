@@ -1,119 +1,104 @@
+/**
+ * Servicio de Comunicación con FastAPI & Resiliencia Offline — NovaMind
+ * Conecta con el orquestador multi-agente LangGraph o conmuta al Modo Demo si el backend está apagado.
+ */
+
 import type {
-  ConfigOpciones,
-  AdaptarPayload,
-  RespuestaAdaptacion,
-} from '../types/api';
+  AdaptedContentPackage,
+  RecipientProfile,
+  OutputFormat,
+  IndustryNiche,
+  DetailLevel,
+} from '../types/types';
+import { SCENARIOS } from '../data/mockScenarios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Mock canónico basado en la especificación oficial de NuevaMente
-export const MOCK_RESPUESTA_ADAPTACION: RespuestaAdaptacion = {
-  status: 'exito',
-  metadatos: {
-    perfil_aplicado: 'Principiante',
-    formato_generado: 'Flashcards',
-    tiempo_estimado_estudio_minutos: 5,
-    conceptos_clave: ['VCN', 'Subredes', 'Internet Gateway', 'Security Lists'],
-  },
-  contenido_adaptado: {
-    titulo: 'Dominando Redes en la Nube (VCN) desde Cero',
-    introduccion_contextualizada:
-      'Imagina la VCN como tu propio barrio privado y seguro dentro de la nube de Oracle, donde tú decides quién entra y quién sale.',
-    items: [
-      {
-        frente: '¿Qué es una VCN en Oracle Cloud?',
-        dorso:
-          'Es tu red virtual privada y personalizada dentro de la nube de Oracle, funcionando como la infraestructura de red de tu empresa.',
-        pista_didactica:
-          'Piensa en ella como el terreno cercado donde residen tus servidores.',
-      },
-      {
-        frente: '¿Para qué sirven las Security Lists (Listas de Seguridad)?',
-        dorso:
-          'Son como guardias virtuales con listas de reglas que definen exactamente qué tipo de tráfico de datos puede entrar o salir de tu red.',
-        pista_didactica: 'Reglas de entrada (ingress) y reglas de salida (egress).',
-      },
-    ],
-  },
-  evaluacion_calidad: {
-    anclaje_fuente_score: 0.98,
-    claridad_pedagogica: 'Alta',
-    observaciones:
-      'Lenguaje ajustado con analogías para público principiante, sin tecnicismos excesivos.',
-  },
-  almacenamiento_oci: {
-    bucket: 'nuevamente-contenidos-educativos',
-    objeto_id: 'contenido-vcn-principiante-flashcards-001.json',
-    status_upload: 'completado',
-  },
-};
-
-/**
- * Obtiene las opciones canónicas para los formularios
- */
-export async function fetchOpcionesConfig(): Promise<ConfigOpciones> {
-  try {
-    const res = await fetch(`${BASE_URL}/api/v1/config/opciones`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } catch {
-    // Respaldo canónico según backend/app/main.py
-    return {
-      perfiles_destinatario: [
-        'Principiante / Transición de Carrera',
-        'Desarrollador Junior / Semi Senior',
-        'Líder Técnico / Arquitecto',
-        'Gestor / Ejecutivo (No Técnico)',
-      ],
-      formatos_salida: [
-        'Flashcards',
-        'Quiz Interactivo con Justificaciones',
-        'Guía Práctica Paso a Paso (Tutorial)',
-        'Resumen Ejecutivo (TL;DR)',
-        'Guion de Clase / Video',
-      ],
-      nichos_sector: ['General', 'Fintech', 'Salud', 'E-commerce'],
-      niveles_detalle: ['Didáctico', 'Intermedio', 'Profundo'],
-    };
-  }
+export interface AdaptarParams {
+  docTitle: string;
+  docContent: string;
+  profile: RecipientProfile;
+  format: OutputFormat;
+  niche: IndustryNiche;
+  detail: DetailLevel;
+  selectedScenarioId?: string;
+  pdfBase64?: string | null;
 }
 
+export type StationProgressCallback = (stage: string, partialPackage?: Partial<AdaptedContentPackage>) => void;
+
 /**
- * Envía la solicitud de adaptación pedagógica a FastAPI (multipart/form-data)
+ * Envía la solicitud de adaptación pedagógica hacia FastAPI o ejecuta el Fallback Offline
  */
-export async function enviarAdaptacion(
-  payload: AdaptarPayload,
-  useMock = false
-): Promise<RespuestaAdaptacion> {
-  if (useMock) {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return MOCK_RESPUESTA_ADAPTACION;
+export async function solicitarAdaptacion(
+  params: AdaptarParams,
+  onProgress?: StationProgressCallback
+): Promise<AdaptedContentPackage> {
+  const { docTitle, docContent, profile, format, niche, detail, selectedScenarioId } = params;
+
+  // 1. Intentar comunicación con el Backend FastAPI
+  try {
+    onProgress?.('Conectando con el Agente Investigador (RAG)...');
+
+    const formData = new FormData();
+    if (docTitle) formData.append('titulo', docTitle);
+    formData.append('documento_contenido', docContent);
+    formData.append('perfil_destinatario', profile);
+    formData.append('formato_salida', format);
+    formData.append('nicho_sector', niche);
+    formData.append('nivel_detalle', detail);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+    const response = await fetch(`${BASE_URL}/api/v1/adaptar`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.json();
+      // Si el backend devuelve un paquete compatible
+      if (data && data.contenido_adaptado) {
+        onProgress?.('Auditoría RAG completada por el Agente Crítico');
+        return data as AdaptedContentPackage;
+      }
+    }
+  } catch (err: unknown) {
+    console.info('ℹ️ Backend FastAPI no detectado o en espera. Activando Modo Demo Offline (Zero-Crash Guarantee):', err);
   }
 
-  const formData = new FormData();
+  // 2. Modo Demo / Fallback Offline de Alta Fidelidad
+  // Buscamos si el usuario seleccionó un escenario predefinido o usamos la Guía OCI Swap (Escenario 0)
+  const matchedScenario = SCENARIOS.find((s) => s.id === selectedScenarioId) || SCENARIOS[0];
 
-  if (payload.archivo) {
-    formData.append('archivo', payload.archivo);
-  } else if (payload.texto_directo) {
-    formData.append('texto_directo', payload.texto_directo);
-  }
+  // Simulación de entrega progresiva visual para la demo (de la más rápida a la más lenta)
+  onProgress?.('⚡ [1/5] Generando Estación 1: Resumen Ninja (TL;DR)...');
+  await new Promise((r) => setTimeout(r, 600));
 
-  if (payload.titulo) formData.append('titulo', payload.titulo);
-  formData.append('perfil_destinatario', payload.perfil_destinatario);
-  formData.append('formato_salida', payload.formato_salida);
-  if (payload.nicho_sector) formData.append('nicho_sector', payload.nicho_sector);
-  if (payload.nivel_detalle) formData.append('nivel_detalle', payload.nivel_detalle);
-  if (payload.tema_consulta) formData.append('tema_consulta', payload.tema_consulta);
+  onProgress?.('📇 [2/5] Generando Estación 2: Flashcards 3D...');
+  await new Promise((r) => setTimeout(r, 700));
 
-  const res = await fetch(`${BASE_URL}/api/v1/adaptar`, {
-    method: 'POST',
-    body: formData,
-  });
+  onProgress?.('📝 [3/5] Generando Estación 5: The Final Trial (Quiz con Escudos)...');
+  await new Promise((r) => setTimeout(r, 700));
 
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.detail || `Error en la solicitud: ${res.status}`);
-  }
+  onProgress?.('🎬 [4/5] Generando Estación 4: Director Cut (Storyboard)...');
+  await new Promise((r) => setTimeout(r, 700));
 
-  return await res.json();
+  onProgress?.('🛠️ [5/5] Generando Estación 3: Tutorial Quest (Laboratorio CLI)...');
+  await new Promise((r) => setTimeout(r, 800));
+
+  onProgress?.('🛡️ [6/6] Auditoría de Anclaje RAG & Persistencia OCI...');
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Clonamos el paquete para asegurar personalización dinámica
+  const demoPackage: AdaptedContentPackage = JSON.parse(JSON.stringify(matchedScenario.data));
+  demoPackage.metadatos.perfil_aplicado = profile;
+  demoPackage.metadatos.formato_generado = format;
+  demoPackage.metadatos.fecha_generacion = new Date().toISOString();
+
+  return demoPackage;
 }

@@ -2,6 +2,16 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.1.0] - 2026-10-06
+
+### 🚀 Orquestación Multi-Proveedor, Resiliencia SSE y Auditoría Real (Fase 9)
+- **Agente Crítico Multi-Proveedor:** Patrón Fábrica (`ProveedorCritico`) con Google Gemini 2.5 Flash (~2s, schema JSON estructurado) como evaluador primario neutral, con fallback en cascada a Groq (`qwen/qwen3.8-27b`) y Cohere (`command-r-08-2024`).
+- **Verificación Determinista de Evidencias:** Validación en Python de que los `chunk_id` citados por el Crítico pertenezcan a los fragmentos reales recuperados por el Agente 1 antes de computar el score de fidelidad.
+- **Canal de Streaming Server-Sent Events (SSE):** Endpoint `POST /api/v1/adaptar/stream` con emisión de eventos estructurados y heartbeats cada 15s para inmunidad total al timeout 524 de Cloudflare Free Tier (límite de 100s).
+- **Desacople Asíncrono y Protección de Memoria:** Envoltorio `asyncio.to_thread` para desacoplar LangGraph del event loop y `asyncio.Semaphore(1)` para proteger la instancia OCI Always Free (1 GB RAM) contra saturación por concurrencia.
+- **Auto-reparación Defensiva del Formato Quiz:** Sanitización en Pydantic (`validar_items`) para normalizar prefijos sintácticos de opciones ("A) ") sin gatillar reintentos innecesarios de LLM.
+- **Optimizaciones de Latencia E2E:** Reducción del pipeline textual completo de 429.19 s a ~18 s con auditoría RAG 100% real.
+
 ## [2.0.0] - 2026-09-29
 
 ### 🚀 Integración Full Stack y Consolidación de Arquitectura

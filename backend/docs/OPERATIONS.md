@@ -4,10 +4,12 @@
 `main.py` configura logging con nivel INFO y formato timestamp, nivel, logger y mensaje. Los módulos backend usan loggers nombrados para backend, almacenamiento y cliente. Se registran inicio/finalización de orquestación, duración y errores de persistencia.
 
 ## Healthcheck
-`GET /health` devuelve `{"status":"ok","service":"nuevamente-backend"}`. Es un chequeo básico de disponibilidad HTTP; no prueba dependencias externas.
+`GET /health` devuelve `{"status":"ok","service":"nuevamente-backend"}`. Gracias al desacople asíncrono con `asyncio.to_thread()`, responde de forma inmediata (< 5 ms) incluso mientras el motor de agentes ejecuta una adaptación pedagógica pesada.
 
 ## Diagnóstico Frecuente
-- **Falta `COHERE_API_KEY`:** revisar `.env`, el directorio de ejecución y la carga de variables.
+- **Falta `COHERE_API_KEY` o `GEMINI_API_KEY`:** revisar `.env`, el directorio de ejecución y la carga de variables. Si falta la clave de Gemini, el sistema recurre automáticamente a Groq o Cohere.
+- **Timeout 524 de Cloudflare en peticiones largas (>100s):** Utilizar el endpoint de streaming `POST /api/v1/adaptar/stream` con Server-Sent Events. En el proxy Nginx de la VM 2, asegurar `proxy_buffering off;` y `proxy_read_timeout 180s;`.
+- **Agotamiento de memoria en OCI Always Free (1 GB RAM):** Uvicorn debe ejecutarse con **1 worker** (`~98.5 MB RAM`) y el semáforo `asyncio.Semaphore(1)` activo. Monitorear con `free -h` y `journalctl -u nuevamente-backend.service`.
 - **No conecta el frontend React con el backend:** verificar que FastAPI esté corriendo en el puerto 8000 y que `/health` responda HTTP 200. Verificar que el frontend consulte a `http://localhost:8000`.
 - **Error CORS:** verificar que el origen del frontend (ej: `http://localhost:5173`) esté incluido en `CORSMiddleware` en `backend/app/main.py`.
 - **No se extrae texto PDF:** el extractor usa `pypdf` con sanitización de cabeceras; PDFs escaneados sin capa de texto seleccionable requieren OCR previo.

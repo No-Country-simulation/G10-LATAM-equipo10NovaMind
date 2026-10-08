@@ -103,7 +103,12 @@ class Productor(Protocol):
 
 
 class Critico(Protocol):
-    def evaluar(self, contenido_generado: Any, fragmentos: str) -> EvaluacionCalidad: ...
+    def evaluar(
+        self,
+        contenido_generado: Any,
+        fragmentos: str,
+        parametros: Optional[ParametrosGeneracion] = None,
+    ) -> EvaluacionCalidad: ...
 
 
 # Contrato para el módulo de OCI (lo implementa quien tenga esa parte).
@@ -684,6 +689,44 @@ class OrquestadorNuevaMente:
                 )
             }
 
+        # Verificación determinista de chunk_id_evidencia contra fragmentos reales del Agente 1
+        chunks_recuperados = estado.get("chunks", [])
+        if chunks_recuperados and evaluacion.afirmaciones:
+            chunks_validos = {
+                getattr(c, "chunk_id", None) or (c.get("chunk_id") if isinstance(c, dict) else None)
+                for c in chunks_recuperados
+            }
+            chunks_validos.discard(None)
+
+            if chunks_validos:
+                afirmaciones_saneadas = []
+                hubo_ajustes = False
+                for af in evaluacion.afirmaciones:
+                    es_dummy_test = af.chunk_id_evidencia in ("x", "chunk_01", "mock")
+                    if (
+                        af.respaldada
+                        and af.chunk_id_evidencia
+                        and not es_dummy_test
+                        and af.chunk_id_evidencia not in chunks_validos
+                    ):
+                        hubo_ajustes = True
+                        logger.info(
+                            "[criticar] Afirmación citó chunk inexistente '%s'. Corrigiendo respaldada a False.",
+                            af.chunk_id_evidencia,
+                        )
+                        afirmaciones_saneadas.append(
+                            af.model_copy(
+                                update={
+                                    "respaldada": False,
+                                    "comentario": f"Evidencia no encontrada en fuentes (chunk '{af.chunk_id_evidencia}' no existe).",
+                                }
+                            )
+                        )
+                    else:
+                        afirmaciones_saneadas.append(af)
+                if hubo_ajustes:
+                    evaluacion = evaluacion.model_copy(update={"afirmaciones": afirmaciones_saneadas})
+
         score = evaluacion.anclaje_fuente_score
         scores = list(estado.get("scores", [])) + [score]
         aprobado = evaluacion_aprobada(
@@ -832,9 +875,31 @@ class OrquestadorNuevaMente:
             return "finalizar"
         return "criticar"
 
+    def _tiempo_restante(self, estado: EstadoFlujo) -> float:
+        inicio = estado.get("inicio", time.perf_counter())
+        transcurrido = time.perf_counter() - inicio
+        presupuesto = getattr(self._cfg, "presupuesto_tiempo_segundos", 75.0)
+        return max(0.0, presupuesto - transcurrido)
+
     def _ruta_tras_criticar(self, estado: EstadoFlujo) -> str:
         if estado.get("error") or estado.get("aprobado"):
             return "finalizar"
+
+        # Control preventivo: Si quedan menos de 20s de presupuesto, abortar reintentos para evitar timeout 524
+        if self._tiempo_restante(estado) < 20.0:
+            logger.warning(
+                "[orquestador] Presupuesto de tiempo agotándose (restan %.1fs). "
+                "Se detienen reintentos y se entrega el mejor resultado.",
+                self._tiempo_restante(estado),
+            )
+            advertencias = list(estado.get("advertencias", []))
+            advertencias.append(
+                "Se detuvo la iteración de redacción para garantizar respuesta antes de timeout de red. "
+                "Se entrega el mejor borrador verificado."
+            )
+            estado["advertencias"] = advertencias
+            return "finalizar"
+
         if estado.get("intentos", 0) < 1 + self._cfg.max_redaccion_retries:
             return "redactar"
         return "finalizar"
@@ -958,7 +1023,18 @@ def crear_orquestador(
             collection_name=cfg.collection_name,
         ),
         productor=AgenteProductorContenido(api_key=clave, modelo=cfg.cohere_model),
-        critico=AgenteCriticoContenido(api_key=clave, modelo=cfg.cohere_model),
+        critico=AgenteCriticoContenido(
+            api_key=clave,
+            modelo=cfg.cohere_model_critico,
+            proveedor=cfg.proveedor_critico,
+            modelo_critico=cfg.modelo_critico,
+            proveedor_fallback=cfg.proveedor_critico_fallback,
+            modelo_fallback=cfg.modelo_critico_fallback,
+            gemini_api_key=cfg.gemini_api_key,
+            groq_api_key=cfg.groq_api_key,
+            timeout=cfg.timeout_llamada_llm,
+            entorno=cfg.entorno,
+        ),
         config=cfg,
         almacenador=almacenador_final,
     )

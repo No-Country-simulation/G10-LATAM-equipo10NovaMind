@@ -1,0 +1,278 @@
+================================================================================
+ESPECIFICACIÓN DE REQUERIMIENTOS DE SOFTWARE (SRS)
+PROYECTO: NUEVAMENTE - SISTEMA INTELIGENTE DE ADAPTACIÓN
+Y GENERACIÓN DE CONTENIDO EDUCATIVO
+
+Programa: ONE (Oracle Next Education) · Grupo 10 | Hackathon NoCountry
+Versión: 1.0 (MVP - Iteración Inicial)
+Estado: En Desarrollo / Entregable Sprint 1
+Área: Frontend & Integración E2E (IA Generativa + RAG + OCI Always Free)
+Fecha: Octubre 2024
+
+PROPÓSITO DEL PROYECTO
+
+Democratizar y acelerar el aprendizaje técnico mediante una solución impulsada
+por Inteligencia Artificial Generativa y RAG (Retrieval-Augmented Generation)
+que transforma manuales, guías y especificaciones técnicas densas en material
+educativo estructurado y personalizado según el perfil del destinatario, su
+industria y el formato pedagógico deseado.
+
+El propósito principal es reducir el tiempo de creación y adaptación de contenidos
+didácticos de semanas a minutos, asegurando fidelidad técnica rigurosa (anclaje
+en las fuentes originales para mitigar alucinaciones) y persistencia segura en la
+nube mediante Oracle Cloud Infrastructure (OCI).
+
+INFORMACIÓN DEL DOMINIO DEL PROBLEMA Y NECESIDADES DE NEGOCIO
+
+2.1. Dominio del Problema:
+El proyecto se posiciona en el sector de EdTech, Capacitación Técnica Corporativa
+y programas de Upskilling / Reskilling. Las organizaciones tecnológicas generan
+documentación exhaustiva pero de difícil digestión para audiencias heterogéneas
+(principiantes en transición de carrera, desarrolladores júnior, líderes técnicos
+o ejecutivos de toma de decisiones).
+
+2.2. Necesidades del Negocio:
+
+Eliminar el cuello de botella que implica la adaptación manual por parte de
+diseñadores instruccionales y expertos temáticos (SMEs).
+
+Permitir la reutilización de un mismo documento técnico base para generar
+múltiples salidas de aprendizaje (flashcards, tutoriales, quizzes, resúmenes).
+
+Garantizar confianza y veracidad técnica en los contenidos creados, evitando
+las alucinaciones habituales de los modelos de lenguaje generales.
+
+Centralizar la ingesta, parametrización y visualización didáctica en una
+interfaz moderna, responsiva y accesible.
+
+ALCANCE DEL SISTEMA (SCOPE - MVP)
+
+3.1. Dentro del Alcance (In Scope):
+
+Ingesta de documentos técnicos en formatos estándar: PDF, Markdown (.md) y texto (.txt).
+
+Parametrización interactiva previa a la generación:
+
+Perfil del Destinatario: Principiante / Transición, Desarrollador Jr/Semi-Sr,
+Líder Técnico / Arquitecto, Gestor / Ejecutivo (No Técnico).
+
+Formato Pedagógico: Flashcards interactivas, Guía práctica paso a paso
+(Tutorial), Quiz interactivo con justificaciones, Resumen ejecutivo (TL;DR).
+
+Nicho / Contexto: General, Fintech, Salud, E-commerce.
+
+Consumo y orquestación con la API/Pipeline RAG mediante contrato JSON tipado.
+
+Visualizadores dinámicos por tipo de formato:
+
+Renderizador de Flashcards interactivas (efecto flip 3D y pistas didácticas).
+
+Renderizador de Tutoriales en Markdown con índice temático y bloques de código.
+
+Renderizador de Quizzes interactivos con opciones y retroalimentación explicativa.
+
+Panel de metadatos pedagógicos: tiempo estimado de lectura, conceptos clave
+y puntuación de anclaje a la fuente (anclaje_fuente_score).
+
+Indicador de estado de persistencia en OCI Object Storage (Bucket Always Free).
+
+Exportación de resultados a formatos JSON y Markdown descargables.
+
+3.2. Fuera del Alcance (Out of Scope - Futuras Iteraciones):
+
+Autenticación multi-usuario con roles complejos y pagos.
+
+Editor colaborativo en tiempo real (WYSIWYG sincronizado).
+
+Soporte multimodal avanzado para parsing de diagramas de arquitectura complejos.
+
+OBJETIVOS DEL SISTEMA
+
+Desarrollar una interfaz de usuario fluida, reactiva e intuitiva que reduzca la
+fricción en la configuración y consumo de materiales de estudio.
+
+Asegurar una integración desacoplada y robusta basada en esquemas de datos JSON
+estandarizados (Pydantic / Structured Outputs).
+
+Proveer observabilidad clara del procesamiento (indicadores de carga y etapas
+del RAG: chunking, embeddings, invocación de LLM).
+
+Cumplir con las restricciones de costo cero utilizando la capa OCI Always Free
+para el almacenamiento de artefactos.
+
+COMPORTAMIENTO PREVIO A LA CONSTRUCCIÓN (FLUJO OPERATIVO DE ESTADOS)
+
+Antes de disparar el pipeline de procesamiento y generación, el cliente frontend
+debe seguir la siguiente máquina de estados:
+
+Estado Inicial (IDLE):
+
+El panel de carga muestra la zona de arrastre (Dropzone).
+
+Los selectores de perfil, formato y nicho contienen valores predeterminados seguros.
+
+El botón de acción "Generar Material" permanece deshabilitado hasta validar entradas.
+
+Validación en Cliente:
+
+Verificación de extensión (.pdf, .md, .txt) y tamaño máximo de archivo.
+
+Verificación de campos obligatorios en el formulario de configuración.
+
+Habilitación del botón de acción tras pasar la validación.
+
+Transición a Procesamiento (LOADING):
+
+Deshabilitación de controles para prevenir solicitudes duplicadas.
+
+Activación de feedback visual contextual con indicador paso a paso:
+[1/4] Ingesta y lectura -> [2/4] Búsqueda vectorial (RAG) ->
+[3/4] Adaptación LLM -> [4/4] Guardado en OCI.
+
+Renderizado Dinámico (SUCCESS / ERROR):
+
+Si la respuesta es HTTP 200/201 con esquema válido, se desmonta el loader
+y se monta la vista de resultados según el formato_generado.
+
+Si ocurre error de red o timeout, se activa alerta descriptiva con opción de reintento.
+
+REQUISITOS FUNCIONALES DEL SISTEMA (RF)
+
+[RF-01] Ingesta de Archivos: El sistema debe permitir subir o arrastrar archivos
+técnicos en formatos PDF, Markdown o TXT.
+[RF-02] Parametrización Pedagógica: La UI debe permitir seleccionar Perfil
+Destinatario, Formato de Salida y Nicho de Aplicación.
+[RF-03] Contrato de Integración API: El frontend debe enviar y recibir datos en
+formato JSON estandarizado respetando el esquema oficial del proyecto.
+[RF-04] Módulo de Flashcards: Debe permitir alternar entre anverso y reverso de
+cada tarjeta didáctica y desplegar pistas conceptuales bajo demanda.
+[RF-05] Módulo de Quizzes y Tutoriales: Debe presentar preguntas con alternativas
+y mostrar la justificación técnica tras seleccionar una opción.
+[RF-06] Despliegue de Métricas y Metadatos: La interfaz debe reflejar conceptos
+clave, tiempo estimado de estudio y el score de anclaje a la fuente original.
+[RF-07] Trazabilidad OCI: Debe mostrar el identificador del objeto y bucket de OCI
+donde quedó persistido el artefacto educativo generado.
+[RF-08] Exportación de Contenidos: Debe brindar opciones para descargar el
+material didáctico en archivos JSON y Markdown.
+
+REQUISITOS NO FUNCIONALES DEL SISTEMA (RNF)
+
+[RNF-01] Usabilidad y Accesibilidad: Navegación accesible por teclado, contrastes
+acordes a estándares WCAG y retroalimentación inmediata de interacción.
+[RNF-02] Rendimiento: Tiempo de renderizado inicial menor a 1.5 segundos; animaciones
+fluidas a 60 FPS sin bloqueo de la UI.
+[RNF-03] Resiliencia y Manejo de Errores: Manejo explícito de tiempos de espera
+(timeouts) en llamadas a la API de IA, con mensajes comprensibles para el usuario.
+[RNF-04] Modularidad de Código: Arquitectura de componentes desacoplada (capa de
+presentación, estado de aplicación y servicios API aislados).
+[RNF-05] Cumplimiento OCI Always Free: Garantizar que la persistencia se realice
+exclusivamente en recursos Always Free de Oracle Cloud Infrastructure.
+
+ESQUEMAS DE DATOS DE INTEGRACIÓN (CONTRATO JSON)
+
+8.1. Payload de Entrada (Solicitud al Backend):
+
+{
+"documento_titulo": "Introduccion a la Arquitectura de Redes VCN en OCI",
+"documento_contenido": "La Virtual Cloud Network (VCN) es una red privada...",
+"perfil_destinatario": "Principiante",
+"formato_salida": "Flashcards",
+"nicho_sector": "General",
+"nivel_detalle": "Didactico"
+}
+
+8.2. Payload de Salida (Respuesta del Backend):
+
+{
+"status": "exito",
+"metadatos": {
+"perfil_aplicado": "Principiante",
+"formato_generado": "Flashcards",
+"tiempo_estimado_estudio_minutos": 5,
+"conceptos_clave": ["VCN", "Subredes", "Internet Gateway", "Security Lists"]
+},
+"contenido_adaptado": {
+"titulo": "Dominando Redes en la Nube (VCN) desde Cero",
+"introduccion_contextualizada": "Imagina la VCN como tu propio barrio privado...",
+"items": [
+{
+"frente": "¿Qué es una VCN en Oracle Cloud?",
+"dorso": "Es tu red virtual privada y personalizada dentro de la nube de Oracle.",
+"pista_didactica": "Piensa en ella como el terreno cercado donde residen tus servidores."
+}
+]
+},
+"evaluacion_calidad": {
+"anclaje_fuente_score": 0.98,
+"claridad_pedagogica": "Alta",
+"observaciones": "Lenguaje ajustado con analogias para principiante."
+},
+"almacenamiento_oci": {
+"bucket": "nuevamente-contenidos-educativos",
+"objeto_id": "contenido-vcn-principiante-flashcards-001.json",
+"status_upload": "completado"
+}
+}
+
+DIAGRAMA DE COMPONENTES Y DISEÑO EN BAJA FIDELIDAD
+
+9.1. Arquitectura de Componentes del Frontend:
+
+[ App Root / Main Shell ]
+│
+├── [ Header / Brand Bar ] -> Estado global y selector de modo
+│
+├── [ Panel de Ingesta y Parámetros ]
+│    ├── FileUploader (Zona Dropzone para PDF, MD, TXT)
+│    ├── SelectorsGrid:
+│    │    ├── ProfileSelector (Principiante | Jr | Arquitecto | Ejecutivo)
+│    │    ├── FormatSelector (Flashcards | Tutorial | Quiz | Resumen)
+│    │    └── NicheSelector (General | Fintech | Salud | E-commerce)
+│    └── SubmitAction (Botón de envío con validación)
+│
+├── [ Feedback de Procesamiento ]
+│    ├── StepProgressBar (Ingesta -> Vector Store -> LLM -> OCI)
+│    └── AlertBanner (Manejo de errores / reintentos)
+│
+└── [ Espacio de Visualización y Resultados ]
+├── MetadataHeader (Tiempo de estudio, conceptos clave, score de anclaje)
+├── DynamicContentView:
+│    ├── FlashcardViewer (Deck interactivo 3D con pista)
+│    ├── TutorialViewer (Parser Markdown enriquecido y bloques de código)
+│    └── QuizViewer (Preguntas, selección múltiple y justificación)
+└── StorageFooter (Badge de persistencia en Bucket OCI Always Free)
+
+9.2. Wireframe en Baja Fidelidad (Diseño de Interfaz):
+
++-------------------------------------------------------------------------------+
+|  🎓 NuevaMente — Adaptación Inteligente de Contenido Educativo (ONE - Gr. 10) |
++-------------------------------------------------------------------------------+
+|                                                                               |
+|  [ SECCIÓN 1: INGESTA TÉCNICA ]        [ SECCIÓN 2: PARAMETRIZACIÓN ]         |
+|  +----------------------------------+  Perfil:   [ Principiante / Transición] |
+|  |       ARRASTRA TU ARCHIVO        |  Formato:  [ Flashcards               ] |
+|  |          PDF / MD / TXT          |  Nicho:    [ Fintech                  ] |
+|  |     o haz clic para explorar     |  Nivel:    [ Didáctico                ] |
+|  +----------------------------------+                                         |
+|  Archivo: manual_oci_vcn.pdf (245 KB)   [ 🚀 GENERAR MATERIAL EDUCATIVO ]     |
+|                                                                               |
++-------------------------------------------------------------------------------+
+|  ESTADO: Procesando RAG... [Chunking OK] -> [Embeddings OK] -> [LLM Activo]   |
++-------------------------------------------------------------------------------+
+|                                                                               |
+|  [ SECCIÓN 3: RESULTADOS DIDÁCTICOS ]                                         |
+|  +-------------------------------------------------------------------------+  |
+|  | METADATOS: ⏱️ 5 min lectura | Score Anclaje: 98% | Términos: VCN, Subred |  |
+|  +-------------------------------------------------------------------------+  |
+|  |                                                                         |  |
+|  |  +------------------------------+     +------------------------------+  |  |
+|  |  | FLASHCARD 1/5                |     | FLASHCARD 2/5                |  |  |
+|  |  | FRENTE: ¿Qué es una VCN?     |     | FRENTE: ¿Qué es una Subred?  |  |  |
+|  |  | [ 🔄 Girar para ver Dorso ]  |     | [ 🔄 Girar para ver Dorso ]  |  |  |
+|  |  | 💡 Pista: Terreno cercado    |     | 💡 Pista: División interna   |  |  |
+|  |  +------------------------------+     +------------------------------+  |  |
+|  |                                                                         |  |
+|  +-------------------------------------------------------------------------+  |
+|  Persistencia: oci://nuevamente-contenidos-educativos/contenido-vcn-001.json  |
+|  Acciones: [ 📥 Descargar JSON ]  [ 📄 Exportar Markdown ]                     |
++-------------------------------------------------------------------------------+

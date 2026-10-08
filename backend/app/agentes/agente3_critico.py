@@ -16,10 +16,12 @@ Esa responsabilidad pertenece al orquestador LangGraph.
 from __future__ import annotations
 
 import json
+import logging
 import os
-from typing import Any
+from typing import Any, Optional
 
 import cohere
+import requests
 
 from app.core.prompts import (
     SYSTEM_CRITICO,
@@ -32,38 +34,56 @@ from app.core.schemas import (
     ParametrosGeneracion,
 )
 
+logger = logging.getLogger("nuevamente.agente3_critico")
+
 
 class CriticoGenerationError(Exception):
-    """Error al invocar Cohere o validar la evaluación del crítico."""
+    """Error al invocar el proveedor del crítico o validar la evaluación."""
 
 
 class AgenteCriticoContenido:
     """
     Agente encargado de revisar la fidelidad y claridad del contenido generado.
-    Soporta modo rápido/bypass configurable mediante MOCK_CRITICO=true.
+    Implementa arquitectura Multi-Proveedor (Gemini 2.5 Flash / Groq / Cohere)
+    con cascada de resiliencia y tolerancia a fallos.
     """
 
     def __init__(
         self,
         api_key: str | None = None,
         modelo: str = "command-r-08-2024",
+        proveedor: str | None = None,
+        modelo_critico: str | None = None,
+        proveedor_fallback: str | None = None,
+        modelo_fallback: str | None = None,
+        gemini_api_key: str | None = None,
+        groq_api_key: str | None = None,
+        timeout: float = 25.0,
+        permitir_mock: bool = False,
+        entorno: str = "dev",
     ):
-        """
-        Args:
-            api_key: clave de Cohere. Si no se proporciona,
-                se obtiene de COHERE_API_KEY.
-            modelo: modelo de Cohere utilizado para la evaluación.
-        """
-        self._bypass = os.getenv("MOCK_CRITICO", "false").lower() in ("true", "1", "yes")
-        clave = api_key or os.getenv("COHERE_API_KEY")
+        self._bypass = (
+            (permitir_mock or os.getenv("MOCK_CRITICO", "false").lower() in ("true", "1", "yes"))
+            and entorno != "prod"
+        )
+        self._entorno = entorno
+        self._timeout = timeout
+        self._modelo = modelo
+        self._proveedor = (proveedor or os.getenv("PROVEEDOR_CRITICO", "gemini")).lower()
+        self._modelo_critico = modelo_critico or os.getenv("MODELO_CRITICO", "gemini-2.5-flash")
+        self._proveedor_fallback = (proveedor_fallback or os.getenv("PROVEEDOR_CRITICO_FALLBACK", "groq")).lower()
+        self._modelo_fallback = modelo_fallback or os.getenv("MODELO_CRITICO_FALLBACK", "qwen/qwen3.8-27b")
 
-        if not clave and not self._bypass:
+        self._gemini_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
+        self._groq_key = groq_api_key or os.getenv("GROQ_API_KEY")
+
+        clave_cohere = api_key or os.getenv("COHERE_API_KEY")
+        if not clave_cohere and not self._gemini_key and not self._groq_key and not self._bypass:
             raise CriticoGenerationError(
-                "No existe COHERE_API_KEY en las variables de entorno."
+                "No existe clave de API para ningún proveedor configurado (COHERE_API_KEY, GEMINI_API_KEY, GROQ_API_KEY)."
             )
 
-        self._cliente = cohere.ClientV2(api_key=clave) if clave else None
-        self._modelo = modelo
+        self._cliente = cohere.ClientV2(api_key=clave_cohere, timeout=self._timeout) if clave_cohere else None
 
     @staticmethod
     def _generar_evaluacion_rapida(observaciones: str = "Aprobación automática para integración de infraestructura") -> EvaluacionCalidad:
@@ -85,35 +105,26 @@ class AgenteCriticoContenido:
 
     def evaluar(
         self,
-        contenido_generado: ContenidoAdaptado,
+        contenido_generado: Any,
         fragmentos: str,
         parametros: ParametrosGeneracion,
     ) -> EvaluacionCalidad:
         """
         Evalúa el contenido generado frente a los fragmentos fuente.
-
-        Args:
-            contenido_generado: contenido producido por el Agente 2.
-            fragmentos: información recuperada por el Agente 1.
-            parametros: contexto real utilizado para la adaptación:
-                perfil, formato, nivel de detalle, nicho y tema.
-
-        Returns:
-            EvaluacionCalidad validada con Pydantic.
-
-        Raises:
-            CriticoGenerationError:
-                Si Cohere falla o la respuesta no cumple el esquema.
         """
-        if self._bypass or not self._cliente:
+        if self._bypass:
             return self._generar_evaluacion_rapida()
 
-        if not fragmentos.strip():
+        if not fragmentos or not str(fragmentos).strip():
             raise CriticoGenerationError(
                 "No existen fragmentos fuente para realizar la evaluación."
             )
 
-        contenido_json = contenido_generado.model_dump_json()
+        contenido_json = (
+            contenido_generado.model_dump_json()
+            if hasattr(contenido_generado, "model_dump_json")
+            else json.dumps(contenido_generado, ensure_ascii=False)
+        )
 
         prompt = construir_prompt_critico(
             contenido_generado=contenido_json,
@@ -124,38 +135,122 @@ class AgenteCriticoContenido:
             nicho_sector=parametros.nicho_sector,
         )
 
+        # Si _cliente es un simulador de tests o proveedor forzado a cohere
+        es_cliente_simulado = self._cliente is not None and not isinstance(self._cliente, cohere.ClientV2)
+        if es_cliente_simulado or self._proveedor == "cohere":
+            return self._evaluar_cohere(prompt)
+
+        errores: list[str] = []
+
+        # 1. Intentar proveedor primario (por defecto: gemini)
         try:
-            respuesta = self._cliente.chat(
-                model=self._modelo,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": SYSTEM_CRITICO,
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    },
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.0,
-            )
-
-            texto = self._extraer_texto(respuesta)
-            datos = self._parsear_json(texto)
-
-            return EvaluacionCalidad.model_validate(datos)
-
-        except CriticoGenerationError:
-            raise
-
+            if self._proveedor == "gemini" and self._gemini_key:
+                return self._evaluar_gemini(prompt)
+            elif self._proveedor == "groq" and self._groq_key:
+                return self._evaluar_groq(prompt)
+            elif self._cliente:
+                return self._evaluar_cohere(prompt)
         except Exception as exc:
-            # Fallback seguro en caso de timeout de red o error inesperado del proveedor LLM
-            if os.getenv("FALLBACK_CRITICO", "false").lower() in ("true", "1", "yes"):
-                return self._generar_evaluacion_rapida(f"Evaluación rápida por fallback: {exc}")
-            raise CriticoGenerationError(
-                f"Salida del Crítico no válida: {exc}"
-            ) from exc
+            logger.warning("[agente3_critico] Falló proveedor primario '%s': %s. Intentando fallback.", self._proveedor, exc)
+            errores.append(f"{self._proveedor}: {exc}")
+
+        # 2. Intentar proveedor fallback (por defecto: groq)
+        try:
+            if self._proveedor_fallback == "groq" and self._groq_key:
+                return self._evaluar_groq(prompt)
+            elif self._proveedor_fallback == "gemini" and self._gemini_key:
+                return self._evaluar_gemini(prompt)
+            elif self._cliente:
+                return self._evaluar_cohere(prompt)
+        except Exception as exc:
+            logger.warning("[agente3_critico] Falló proveedor secundario '%s': %s.", self._proveedor_fallback, exc)
+            errores.append(f"{self._proveedor_fallback}: {exc}")
+
+        # 3. Intentar Cohere como último recurso
+        if self._cliente and self._proveedor != "cohere" and self._proveedor_fallback != "cohere":
+            try:
+                return self._evaluar_cohere(prompt)
+            except Exception as exc:
+                errores.append(f"cohere: {exc}")
+
+        # 4. Fallback de contingencia rápida si está explícitamente autorizado y fuera de producción
+        if os.getenv("FALLBACK_CRITICO", "false").lower() in ("true", "1", "yes") and self._entorno != "prod":
+            return self._generar_evaluacion_rapida(f"Evaluación rápida por fallback: {'; '.join(errores)}")
+
+        raise CriticoGenerationError(
+            f"Salida del Crítico no válida (fallaron proveedores): {'; '.join(errores)}"
+        )
+
+    def _evaluar_gemini(self, prompt: str) -> EvaluacionCalidad:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self._modelo_critico}:generateContent?key={self._gemini_key}"
+        body = {
+            "systemInstruction": {"parts": [{"text": SYSTEM_CRITICO}]},
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "temperature": 0.0,
+            },
+        }
+        resp = requests.post(url, json=body, timeout=self._timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        candidates = data.get("candidates", [])
+        if not candidates:
+            raise CriticoGenerationError("Gemini no devolvió candidatos de respuesta")
+        parts = candidates[0].get("content", {}).get("parts", [])
+        if not parts:
+            raise CriticoGenerationError("Gemini no devolvió partes de contenido")
+        texto = parts[0].get("text", "")
+        datos = self._parsear_json(texto)
+        return EvaluacionCalidad.model_validate(datos)
+
+    def _evaluar_groq(self, prompt: str) -> EvaluacionCalidad:
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self._groq_key}",
+            "Content-Type": "application/json",
+        }
+        modelo = self._modelo_fallback if self._proveedor != "groq" else self._modelo_critico
+        body = {
+            "model": modelo,
+            "messages": [
+                {"role": "system", "content": SYSTEM_CRITICO + " Responde únicamente en formato JSON."},
+                {"role": "user", "content": prompt},
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.0,
+        }
+        resp = requests.post(url, headers=headers, json=body, timeout=self._timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        choices = data.get("choices", [])
+        if not choices:
+            raise CriticoGenerationError("Groq no devolvió elecciones de respuesta")
+        texto = choices[0].get("message", {}).get("content", "")
+        datos = self._parsear_json(texto)
+        return EvaluacionCalidad.model_validate(datos)
+
+    def _evaluar_cohere(self, prompt: str) -> EvaluacionCalidad:
+        if not self._cliente:
+            raise CriticoGenerationError("Cliente Cohere no configurado para Agente 3.")
+        respuesta = self._cliente.chat(
+            model=self._modelo,
+            messages=[
+                {
+                    "role": "system",
+                    "content": SYSTEM_CRITICO,
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0,
+        )
+        texto = self._extraer_texto(respuesta)
+        datos = self._parsear_json(texto)
+        return EvaluacionCalidad.model_validate(datos)
 
     @staticmethod
     def _extraer_texto(respuesta: Any) -> str:

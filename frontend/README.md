@@ -1,78 +1,78 @@
-# 🖥️ NuevaMente — Microservicio Frontend (React 19 + Vite + TypeScript)
+# 🧠 NovaMind — Microservicio Frontend (React 19 + Vite + TypeScript)
 
-> **Plataforma:** NuevaMente — Sistema Inteligente de Adaptación Pedagógica  
-> **Tecnologías:** React 19, TypeScript, Vite 8, GSAP, Lenis Smooth Scroll, Lucide React, CSS Modules  
+> **Plataforma Oficial:** NovaMind — Sistema Inteligente de Adaptación Pedagógica Multi-Agente RAG  
+> **Tecnologías:** React 19, TypeScript, Vite 8, Lucide React, Canvas Confetti, OKLCH Tokens, CSS Modules  
 > **Puerto por Defecto:** `http://localhost:5173`  
 > **Backend Vinculado:** `http://127.0.0.1:8000` (FastAPI + LangGraph)  
+> **Nube de Persistencia:** Oracle Cloud Infrastructure (OCI Always Free `sa-santiago-1`)  
 
 ---
 
 ## 📖 1. Visión General del Frontend
 
-El frontend de **NuevaMente** es una Single Page Application (SPA) modular diseñada con una estética moderna en tema oscuro (Dark Glassmorphism). Su función principal es guiar al estudiante o profesional en un flujo interactivo de 3 pasos:
+El frontend de **NovaMind** es una Single Page Application (SPA) modular de alta fidelidad estética (Dark Glassmorphism con paleta de tokens OKLCH y tipografías Syne + Plus Jakarta Sans). Guía al usuario en un circuito de aprendizaje gamificado estructurado en 3 pasos:
 
-1. **Paso 1: Configuración e Ingesta (`IngestView`):** Carga de material técnico de referencia (PDF, Markdown, TXT o texto directo) y parametrización pedagógica (perfil destinatario, formato pedagógico, nicho y nivel de detalle).
-2. **Paso 2: Visualizador Educativo Adaptativo (`ViewerView`):** Renderizado dinámico e interactivo del material generado según el formato pedagógico devuelto por el motor multi-agente (Flashcards 3D, Quiz interactivo con justificaciones, Guía práctica / Tutorial, Resumen ejecutivo o Guion audiovisual).
-3. **Paso 3: Auditoría y Persistencia Cloud (`MetricsView`):** Visualización del porcentaje de anclaje RAG (Zero Hallucination), métricas operativas de LangGraph (chunks recuperados, intentos de redacción, duración) y metadatos de persistencia en Oracle Cloud Infrastructure (OCI Object Storage Always Free).
+1. **Paso 1: Configuración e Ingesta (`Step1Ingestion`):**  
+   - Ingesta de documentos técnicos reales (`.pdf`, `.md`, `.txt` o texto libre).
+   - Botón directo de 1-click: **`⚡ Cargar Guía OCI Swap (Modo Demo)`** que precarga la guía oficial de aprovisionamiento de 4 GB Swap en instancias OCI Always Free (`VM.Standard.E2.1.Micro`).
+   - Configuración pedagógica: perfil destinatario, formato, nicho de industria y nivel de detalle.
+   - Pipeline de progreso en vivo con micro-etapas transparentes y salvaguarda *Zero-Crash* offline.
+
+2. **Paso 2: Circuito Pedagógico Gamificado — 5 Estaciones (`Step2KnowledgeQuest`):**  
+   - **Estación 1: Resumen Ninja (TL;DR):** Analogía central de alto impacto, matriz de métricas clave (riesgo, despliegue, costo $0.00 OCI) y conceptos verificados (+50 XP).
+   - **Estación 2: Flashcard Quest (3D Flip & Mastery):** Tarjetas tridimensionales con giros interactivos, pistas didácticas y marcado de dominio (+100 XP).
+   - **Estación 3: Tutorial Quest (Laboratorio CLI Interactivo):** Guía práctica técnica paso a paso con terminal sandbox simulada para ejecutar y validar los comandos de Linux/OCI (`fallocate`, `chmod 600`, `mkswap`, `swapon`, `/etc/fstab`, `swappiness=20`) (+150 XP).
+   - **Estación 4: Director Cut (Storyboard & Teleprompter):** Guion audiovisual estructurado por escenas con minutaje, texto para locutor/profesor, storyboard visual y consejos pedagógicos (+100 XP).
+   - **Estación 5: The Final Trial (Quiz con Escudos Cognitivos):** Cuestionario interactivo con retroalimentación RAG inmediata, citas textuales y penalización de escudos cognitivos ante respuestas incorrectas (+200 XP).
+
+3. **Paso 3: Auditoría RAG & Persistencia OCI Cloud (`Step3OCICloud`):**  
+   - Medidor visual del Score de Anclaje a la Fuente (Zero Hallucination Audit).
+   - Metadatos de persistencia en Oracle Cloud Object Storage (`novamind-contenidos-educativos`, región `sa-santiago-1`, ETag verificado).
+   - Exportación instantánea del paquete pedagógico en JSON estructurado.
+
+4. **Capa Transversal de Gamificación (`PlayerHUD` & Recompensas):**  
+   - Barra de estado superior con XP acumulado, racha de estudio diaria y 3 escudos cognitivos de protección.
+   - Sistema de medallas y trofeos (`BadgeModal`) con efectos de confetti (`canvas-confetti`).
 
 ---
 
 ## ⚡ 2. Consideraciones Clave de la Integración con el Backend
 
-Al trabajar o desplegar este microservicio, se deben tener en cuenta los siguientes lineamientos de integración:
-
 1. **Variables de Entorno y URL de la API:**
-   - Por defecto, el cliente HTTP (`frontend/src/services/api.ts`) busca la variable `VITE_API_URL`.
-   - Si no está definida en un archivo `.env` local del frontend, toma por fallback `http://localhost:8000`.
-   - Para producción o entornos remotos (ej. OCI Compute con Cloudflare Tunnel), configurar `VITE_API_URL=https://tu-dominio-api.com`.
+   - Cliente HTTP (`frontend/src/services/api.ts`) apunta a `VITE_API_URL` (por defecto `http://localhost:8000`).
+   - En producción (OCI Compute con Cloudflare Tunnel): `https://novamind.techgk.cl`.
 
-2. **Protocolo de Envío Multipart (`POST /api/v1/adaptar`):**
-   - La ingesta no utiliza JSON plano para la entrada debido a que soporta subida de archivos binarios (`.pdf`) y documentos de texto (`.md`, `.txt`).
-   - Se utiliza `FormData` (`multipart/form-data`) tanto si el usuario arrastra un archivo como si escribe texto libre en el área editable.
+2. **Protocolo Multipart (`POST /api/v1/adaptar`):**
+   - Soporta documentos binarios (`.pdf`) y texto estructurado mediante `FormData`.
+   - Soporte opcional de streaming Server-Sent Events (`POST /api/v1/adaptar/stream`).
 
-3. **Restricción de Longitud Mínima del Documento:**
-   - El backend exige que el contenido a adaptar tenga **al menos 40 caracteres** (regla de validación en `SolicitudAdaptacion` de Pydantic v2).
-   - El frontend valida y precarga un texto canónico para evitar que peticiones vacías generen un error `HTTP 422`.
+3. **Tiempos de Respuesta del Pipeline Multi-Agente (Latencia Real Optimizada):**
+   - Agente 1 (Investigador RAG con embeddings en Cohere y ChromaDB).
+   - Agente 2 (Productor de Contenidos con Cohere `command-r-08-2024`, ~14-18s).
+   - Agente 3 (Crítico con Gemini 2.5 Flash / Groq, ~1-2s).
+   - Ciclo total promedio: **~18 segundos** por ejecución.
 
-4. **Tiempos de Respuesta del Pipeline Multi-Agente (Latencia Real):**
-   - A diferencia de un CRUD tradicional, la adaptación pedagógica involucra:
-     1. Chunking y generación de embeddings en Cohere (`embed-multilingual-v3.0`).
-     2. Búsqueda vectorial en ChromaDB.
-     3. Redacción con LLM Cohere Command R+ (Agente 2).
-     4. Auditoría de afirmaciones y fact-checking (Agente 3).
-     5. Potenciales reintentos automáticos si el score de anclaje no alcanza el umbral (`0.75`).
-     6. Persistencia del paquete JSON en OCI Object Storage.
-   - Este ciclo toma entre **25 y 90 segundos** por intento. La interfaz muestra un indicador de fases animado (`loadingTrack` con 3 etapas) para informar el progreso al usuario.
-
-5. **Manejo Resiliente de Fallback (Modo Demostrativo sin Caídas):**
-   - Si el backend local no estuviera levantado o presentara problemas de conexión, `App.tsx` captura el fallo de red, despliega un aviso informativo discreto ("Modo Respaldo: Servidor no disponible") y carga los datos canónicos de demostración (`MOCK_RESPUESTA_ADAPTACION`). La interfaz nunca colapsa ni queda en blanco.
-
-6. **Soporte de CORS en el Backend:**
-   - El backend FastAPI tiene habilitado CORS explícito para `http://localhost:5173`, `http://127.0.0.1:5173` y cualquier puerto localhost dinámico con `allow_credentials=True`.
+4. **Modo Demo / Resiliencia Offline (Zero-Crash Guarantee):**
+   - Si el backend local no está encendido o la red no responde, el frontend activa de forma instantánea y fluida el banco de datos de alta fidelidad en `frontend/src/data/mockScenarios.ts`. Cero pantallas en blanco.
 
 ---
 
-## 📊 3. Tabla Resumen: Estado General de Componentes y Funciones
+## 📊 3. Tabla Resumen: Componentes y Estaciones Pedagógicas
 
-A continuación se detalla el estado actual de cada componente, servicio y contrato en el frontend:
-
-| Componente / Función | Rol Arquitectónico | Ubicación en el Código | Estado | Descripción y Responsabilidad |
+| Componente / Estación | Rol Arquitectónico | Ubicación en el Código | Estado | Descripción y Funcionalidad |
 |---|---|---|:---:|---|
-| **`App.tsx`** | Componente Raíz / Orquestador UI | [`src/App.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/App.tsx) | ✅ **Activo (Live)** | Gestiona el estado global de navegación (`currentStep`), almacena `adaptationResult`, maneja el fallback ante caídas y orquesta el scroll suave con Lenis y animaciones GSAP. |
-| **`Header`** | Barra Superior | [`src/components/Header/Header.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Header/Header.tsx) | ✅ **Activo** | Despliega el logotipo de NuevaMente, el estado del sistema ("Sistema Activo") y el título adaptado del documento en tiempo real. |
-| **`Stepper`** | Barra de Pasos | [`src/components/Stepper/Stepper.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/components/Stepper/Stepper.tsx) | ✅ **Activo** | Permite visualizar el avance y navegar entre los 3 pasos: *Configuración e ingesta*, *Visualizar resultados*, *Métricas y OCI Cloud*. |
-| **`IngestView`** | Vista Paso 1: Ingesta | [`src/components/IngestView/IngestView.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/IngestView/IngestView.tsx) | ✅ **Activo (Live)** | Captura de archivos reales (`.pdf`, `.md`, `.txt`) con drag & drop o textarea libre; selectores de perfil, formato, nicho y nivel; disparador con barra de progreso multietapa. |
-| **`SelectField`** | Control Reutilizable | [`src/components/SelectField/SelectField.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/SelectField/SelectField.tsx) | ✅ **Activo** | Renderiza menús desplegables estilizados y accesibles para las opciones pedagógicas canónicas. |
-| **`ViewerView`** | Vista Paso 2: Visor Principal | [`src/components/ViewerView/ViewerView.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/ViewerView/ViewerView.tsx) | ✅ **Activo (Live)** | Sincroniza la pestaña activa según el formato generado por el backend, muestra metadatos pedagógicos (perfil, tiempo, conceptos clave) y enruta al subvisor correspondiente. |
-| **`FlashcardViewer`** | Subvisor: Tarjetas 3D | [`src/components/ViewerView/FlashcardViewer/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/ViewerView/FlashcardViewer/FlashcardViewer.tsx) | ✅ **Activo (Live)** | Tarjetas de memorización interactivas con giro 3D en CSS, preguntas en el frente, explicaciones y pistas didácticas en el reverso, y botones de auto-evaluación. |
-| **`QuizViewer`** | Subvisor: Cuestionario | [`src/components/ViewerView/QuizViewer/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/components/ViewerView/QuizViewer/QuizViewer.tsx) | ✅ **Activo (Live)** | Evaluación interactiva multi-pregunta con selección de opciones (A, B, C, D), validación inmediata de respuesta correcta e incorrecta, y justificación pedagógica en vivo. |
-| **`TutorialViewer`** | Subvisor: Guía Práctica | [`src/components/ViewerView/TutorialViewer/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/components/ViewerView/TutorialViewer/TutorialViewer.tsx) | ✅ **Activo (Live)** | Muestra pasos técnicos estructurados con checklist interactivo que permite al estudiante marcar pasos completados. |
-| **`SummaryViewer`** | Subvisor: Resumen TL;DR | [`src/components/ViewerView/SummaryViewer/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/components/ViewerView/SummaryViewer/SummaryViewer.tsx) | ✅ **Activo (Live)** | Síntesis ejecutiva de lectura rápida con introducción contextualizada, puntos clave y explicaciones de "por qué importa". |
-| **`ScriptViewer`** | Subvisor: Guion Audiovisual | [`src/components/ViewerView/ScriptViewer/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/components/ViewerView/ScriptViewer/ScriptViewer.tsx) | ✅ **Activo (Live)** | Desglose temporal de escenas con marcas de tiempo (timestamps), texto de locución sugerido y apoyos visuales para el instructor. |
-| **`MetricsView`** | Vista Paso 3: Auditoría y Cloud | [`src/components/MetricsView/MetricsView.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/components/MetricsView/MetricsView.tsx) | ✅ **Activo (Live)** | Despliega el medidor circular de anclaje RAG (Zero Hallucination), observaciones del Agente Crítico, telemetría LangGraph, estado del bucket OCI y visor/descarga de JSON. |
-| **`fetchOpcionesConfig`** | Función de Servicio HTTP | [`src/services/api.ts`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/services/api.ts) | ✅ **Activo** | Ejecuta `GET /api/v1/config/opciones` para obtener perfiles y formatos canónicos de Pydantic, con respaldo offline canónico si no hay red. |
-| **`enviarAdaptacion`** | Función de Servicio HTTP | [`src/services/api.ts`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/services/api.ts) | ✅ **Activo** | Empaqueta `AdaptarPayload` en `FormData` y despacha `POST /api/v1/adaptar`, parseando la respuesta tipada `RespuestaAdaptacion`. |
-| **Contratos TypeScript** | Tipado e Interfaces | [`src/types/api.ts`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/types/api.ts) | ✅ **Activo** | Definición estricta de interfaces (`FlashcardItem`, `QuizItem`, `TutorialItem`, `SummaryItem`, `ScriptItem`, `MetricasOrquestacion`, `RespuestaAdaptacion`). |
+| **`App.tsx`** | Componente Raíz / Estado Global | [`src/App.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/App.tsx) | ✅ **Activo** | Gestiona el stepper principal (Pasos 1, 2, 3), sistema de XP, escudos cognitivos, medallas y orquesta la API. |
+| **`PlayerHUD`** | Barra de Gamificación | [`src/components/PlayerHUD/PlayerHUD.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/PlayerHUD/PlayerHUD.tsx) | ✅ **Activo** | Muestra XP en tiempo real, días de racha, 3 escudos cognitivos y progreso de medallas. |
+| **`Header`** | Barra de Identidad | [`src/components/Header/Header.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Header/Header.tsx) | ✅ **Activo** | Isotipo Möbius oficial, branding NovaMind, estado de conexión y acceso a perfil de usuario. |
+| **`Step1Ingestion`** | Paso 1: Configuración & Ingesta | [`src/components/Step1Ingestion/Step1Ingestion.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Step1Ingestion/Step1Ingestion.tsx) | ✅ **Activo** | Carga de archivos, botón de 1-click `⚡ Cargar Guía OCI Swap`, selección de perfiles y barra de progreso. |
+| **`Step2KnowledgeQuest`** | Paso 2: Circuito 5 Estaciones | [`src/components/Step2KnowledgeQuest/Step2KnowledgeQuest.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Step2KnowledgeQuest/Step2KnowledgeQuest.tsx) | ✅ **Activo** | Navegación entre las 5 estaciones pedagógicas, desbloqueo secuencial y cálculo de avance. |
+| **`Station1ResumenNinja`** | Estación 1: Síntesis TL;DR | [`src/components/stations/Station1ResumenNinja/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/stations/Station1ResumenNinja/Station1ResumenNinja.tsx) | ✅ **Activo** | Analogía central didáctica, métricas rápidas de impacto y conceptos clave verificados (+50 XP). |
+| **`Station2FlashcardQuest`** | Estación 2: Tarjetas 3D | [`src/components/stations/Station2FlashcardQuest/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/stations/Station2FlashcardQuest/Station2FlashcardQuest.tsx) | ✅ **Activo** | Flashcards tridimensionales interactivas, pistas didácticas y seguimiento de tarjetas dominadas (+100 XP). |
+| **`Station3TutorialQuest`** | Estación 3: Laboratorio CLI | [`src/components/stations/Station3TutorialQuest/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/stations/Station3TutorialQuest/Station3TutorialQuest.tsx) | ✅ **Activo** | Sandbox interactivo de terminal Linux con validación de comandos reales de OCI Swap (+150 XP). |
+| **`Station4DirectorCut`** | Estación 4: Guion & Teleprompter | [`src/components/stations/Station4DirectorCut/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/stations/Station4DirectorCut/Station4DirectorCut.tsx) | ✅ **Activo** | Storyboard visual de clase con minutaje, texto para locución y recomendaciones pedagógicas (+100 XP). |
+| **`Station5Quiz`** | Estación 5: The Final Trial | [`src/components/stations/Station5Quiz/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/frontend/src/components/stations/Station5Quiz/Station5Quiz.tsx) | ✅ **Activo** | Cuestionario desafiante con 3 escudos de protección, justificación RAG y citas a la fuente (+200 XP). |
+| **`Step3OCICloud`** | Paso 3: Auditoría & Cloud | [`src/components/Step3OCICloud/Step3OCICloud.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Step3OCICloud/Step3OCICloud.tsx) | ✅ **Activo** | Métricas de auditoría RAG, anclaje a la fuente, bucket OCI Always Free y exportación JSON. |
+| **`BadgeModal`** | Modal de Recompensas | [`src/components/BadgeModal/BadgeModal.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/BadgeModal/BadgeModal.tsx) | ✅ **Activo** | Celebración visual interactiva al desbloquear medallas con confeti y botón para continuar. |
 
 ---
 
@@ -80,39 +80,49 @@ A continuación se detalla el estado actual de cada componente, servicio y contr
 
 ```text
 frontend/
-├── package.json               # Dependencias (React 19, Vite 8, GSAP, Lenis, Lucide)
+├── package.json               # Dependencias (React 19, Vite 8, Lucide, Canvas Confetti)
 ├── tsconfig.json              # Configuración base TypeScript
-├── vite.config.ts             # Configuración del servidor de desarrollo y empaquetador
-├── index.html                 # Punto de entrada HTML
-├── public/                    # Recursos estáticos públicos
+├── vite.config.ts             # Configuración de empaquetado Vite
+├── index.html                 # Punto de entrada HTML con meta NovaMind
+├── public/                    # Isotipo oficial SVG y recursos estáticos
+│   ├── Isotipo.svg            # Isotipo Möbius NovaMind
+│   └── IsotipoMonocromo.svg   # Versión monocromo
 │
 └── src/                       # Código fuente de la aplicación
-    ├── main.tsx               # Montaje del Virtual DOM en React 19
-    ├── App.tsx                # Orquestador principal de estado y vistas
-    ├── App.module.css         # Estilos y efectos de luz ambiental
+    ├── main.tsx               # Montaje en React 19
+    ├── App.tsx                # Orquestador del flujo, estado de gamificación y vistas
+    ├── App.module.css         # Estilos globales y capas glassmorphism
     │
-    ├── components/            # Componentes de la interfaz de usuario
-    │   ├── Header/            # Barra superior de la plataforma
-    │   ├── Stepper/           # Control del progreso en 3 pasos
-    │   ├── SelectField/       # Selector pedagógico estilizado
-    │   ├── IngestView/        # Paso 1: Ingesta de documentos y parámetros
-    │   ├── ViewerView/        # Paso 2: Visores pedagógicos
-    │   │   ├── FlashcardViewer/ # Tarjetas didácticas 3D
-    │   │   ├── QuizViewer/      # Cuestionario interactivo multi-pregunta
-    │   │   ├── TutorialViewer/  # Guía técnica paso a paso
-    │   │   ├── SummaryViewer/   # Resumen ejecutivo TL;DR
-    │   │   └── ScriptViewer/    # Guion audiovisual temporizado
-    │   └── MetricsView/       # Paso 3: Métricas RAG, LangGraph y OCI Cloud
+    ├── components/            # Componentes del sistema
+    │   ├── Header/            # Barra superior con Isotipo Möbius y status
+    │   ├── PlayerHUD/         # HUD de gamificación (XP, Racha, Escudos, Medallas)
+    │   ├── AuthModal/         # Modal de autenticación y perfil de usuario
+    │   ├── BadgeModal/        # Modal de celebración de medallas con confeti
+    │   ├── Step1Ingestion/    # Paso 1: Ingesta de documentos & botón 1-click OCI Demo
+    │   ├── Step2KnowledgeQuest/ # Paso 2: Orquestador del circuito de 5 estaciones
+    │   │   └── stations/      # Las 5 estaciones de aprendizaje
+    │   │       ├── Station1ResumenNinja/
+    │   │       ├── Station2FlashcardQuest/
+    │   │       ├── Station3TutorialQuest/
+    │   │       ├── Station4DirectorCut/
+    │   │       └── Station5Quiz/
+    │   └── Step3OCICloud/     # Paso 3: Métricas de anclaje RAG y bucket OCI
     │
-    ├── services/              # Capa de comunicación HTTP
-    │   └── api.ts             # Cliente fetch hacia FastAPI y mock de respaldo
+    ├── data/                  # Datos canónicos de prueba
+    │   └── mockScenarios.ts   # Escenario 0 (OCI Swap 4 GB) y escenarios técnicos
     │
-    ├── styles/                # Design tokens y reset CSS
-    │   ├── tokens.css         # Variables CSS de color, tipografía y sombras
-    │   └── global.css         # Estilos globales de página
+    ├── services/              # Comunicación con backend FastAPI y fallback
+    │   └── api.ts
     │
-    └── types/                 # Modelos de datos TypeScript
-        └── api.ts             # Contratos sincronizados con Pydantic v2
+    ├── types/                 # Tipado e interfaces completas del paquete pedagógico
+    │   └── types.ts
+    │
+    ├── utils/                 # Utilidades (confetti, etc.)
+    │   └── confetti.ts
+    │
+    └── styles/                # Tokens de diseño OKLCH y CSS global
+        ├── tokens.css
+        └── global.css
 ```
 
 ---
@@ -139,32 +149,9 @@ npm.cmd run preview
 
 ---
 
-## 🌟 6. Estado Actual de la Integración y Validación E2E
-
-El microservicio frontend se encuentra **100% integrado, operativo y certificado** contra el backend oficial:
-
-### Hitos Técnicos Verificados (Fase 4 & Fase 5):
-1. **Sincronización Total con FastAPI:**
-   - Consume en tiempo real el endpoint canónico `/api/v1/config/opciones` para poblar dinámicamente los selectores de perfiles, formatos, nichos y niveles pedagógicos.
-   - Envío optimizado mediante `FormData` (`multipart/form-data`) con soporte para subida de archivos binarios (`.pdf`) o texto directo, con control de timeout mediante `AbortController` (120 segundos).
-   - Tipado TypeScript estricto alineado con los esquemas Pydantic v2 en `src/types/api.ts`.
-2. **Validación End-to-End Real en Navegador:**
-   - Se completó la prueba interactiva con el documento real `apache_kafka_introduction.md`, seleccionando perfil `profesional_tecnico` y formato `flashcards_estudio`.
-   - **Resultados de la Validación:**
-     - Barra de progreso multietapa animada completada (Ingesta ➔ Búsqueda RAG ➔ Redacción ➔ Auditoría).
-     - Renderizado interactivo fluido de las flashcards 3D con efecto flip y auto-evaluación.
-     - Dashboard de auditoría con **Score de anclaje RAG de 1.00 (100% de afirmaciones respaldadas)**.
-     - Detección y despliegue del estado de persistencia en Oracle Cloud Infrastructure (`sa-santiago-1`).
-3. **Mecanismo de Resiliencia (Zero Crashes):**
-   - El frontend incorpora `MOCK_RESPUESTA_ADAPTACION` como salvaguarda ante caídas imprevistas de red o ausencia de API Keys en demostraciones locales, garantizando que los evaluadores siempre puedan explorar los 5 formatos interactivos sin pantallas en blanco ni excepciones en consola.
-
----
-
-## 📚 7. Documentación Relacionada del Proyecto
+## 📚 6. Documentación Relacionada del Proyecto
 
 Para más detalles sobre la arquitectura integral y la evolución del sistema, consultar:
-* [INFORME_INTEGRACION_FRONTEND_REACT.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/INFORME_INTEGRACION_FRONTEND_REACT.md): Informe exhaustivo de la integración del frontend (Fase 4).
-* [ESQUEMA_INTEGRACION_FULLSTACK.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/historial_progreso/ESQUEMA_INTEGRACION_FULLSTACK.md): Especificación técnica de arquitectura, puertos y contratos.
+* [guia_optimizacion_swap_oci.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/data/documents/guia_optimizacion_swap_oci.md): Documentación oficial del benchmark y guía técnica de memoria Swap OCI.
 * [CAMBIOS.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/CAMBIOS.md): Bitácora cronológica de versiones y cambios del proyecto.
-* [README.md Maestro](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/README.md): Manual general y arquitectura unificada de NuevaMente.
-
+* [README.md Maestro](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/README.md): Manual general y arquitectura unificada de NovaMind.

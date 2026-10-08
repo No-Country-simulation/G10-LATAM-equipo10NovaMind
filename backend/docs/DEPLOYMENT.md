@@ -3,9 +3,10 @@
 ## Requisitos Identificados
 - **Python 3.12.7** (estándar oficial del proyecto).
 - **Node.js 18+ y npm** (para la interfaz web React 19 + Vite).
-- Clave de API de Cohere (`COHERE_API_KEY`) para embeddings (`embed-multilingual-v3.0`) y generación LLM (`command-r-plus-08-2024`).
-- Persistencia local ChromaDB y directorios de datos (`data/chroma/`, `data/outputs/`).
-- Credenciales de Oracle Cloud Infrastructure (OCI) únicamente para habilitar el bucket cloud Always Free.
+- **Claves de API de LLMs:**
+  - **Cohere (`COHERE_API_KEY`)**: Requerida para embeddings (`embed-multilingual-v3.0`) y redacción del Agente 2 (`command-r-08-2024`).
+  - **Google Gemini (`GEMINI_API_KEY`)**: Requerida para el Agente 3 Crítico Multi-Proveedor (`gemini-2.5-flash`).
+  - **Groq (`GROQ_API_KEY`)**: Opcional / fallback para contingencia analítica ultrarrápida (`qwen/qwen3.8-27b`).
 
 ## Opción 1: Lanzamiento Rápido Automático (1 Clic)
 El proyecto incluye un script lanzador concurrente:
@@ -50,9 +51,15 @@ npm run dev
 
 | Variable | Uso / módulo | Valor predeterminado o nota |
 |---|---|---|
-| `COHERE_API_KEY` | Cohere / configuración | Necesaria cuando el flujo Cohere se activa |
-| `COHERE_MODEL` | Modelo de chat en Config | `command-a-03-2025` |
-| `COHERE_EMBEDDING_MODEL` | Modelo embedding en Config | `embed-multilingual-v3.0` |
+| `COHERE_API_KEY` | Cohere / configuración | Necesaria para embeddings y Agente 2 |
+| `COHERE_MODEL` | Modelo de redacción (Agente 2) | `command-r-08-2024` (~18s latencia) |
+| `COHERE_EMBEDDING_MODEL` | Modelo embedding en Config | `embed-multilingual-v3.0` (1024 dims) |
+| `PROVEEDOR_CRITICO` | Proveedor del Agente 3 | `gemini` (predeterminado), `groq` o `cohere` |
+| `MODELO_CRITICO` | Modelo del Agente 3 Crítico | `gemini-2.5-flash` (~2s latencia) |
+| `PROVEEDOR_CRITICO_FALLBACK` | Fallback de contingencia Agente 3 | `groq` o `cohere` |
+| `GEMINI_API_KEY` | API Key Google AI Studio | Clave para evaluación neutral del Crítico |
+| `GROQ_API_KEY` | API Key Groq | Clave opcional para evaluación LPU (<1.5s) |
+| `PRESUPUESTO_TIEMPO_SEGUNDOS` | Deadline interno anti-timeout | `75.0` segundos (límite previo a 100s Cloudflare) |
 | `AGENTE1_CHROMA_PATH` | Config RAG de configuración | `./chroma_db` |
 | `AGENTE1_COLLECTION_NAME` | Config RAG | `nuevamente_documentos` |
 | `TOP_K_CHUNKS` | Recuperación | `6`, rango 1–30 |
@@ -80,9 +87,9 @@ npm run dev
 
 **Nota de Armonización:** La configuración fue armonizada y centralizada en `backend/app/core/config.py`, soportando nombres canónicos y alias habituales de entorno (`COHERE_MODEL`, `COHERE_EMBEDDING_MODEL`, `OCI_*`). Para más información sobre el despliegue en nube privada, consultar los documentos en `deploy/` y `historial_progreso/`.
 
-## Despliegue en Servidor / Nube
-Para despliegues en instancias de nube (ej: Oracle Cloud Infrastructure Compute Always Free), consultar:
-- `deploy/README_DESPLIEGUE_OCI.md`: Guía de arquitectura para instancias Ubuntu.
-- `deploy/systemd/`: Archivos de servicio para gestión de demonios en background de FastAPI y Vite/Node.
-- `iniciar_local.bat`: Para ejecución local concurrente en entornos de desarrollo Windows.
+## Despliegue en Servidor / Nube (Topología OCI Always Free)
+Para despliegues en producción sobre Oracle Cloud Infrastructure (`VM.Standard.E2.1.Micro`, 1 vCPU, 1 GB RAM):
+- **VM 1 (`n8n-vm` - Backend API):** Uvicorn con **1 worker** (`~98.5 MB RAM`), `asyncio.Semaphore(1)` para control estricto de memoria y puerto privado 8000 dentro de la VCN.
+- **VM 2 (`climasmart-bems-vm` - Frontend & Edge):** Nginx (`:8080`, ~6 MB RAM) sirviendo la SPA compilada, proxy inverso de `/api/` con `proxy_buffering off;` para SSE, y expuesto a Internet vía **Cloudflare Tunnel (`novamind.techgk.cl`)**.
+- Documentación detallada en: `historial_progreso/INFORME_ORQUESTACION_MULTI_PROVEEDOR_FASE9.md` y `deploy/README_DESPLIEGUE_OCI.md`.
 

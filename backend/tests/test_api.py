@@ -5,6 +5,7 @@ Pruebas de la API REST de FastAPI (backend/app/main.py).
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
+import json
 
 import pytest
 from fastapi.testclient import TestClient
@@ -137,5 +138,77 @@ def test_listar_paquetes_endpoint():
 def test_descargar_paquete_no_encontrado():
     response = client.get("/api/v1/paquetes/objeto_inexistente_12345.json")
     assert response.status_code == 404
+
+
+def test_adaptar_stream_emite_eventos_sse():
+    respuesta_mock = RespuestaAdaptacion(
+        status="exito",
+        metadatos=MetadatosSalida(
+            perfil_aplicado="Principiante / Transición de Carrera",
+            formato_generado="Flashcards",
+            nicho_aplicado="General",
+            tiempo_estimado_estudio_minutos=10,
+            conceptos_clave=["VCN", "Subredes"],
+        ),
+        contenido_adaptado=ContenidoAdaptado(
+            titulo="Flashcards de VCN",
+            introduccion_contextualizada="Tarjetas de estudio para principiantes.",
+            items=[
+                {"frente": "¿Qué es VCN?", "dorso": "Red virtual en OCI", "concepto_clave": "VCN"}
+            ] * 5,
+        ),
+        evaluacion_calidad=EvaluacionCalidad(
+            anclaje_fuente_score=1.0,
+            claridad_pedagogica="Alta",
+            afirmaciones=[
+                AfirmacionEvaluada(
+                    afirmacion="VCN es una red virtual en Oracle Cloud.",
+                    respaldada=True,
+                    chunk_id_evidencia="chunk_01",
+                )
+            ],
+        ),
+        almacenamiento_oci=AlmacenamientoOCI(
+            bucket="local-mock-storage",
+            objeto_id="contenidos_generados/mock.json",
+            status_upload="completado",
+        ),
+        orquestacion=MetricasOrquestacion(
+            intentos_redaccion=1,
+            scores_por_intento=[1.0],
+            umbral_anclaje=0.75,
+            max_reintentos=2,
+            duracion_segundos=1.0,
+        ),
+    )
+
+    with patch("app.main.get_orquestador") as mock_get_orq:
+        mock_orq = MagicMock()
+        mock_orq.ejecutar.return_value = respuesta_mock
+        mock_get_orq.return_value = mock_orq
+
+        response = client.post(
+            "/api/v1/adaptar/stream",
+            data={
+                "texto_directo": "La Virtual Cloud Network (VCN) es una red virtual en OCI.",
+                "titulo": "Intro VCN",
+                "perfil_destinatario": "Principiante",
+                "formato_salida": "Flashcards",
+                "nicho_sector": "General",
+                "nivel_detalle": "Didáctico",
+            },
+        )
+
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers["content-type"]
+        lineas = response.text.split("\n\n")
+        # Debe contener al menos el evento de inicio y el evento de resultado
+        eventos = [json.loads(l.replace("data: ", "")) for l in lineas if l.startswith("data: ")]
+        assert any(e.get("tipo") == "inicio" for e in eventos)
+        assert any(e.get("tipo") == "resultado" for e in eventos)
+        resultado_final = next(e for e in eventos if e.get("tipo") == "resultado")
+        assert resultado_final["datos"]["status"] == "exito"
+        assert resultado_final["datos"]["contenido_adaptado"]["titulo"] == "Flashcards de VCN"
+
 
 
