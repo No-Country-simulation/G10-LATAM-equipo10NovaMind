@@ -13,7 +13,8 @@ interface Step1Props {
     niche: IndustryNiche,
     detail: DetailLevel,
     selectedScenarioId?: string,
-    pdfBase64?: string | null
+    pdfBase64?: string | null,
+    rawFile?: File | null
   ) => void;
   isProcessing: boolean;
   processingStage: string;
@@ -33,6 +34,7 @@ export const Step1Ingestion = ({
   const [detail, setDetail] = useState<DetailLevel>('Didáctico');
   const [fileName, setFileName] = useState<string | null>(null);
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [rawFile, setRawFile] = useState<File | null>(null);
 
   const handleLoadDemoScenario = () => {
     const demoSc = SCENARIOS[0]; // Guía Técnica OCI Swap 4 GB
@@ -44,6 +46,7 @@ export const Step1Ingestion = ({
     setFormat('Paquete Educativo Completo (5 Estaciones)');
     setFileName(null);
     setPdfBase64(null);
+    setRawFile(null);
   };
 
   const handleSelectScenario = (sc: TechnicalScenario) => {
@@ -54,12 +57,14 @@ export const Step1Ingestion = ({
     setProfile(sc.perfilRecomendado);
     setFileName(null);
     setPdfBase64(null);
+    setRawFile(null);
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setRawFile(file);
     setFileName(file.name);
     setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
 
@@ -69,8 +74,9 @@ export const Step1Ingestion = ({
         const result = event.target?.result as string;
         const base64Clean = result.includes(',') ? result.split(',')[1] : result;
         setPdfBase64(base64Clean);
+        const mb = (file.size / (1024 * 1024)).toFixed(2);
         setDocContent(
-          `📄 [DOCUMENTO PDF CARGADO: "${file.name}"]\n\nEl archivo binario fue procesado y sincronizado con éxito.\nGemini utilizará procesamiento multimodal nativo para extraer la semántica, estructura de capítulos y diagramas del PDF sin pérdidas tipográficas.`
+          `📄 [ARCHIVO PDF LISTO PARA INGESTA]: "${file.name}" (${mb} MB)\nEl archivo binario se transmitirá directamente al motor RAG de NovaMind (pypdf + ChromaDB + Cohere Embeddings) para extraer la semántica de sus páginas y alimentar la orquestación multi-agente.`
         );
       };
       reader.readAsDataURL(file);
@@ -87,7 +93,17 @@ export const Step1Ingestion = ({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onStartPipeline(docTitle, docContent, profile, format, niche, detail, selectedScenario?.id, pdfBase64);
+    onStartPipeline(
+      docTitle,
+      docContent,
+      profile,
+      format,
+      niche,
+      detail,
+      selectedScenario?.id,
+      pdfBase64,
+      rawFile
+    );
   };
 
   return (

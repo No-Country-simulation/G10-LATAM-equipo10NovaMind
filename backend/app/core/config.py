@@ -129,9 +129,8 @@ class Config:
             modelo_critico_fallback=os.getenv("MODELO_CRITICO_FALLBACK", "qwen/qwen3.8-27b"),
             gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
             groq_api_key=os.getenv("GROQ_API_KEY") or None,
-            openrouter_api_key=os.getenv("OPENROUTER_API_KEY") or None,
-            presupuesto_tiempo_segundos=_leer_float("PRESUPUESTO_TIEMPO_SEGUNDOS", 75.0, 10.0, 95.0),
-            timeout_llamada_llm=_leer_float("TIMEOUT_LLAMADA_LLM", 25.0, 5.0, 60.0),
+            presupuesto_tiempo_segundos=_leer_float("PRESUPUESTO_TIEMPO_SEGUNDOS", 180.0, 10.0, 300.0),
+            timeout_llamada_llm=_leer_float("TIMEOUT_LLAMADA_LLM", 45.0, 5.0, 120.0),
             entorno=os.getenv("APP_ENV", "dev").lower(),
         )
 

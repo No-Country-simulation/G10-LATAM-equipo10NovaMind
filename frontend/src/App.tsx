@@ -62,6 +62,9 @@ export default function App() {
   // Estado del Pipeline y sus 5 micro-etapas
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingStage, setProcessingStage] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [unlockedStations, setUnlockedStations] = useState<number[]>([0, 1, 2, 3, 4]);
+  const [generatingMessage, setGeneratingMessage] = useState<string>("");
 
   const completedStationsCount =
     Object.values(completedStations).filter(Boolean).length;
@@ -134,8 +137,15 @@ export default function App() {
     detail: DetailLevel,
     selectedScenarioId?: string,
     pdfBase64?: string | null,
+    rawFile?: File | null,
   ) => {
     setIsProcessing(true);
+    setIsGenerating(true);
+    setGeneratingMessage("Conectando con el orquestador multi-agente de NovaMind...");
+    setUnlockedStations([0]); // La estación 1 inicia su generación
+    setActiveStationIndex(0);
+    setCompletedStations({});
+    setCurrentStep(2); // Pasar inmediatamente a la Estación de Conocimiento para ver la generación en vivo
 
     try {
       const adaptedPkg = await solicitarAdaptacion(
@@ -148,24 +158,41 @@ export default function App() {
           detail,
           selectedScenarioId,
           pdfBase64,
+          rawFile,
         },
-        (stage) => setProcessingStage(stage)
+        (stage, _partialPkg, unlockedIdx) => {
+          setProcessingStage(stage);
+          setGeneratingMessage(stage);
+          if (typeof unlockedIdx === 'number') {
+            setUnlockedStations((prev) => {
+              const set = new Set(prev);
+              for (let i = 0; i <= unlockedIdx; i++) {
+                set.add(i);
+              }
+              return Array.from(set).sort((a, b) => a - b);
+            });
+          }
+        }
       );
 
-      // Reinicio de estaciones para el nuevo documento
-      setCompletedStations({});
+      // Finalización exitosa: desbloqueo total y carga del paquete adaptado
       setCurrentPackage(adaptedPkg);
-      setCurrentStep(2);
-      setActiveStationIndex(0);
+      setUnlockedStations([0, 1, 2, 3, 4]);
+      setIsGenerating(false);
+      setIsProcessing(false);
       triggerSmallConfetti();
     } catch (err: unknown) {
       console.error("Error en el pipeline de NovaMind:", err);
-      // Salvaguarda Zero-Crash con el escenario OCI Swap
-      setCurrentPackage(SCENARIOS[0].data);
-      setCurrentStep(2);
+      setIsGenerating(false);
+      setIsProcessing(false);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      alert(`⚠️ ${errMsg}`);
+      setCurrentStep(1); // Regresar al paso 1 en caso de fallo para que el usuario pueda reintentar
     } finally {
+      setIsGenerating(false);
       setIsProcessing(false);
       setProcessingStage("");
+      setGeneratingMessage("");
     }
   };
 
@@ -305,6 +332,9 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
             onOpenMasterBadge={() => handleUnlockBadge("master")}
             onDownloadArtifact={handleDownloadJSON}
             onGoToOCIInspect={() => setCurrentStep(3)}
+            isGenerating={isGenerating}
+            unlockedStations={unlockedStations}
+            generatingMessage={generatingMessage}
           />
         )}
 

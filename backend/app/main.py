@@ -280,17 +280,52 @@ async def adaptar_contenido_stream(
 
         tarea = asyncio.create_task(_ejecutar())
 
-        # 2. Bucle de heartbeats cada 15s mientras la tarea está en curso
+        # 2. Bucle de progresión granular en tiempo real cada 3s mientras la tarea está en curso
         segundos_transcurridos = 0
         while not tarea.done():
             try:
-                await asyncio.wait_for(asyncio.shield(tarea), timeout=15.0)
+                await asyncio.wait_for(asyncio.shield(tarea), timeout=3.0)
             except asyncio.TimeoutError:
-                segundos_transcurridos += 15
-                # Comentario SSE para mantener vivos proxies (Cloudflare / Nginx)
-                yield f": ping - heartbeat anti-timeout ({segundos_transcurridos}s)\n\n"
-                # Evento informativo para clientes SSE
-                yield f"data: {json.dumps({'tipo': 'heartbeat', 'segundos': segundos_transcurridos, 'mensaje': f'Orquestando agentes ({segundos_transcurridos}s transcurridos)...'}, ensure_ascii=False)}\n\n"
+                segundos_transcurridos += 3
+
+                # Determinación de etapa pedagógica y estación desbloqueada según tiempo
+                if segundos_transcurridos <= 6:
+                    etapa = "ingesta"
+                    estacion = 0
+                    msg = "Agente 1 (RAG): Ingestando documento y extrayendo texto estructurado..."
+                elif segundos_transcurridos <= 18:
+                    etapa = "investigacion"
+                    estacion = 0
+                    msg = "Agente 1 (RAG): Generando embeddings vectoriales y recuperando fragmentos..."
+                elif segundos_transcurridos <= 36:
+                    etapa = "redaccion_estacion_1"
+                    estacion = 0
+                    msg = "Agente 2 (Productor): Redactando Estación 1 · Resumen Ninja (TL;DR)..."
+                elif segundos_transcurridos <= 60:
+                    etapa = "redaccion_estacion_2"
+                    estacion = 1
+                    msg = "Agente 2 (Productor): Generando Estación 2 · Flashcard Quest 3D..."
+                elif segundos_transcurridos <= 85:
+                    etapa = "redaccion_estacion_3"
+                    estacion = 2
+                    msg = "Agente 2 (Productor): Elaborando Estación 3 · Tutorial Quest (Laboratorio)..."
+                elif segundos_transcurridos <= 110:
+                    etapa = "redaccion_estacion_4"
+                    estacion = 3
+                    msg = "Agente 2 (Productor): Diseñando Estación 4 · Director Cut (Storyboard)..."
+                elif segundos_transcurridos <= 135:
+                    etapa = "redaccion_estacion_5"
+                    estacion = 4
+                    msg = "Agente 2 (Productor): Formulando Estación 5 · The Final Trial (Quiz RAG)..."
+                else:
+                    etapa = "auditoria"
+                    estacion = 4
+                    msg = f"Agente 3 (Crítico): Auditando fidelidad RAG y anclaje a fuentes ({segundos_transcurridos}s)..."
+
+                # Comentario SSE keep-alive anti-timeout para Cloudflare/Nginx
+                yield f": ping - heartbeat ({segundos_transcurridos}s)\n\n"
+                # Evento informativo para sincronización de UI
+                yield f"data: {json.dumps({'tipo': 'progreso', 'segundos': segundos_transcurridos, 'mensaje': msg, 'etapa': etapa, 'estacion_desbloqueada': estacion}, ensure_ascii=False)}\n\n"
 
         # 3. Emisión de resultado final o error
         try:

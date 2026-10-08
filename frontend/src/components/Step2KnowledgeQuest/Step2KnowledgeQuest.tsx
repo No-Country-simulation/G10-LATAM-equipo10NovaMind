@@ -1,4 +1,14 @@
-import { Zap, BookOpen, Terminal, Clapperboard, Award, Lock, CheckCircle2, ChevronRight } from 'lucide-react';
+import {
+  Zap,
+  BookOpen,
+  Terminal,
+  Clapperboard,
+  Award,
+  Lock,
+  CheckCircle2,
+  ChevronRight,
+  Sparkles,
+} from 'lucide-react';
 import type { AdaptedContentPackage } from '../../types/types';
 import { Station1ResumenNinja } from '../stations/Station1ResumenNinja/Station1ResumenNinja';
 import { Station2FlashcardQuest } from '../stations/Station2FlashcardQuest/Station2FlashcardQuest';
@@ -23,6 +33,9 @@ interface Step2Props {
   onOpenMasterBadge: () => void;
   onDownloadArtifact: () => void;
   onGoToOCIInspect: () => void;
+  isGenerating?: boolean;
+  unlockedStations?: number[];
+  generatingMessage?: string;
 }
 
 export const Step2KnowledgeQuest = ({
@@ -41,9 +54,13 @@ export const Step2KnowledgeQuest = ({
   onOpenMasterBadge,
   onDownloadArtifact,
   onGoToOCIInspect,
+  isGenerating = false,
+  unlockedStations = [0, 1, 2, 3, 4],
+  generatingMessage = '',
 }: Step2Props) => {
   const completedStationsCount = Object.values(completedStations).filter(Boolean).length;
   const isFinalTrialUnlocked = completedStationsCount >= 2;
+  const unlockedList = unlockedStations || [0, 1, 2, 3, 4];
 
   const stationsMeta = [
     {
@@ -89,15 +106,30 @@ export const Step2KnowledgeQuest = ({
   ];
 
   const handleSelectStation = (index: number) => {
-    if (index === 4 && !isFinalTrialUnlocked) {
+    if (index === 4 && !isFinalTrialUnlocked && !isGenerating) {
       alert('Debes completar al menos 2 estaciones antes de desbloquear la Prueba Final.');
       return;
     }
     onSelectStationIndex(index);
   };
 
+  const isCurrentStationReady = !isGenerating || unlockedList.includes(activeStationIndex);
+
   return (
     <div className={styles.container}>
+      {/* Banner de Generación Progresiva en Tiempo Real */}
+      {isGenerating && (
+        <div className={styles.generatingBanner}>
+          <div className={styles.generatingBannerText}>
+            <Sparkles size={16} className={styles.spinningIcon} color="#f0abfc" />
+            <span>{generatingMessage || 'Orquestando agentes pedagógicos en tiempo real...'}</span>
+          </div>
+          <span className={styles.generatingBannerSub}>
+            Estaciones listas: {unlockedList.length} de 5
+          </span>
+        </div>
+      )}
+
       {/* RPG Stepper Strip */}
       <div className={styles.stepperBarCard}>
         <div className={styles.stepperHeader}>
@@ -122,6 +154,7 @@ export const Step2KnowledgeQuest = ({
           {stationsMeta.map((node) => {
             const isSelected = activeStationIndex === node.index;
             const isDone = !!completedStations[node.index];
+            const isStationReady = !isGenerating || unlockedList.includes(node.index);
             const NodeIcon = node.icon;
 
             const selectedClass = isSelected ? styles[`nodeSelected_${node.index}`] : '';
@@ -131,8 +164,8 @@ export const Step2KnowledgeQuest = ({
                 key={node.index}
                 type="button"
                 onClick={() => handleSelectStation(node.index)}
-                disabled={node.isLocked}
-                className={`${styles.nodeBtn} ${selectedClass} ${node.isLocked ? styles.nodeBtnLocked : ''}`}
+                disabled={node.isLocked && !isGenerating}
+                className={`${styles.nodeBtn} ${selectedClass} ${node.isLocked && !isGenerating ? styles.nodeBtnLocked : ''}`}
               >
                 <div className={styles.nodeTopRow}>
                   <div
@@ -146,16 +179,28 @@ export const Step2KnowledgeQuest = ({
                   >
                     {isDone ? (
                       <CheckCircle2 size={16} />
-                    ) : node.isLocked ? (
+                    ) : node.isLocked && !isGenerating ? (
                       <Lock size={14} color="#f59e0b" />
+                    ) : !isStationReady ? (
+                      <Sparkles size={14} className={styles.spinningIcon} color="#fbbf24" />
                     ) : (
                       <NodeIcon size={14} />
                     )}
                   </div>
 
-                  <span className={styles.nodeXpPill}>
-                    {node.xp}
-                  </span>
+                  {!isStationReady ? (
+                    <span className={styles.nodeGeneratingPill}>
+                      ⏳ Generando...
+                    </span>
+                  ) : isGenerating ? (
+                    <span className={styles.nodeReadyPill}>
+                      ✨ Lista
+                    </span>
+                  ) : (
+                    <span className={styles.nodeXpPill}>
+                      {node.xp}
+                    </span>
+                  )}
                 </div>
 
                 <div className={styles.nodeMetaBlock}>
@@ -163,7 +208,11 @@ export const Step2KnowledgeQuest = ({
                     0{node.index + 1}. {node.title}
                   </div>
                   <div className={styles.nodeSubtitleText}>
-                    {node.isLocked ? '🔒 Requiere 2 completadas' : node.subtitle}
+                    {!isStationReady
+                      ? 'Redactando con Agente 2...'
+                      : node.isLocked && !isGenerating
+                      ? '🔒 Requiere 2 completadas'
+                      : node.subtitle}
                   </div>
                 </div>
 
@@ -176,55 +225,80 @@ export const Step2KnowledgeQuest = ({
 
       {/* Active Station Viewport */}
       <div className={styles.viewportContainer}>
-        {activeStationIndex === 0 && (
-          <Station1ResumenNinja
-            data={contentPackage.contenido_adaptado.resumen_ninja}
-            isCompleted={!!completedStations[0]}
-            onCompleteStation={(xp) => onCompleteStation(0, xp)}
-            onOpenNinjaBadge={onOpenNinjaBadge}
-          />
-        )}
+        {!isCurrentStationReady ? (
+          <div className={styles.generatingCard}>
+            <div className={styles.generatingHeader}>
+              <Sparkles size={28} className={styles.spinningIcon} color="#f0abfc" />
+              <h3 className={styles.generatingTitle}>
+                Generando 0{activeStationIndex + 1}. {stationsMeta[activeStationIndex]?.title}
+              </h3>
+            </div>
+            <p className={styles.generatingDesc}>
+              {generatingMessage || 'El Agente Productor está transformando el material técnico RAG para esta estación...'}
+            </p>
+            <div className={styles.generatingProgressTrack}>
+              <div className={styles.generatingProgressShimmer} />
+            </div>
+            <div className={styles.generatingMetaRow}>
+              <span>✦ Ingesta Vectorial ChromaDB</span>
+              <span>✦ Agente Productor Cohere</span>
+              <span>✦ Auditoría RAG Gemini/Groq</span>
+              <span>✦ Persistencia OCI</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            {activeStationIndex === 0 && (
+              <Station1ResumenNinja
+                data={contentPackage.contenido_adaptado.resumen_ninja}
+                isCompleted={!!completedStations[0]}
+                onCompleteStation={(xp) => onCompleteStation(0, xp)}
+                onOpenNinjaBadge={onOpenNinjaBadge}
+              />
+            )}
 
-        {activeStationIndex === 1 && (
-          <Station2FlashcardQuest
-            cards={contentPackage.contenido_adaptado.flashcards}
-            isCompleted={!!completedStations[1]}
-            onCompleteStation={(xp) => onCompleteStation(1, xp)}
-            onOpenStreakBadge={onOpenStreakBadge}
-          />
-        )}
+            {activeStationIndex === 1 && (
+              <Station2FlashcardQuest
+                cards={contentPackage.contenido_adaptado.flashcards}
+                isCompleted={!!completedStations[1]}
+                onCompleteStation={(xp) => onCompleteStation(1, xp)}
+                onOpenStreakBadge={onOpenStreakBadge}
+              />
+            )}
 
-        {activeStationIndex === 2 && (
-          <Station3TutorialQuest
-            steps={contentPackage.contenido_adaptado.tutorial}
-            isCompleted={!!completedStations[2]}
-            onCompleteStation={(xp) => onCompleteStation(2, xp)}
-            onOpenBuilderBadge={onOpenBuilderBadge}
-          />
-        )}
+            {activeStationIndex === 2 && (
+              <Station3TutorialQuest
+                steps={contentPackage.contenido_adaptado.tutorial}
+                isCompleted={!!completedStations[2]}
+                onCompleteStation={(xp) => onCompleteStation(2, xp)}
+                onOpenBuilderBadge={onOpenBuilderBadge}
+              />
+            )}
 
-        {activeStationIndex === 3 && (
-          <Station4DirectorCut
-            scenes={contentPackage.contenido_adaptado.director_cut}
-            isCompleted={!!completedStations[3]}
-            onCompleteStation={(xp) => onCompleteStation(3, xp)}
-            onOpenDirectorBadge={onOpenDirectorBadge}
-          />
-        )}
+            {activeStationIndex === 3 && (
+              <Station4DirectorCut
+                scenes={contentPackage.contenido_adaptado.director_cut}
+                isCompleted={!!completedStations[3]}
+                onCompleteStation={(xp) => onCompleteStation(3, xp)}
+                onOpenDirectorBadge={onOpenDirectorBadge}
+              />
+            )}
 
-        {activeStationIndex === 4 && (
-          <Station5FinalTrial
-            questions={contentPackage.contenido_adaptado.quiz}
-            completedStationsCount={completedStationsCount}
-            isUnlocked={isFinalTrialUnlocked}
-            cognitiveShields={cognitiveShields}
-            onSelectStation={(idx) => handleSelectStation(idx)}
-            onDeductShield={onDeductShield}
-            onResetCircuit={onResetCircuit}
-            onCompleteStation={(xp) => onCompleteStation(4, xp)}
-            onOpenMasterBadge={onOpenMasterBadge}
-            onDownloadArtifact={onDownloadArtifact}
-          />
+            {activeStationIndex === 4 && (
+              <Station5FinalTrial
+                questions={contentPackage.contenido_adaptado.quiz}
+                completedStationsCount={completedStationsCount}
+                isUnlocked={isFinalTrialUnlocked || isGenerating}
+                cognitiveShields={cognitiveShields}
+                onSelectStation={(idx) => handleSelectStation(idx)}
+                onDeductShield={onDeductShield}
+                onResetCircuit={onResetCircuit}
+                onCompleteStation={(xp) => onCompleteStation(4, xp)}
+                onOpenMasterBadge={onOpenMasterBadge}
+                onDownloadArtifact={onDownloadArtifact}
+              />
+            )}
+          </>
         )}
       </div>
 
