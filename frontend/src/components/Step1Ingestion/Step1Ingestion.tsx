@@ -1,8 +1,10 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { UploadCloud, Sparkles, Layers, Cpu, Database, CheckCircle2, ArrowRight, Zap } from 'lucide-react';
-import type { RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, TechnicalScenario } from '../../types/types';
-import { SCENARIOS } from '../../data/mockScenarios';
+import { UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight } from 'lucide-react';
+import type { RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset } from '../../types/types';
+import { REAL_DOCUMENTS_CATALOG } from '../../data/mockScenarios';
 import styles from './Step1Ingestion.module.css';
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface Step1Props {
   onStartPipeline: (
@@ -25,7 +27,8 @@ export const Step1Ingestion = ({
   isProcessing,
   processingStage,
 }: Step1Props) => {
-  const [selectedScenario, setSelectedScenario] = useState<TechnicalScenario | null>(null);
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [isLoadingPreset, setIsLoadingPreset] = useState<boolean>(false);
   const [docTitle, setDocTitle] = useState<string>('');
   const [docContent, setDocContent] = useState<string>('');
   const [profile, setProfile] = useState<RecipientProfile>('Principiante');
@@ -36,34 +39,57 @@ export const Step1Ingestion = ({
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [rawFile, setRawFile] = useState<File | null>(null);
 
-  const handleLoadDemoScenario = () => {
-    const demoSc = SCENARIOS[0]; // Guía Técnica OCI Swap 4 GB
-    setSelectedScenario(demoSc);
-    setDocTitle(demoSc.titulo);
-    setDocContent(demoSc.contenido);
-    setNiche(demoSc.nicho);
-    setProfile(demoSc.perfilRecomendado);
-    setFormat('Paquete Educativo Completo (5 Estaciones)');
-    setFileName(null);
-    setPdfBase64(null);
-    setRawFile(null);
+  const handleSelectRealDocument = async (doc: RealDocumentPreset) => {
+    setSelectedDocId(doc.id);
+    setIsLoadingPreset(true);
+    setDocTitle(doc.titulo);
+    setNiche(doc.nicho);
+    setProfile(doc.perfil);
+    setFormat(doc.formato_sugerido);
+    setFileName(doc.nombre_archivo);
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/v1/documentos/ejemplos/${encodeURIComponent(doc.nombre_archivo)}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const mimeType = doc.tipo === 'pdf' ? 'application/pdf' : 'text/markdown';
+        const file = new File([blob], doc.nombre_archivo, { type: mimeType });
+        setRawFile(file);
+
+        if (doc.tipo === 'markdown') {
+          const text = await blob.text();
+          setDocContent(text);
+          setPdfBase64(null);
+        } else {
+          setPdfBase64(null);
+          const mb = (blob.size / (1024 * 1024)).toFixed(2);
+          setDocContent(
+            `📄 [ARCHIVO PDF OFICIAL CARGADO]: "${doc.nombre_archivo}" (${mb} MB)\nEl archivo binario se transmitirá directamente al motor RAG de NovaMind (pypdf + ChromaDB + Cohere Embeddings) para extraer la semántica de sus páginas y alimentar la orquestación multi-agente en tiempo real.`
+          );
+        }
+      } else {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    } catch (err) {
+      console.warn('Cargando documento en modo referencia:', err);
+      setRawFile(null);
+      setDocContent(
+        `📄 Documento Oficial: "${doc.titulo}" (${doc.nombre_archivo})\n\n${doc.descripcion}\n\nEste documento será analizado y contextualizado por los agentes pedagógicos de NovaMind.`
+      );
+    } finally {
+      setIsLoadingPreset(false);
+    }
   };
 
-  const handleSelectScenario = (sc: TechnicalScenario) => {
-    setSelectedScenario(sc);
-    setDocTitle(sc.titulo);
-    setDocContent(sc.contenido);
-    setNiche(sc.nicho);
-    setProfile(sc.perfilRecomendado);
-    setFileName(null);
-    setPdfBase64(null);
-    setRawFile(null);
+  const handleLoadDemoScenario = () => {
+    handleSelectRealDocument(REAL_DOCUMENTS_CATALOG[0]);
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setSelectedDocId(null);
     setRawFile(file);
     setFileName(file.name);
     setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
@@ -100,7 +126,7 @@ export const Step1Ingestion = ({
       format,
       niche,
       detail,
-      selectedScenario?.id,
+      selectedDocId || undefined,
       pdfBase64,
       rawFile
     );
@@ -147,49 +173,59 @@ export const Step1Ingestion = ({
             type="button"
             onClick={handleLoadDemoScenario}
             className={styles.demoButton}
+            disabled={isLoadingPreset}
           >
             <Zap size={16} />
-            ⚡ Cargar Guía OCI Swap (Modo Demo)
+            {isLoadingPreset ? '⏳ Descargando documento...' : '⚡ Cargar Guía OCI Swap (Documento Real)'}
           </button>
         </div>
       </div>
 
-      {/* Preset Scenarios Selector */}
+      {/* Biblioteca de Documentos Reales Selector */}
       <div className={styles.scenariosSection}>
         <div className={styles.scenariosHeader}>
           <h3 className={styles.scenariosLabel}>
-            <Layers size={16} color="var(--color-violet-400)" />
-            Escenarios de Arquitectura OCI Predefinidos
+            <Database size={16} color="var(--color-violet-400)" />
+            Biblioteca de Documentos Reales (data/documents/)
           </h3>
-          <span className={styles.scenariosHelp}>O selecciona uno de los escenarios para cargar datos de prueba reales</span>
+          <span className={styles.scenariosHelp}>
+            {isLoadingPreset
+              ? '⏳ Descargando archivo de prueba real...'
+              : 'Selecciona un documento oficial de prueba para cargarlo y procesarlo con el pipeline RAG real'}
+          </span>
         </div>
 
         <div className={styles.scenariosGrid}>
-          {SCENARIOS.map((sc) => {
-            const isSelected = selectedScenario?.id === sc.id && !pdfBase64;
+          {REAL_DOCUMENTS_CATALOG.map((doc) => {
+            const isSelected = selectedDocId === doc.id;
 
             return (
               <button
-                key={sc.id}
+                key={doc.id}
                 type="button"
-                onClick={() => handleSelectScenario(sc)}
+                onClick={() => handleSelectRealDocument(doc)}
                 className={`${styles.scenarioCard} ${isSelected ? styles.scenarioCardSelected : ''}`}
               >
                 <div className={styles.scenarioTopRow}>
-                  <span className={styles.nicheBadge}>
-                    {sc.nicho}
-                  </span>
+                  <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                    <span className={styles.nicheBadge}>
+                      {doc.nicho}
+                    </span>
+                    <span className={styles.formatTypeBadge}>
+                      {doc.tipo === 'pdf' ? '📕 PDF' : '📄 MD'} · {doc.tamano_formato.split(' ')[0]} {doc.tamano_formato.split(' ')[1]}
+                    </span>
+                  </div>
                   {isSelected && (
                     <CheckCircle2 size={16} color="var(--color-violet-400)" />
                   )}
                 </div>
 
                 <div className={styles.scenarioTitle}>
-                  {sc.titulo}
+                  {doc.titulo}
                 </div>
 
                 <div className={styles.scenarioSnippet}>
-                  {sc.contenido}
+                  {doc.descripcion}
                 </div>
               </button>
             );

@@ -150,6 +150,19 @@ export interface AdaptedContentPackage {
   };
 }
 
+export interface RealDocumentPreset {
+  id: string;
+  nombre_archivo: string;
+  titulo: string;
+  nicho: IndustryNiche;
+  perfil: RecipientProfile;
+  formato_sugerido: OutputFormat;
+  tipo: 'markdown' | 'pdf';
+  tamano_formato: string;
+  descripcion: string;
+  tamano_bytes?: number;
+}
+
 export interface TechnicalScenario {
   id: string;
   titulo: string;

@@ -13,11 +13,12 @@ import asyncio
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import ValidationError
 
 from app.core.config import ConfigError
@@ -414,4 +415,104 @@ def descargar_paquete(objeto_id: str) -> Dict[str, Any]:
         if archivo.exists():
             return json.loads(archivo.read_text(encoding="utf-8"))
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paquete no encontrado.")
+
+
+def _obtener_directorio_documentos() -> Path:
+    posibles = [
+        Path(__file__).resolve().parents[2] / "data" / "documents",
+        Path("data/documents").resolve(),
+        Path("../data/documents").resolve(),
+    ]
+    for p in posibles:
+        if p.exists() and p.is_dir():
+            return p
+    return posibles[0]
+
+
+CATALOGO_DOCUMENTOS = [
+    {
+        "id": "guia-swap-oci",
+        "nombre_archivo": "guia_optimizacion_swap_oci.md",
+        "titulo": "Guía Técnica OCI: Optimización de Memoria y Swap de 4 GB",
+        "nicho": "General",
+        "perfil": "Principiante",
+        "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
+        "tipo": "markdown",
+        "tamano_formato": "7.7 KB (Markdown)",
+        "descripcion": "Arquitectura de memoria virtual y aprovisionamiento de 4 GB Swap en VM.Standard.E2.1.Micro para prevenir el OOM Killer sin costes en OCI Always Free.",
+    },
+    {
+        "id": "apache-kafka",
+        "nombre_archivo": "apache_kafka_introduction.md",
+        "titulo": "Apache Kafka: Fundamentos y Arquitectura de Event Streaming",
+        "nicho": "Fintech",
+        "perfil": "Desarrollador Junior",
+        "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
+        "tipo": "markdown",
+        "tamano_formato": "11.2 KB (Markdown)",
+        "descripcion": "Fundamentos de Event Streaming distribuido, Topics, Particiones y Arquitectura de Microservicios reactivos en tiempo real.",
+    },
+    {
+        "id": "enisa-threat-landscape",
+        "nombre_archivo": "ENISA Threat Landscape 2026_Final.pdf",
+        "titulo": "ENISA Threat Landscape: Ciberamenazas y Resiliencia Digital",
+        "nicho": "General",
+        "perfil": "Líder Técnico / Arquitecto",
+        "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
+        "tipo": "pdf",
+        "tamano_formato": "8.4 MB (PDF Oficial)",
+        "descripcion": "Informe exhaustivo de la Agencia Europea de Ciberseguridad sobre vectores de ataque, cadenas de suministro y ciberdefensa moderna.",
+    },
+    {
+        "id": "snowflake-architecture",
+        "nombre_archivo": "Snowflake_SIGMOD.pdf",
+        "titulo": "Snowflake Elastic Data Warehouse (SIGMOD Paper)",
+        "nicho": "General",
+        "perfil": "Líder Técnico / Arquitecto",
+        "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
+        "tipo": "pdf",
+        "tamano_formato": "909 KB (PDF Técnico)",
+        "descripcion": "Paper académico oficial de SIGMOD sobre arquitectura elástica desacoplada de cómputo y almacenamiento en bases de datos analíticas cloud.",
+    },
+    {
+        "id": "caballero-armadura",
+        "nombre_archivo": "El caballero de la armadura oxidada - Robert-Fisher.pdf",
+        "titulo": "El Caballero de la Armadura Oxidada (Pedagogía & Humanidades)",
+        "nicho": "General",
+        "perfil": "Principiante",
+        "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
+        "tipo": "pdf",
+        "tamano_formato": "175 KB (PDF Literario)",
+        "descripcion": "Obra alegórica de Robert Fisher sobre autoconocimiento, coraje reflexivo, barreras emocionales y transformación pedagógica.",
+    },
+]
+
+
+@app.get("/api/v1/documentos/ejemplos", tags=["Biblioteca de Documentos"])
+def listar_documentos_ejemplo() -> List[Dict[str, Any]]:
+    """Retorna la lista de documentos reales disponibles en data/documents/ para pruebas de orquestación."""
+    directorio = _obtener_directorio_documentos()
+    documentos_disponibles = []
+    for doc in CATALOGO_DOCUMENTOS:
+        ruta = directorio / doc["nombre_archivo"]
+        item = dict(doc)
+        item["existe"] = ruta.exists()
+        if ruta.exists():
+            item["tamano_bytes"] = ruta.stat().st_size
+        documentos_disponibles.append(item)
+    return documentos_disponibles
+
+
+@app.get("/api/v1/documentos/ejemplos/{nombre_archivo}", tags=["Biblioteca de Documentos"])
+def obtener_documento_ejemplo(nombre_archivo: str) -> FileResponse:
+    """Descarga el archivo físico real desde data/documents/ para alimentarlo al pipeline."""
+    directorio = _obtener_directorio_documentos()
+    archivo = directorio / Path(nombre_archivo).name
+    if not archivo.exists() or not archivo.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Documento '{nombre_archivo}' no encontrado en la biblioteca.",
+        )
+    media_type = "application/pdf" if archivo.suffix.lower() == ".pdf" else "text/markdown; charset=utf-8"
+    return FileResponse(path=str(archivo), filename=archivo.name, media_type=media_type)
 

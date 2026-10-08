@@ -188,7 +188,7 @@
 
 @media (min-width: 768px) {
   .scenariosGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
 
@@ -235,6 +235,17 @@
   border-radius: var(--radius-sm);
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--color-cyan-300);
+}
+
+.formatTypeBadge {
+  font-size: 0.625rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background-color: rgba(139, 92, 246, 0.15);
+  color: var(--color-violet-300);
+  border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 .scenarioTitle {
