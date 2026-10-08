@@ -24,8 +24,8 @@ En `backend/app/orquestador.py`, la persistencia se gestiona mediante `almacenad
 El almacenamiento local devuelve metadatos con `bucket="local-mock-storage"` y `status_upload="completado"` cuando la escritura termina correctamente.
 
 ## Topología de Objetos en OCI Object Storage
-El cliente real (`backend/app/storage/oci_client.py`) utiliza el SDK oficial de Oracle Cloud (`oci.object_storage.UploadManager`) con autenticación estándar (`~/.oci/config`) o variables de entorno (`OCI_USER`, `OCI_TENANCY`, `OCI_FINGERPRINT`, `OCI_KEY_FILE`, `OCI_REGION`):
-* **Bucket:** `nuevamente-contenidos-educativos` (Tier Standard, Always Free).
+El cliente real (`backend/app/servicios/almacenamiento_oci.py`) utiliza el SDK oficial de Oracle Cloud (`oci.object_storage.UploadManager`) con autenticación estándar (`~/.oci/config`) o variables de entorno (`OCI_USER`, `OCI_TENANCY`, `OCI_FINGERPRINT`, `OCI_KEY_FILE`, `OCI_REGION`):
+* **Bucket:** `novamind-contenidos-educativos` (Tier Standard, Always Free).
 * **Región:** `sa-santiago-1`.
 * **Namespace:** Configurado dinámicamente vía variable `OCI_NAMESPACE`.
 * **Estructura Jerárquica de Claves Cloud:**

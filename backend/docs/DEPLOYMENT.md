@@ -6,7 +6,7 @@
 - **Claves de API de LLMs:**
   - **Cohere (`COHERE_API_KEY`)**: Requerida para embeddings (`embed-multilingual-v3.0`) y redacción del Agente 2 (`command-r-08-2024`).
   - **Google Gemini (`GEMINI_API_KEY`)**: Requerida para el Agente 3 Crítico Multi-Proveedor (`gemini-2.5-flash`).
-  - **Groq (`GROQ_API_KEY`)**: Opcional / fallback para contingencia analítica ultrarrápida (`qwen/qwen3.8-27b`).
+  - **Groq (`GROQ_API_KEY`)**: Opcional / fallback para contingencia analítica ultrarrápida (`llama-3.3-70b-versatile`).
 
 ## Opción 1: Lanzamiento Rápido Automático (1 Clic)
 El proyecto incluye un script lanzador concurrente:

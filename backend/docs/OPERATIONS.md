@@ -23,8 +23,12 @@
 2. **Diagnóstico de Conectividad Cloud OCI:**
    Ejecutar `python scripts/test_oci_conexion.py` para realizar una prueba end-to-end de autenticación, lectura de namespace y subida/descarga de un objeto de prueba.
 3. **Verificación de Pruebas Automatizadas:**
-   Ejecutar `pytest backend/tests -v` tras cualquier actualización de código para asegurar que los 65 tests de regresión continúen en verde.
-4. **Respaldos de Datos:**
+   Ejecutar `pytest backend/tests -v` tras cualquier actualización de código para asegurar que los **70 tests de regresión** continúen en verde.
+4. **Prueba de Estrés y Rendimiento Concurrente:**
+   Ejecutar `python scripts/prueba_estres.py` para evaluar el throughput (>130 RPS), la latencia percentil p95 y certificar la ausencia de congelamiento del event loop durante inferencias pesadas.
+5. **Certificación End-to-End con Documento Real:**
+   Ejecutar `python scripts/test_kafka_e2e.py` para validar en vivo la orquestación completa con `data/documents/apache_kafka_introduction.md`.
+6. **Respaldos de Datos:**
    Respaldar periódicamente las salidas en `data/outputs/` y el directorio `data/chroma/` con el servicio detenido.
 
 ## Incidentes

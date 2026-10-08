@@ -23,7 +23,7 @@ Es un healthcheck de proceso; no verifica por sí mismo conectividad con Cohere,
 ## `GET /api/v1/config/opciones`
 Respuesta `200` con listas `perfiles_destinatario`, `formatos_salida`, `nichos_sector` y `niveles_detalle`. Valores definidos en `main.py`:
 - Perfiles: `Principiante / Transición de Carrera`, `Desarrollador Junior / Semi Senior`, `Líder Técnico / Arquitecto`, `Gestor / Ejecutivo (No Técnico)`.
-- Formatos: `Guía Práctica Paso a Paso (Tutorial)`, `Flashcards`, `Quiz Interactivo con Justificaciones`, `Resumen Ejecutivo (TL;DR)`, `Guion de Clase / Video`.
+- Formatos: `Guía Práctica Paso a Paso (Tutorial)`, `Flashcards`, `Quiz Interactivo con Justificaciones`, `Resumen Ejecutivo (TL;DR)`, `Guion de Clase / Video`, `Paquete Educativo Completo (5 Estaciones)`.
 - Nichos: `Fintech`, `Salud`, `E-commerce`, `General`.
 - Niveles: `Didáctico`, `Intermedio`, `Profundo`.
 
@@ -34,7 +34,8 @@ Campos:
 | Campo | Tipo | Requerido | Descripción |
 |---|---|---:|---|
 | `archivo` | archivo | No* | PDF, MD/Markdown o TXT |
-| `texto_directo` | string | No* | Texto alternativo |
+| `texto_directo` | string | No* | Texto alternativo de entrada |
+| `documento_contenido` | string | No* | Alias canónico de `texto_directo` (interoperabilidad de esquemas) |
 | `titulo` | string | No | Título del documento |
 | `perfil_destinatario` | string | Sí | Perfil pedagógico |
 | `formato_salida` | string | Sí | Formato deseado |
@@ -42,7 +43,7 @@ Campos:
 | `nivel_detalle` | string | No | Predeterminado `Didáctico` |
 | `tema_consulta` | string | No | Foco opcional de búsqueda |
 
-*Debe proporcionarse archivo no vacío o `texto_directo` no vacío. El esquema de solicitud exige al menos 40 caracteres de contenido. Los valores se normalizan mediante alias y validaciones Pydantic.
+*Debe proporcionarse archivo no vacío o `texto_directo`/`documento_contenido` no vacío. El esquema de solicitud exige al menos 40 caracteres de contenido. Los valores se normalizan mediante alias y validaciones Pydantic.
 
 Ejemplo con texto:
 ```bash

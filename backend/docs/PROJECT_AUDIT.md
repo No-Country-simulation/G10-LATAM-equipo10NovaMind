@@ -29,26 +29,28 @@ Los requirements fijan versiones para varias dependencias, pero también contien
 ### 8. Observabilidad y operación
 No se identificaron métricas/alertas ni readiness check de dependencias. `/health` solo devuelve estado estático. **Acción:** agregar health/readiness diferenciados, métricas, correlación de solicitudes y runbook.
 
-## Estado de Resolución y Mitigaciones Implementadas (Fases 1 a 9)
+## Estado de Resolución y Mitigaciones Implementadas (Fases 1 a 10)
 
-Tras el desarrollo de las 9 fases de integración técnica y despliegue en producción, los hallazgos fueron atendidos y validados:
+Tras el desarrollo de las 10 fases de integración técnica y despliegue en producción, los hallazgos fueron atendidos y validados:
 
 | Hallazgo | Estado | Mitigación Implementada |
 |---|:---:|---|
 | **1. Configuración divergente** | 🟢 Resuelto | Centralización en `backend/app/core/config.py` con resolución tolerante de alias (`COHERE_MODEL`, `COHERE_EMBEDDING_MODEL`, `OCI_*`) y plantilla `.env.example` sincronizada. |
-| **2. Doble orquestador** | 🟢 Clarificado | `backend/app/orquestador.py` (LangGraph determinista con ciclo reflexivo) se consolidó como el orquestador oficial del sistema y está validado al 100% por los 65 tests. |
+| **2. Doble orquestador** | 🟢 Clarificado | `backend/app/orquestador.py` (LangGraph determinista con ciclo reflexivo) se consolidó como el orquestador oficial del sistema y está validado al 100% por los 70 tests. |
 | **3. CORS permisivo** | 🟢 Resuelto | Restricción estricta en `main.py` eliminando comodines globales `["*"]` y autorizando únicamente los orígenes locales del frontend (`5173`) y API (`8000`). |
-| **4. Ingesta de archivos** | 🟡 Mitigado | Sanitización de encabezados en PDFs mediante `pypdf`, validación de extensiones permitidas (.pdf, .md, .txt) y umbral mínimo de 40 caracteres. |
+| **4. Ingesta de archivos** | 🟢 Resuelto | Interoperabilidad de parámetros (`documento_contenido` / `texto_directo`), sanitización de encabezados en PDFs mediante `pypdf`, validación de extensiones permitidas (.pdf, .md, .txt) y umbral mínimo de 40 caracteres. |
 | **5. Persistencia y fallback** | 🟢 Resuelto | Implementación de `almacenador_resiliente` en el nodo persistir del orquestador, priorizando OCI Always Free y cayendo a `data/outputs/` de forma silenciosa ante fallos. |
 | **6. Diferencias README/Código** | 🟢 Resuelto | `README.md` reescrito reflejando la arquitectura real React 19 + Vite, scripts batch de un clic (`iniciar_local.bat`), endpoints y puertos reales. |
 | **7. Dependencias y entorno** | 🟢 Resuelto | Fijación estricta de entorno en Python 3.12.7, dependencias unificadas en `requirements.txt` y validación de instalación limpia. |
 | **8. Observabilidad** | 🟢 Resuelto | Logs detallados con timestamp y duración de etapas, scripts de diagnóstico y restablecimiento a estado cero. |
 | **9. Latencia y Timeout Cloudflare (524)** | 🟢 Resuelto | Transición a `command-r-08-2024` (reduciendo redacción de 300s a 18s) e implementación de streaming SSE con heartbeats cada 15s. |
-| **10. Auditoría de Calidad Real (Agente 3)** | 🟢 Resuelto | Desacople multi-proveedor con **Google Gemini 2.5 Flash** (~2s) y Groq (`qwen3.8-27b`), erradicando mocks y verificando `chunk_id` en Python. |
-| **11. Concurrencia y Event Loop** | 🟢 Resuelto | Desacople de inferencia mediante `asyncio.to_thread` y protección de memoria en OCI (1 GB RAM) con `asyncio.Semaphore(1)`. |
+| **10. Auditoría de Calidad Real (Agente 3)** | 🟢 Resuelto | Desacople multi-proveedor con **Google Gemini 2.5 Flash** (~2s) y Groq (`llama-3.3-70b-versatile`), erradicando mocks y verificando `chunk_id` en Python. |
+| **11. Concurrencia y Event Loop** | 🟢 Resuelto | Desacople de inferencia mediante `asyncio.to_thread` y protección de memoria en OCI (1 GB RAM) con `asyncio.Semaphore(1)`. Comprobado con 137 RPS y latencia de 9.27 ms en `/health` bajo carga. |
 
 ## Validación Operativa Realizada
-- **Suite de Pruebas Automatizadas:** 65 pruebas ejecutadas mediante pytest: **65 passed (100% de éxito)**.
+- **Suite de Pruebas Automatizadas:** 70 pruebas ejecutadas mediante pytest: **70 passed (100% de éxito)**.
+- **Validación E2E en Vivo con Kafka (`apache_kafka_introduction.md`):** Indexación de 12 chunks, generación de 7 flashcards y 27 afirmaciones auditadas con Score de Anclaje de 1.0 (100% fidelidad, 0 alucinaciones).
+- **Benchmark de Estrés:** 137.24 RPS en `/health`, 144.32 RPS en opciones y 0% congelamiento de event loop durante inferencias pesadas de 71s (memoria contenida en ~172 MB).
 - **Validación en Producción OCI (`novamind.techgk.cl`):** Respuesta HTTP E2E exitosa en **9.51 s (8.86 s backend)** con persistencia en OCI Object Storage verificada en tiempo real.
 - **Purga de Credenciales:** Limpieza total del historial git con `git-filter-repo` y exclusión de secretos en `.gitignore`.
 

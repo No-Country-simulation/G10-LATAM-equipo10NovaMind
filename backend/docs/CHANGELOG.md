@@ -2,6 +2,19 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.2.0] - 2026-10-08
+
+### 🚀 Circuito de 5 Estaciones, Guía OCI Swap, E2E Kafka y Benchmark de Estrés (Fase 10)
+- **Formato Unificado de 5 Estaciones:** Incorporación de `"Paquete Educativo Completo (5 Estaciones)"` en esquemas Pydantic v2 y soporte en el Agente 2 Productor para generar el flujo integral de aprendizaje: Resumen Ninja, Flashcard Quest, Tutorial Quest, Director Cut (Storyboard/Teleprompter) y The Final Trial (Quiz con escudos).
+- **Interoperabilidad Transparente de Ingesta:** Normalización en `main.py` para aceptar de forma indistinta y concurrente `texto_directo` o `documento_contenido`.
+- **Validación E2E en Vivo (`apache_kafka_introduction.md`):** Certificación del pipeline contra documento técnico denso (11.052 caracteres): 12 chunks semánticos indexados en 1.28s, 7 flashcards en 21.93s, 27 afirmaciones auditadas con **Score de Anclaje de 1.0 (100% fidelidad, 0 alucinaciones)** y persistencia exitosa en OCI Object Storage.
+- **Benchmark de Estrés y No-Bloqueo del Event Loop:** Ejecución de suite de concurrencia:
+  - Throughput: 137.24 RPS en `/health` y 144.32 RPS en opciones.
+  - Asincronismo comprobado: latencia media de 9.27 ms en `/health` durante inferencia RAG pesada de 71.76 s (0% event loop starvation).
+  - Consumo de RAM: ~172 MB working set bajo estrés máximo en instancia `VM.Standard.E2.1.Micro`.
+- **Auto-Failover Activo:** Conmutación automática ante saturación del evaluador primario (Gemini -> Groq `llama-3.3-70b-versatile`) resolviendo en 2.1s sin error 500.
+- **Suite de Testing Ampliada:** Cobertura extendida a **70 pruebas unitarias y de integración al 100%** de éxito.
+
 ## [2.1.0] - 2026-10-06
 
 ### 🚀 Orquestación Multi-Proveedor, Resiliencia SSE y Auditoría Real (Fase 9)
