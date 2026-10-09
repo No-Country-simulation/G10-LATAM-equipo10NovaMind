@@ -193,6 +193,51 @@ class AgenteProductorContenido:
             for c in chunks
         ]
 
+        adaptado_dict = dict(datos.get("contenido_adaptado", {}))
+
+        # Garantizar introduccion_contextualizada
+        if not adaptado_dict.get("introduccion_contextualizada"):
+            for alt_key in ("introduccion", "intro", "contexto", "resumen", "descripcion"):
+                if adaptado_dict.get(alt_key):
+                    adaptado_dict["introduccion_contextualizada"] = str(adaptado_dict[alt_key])
+                    break
+            if not adaptado_dict.get("introduccion_contextualizada"):
+                tit = adaptado_dict.get("titulo") or "este contenido técnico"
+                adaptado_dict["introduccion_contextualizada"] = (
+                    f"Fundamentos técnicos y conceptuales para comprender y aplicar {tit}."
+                )
+
+        if parametros.formato_salida == "Paquete Educativo Completo (5 Estaciones)":
+            items = adaptado_dict.get("items", [])
+            if not adaptado_dict.get("resumen_ninja"):
+                for it in items:
+                    if isinstance(it, dict) and "analogia_central" in it:
+                        adaptado_dict["resumen_ninja"] = it
+                        break
+            if not adaptado_dict.get("resumen_ninja"):
+                conceptos_objs = [
+                    {"id": f"c{idx+1}", "texto": txt, "verificado": False}
+                    for idx, txt in enumerate(datos["metadatos"].get("conceptos_clave", [])[:4])
+                ]
+                adaptado_dict["resumen_ninja"] = {
+                    "titulo": adaptado_dict.get("titulo", "Síntesis Conceptual"),
+                    "analogia_central": adaptado_dict.get("introduccion_contextualizada", "Fundamentos técnicos extraídos de la fuente."),
+                    "conceptos_clave": conceptos_objs,
+                    "metricas_rapidas": {
+                        "riesgo": "Controlado",
+                        "despliegue": "< 3 minutos",
+                        "tipo_oci": "OCI Standard / Cloud",
+                        "costo": "$0.00 USD",
+                    },
+                }
+            if not adaptado_dict.get("flashcards") and items:
+                fcs = [it for it in items if isinstance(it, dict) and "frente" in it and "dorso" in it]
+                if fcs:
+                    for idx, fc in enumerate(fcs):
+                        if "id" not in fc:
+                            fc["id"] = f"fc-{idx+1}"
+                    adaptado_dict["flashcards"] = fcs
+
         try:
             paquete = PaqueteEducativo(
                 status="exito",
@@ -211,7 +256,7 @@ class AgenteProductorContenido:
                     ),
                 ),
                 contenido_adaptado=ContenidoAdaptado(
-                    **datos["contenido_adaptado"]
+                    **adaptado_dict
                 ),
                 fuentes_utilizadas=fuentes,
             )
@@ -303,6 +348,82 @@ class AgenteProductorContenido:
             else ""
         )
 
+        if parametros.formato_salida == "Paquete Educativo Completo (5 Estaciones)":
+            plantilla_formato_json = """\
+{
+  "metadatos": {
+    "tiempo_estimado_estudio_minutos": <entero>,
+    "conceptos_clave": [<hasta 5 strings con conceptos clave>],
+    "prerrequisitos": [<hasta 4 strings con prerrequisitos>]
+  },
+  "contenido_adaptado": {
+    "titulo": "<título atractivo y específico>",
+    "introduccion_contextualizada": "<1-2 frases que enganchen al perfil>",
+    "resumen_ninja": {
+      "titulo": "<título de la estación 1>",
+      "analogia_central": "<analogía pedagógica central>",
+      "conceptos_clave": [
+        {"id": "c1", "texto": "<concepto 1>", "verificado": false},
+        {"id": "c2", "texto": "<concepto 2>", "verificado": false},
+        {"id": "c3", "texto": "<concepto 3>", "verificado": false}
+      ],
+      "metricas_rapidas": {
+        "riesgo": "<bajo|medio|alto>",
+        "despliegue": "<tiempo estimado>",
+        "tipo_oci": "<servicio cloud o arquitectura>",
+        "costo": "<costo estimado o free>"
+      }
+    },
+    "flashcards": [
+      {"id": "fc1", "frente": "<pregunta>", "dorso": "<respuesta>", "pista_didactica": "<pista>"},
+      {"id": "fc2", "frente": "<pregunta>", "dorso": "<respuesta>", "pista_didactica": "<pista>"},
+      {"id": "fc3", "frente": "<pregunta>", "dorso": "<respuesta>", "pista_didactica": "<pista>"}
+    ],
+    "tutorial": [
+      {"id": "t1", "paso": 1, "titulo": "<paso 1>", "descripcion": "<detalle>", "cli_command": "<comando bash>", "completado": false, "verificacion": "<verificación>"},
+      {"id": "t2", "paso": 2, "titulo": "<paso 2>", "descripcion": "<detalle>", "cli_command": "<comando bash>", "completado": false, "verificacion": "<verificación>"}
+    ],
+    "director_cut": [
+      {
+        "id": "d1",
+        "escena": 1,
+        "tiempo": "0:00 - 0:20",
+        "titulo": "<título escena>",
+        "guion_locutor": "<locución 25-40 palabras>",
+        "estimacion_palabras": 30,
+        "storyboard_visual": "<descripción visual>",
+        "consejo_pedagogico": "<consejo>",
+        "visual": {"tipo": "ppt_concepto", "titulo": "<título visual>", "puntos_clave": ["<punto 1>", "<punto 2>"]},
+        "fuentes": [{"chunk_id": "<id>", "texto_fuente": "<cita textual del fragmento>"}]
+      }
+    ],
+    "quiz": [
+      {
+        "id": "q1",
+        "pregunta": "<pregunta>",
+        "opciones": ["<opción A>", "<opción B>", "<opción C>", "<opción D>"],
+        "respuesta_correcta": 0,
+        "justificacion_rag": "<justificación>",
+        "cita_fuente": "<cita>"
+      }
+    ]
+  }
+}"""
+        else:
+            plantilla_formato_json = """\
+{
+  "metadatos": {
+    "tiempo_estimado_estudio_minutos": <entero>,
+    "conceptos_clave": [<hasta 5 strings>],
+    "prerrequisitos": [<hasta 4 strings>]
+  },
+  "contenido_adaptado": {
+    "titulo": "<título atractivo y específico>",
+    "introduccion_contextualizada": "<1-2 frases que enganchen al perfil indicado>",
+    "items": [<según las instrucciones de formato de arriba>]
+  }
+}"""
+
         return f"""
 DOCUMENTACIÓN TÉCNICA FUENTE
 (ÚNICA BASE PERMITIDA PARA LAS AFIRMACIONES TÉCNICAS):
@@ -353,16 +474,5 @@ estar respaldada por los fragmentos fuente recibidos.
 FORMATO DE RESPUESTA
 (JSON exacto, sin texto fuera del JSON):
 
-{{
-  "metadatos": {{
-    "tiempo_estimado_estudio_minutos": <entero>,
-    "conceptos_clave": [<hasta 5 strings>],
-    "prerrequisitos": [<hasta 4 strings con conocimientos previos necesarios>]
-  }},
-  "contenido_adaptado": {{
-    "titulo": "<título atractivo y específico>",
-    "introduccion_contextualizada": "<1-2 frases que enganchen al perfil indicado>",
-    "items": [<según las instrucciones de formato de arriba>]
-  }}
-}}
+{plantilla_formato_json}
 """.strip()

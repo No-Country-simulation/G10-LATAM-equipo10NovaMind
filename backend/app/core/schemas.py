@@ -281,14 +281,40 @@ class MetadatosSalida(BaseModel):
 
 
 class ContenidoAdaptado(BaseModel):
-    titulo: str = Field(..., min_length=1)
-    introduccion_contextualizada: str = Field(..., min_length=1)
+    titulo: str = Field(default="Adaptación Pedagógica Especializada", min_length=1)
+    introduccion_contextualizada: str = Field(
+        default="Fundamentos técnicos y pedagógicos contextualizados a partir de la fuente.",
+        min_length=1,
+    )
     items: List[Dict[str, Any]] = Field(default_factory=list)
-    resumen_ninja: Optional[Dict[str, Any]] = None
+    resumen_ninja: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
     flashcards: Optional[List[Dict[str, Any]]] = None
-    tutorial: Optional[List[Dict[str, Any]]] = None
-    director_cut: Optional[List[Dict[str, Any]]] = None
-    quiz: Optional[List[Dict[str, Any]]] = None
+    tutorial: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
+    director_cut: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
+    quiz: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalizar_campos_contenido(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+
+        # Normalizar título si falta o está vacío
+        if not data.get("titulo"):
+            data["titulo"] = data.get("title") or data.get("nombre") or "Adaptación Pedagógica Especializada"
+
+        # Normalizar introducción contextualizada si el LLM usó otro nombre o la omitió
+        if not data.get("introduccion_contextualizada"):
+            for alt_key in ("introduccion", "intro", "contexto", "resumen", "descripcion"):
+                if data.get(alt_key):
+                    data["introduccion_contextualizada"] = str(data[alt_key])
+                    break
+            if not data.get("introduccion_contextualizada"):
+                data["introduccion_contextualizada"] = (
+                    f"Fundamentos técnicos y pedagógicos contextualizados para dominar {data['titulo']}."
+                )
+
+        return data
 
 
 class FuenteUtilizada(BaseModel):

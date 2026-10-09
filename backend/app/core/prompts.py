@@ -46,7 +46,107 @@ SALIDA ESPERADA:
   }
 }"""
 
+EJEMPLO_PAQUETE_5_ESTACIONES = """\
+EJEMPLO DE TRANSFORMACIÓN (demuestra el formato de 5 estaciones; no copies sus entidades ni afirmaciones):
+
+FUENTE:
+"El concepto A permite realizar B. El paso C ocurre después de B. La clave D es un comando para verificar el estado de B."
+
+PERFIL:
+Principiante (solo ilustrativo: adapta al perfil de tu tarea)
+
+FORMATO:
+Paquete Educativo Completo (5 Estaciones)
+
+SALIDA ESPERADA:
+{
+  "metadatos": {
+    "tiempo_estimado_estudio_minutos": 8,
+    "conceptos_clave": ["Concepto A", "Operación B", "Paso C"],
+    "prerrequisitos": ["Fundamentos básicos"]
+  },
+  "contenido_adaptado": {
+    "titulo": "Dominando el Concepto A y la Operación B",
+    "introduccion_contextualizada": "Aprende cómo el concepto A permite realizar la operación B sin fricción.",
+    "resumen_ninja": {
+      "titulo": "Fundamentos y Secuencia Operativa",
+      "analogia_central": "El concepto A es como el interruptor principal que habilita la operación B en el flujo de trabajo.",
+      "conceptos_clave": [
+        {"id": "c1", "texto": "El concepto A inicia y habilita la operación B.", "verificado": false},
+        {"id": "c2", "texto": "El paso C se ejecuta estrictamente después de B.", "verificado": false}
+      ],
+      "metricas_rapidas": {
+        "riesgo": "Bajo (Secuencia lineal)",
+        "despliegue": "< 2 minutos",
+        "tipo_oci": "OCI Always Free / Standard",
+        "costo": "$0.00 USD"
+      }
+    },
+    "flashcards": [
+      {
+        "id": "fc1",
+        "frente": "¿Qué habilita el concepto A?",
+        "dorso": "Permite realizar la operación B según la documentación técnica.",
+        "pista_didactica": "A es el habilitador directo de B."
+      },
+      {
+        "id": "fc2",
+        "frente": "¿Cuándo se ejecuta el paso C?",
+        "dorso": "Ocurre después de la operación B.",
+        "pista_didactica": "Secuencia cronológica A -> B -> C."
+      }
+    ],
+    "tutorial": [
+      {
+        "id": "t1",
+        "paso": 1,
+        "titulo": "Ejecutar la operación B",
+        "descripcion": "Inicia la operación B respaldada por el concepto A.",
+        "cli_command": "echo 'iniciando operacion B'",
+        "completado": false,
+        "verificacion": "Verifica que el proceso B retorne estado 0."
+      }
+    ],
+    "director_cut": [
+      {
+        "id": "d1",
+        "escena": 1,
+        "tiempo": "0:00 - 0:20",
+        "titulo": "Apertura e Intuición de A",
+        "guion_locutor": "Hoy descubriremos cómo el concepto A desencadena la operación B en nuestros entornos técnicos.",
+        "estimacion_palabras": 22,
+        "storyboard_visual": "Plano general mostrando el diagrama conceptual A hacia B.",
+        "consejo_pedagogico": "Mantén la locución fluida y enfocada.",
+        "visual": {
+          "tipo": "ppt_concepto",
+          "titulo": "Concepto A y Operación B",
+          "puntos_clave": ["Habilitación de B", "Secuencia C"]
+        },
+        "fuentes": [
+          {"chunk_id": "c_001", "texto_fuente": "El concepto A permite realizar B."}
+        ]
+      }
+    ],
+    "quiz": [
+      {
+        "id": "q1",
+        "pregunta": "¿Qué relación técnica describe la fuente entre A y B?",
+        "opciones": [
+          "A permite realizar B.",
+          "A desactiva la operación B.",
+          "B ocurre antes de A.",
+          "No existe relación entre A y B."
+        ],
+        "respuesta_correcta": 0,
+        "justificacion_rag": "La fuente indica textualmente que A permite realizar B.",
+        "cita_fuente": "El concepto A permite realizar B."
+      }
+    ]
+  }
+}"""
+
 EJEMPLOS_FEW_SHOT_PRODUCTOR: Dict[str, str] = {
+    "Paquete Educativo Completo (5 Estaciones)": EJEMPLO_PAQUETE_5_ESTACIONES,
     "Flashcards": EJEMPLO_FEW_SHOT_PRODUCTOR,
     'Quiz Interactivo con Justificaciones': 'EJEMPLO DE TRANSFORMACIÓN (solo demuestra el formato; no copies sus entidades ni agregues esos hechos):\n\nFUENTE:\n"El concepto A permite realizar B. El paso C ocurre después de B."\n\nPERFIL:\nPrincipiante (solo ilustrativo: adapta al perfil de tu tarea)\n\nFORMATO:\nQuiz Interactivo con Justificaciones\n\nSALIDA ESPERADA:\n{\n  "metadatos": {\n    "tiempo_estimado_estudio_minutos": 5,\n    "conceptos_clave": [\n      "A",\n      "B"\n    ],\n    "prerrequisitos": []\n  },\n  "contenido_adaptado": {\n    "titulo": "Comprender el concepto A",\n    "introduccion_contextualizada": "Verás cómo se relacionan A, B y C.",\n    "items": [\n      {\n        "pregunta": "¿Qué permite realizar el concepto A?",\n        "opciones": [\n          "Permite realizar B.",\n          "Permite realizar C.",\n          "No permite realizar nada.",\n          "Permite eliminar B."\n        ],\n        "respuesta_correcta": "Permite realizar B.",\n        "justificacion": "La fuente indica que A permite realizar B."\n      },\n      {\n        "pregunta": "¿Cuándo ocurre el paso C?",\n        "opciones": [\n          "Antes de B.",\n          "Después de B.",\n          "Antes de A.",\n          "Nunca."\n        ],\n        "respuesta_correcta": "Después de B.",\n        "justificacion": "La fuente indica que C ocurre después de B."\n      }\n    ]\n  }\n}\n\n(El ejemplo muestra pocos items por brevedad: tu respuesta debe cumplir el rango de items indicado en las instrucciones de formato.)',
     'Guía Práctica Paso a Paso (Tutorial)': 'EJEMPLO DE TRANSFORMACIÓN (solo demuestra el formato; no copies sus entidades ni agregues esos hechos):\n\nFUENTE:\n"El concepto A permite realizar B. El paso C ocurre después de B."\n\nPERFIL:\nPrincipiante (solo ilustrativo: adapta al perfil de tu tarea)\n\nFORMATO:\nGuía Práctica Paso a Paso (Tutorial)\n\nSALIDA ESPERADA:\n{\n  "metadatos": {\n    "tiempo_estimado_estudio_minutos": 5,\n    "conceptos_clave": [\n      "A",\n      "B"\n    ],\n    "prerrequisitos": []\n  },\n  "contenido_adaptado": {\n    "titulo": "Comprender el concepto A",\n    "introduccion_contextualizada": "Verás cómo se relacionan A, B y C.",\n    "items": [\n      {\n        "numero_paso": 1,\n        "titulo": "Identifica el concepto A",\n        "instruccion": "Reconoce que A permite realizar B, según la fuente."\n      },\n      {\n        "numero_paso": 2,\n        "titulo": "Ubica el paso C",\n        "instruccion": "Recuerda que C ocurre después de B."\n      }\n    ]\n  }\n}\n\n(El ejemplo muestra pocos items por brevedad: tu respuesta debe cumplir el rango de items indicado en las instrucciones de formato.)',

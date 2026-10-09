@@ -268,7 +268,13 @@ export const Step2KnowledgeQuest = ({
 
             {activeStationIndex === 2 && (
               <Station3TutorialQuest
-                steps={contentPackage.contenido_adaptado.tutorial}
+                steps={
+                  Array.isArray(contentPackage.contenido_adaptado.tutorial)
+                    ? contentPackage.contenido_adaptado.tutorial
+                    : ((contentPackage.contenido_adaptado.tutorial as any)?.pasos ||
+                       (contentPackage.contenido_adaptado.tutorial as any)?.steps ||
+                       [])
+                }
                 isCompleted={!!completedStations[2]}
                 onCompleteStation={(xp) => onCompleteStation(2, xp)}
                 onOpenBuilderBadge={onOpenBuilderBadge}
@@ -277,7 +283,13 @@ export const Step2KnowledgeQuest = ({
 
             {activeStationIndex === 3 && (
               <Station4DirectorCut
-                scenes={contentPackage.contenido_adaptado.director_cut}
+                scenes={
+                  Array.isArray(contentPackage.contenido_adaptado.director_cut)
+                    ? contentPackage.contenido_adaptado.director_cut
+                    : ((contentPackage.contenido_adaptado.director_cut as any)?.escenas ||
+                       (contentPackage.contenido_adaptado.director_cut as any)?.scenes ||
+                       [])
+                }
                 isCompleted={!!completedStations[3]}
                 onCompleteStation={(xp) => onCompleteStation(3, xp)}
                 onOpenDirectorBadge={onOpenDirectorBadge}
@@ -286,7 +298,13 @@ export const Step2KnowledgeQuest = ({
 
             {activeStationIndex === 4 && (
               <Station5FinalTrial
-                questions={contentPackage.contenido_adaptado.quiz}
+                questions={
+                  Array.isArray(contentPackage.contenido_adaptado.quiz)
+                    ? contentPackage.contenido_adaptado.quiz
+                    : ((contentPackage.contenido_adaptado.quiz as any)?.preguntas ||
+                       (contentPackage.contenido_adaptado.quiz as any)?.questions ||
+                       [])
+                }
                 completedStationsCount={completedStationsCount}
                 isUnlocked={isFinalTrialUnlocked || isGenerating}
                 cognitiveShields={cognitiveShields}
