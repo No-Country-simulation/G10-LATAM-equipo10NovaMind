@@ -127,7 +127,6 @@ export default function App() {
     }
   };
 
-  // Pipeline RAG completo con entrega progresiva
   const handleStartPipeline = async (
     title: string,
     content: string,
@@ -141,11 +140,10 @@ export default function App() {
   ) => {
     setIsProcessing(true);
     setIsGenerating(true);
+    setProcessingStage("Iniciando orquestación con agentes de NovaMind...");
     setGeneratingMessage("Conectando con el orquestador multi-agente de NovaMind...");
-    setUnlockedStations([0]); // La estación 1 inicia su generación
-    setActiveStationIndex(0);
     setCompletedStations({});
-    setCurrentStep(2); // Pasar inmediatamente a la Estación de Conocimiento para ver la generación en vivo
+    setActiveStationIndex(0);
 
     try {
       const adaptedPkg = await solicitarAdaptacion(
@@ -160,34 +158,22 @@ export default function App() {
           pdfBase64,
           rawFile,
         },
-        (stage, _partialPkg, unlockedIdx) => {
+        (stage) => {
           setProcessingStage(stage);
           setGeneratingMessage(stage);
-          if (typeof unlockedIdx === 'number') {
-            setUnlockedStations((prev) => {
-              const set = new Set(prev);
-              for (let i = 0; i <= unlockedIdx; i++) {
-                set.add(i);
-              }
-              return Array.from(set).sort((a, b) => a - b);
-            });
-          }
         }
       );
 
-      // Finalización exitosa: desbloqueo total y carga del paquete adaptado
+      // Finalización exitosa: cargamos el nuevo paquete y abrimos la Ruta Cognitiva
       setCurrentPackage(adaptedPkg);
       setUnlockedStations([0, 1, 2, 3, 4]);
-      setIsGenerating(false);
-      setIsProcessing(false);
+      setCurrentStep(2);
       triggerSmallConfetti();
     } catch (err: unknown) {
       console.error("Error en el pipeline de NovaMind:", err);
-      setIsGenerating(false);
-      setIsProcessing(false);
       const errMsg = err instanceof Error ? err.message : String(err);
       alert(`⚠️ ${errMsg}`);
-      setCurrentStep(1); // Regresar al paso 1 en caso de fallo para que el usuario pueda reintentar
+      setCurrentStep(1);
     } finally {
       setIsGenerating(false);
       setIsProcessing(false);

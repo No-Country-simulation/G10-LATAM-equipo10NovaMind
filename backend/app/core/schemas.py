@@ -164,7 +164,7 @@ _MAPA_NIVEL = _construir_mapa(
     {
         "Didáctico": ["didactico", "basico"],
         "Intermedio": ["estandar", "medio"],
-        "Profundo": ["avanzado", "detallado", "tecnico"],
+        "Profundo": ["avanzado", "detallado", "tecnico", "tecnico profundo", "profundo"],
     }
 )
 

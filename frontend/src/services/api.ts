@@ -41,10 +41,6 @@ export async function solicitarAdaptacion(
 ): Promise<AdaptedContentPackage> {
   const { docTitle, docContent, profile, format, niche, detail, selectedScenarioId, rawFile } = params;
 
-  const isCustomDocument = Boolean(
-    rawFile || (!selectedScenarioId && docContent && docTitle !== 'Guía de OCI Swap y Optimización en Free Tier')
-  );
-
   // 1. Intentar comunicación con el Backend FastAPI vía SSE Streaming
   try {
     onProgress?.('Iniciando conexión con el orquestador de NovaMind...', undefined, 0);
@@ -133,13 +129,14 @@ export async function solicitarAdaptacion(
     }
   } catch (err: unknown) {
     console.error('Error al conectar con backend FastAPI:', err);
-    if (isCustomDocument) {
-      // Para un documento real subido por el usuario, NUNCA engañar con un mock de OCI Swap.
-      const mensaje = err instanceof Error ? err.message : String(err);
+    // Para cualquier documento real (Kafka, ENISA, CISO o subido por el usuario), nunca enmascarar errores con el demo de Swap
+    const mensaje = err instanceof Error ? err.message : String(err);
+    if (selectedScenarioId !== 'oci-swap-guia') {
       throw new Error(
-        `No fue posible procesar tu documento "${docTitle || 'subido'}" con el orquestador real: ${mensaje}. Por favor verifica que el backend esté activo y que el documento sea legible.`
+        `Error al procesar "${docTitle || 'documento'}" con el orquestador real: ${mensaje}`
       );
     }
+    console.warn('Backend no disponible para OCI Swap. Usando fallback offline de alta fidelidad.');
   }
 
   // 2. Modo Demo / Fallback Offline de Alta Fidelidad para escenarios predefinidos
