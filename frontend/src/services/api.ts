@@ -91,22 +91,22 @@ export async function solicitarAdaptacion(
 
           if (trimmed.startsWith('data:')) {
             const jsonStr = trimmed.slice(5).trim();
+            let evento: any;
             try {
-              const evento = JSON.parse(jsonStr);
-              if (evento.tipo === 'inicio') {
-                onProgress?.(evento.mensaje || 'Solicitud recibida. Iniciando orquestación...', undefined, 0);
-              } else if (evento.tipo === 'progreso') {
-                const stationIdx = typeof evento.estacion_desbloqueada === 'number' ? evento.estacion_desbloqueada : 0;
-                onProgress?.(evento.mensaje || 'Procesando estación...', undefined, stationIdx);
-              } else if (evento.tipo === 'resultado' && evento.datos) {
-                resultadoPaquete = evento.datos as AdaptedContentPackage;
-              } else if (evento.tipo === 'error') {
-                throw new Error(evento.detalle || 'Error durante la orquestación en el backend');
-              }
-            } catch (pErr) {
-              if (pErr instanceof Error && pErr.message.includes('Error durante la orquestación')) {
-                throw pErr;
-              }
+              evento = JSON.parse(jsonStr);
+            } catch {
+              continue;
+            }
+
+            if (evento.tipo === 'inicio') {
+              onProgress?.(evento.mensaje || 'Solicitud recibida. Iniciando orquestación...', undefined, 0);
+            } else if (evento.tipo === 'progreso') {
+              const stationIdx = typeof evento.estacion_desbloqueada === 'number' ? evento.estacion_desbloqueada : 0;
+              onProgress?.(evento.mensaje || 'Procesando estación...', undefined, stationIdx);
+            } else if (evento.tipo === 'resultado' && evento.datos) {
+              resultadoPaquete = evento.datos as AdaptedContentPackage;
+            } else if (evento.tipo === 'error') {
+              throw new Error(evento.detalle || 'Error durante la orquestación en el backend');
             }
           }
         }
@@ -116,6 +116,8 @@ export async function solicitarAdaptacion(
         onProgress?.('¡Adaptación pedagógica completa!', undefined, 4);
         return resultadoPaquete;
       }
+
+      throw new Error('El flujo de streaming finalizó sin entregar el paquete adaptado.');
     } else if (!response.ok) {
       const errText = await response.text();
       let errorMsg = `Error HTTP ${response.status}`;
@@ -129,20 +131,23 @@ export async function solicitarAdaptacion(
     }
   } catch (err: unknown) {
     console.error('Error al conectar con backend FastAPI:', err);
-    // Para cualquier documento real (Kafka, ENISA, CISO o subido por el usuario), nunca enmascarar errores con el demo de Swap
     const mensaje = err instanceof Error ? err.message : String(err);
-    if (selectedScenarioId !== 'oci-swap-guia') {
+    // Para cualquier documento real (Kafka, ENISA, Swap, etc.), nunca sustituir silenciosamente con el mock
+    if (selectedScenarioId !== 'demo-offline-swap') {
       throw new Error(
         `Error al procesar "${docTitle || 'documento'}" con el orquestador real: ${mensaje}`
       );
     }
-    console.warn('Backend no disponible para OCI Swap. Usando fallback offline de alta fidelidad.');
+    console.warn('Backend no disponible para demo offline explícita.');
   }
 
-  // 2. Modo Demo / Fallback Offline de Alta Fidelidad para escenarios predefinidos
+  // 2. Modo Demo Offline únicamente si se solicitó explícitamente demo-offline-swap
+  if (selectedScenarioId !== 'demo-offline-swap') {
+    throw new Error('No se pudo completar la adaptación con el backend.');
+  }
+
   const matchedScenario = SCENARIOS.find((s) => s.id === selectedScenarioId) || SCENARIOS[0];
 
-  // Simulación de entrega progresiva visual para la demo (de la más rápida a la más lenta)
   onProgress?.('⚡ [1/5] Generando Estación 1: Resumen Ninja (TL;DR)...', undefined, 0);
   await new Promise((r) => setTimeout(r, 600));
 
@@ -161,7 +166,6 @@ export async function solicitarAdaptacion(
   onProgress?.('🛡️ [6/6] Auditoría de Anclaje RAG & Persistencia OCI...', undefined, 4);
   await new Promise((r) => setTimeout(r, 400));
 
-  // Clonamos el paquete para asegurar personalización dinámica
   const demoPackage: AdaptedContentPackage = JSON.parse(JSON.stringify(matchedScenario.data));
   demoPackage.metadatos.perfil_aplicado = profile;
   demoPackage.metadatos.formato_generado = format;
