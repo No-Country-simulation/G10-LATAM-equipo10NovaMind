@@ -45,7 +45,7 @@ if str(ROOT_DIR / "backend") not in sys.path:
 
 def print_banner():
     print("=" * 68)
-    print("      NUEVAMENTE — RESTABLECIMIENTO A ESTADO CERO (ZERO-STATE)")
+    print("       NOVAMIND — RESTABLECIMIENTO A ESTADO CERO (ZERO-STATE)")
     print("=" * 68)
     print(f"Directorio Raíz: {ROOT_DIR}\n")
 
@@ -270,7 +270,7 @@ def main():
     print("=" * 68)
     print("\nPara iniciar una prueba limpia desde cero ejecuta:")
     print("  -> iniciar_local.bat")
-    print("\nInterfaz Web disponible en: http://localhost:8501\n")
+    print("\nInterfaz Web disponible en: http://localhost:5173\n")
 
 
 if __name__ == "__main__":

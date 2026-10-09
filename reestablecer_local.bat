@@ -1,10 +1,10 @@
 @echo off
 setlocal
-title NuevaMente - Restablecer Estado Cero (Zero-State)
+title NovaMind - Restablecer Estado Cero (Zero-State)
 
 echo =======================================================
 echo    Restablecimiento de Entorno a Estado Cero
-echo                     NuevaMente
+echo                     NovaMind
 echo =======================================================
 echo.
 
