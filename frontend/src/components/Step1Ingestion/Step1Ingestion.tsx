@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight } from 'lucide-react';
+import { UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock } from 'lucide-react';
 import type { RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset } from '../../types/types';
 import { REAL_DOCUMENTS_CATALOG } from '../../data/mockScenarios';
 import styles from './Step1Ingestion.module.css';
@@ -119,6 +119,10 @@ export const Step1Ingestion = ({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (!docContent.trim() && !rawFile) {
+      alert('Por favor selecciona un documento de la biblioteca o sube un archivo antes de iniciar el pipeline.');
+      return;
+    }
     onStartPipeline(
       docTitle,
       docContent,
@@ -271,24 +275,41 @@ export const Step1Ingestion = ({
             </div>
           </div>
 
-          {/* Document Content Textarea */}
+          {/* Previsualización del Documento Técnico (Solo Lectura) */}
           <div className={styles.fieldGroup}>
-            <label className={`${styles.fieldLabel} ${styles.fieldLabelRow}`}>
-              <span>Cuerpo de la Documentación Técnica</span>
-              {pdfBase64 && (
-                <span className={styles.pdfNotice}>
-                  ✓ PDF codificado en Base64 listo para Gemini Multimodal
+            <div className={styles.fieldLabelRow}>
+              <span className={styles.fieldLabel}>Previsualización del Documento Técnico</span>
+              <div className={styles.previewBadgesRow}>
+                <span className={styles.readOnlyBadge}>
+                  <Eye size={12} />
+                  <span>Solo Lectura · Previsualización</span>
                 </span>
-              )}
-            </label>
-            <textarea
-              rows={4}
-              value={docContent}
-              onChange={(e) => setDocContent(e.target.value)}
-              placeholder="Pega aquí el contenido técnico para indexar en la base vectorial..."
-              className={styles.textArea}
-              required
-            />
+                {docContent && (
+                  <span className={styles.charCountBadge}>
+                    {docContent.length.toLocaleString()} caracteres
+                  </span>
+                )}
+                {pdfBase64 && (
+                  <span className={styles.pdfNotice}>
+                    ✓ PDF listo para Gemini Multimodal
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.previewBoxWrapper}>
+              <textarea
+                rows={5}
+                value={docContent}
+                readOnly
+                placeholder="Selecciona un documento oficial de la biblioteca superior o sube un archivo (PDF, MD o TXT) para previsualizar su contenido aquí..."
+                className={styles.previewTextArea}
+              />
+              <div className={styles.previewFooterNotice}>
+                <Lock size={12} />
+                <span>Documento protegido contra edición: el contenido fuente se procesará íntegro sin modificaciones manuales.</span>
+              </div>
+            </div>
           </div>
 
           {/* 4 Parámetros Pedagógicos */}
