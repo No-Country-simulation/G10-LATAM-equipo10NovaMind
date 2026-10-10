@@ -1,0 +1,417 @@
+.playerContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #07090e;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 30px rgba(139, 92, 246, 0.15);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.playerViewport {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 38%, #0f172a 0%, #080c16 55%, #04060a 100%);
+}
+
+/* Watermark & Top Bar */
+.topOverlay {
+  position: absolute;
+  top: 1rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.brandPill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: rgba(13, 17, 26, 0.75);
+  border: 1px solid rgba(217, 70, 239, 0.4);
+  backdrop-filter: blur(8px);
+  font-size: 0.6875rem;
+  font-family: var(--font-code);
+  color: #f0abfc;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sceneBadgePill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: rgba(13, 17, 26, 0.75);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  backdrop-filter: blur(8px);
+  font-size: 0.6875rem;
+  font-family: var(--font-code);
+  color: var(--color-cyan-300);
+}
+
+/* Scene Headline & Badges */
+.sceneHeaderOverlay {
+  position: absolute;
+  top: 3.75rem;
+  left: 1.5rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 70%;
+  pointer-events: none;
+  animation: slideInDown 0.4s ease-out;
+}
+
+.sceneTitle {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+@media (min-width: 768px) {
+  .sceneTitle {
+    font-size: 1.5rem;
+  }
+}
+
+.sceneSubtitle {
+  font-size: 0.75rem;
+  font-family: var(--font-code);
+  color: #cbd5e1;
+}
+
+/* Subtitles Container (Bottom Glassmorphism) */
+.subtitlesContainer {
+  position: absolute;
+  bottom: 4.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  background: rgba(7, 9, 14, 0.85);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 15;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  animation: fadeInSubtitle 0.3s ease;
+}
+
+.subtitleSpeaker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--color-cyan-400);
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.subtitleText {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #f8fafc;
+  font-weight: 500;
+}
+
+@media (min-width: 640px) {
+  .subtitleText {
+    font-size: 0.9375rem;
+  }
+}
+
+/* Bottom Controls Bar */
+.controlsBar {
+  background: rgba(13, 17, 26, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 20;
+}
+
+/* Timeline & Scrubber */
+.timelineTrack {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.timelineProgress {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6 0%, #06b6d4 100%);
+  border-radius: var(--radius-full);
+  position: relative;
+}
+
+.sceneNotch {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Controls Row */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.leftControls, .centerControls, .rightControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.controlBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.controlBtn:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.controlBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.playPauseBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.playPauseBtn:hover {
+  transform: scale(1.08);
+}
+
+.timeDisplay {
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  margin-left: 0.5rem;
+}
+
+.speedSelector {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-family: var(--font-code);
+  font-size: 0.6875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  outline: none;
+}
+
+.speedSelector:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.activeToggleBtn {
+  color: var(--color-cyan-400);
+  background: rgba(6, 182, 212, 0.15);
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInSubtitle {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Concept Explanation Overlay (Glassmorphism HUD Card) */
+.conceptExplanationOverlay {
+  position: absolute;
+  bottom: 1.125rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  z-index: 15;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.conceptCard {
+  width: 100%;
+  max-width: 820px;
+  background: rgba(8, 12, 22, 0.88);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: var(--radius-lg);
+  padding: 0.875rem 1.25rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 25px rgba(6, 182, 212, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  pointer-events: auto;
+}
+
+.conceptHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.conceptBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.conceptBadgeIcon {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.8));
+}
+
+.conceptMetricPill {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  padding: 0.2rem 0.625rem;
+  border-radius: var(--radius-full);
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.metricVal {
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--color-cyan-300);
+}
+
+.metricLbl {
+  font-size: 0.625rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.conceptDefinition {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #f1f5f9;
+  font-weight: 400;
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .conceptDefinition {
+    font-size: 0.9375rem;
+  }
+}
+
+.conceptTagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.conceptTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-code);
+  font-size: 0.6875rem;
+  color: #cbd5e1;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+

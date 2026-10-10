@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Clapperboard, CheckCircle2, ChevronLeft, ChevronRight, Eye, Video, Award } from 'lucide-react';
-import type { DirectorScene } from '../../../types/types';
+import { Clapperboard, CheckCircle2, ChevronLeft, ChevronRight, Eye, Video, Award, Sparkles } from 'lucide-react';
+import type { DirectorScene, AdaptedContentPackage } from '../../../types/types';
 import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
+import { VideoStudioModal } from '../../VideoStudio/VideoStudioModal';
 import styles from './Station4DirectorCut.module.css';
 
 interface Station4Props {
@@ -9,17 +10,73 @@ interface Station4Props {
   isCompleted: boolean;
   onCompleteStation: (xp: number) => void;
   onOpenDirectorBadge: () => void;
+  packageData?: AdaptedContentPackage;
 }
+
+const DEFAULT_PACKAGE_DATA: AdaptedContentPackage = {
+  status: 'exito',
+  metadatos: {
+    perfil_aplicado: 'Principiante',
+    formato_generado: 'Guion de Clase / Video',
+    tiempo_estimado_estudio_minutos: 5,
+    conceptos_clave: ['VCN', 'Subredes', 'Seguridad OCI'],
+    fecha_generacion: new Date().toISOString(),
+    modelo_llm: 'Gemini Flash + RAG Grounding',
+  },
+  contenido_adaptado: {
+    titulo: 'Microclase Didáctica OCI',
+    introduccion_contextualizada:
+      'Transformación didáctica del conocimiento técnico con NuevaMente Video Studio.',
+    resumen_ninja: {
+      titulo: 'Resumen Rápido',
+      analogia_central: 'Arquitectura simplificada paso a paso.',
+      conceptos_clave: [
+        { id: 'c1', texto: 'Aislamiento de red', verificado: true },
+        { id: 'c2', texto: 'Seguridad stateful', verificado: true },
+      ],
+      metricas_rapidas: {
+        riesgo: 'Bajo',
+        despliegue: 'Inmediato',
+        tipo_oci: 'Core Networking',
+        costo: '$0.00',
+      },
+    },
+    flashcards: [],
+    tutorial: [],
+    director_cut: [],
+    quiz: [],
+  },
+  evaluacion_calidad: {
+    anclaje_fuente_score: 0.98,
+    claridad_pedagogica: 'Alta',
+    observaciones: 'Contenido adaptado con alta fidelidad a la fuente.',
+    mitigacion_alucinaciones: 'Verificación RAG estricta',
+    chunks_procesados: 4,
+    similitud_coseno_promedio: 0.95,
+  },
+  almacenamiento_oci: {
+    bucket: 'nuevamente-edtech-artifacts',
+    objeto_id: 'microclase-video-studio.json',
+    status_upload: 'completado',
+    region: 'sa-saopaulo-1',
+    etag: 'etag-verified-oci',
+    tamano_bytes: 4096,
+    url_always_free:
+      'https://objectstorage.sa-saopaulo-1.oraclecloud.com/n/ax9k3z/b/nuevamente-edtech-artifacts/o/microclase-video-studio.json',
+  },
+};
 
 export const Station4DirectorCut = ({
   scenes = [],
   isCompleted,
   onCompleteStation,
   onOpenDirectorBadge,
+  packageData,
 }: Station4Props) => {
   const [prevScenes, setPrevScenes] = useState(scenes);
   const [currentSceneIndex, setCurrentSceneIndex] = useState<number>(0);
   const [viewedScenes, setViewedScenes] = useState<Record<number, boolean>>({ 0: true });
+  const [isVideoStudioOpen, setIsVideoStudioOpen] = useState<boolean>(false);
 
   // Sincronización limpia en render sin useEffect
   if (scenes !== prevScenes) {
@@ -98,6 +155,16 @@ export const Station4DirectorCut = ({
         </div>
 
         <div className={styles.headerActions}>
+          <button
+            type="button"
+            onClick={() => setIsVideoStudioOpen(true)}
+            className={styles.generateVideoBtn}
+            title="Abrir NuevaMente Video Studio para generar microclase audiovisual interactiva"
+          >
+            <Sparkles size={16} color="#f0abfc" />
+            <span>Generar microclase audiovisual</span>
+          </button>
+
           {isPassed && (
             <button
               type="button"
@@ -219,6 +286,14 @@ export const Station4DirectorCut = ({
           </div>
         </div>
       </div>
+
+      {/* Modal NuevaMente Video Studio */}
+      <VideoStudioModal
+        isOpen={isVideoStudioOpen}
+        onClose={() => setIsVideoStudioOpen(false)}
+        directorScenes={safeScenes}
+        packageData={packageData || DEFAULT_PACKAGE_DATA}
+      />
     </div>
   );
 };

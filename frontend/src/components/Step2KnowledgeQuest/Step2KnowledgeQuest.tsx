@@ -209,6 +209,7 @@ export const Step2KnowledgeQuest = ({
             isCompleted={!!completedStations[3]}
             onCompleteStation={(xp) => onCompleteStation(3, xp)}
             onOpenDirectorBadge={onOpenDirectorBadge}
+            packageData={contentPackage}
           />
         )}
 
