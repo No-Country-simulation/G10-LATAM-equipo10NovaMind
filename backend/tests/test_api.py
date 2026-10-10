@@ -100,10 +100,13 @@ def test_adaptar_valida_esquema_con_texto_directo():
         ),
     )
 
-    with patch("app.main.get_orquestador") as mock_get_orq:
+    with patch("app.main.get_orquestador") as mock_get_orq, patch("app.main.get_cadena_colaborativa") as mock_get_cadena:
         mock_orq = MagicMock()
         mock_orq.ejecutar.return_value = respuesta_mock
         mock_get_orq.return_value = mock_orq
+        mock_cadena = MagicMock()
+        mock_cadena.ejecutar.return_value = respuesta_mock
+        mock_get_cadena.return_value = mock_cadena
 
         response = client.post(
             "/api/v1/adaptar",
@@ -114,6 +117,7 @@ def test_adaptar_valida_esquema_con_texto_directo():
                 "formato_salida": "Flashcards",
                 "nicho_sector": "General",
                 "nivel_detalle": "Didáctico",
+                "modo_rag": "tradicional",
             },
         )
 
@@ -196,6 +200,7 @@ def test_adaptar_stream_emite_eventos_sse():
                 "formato_salida": "Flashcards",
                 "nicho_sector": "General",
                 "nivel_detalle": "Didáctico",
+                "modo_rag": "tradicional",
             },
         )
 

@@ -16,6 +16,13 @@ import os
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
+from dotenv import load_dotenv
+
+_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if (_ROOT_DIR / ".env").exists():
+    load_dotenv(_ROOT_DIR / ".env")
+load_dotenv()
+
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
