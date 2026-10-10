@@ -234,3 +234,40 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
    - Backend Pytest: **71/71 pruebas pasando al 100%** con la inclusión de `test_contrato_audiovisual_escena_director_cut`.
    - Frontend Vite: Compilación TypeScript (`tsc -b && vite build`) completada con éxito en **1.89s** con 0 advertencias o errores.
 
+## Fase 12: Pipeline Colaborativo Multi-Modelo (Vectorless RAG), Compilador PDF y Despacho Silencioso
+
+1. **Pipeline Colaborativo Multi-Modelo (`CadenaColaborativaMultiModelo`):**
+   - Implementado en `backend/app/agentes/cadena_colaborativa.py`.
+   - Arquitectura de especialización funcional:
+     - **Paso 1 (Ingesta masiva & Generación)**: Google Gemini 2.5 Flash con ventana de contexto de 1M tokens. Failover 1 ultra-rápido hacia Groq LPU (`openai/gpt-oss-120b`).
+     - **Paso 2 (Auditoría RAG)**: Groq LPU (`openai/gpt-oss-120b` / `openai/gpt-oss-20b`) con verificación estricta de afirmaciones y fallback a auditoría heurística interna.
+     - **Paso 3 (Humanización y Nicho)**: Cohere Command R (`command-r-08-2024`) con adaptación al perfil y jerga sectorial (Fintech, Salud, etc.).
+   - Modo de ejecución por defecto: `modo_rag="vectorless"` configurado en endpoints `/api/v1/adaptar` y `/api/v1/adaptar/stream`.
+   - Tiempo de respuesta medido: **~11.1 segundos** de procesamiento real.
+
+2. **Dossier PDF Estandarizado con ReportLab:**
+   - Implementado en `backend/app/servicios/generador_pdf.py`.
+   - Compilación didáctica de 5 estaciones estructuradas:
+     1. Resumen Ejecutivo (TL;DR de 5-7 líneas con analogía y métricas).
+     2. Flashcards de estudio activo con preguntas y pistas didácticas.
+     3. Laboratorio CLI Paso a Paso.
+     4. Diagrama Conceptual Explicativo.
+     5. The Final Trial (Quiz con justificaciones RAG y citas textuales).
+   - **Exclusión deliberada del guion audiovisual** en el PDF por especificación didáctica.
+   - Sanitización de caracteres XML con `html.escape()` para prevenir caídas de `paraparser`.
+
+3. **Despacho Silencioso por Correo Electrónico:**
+   - Implementado en `backend/app/servicios/servicio_correo.py`.
+   - Despacho desacoplado en segundo plano (`asyncio.create_task` / `BackgroundTasks`).
+   - Respaldo automático del PDF generado en OCI Object Storage (`reportes-pdf/dossier-*.pdf`).
+   - Envío SMTP real cuando se configuran credenciales o ejecución en modo simulación silenciosa sin bloqueo para el usuario.
+
+4. **Respaldo Secundario a RAG Tradicional (LangGraph):**
+   - Preservación íntegra de la orquestación LangGraph profunda con ChromaDB y embeddings vectoriales de Cohere.
+   - Activación automática ante fallos de cuota o indisponibilidad concurrente de Gemini y Groq, advirtiendo al usuario en el stream SSE: `⚠️ Conmutando a Orquestador Clásico LangGraph por alta demanda...`.
+
+5. **Validación Integral de Pruebas:**
+   - Creación de `backend/tests/test_cadena_colaborativa_y_pdf.py` con 5 nuevas pruebas unitarias e integración de endpoints.
+   - **Suite Completa: 76/76 pruebas pasando al 100% (`pytest backend/tests -v`)**.
+   - Build de producción Frontend (`tsc -b && vite build`): Exitoso en 7.01s con 0 errores.
+

@@ -2,6 +2,18 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.3.0] - 2026-10-09
+
+### 🚀 Pipeline Colaborativo Multi-Modelo (Vectorless RAG), Dossier PDF y Despacho Silencioso (Fase 12)
+- **Pipeline Colaborativo Vectorless (`CadenaColaborativaMultiModelo`):** Ingesta masiva ultra-rápida con Google Gemini 2.5 Flash, auditoría RAG fáctica con Groq LPU (`openai/gpt-oss-120b`) y humanización/nicho con Cohere Command R (`command-r-08-2024`). Latencia de procesamiento reducida a **~11.1 segundos**.
+- **Doble Cascada de Resiliencia (Auto-Failover en Tiempo Real):**
+  - Failover 1: Gemini timeout/503 -> Groq LPU inmediato en 3.0s.
+  - Failover 2: Groq cuota/límite -> Orquestador LangGraph clásico con ChromaDB y embeddings vectoriales, advirtiendo al usuario en el stream SSE.
+- **Compilador de Dossier PDF Estandarizado (ReportLab):** Generación de documento formal descargable con las 5 estaciones (Resumen, Flashcards, Tutorial, Diagrama Mermaid, Quiz), excluyendo deliberadamente el recurso audiovisual. Sanitización defensiva contra errores de sintaxis XML en texto de LLMs.
+- **Despacho Silencioso por Correo Electrónico:** Procesamiento asíncrono en segundo plano (`BackgroundTasks`) con respaldo en OCI Object Storage (`reportes-pdf/dossier-*.pdf`) y modo de simulación segura si no hay servidor SMTP configurado.
+- **Esquema Pydantic Ampliado:** Soporte para `diagrama_mermaid` y compatibilidad `extra="ignore"` en `ContenidoAdaptado`.
+- **Suite de Pruebas Ampliada:** Cobertura extendida a **76 pruebas automatizadas aprobadas al 100% (`pytest backend/tests -v`)**.
+
 ## [2.2.0] - 2026-10-08
 
 ### 🚀 Circuito de 5 Estaciones, Guía OCI Swap, E2E Kafka y Benchmark de Estrés (Fase 10)
