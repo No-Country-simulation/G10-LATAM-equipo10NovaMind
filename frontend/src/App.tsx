@@ -134,7 +134,7 @@ export default function App() {
     niche: IndustryNiche,
     detail: DetailLevel,
     selectedScenarioId?: string,
-    pdfBase64?: string | null,
+    pdfBase64?: string | string[] | null,
   ) => {
     setIsProcessing(true);
 

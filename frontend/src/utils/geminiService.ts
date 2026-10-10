@@ -208,12 +208,12 @@ export async function generatePedagogicalPackage(
   format: OutputFormat,
   niche: IndustryNiche,
   detail: DetailLevel,
-  pdfBase64?: string | null
+  pdfBase64?: string | string[] | null
 ): Promise<AdaptedContentPackage> {
   const timestamp = Date.now();
   const promptText = `
 Eres un Sistema Inteligente de Adaptación y Generación de Contenido Educativo (NuevaMente).
-Tu misión es procesar el material ingresado (analizando el texto provisto o el archivo adjunto multimodalmente) y generar un paquete educativo completo anclado estrictamente a la fuente (RAG Grounding), mitigando cualquier alucinación.
+Tu misión es procesar el material ingresado (analizando el texto provisto o los archivos adjuntos multimodalmente) y generar un paquete educativo completo anclado estrictamente a la fuente (RAG Grounding), mitigando cualquier alucinación.
 
 PARÁMETROS:
 - Título Identificado: "${docTitle || 'Documento sin título'}"
@@ -222,7 +222,7 @@ PARÁMETROS:
 - Nicho / Enfoque: "${niche}"
 - Nivel de Profundidad: "${detail}"
 
-${docContent && !pdfBase64 ? `DOCUMENTACIÓN FUENTE:\n"""\n${docContent}\n"""` : 'El material fuente ha sido adjuntado para análisis e interpretación multimodal completa.'}
+${docContent ? `DOCUMENTACIÓN FUENTE:\n"""\n${docContent}\n"""` : 'El material fuente ha sido adjuntado para análisis e interpretación multimodal completa.'}
 
 DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
 1. Adapta el lenguaje, ejemplos y analogías al perfil "${profile}" en el contexto de "${niche}".
@@ -230,7 +230,7 @@ DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
    - resumen_ninja: analogía central pedagógica, 3 o 4 conceptos clave verificados y métricas rápidas.
    - flashcards: mínimo 3 tarjetas de active recall con pregunta (frente), respuesta (dorso) y pista didáctica analógica.
    - tutorial: 3 a 4 pasos prácticos progresivos con instrucciones reproducibles y validación técnica.
-   - director_cut: 2 o 3 escenas de storyboard para guion didáctico (teleprompter del docente e indicación visual).
+   - director_cut: mínimo 4 a 6 escenas completas de storyboard para el guion didáctico audiovisual (cubriendo introducción/gancho, explicación del concepto central, desglose de componentes/casos, y conclusión pedagógica, cada una con su guion de locución, indicación visual de storyboard y consejo didáctico).
    - quiz: mínimo 3 preguntas didácticas con opciones, índice de la respuesta correcta (0-indexed) y justificación referenciando citas directas.
 3. En 'almacenamiento_oci', define:
    - bucket: "nuevamente-edtech-artifacts"
@@ -245,13 +245,18 @@ DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
   const contents: (string | Part)[] = [];
 
   if (pdfBase64) {
-    const cleanData = pdfBase64.includes(',') ? pdfBase64.split(',')[1] : pdfBase64;
-    contents.push({
-      inlineData: {
-        data: cleanData,
-        mimeType: 'application/pdf',
-      },
-    });
+    const pdfArray = Array.isArray(pdfBase64) ? pdfBase64 : [pdfBase64];
+    for (const b64 of pdfArray) {
+      if (b64 && b64.trim().length > 0) {
+        const cleanData = b64.includes(',') ? b64.split(',')[1] : b64;
+        contents.push({
+          inlineData: {
+            data: cleanData,
+            mimeType: 'application/pdf',
+          },
+        });
+      }
+    }
   }
 
   contents.push(promptText);
