@@ -9,9 +9,11 @@ import {
   Globe,
   Sparkles,
   Award,
+  ArrowRight,
 } from "lucide-react";
 import type { ResumenNinjaData } from "../../../types/types";
 import { triggerLevelUpConfetti } from "../../../utils/confetti";
+import { MermaidDiagram } from "../../MermaidDiagram/MermaidDiagram";
 import styles from "./Station1ResumenNinja.module.css";
 
 interface Station1Props {
@@ -19,6 +21,8 @@ interface Station1Props {
   isCompleted: boolean;
   onCompleteStation: (xp: number) => void;
   onOpenNinjaBadge: () => void;
+  diagramaMermaid?: string;
+  onNextStation?: () => void;
 }
 
 export const Station1ResumenNinja: React.FC<Station1Props> = ({
@@ -26,6 +30,8 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
   isCompleted,
   onCompleteStation,
   onOpenNinjaBadge,
+  diagramaMermaid,
+  onNextStation,
 }) => {
   const [prevData, setPrevData] = useState(data);
   const [checkedConcepts, setCheckedConcepts] = useState<
@@ -201,6 +207,12 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
         </div>
       </div>
 
+      {/* Diagrama de Arquitectura y Flujo Mermaid */}
+      <MermaidDiagram
+        chart={diagramaMermaid}
+        title="Diagrama de Arquitectura y Flujo del Documento"
+      />
+
       {/* CTA de Asimilación */}
       <div className={styles.assimilationBar}>
         <div>
@@ -251,6 +263,21 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
           )}
         </button>
       </div>
+
+      {/* Botón de Siguiente Estación */}
+      {onNextStation && (
+        <div className={styles.stationNextFooter}>
+          <button
+            type="button"
+            onClick={onNextStation}
+            className={styles.nextStationBtn}
+          >
+            <span>Siguiente Estación: Flashcard Quest</span>
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
+

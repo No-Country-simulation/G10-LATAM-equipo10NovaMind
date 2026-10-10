@@ -2,6 +2,16 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.4.0] - 2026-10-10
+
+### ⚡ Concurrencia Optimizada, Renderizador Mermaid en UI y Navegación Fluida (Fase 13)
+- **Escalamiento de Concurrencia en Backend:** Ampliación del semáforo global `_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(5)` (anteriormente 1, lo que retenía peticiones concurrentes en cola por más de 3 minutos).
+- **Aceleración Agresiva de Failovers:** Reducción de timeout de Gemini a `7.0s` y eliminación de alias colgados para conmutar de inmediato a Groq LPU (`openai/gpt-oss-120b`), asegurando respuesta en `< 10 segundos`.
+- **Sanitización XML en Generador PDF (ReportLab):** Blindaje preventivo con `html.escape()` sobre todos los textos provenientes de LLMs para evitar fallos de `paraparser` por caracteres `< > &`.
+- **Visualizador Dinámico Mermaid.js en UI:** Componente `MermaidDiagram` integrado con modo oscuro cyberpunk/clean, renderizado dinámico en tiempo real (`mermaid.render()`), conmutador Gráfico/Código y botón con feedback de copiado al portapapeles.
+- **Feedback Integrado sin `alert()` Bloqueante:** Reemplazo de `alert()` nativo por toast flotante animado de seguridad cognitiva (`lockedToast`) que muestra el estado de desbloqueo exacto y se auto-descarta a los 5s.
+- **Navegación Secuencial Directa:** Botones de acción "Siguiente Estación →" al pie de todas las estaciones pedagógicas para una experiencia de usuario fluida y gamificada.
+
 ## [2.3.0] - 2026-10-09
 
 ### 🚀 Pipeline Colaborativo Multi-Modelo (Vectorless RAG), Dossier PDF y Despacho Silencioso (Fase 12)

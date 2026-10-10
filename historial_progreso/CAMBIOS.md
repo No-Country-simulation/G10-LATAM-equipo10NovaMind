@@ -271,3 +271,25 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
    - **Suite Completa: 76/76 pruebas pasando al 100% (`pytest backend/tests -v`)**.
    - Build de producción Frontend (`tsc -b && vite build`): Exitoso en 7.01s con 0 errores.
 
+## Fase 13: Optimización de Concurrencia, Visualizador Mermaid y Fluidez UX
+
+1. **Subida de Concurrencia y Aceleración de Timeouts en Backend:**
+   - Ampliación del semáforo global `_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(5)` en `backend/app/main.py` (anteriormente `Semaphore(1)` bloqueaba peticiones simultáneas provocando colas de espera de hasta 3 minutos).
+   - Reducción agresiva del timeout de Gemini a `7.0s` (antes 25s) y eliminación del alias no responsivo `gemini-flash-latest`, permitiendo failover instantáneo hacia Groq LPU (`openai/gpt-oss-120b`).
+   - Saneamiento defensivo de entidades XML con `_escapar()` (`html.escape`) en `backend/app/servicios/generador_pdf.py` para blindar ReportLab contra caídas de `paraparser` ante caracteres `< > &` generados por LLMs.
+
+2. **Renderizado Visual del Diagrama Mermaid en Interfaz Web:**
+   - Instalación de la biblioteca oficial `mermaid` (`v11.x`) en el frontend de React.
+   - Creación del componente reutilizable `frontend/src/components/MermaidDiagram/MermaidDiagram.tsx` con estilos oscuros personalizados (`MermaidDiagram.module.css`).
+   - Integración interactiva: renderizado dinámico vía `mermaid.render()`, conmutación entre vista SVG y código fuente Mermaid, y botón con feedback de copiado al portapapeles.
+   - Incorporación directa en **Estación 01 (Resumen Ninja)** con el diagrama de flujo y arquitectura generado por la orquestación.
+
+3. **Reemplazo de `alert()` por Feedback Integrado y Navegación Secuencial:**
+   - Eliminación del modal bloqueante `alert()` en `frontend/src/components/Step2KnowledgeQuest/Step2KnowledgeQuest.tsx`.
+   - Incorporación de toast visual flotante animado (`lockedToast`) con temporizador de auto-cierre a los 5s y mensaje amigable de protocolo que expone el progreso exacto (`{completedStationsCount}/2`).
+   - Incorporación de botones de acción "Siguiente Estación →" al pie de todas las estaciones pedagógicas:
+     - Estación 01 (Resumen Ninja) → Estación 02 (Flashcard Quest).
+     - Estación 02 (Flashcard Quest) → Estación 03 (Tutorial Quest).
+     - Estación 03 (Tutorial Quest) → Estación 04 (Director Cut).
+     - Estación 04 (Director Cut) → Estación 05 (The Final Trial / Quiz Capstone).
+

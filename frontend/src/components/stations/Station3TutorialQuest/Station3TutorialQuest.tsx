@@ -9,6 +9,7 @@ interface Station3Props {
   isCompleted: boolean;
   onCompleteStation: (xp: number) => void;
   onOpenBuilderBadge?: () => void;
+  onNextStation?: () => void;
 }
 
 export const Station3TutorialQuest = ({
@@ -16,6 +17,7 @@ export const Station3TutorialQuest = ({
   isCompleted,
   onCompleteStation,
   onOpenBuilderBadge,
+  onNextStation,
 }: Station3Props) => {
   const [prevSteps, setPrevSteps] = useState(steps);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
@@ -263,6 +265,32 @@ export const Station3TutorialQuest = ({
           </button>
         </div>
       </div>
+
+      {onNextStation && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
+          <button
+            type="button"
+            onClick={onNextStation}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.25rem',
+              background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(99, 102, 241, 0.2) 100%)',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              color: '#38bdf8',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <span>Siguiente Estación: Director Cut</span>
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
-};
+};

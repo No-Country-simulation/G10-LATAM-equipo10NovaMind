@@ -817,6 +817,27 @@ class OrquestadorNuevaMente:
                 "Se entrega el mejor intento y se recomienda revisión humana."
             )
 
+        # Garantizar diagrama_mermaid contextual si el modelo no lo devolvió
+        if not getattr(paquete.contenido_adaptado, "diagrama_mermaid", None):
+            res_ninja = getattr(paquete.contenido_adaptado, "resumen_ninja", None)
+            conceptos = getattr(res_ninja, "conceptos_clave", []) if res_ninja else []
+            doc_tit = (paquete.contenido_adaptado.titulo or "Documento Técnico")[:28].replace('"', '')
+            if conceptos:
+                lineas = [f"    A[{doc_tit}]"]
+                prev_letra = "A"
+                for idx, c in enumerate(conceptos[:3], start=1):
+                    letra = chr(65 + idx)
+                    c_txt = (c.texto if hasattr(c, "texto") else str(c))[:32].replace('"', '')
+                    lineas.append(f"    {prev_letra} --> {letra}[{c_txt}]")
+                    prev_letra = letra
+                paquete.contenido_adaptado.diagrama_mermaid = "flowchart TD\n" + "\n".join(lineas)
+            else:
+                paquete.contenido_adaptado.diagrama_mermaid = (
+                    f"flowchart TD\n"
+                    f"    A[{doc_tit}] --> B[Núcleo Operativo]\n"
+                    f"    B --> C[Aplicación Práctica]\n"
+                )
+
         respuesta = RespuestaAdaptacion(
             status="exito" if aprobado else "exito_con_advertencias",
             metadatos=paquete.metadatos,

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   Zap,
   BookOpen,
@@ -8,6 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Sparkles,
+  X,
 } from 'lucide-react';
 import type { AdaptedContentPackage } from '../../types/types';
 import { Station1ResumenNinja } from '../stations/Station1ResumenNinja/Station1ResumenNinja';
@@ -58,6 +60,16 @@ export const Step2KnowledgeQuest = ({
   unlockedStations = [0, 1, 2, 3, 4],
   generatingMessage = '',
 }: Step2Props) => {
+  const [lockedWarning, setLockedWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (lockedWarning) {
+      const timer = setTimeout(() => {
+        setLockedWarning(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [lockedWarning]);
   const completedStationsCount = Object.values(completedStations).filter(Boolean).length;
   const isFinalTrialUnlocked = completedStationsCount >= 2;
   const unlockedList = unlockedStations || [0, 1, 2, 3, 4];
@@ -107,9 +119,12 @@ export const Step2KnowledgeQuest = ({
 
   const handleSelectStation = (index: number) => {
     if (index === 4 && !isFinalTrialUnlocked && !isGenerating) {
-      alert('Debes completar al menos 2 estaciones antes de desbloquear la Prueba Final.');
+      setLockedWarning(
+        `Protocolo de Evaluación: Completa al menos 2 estaciones previas (${completedStationsCount}/2 completadas) para desbloquear The Final Trial.`
+      );
       return;
     }
+    setLockedWarning(null);
     onSelectStationIndex(index);
   };
 
@@ -117,6 +132,26 @@ export const Step2KnowledgeQuest = ({
 
   return (
     <div className={styles.container}>
+      {/* Toast Flotante de Protocolo de Desbloqueo */}
+      {lockedWarning && (
+        <div className={styles.lockedToast}>
+          <div className={styles.lockedToastContent}>
+            <div className={styles.lockedToastIcon}>
+              <Lock size={18} />
+            </div>
+            <span>{lockedWarning}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLockedWarning(null)}
+            className={styles.lockedToastClose}
+            title="Cerrar notificación"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Banner de Generación Progresiva en Tiempo Real */}
       {isGenerating && (
         <div className={styles.generatingBanner}>
@@ -254,6 +289,8 @@ export const Step2KnowledgeQuest = ({
                 isCompleted={!!completedStations[0]}
                 onCompleteStation={(xp) => onCompleteStation(0, xp)}
                 onOpenNinjaBadge={onOpenNinjaBadge}
+                diagramaMermaid={contentPackage.contenido_adaptado.diagrama_mermaid}
+                onNextStation={() => handleSelectStation(1)}
               />
             )}
 
@@ -263,6 +300,7 @@ export const Step2KnowledgeQuest = ({
                 isCompleted={!!completedStations[1]}
                 onCompleteStation={(xp) => onCompleteStation(1, xp)}
                 onOpenStreakBadge={onOpenStreakBadge}
+                onNextStation={() => handleSelectStation(2)}
               />
             )}
 
@@ -278,6 +316,7 @@ export const Step2KnowledgeQuest = ({
                 isCompleted={!!completedStations[2]}
                 onCompleteStation={(xp) => onCompleteStation(2, xp)}
                 onOpenBuilderBadge={onOpenBuilderBadge}
+                onNextStation={() => handleSelectStation(3)}
               />
             )}
 
@@ -293,6 +332,7 @@ export const Step2KnowledgeQuest = ({
                 isCompleted={!!completedStations[3]}
                 onCompleteStation={(xp) => onCompleteStation(3, xp)}
                 onOpenDirectorBadge={onOpenDirectorBadge}
+                onNextStation={() => handleSelectStation(4)}
               />
             )}
 

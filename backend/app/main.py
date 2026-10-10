@@ -73,8 +73,8 @@ _orquestador_singleton: Optional[OrquestadorNuevaMente] = None
 _cadena_singleton: Optional[CadenaColaborativaMultiModelo] = None
 _servicio_correo_singleton: Optional[ServicioCorreo] = None
 
-# Semáforo de concurrencia: limita ejecuciones pesadas simultáneas para proteger la RAM de 1 GB en OCI Always Free
-_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(1)
+# Semáforo de concurrencia: límite de 5 solicitudes simultáneas para evitar encolamiento innecesario
+_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(5)
 
 
 def get_orquestador() -> OrquestadorNuevaMente:

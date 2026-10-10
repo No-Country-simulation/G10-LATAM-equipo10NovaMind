@@ -383,6 +383,7 @@ class AgenteProductorContenido:
       {"id": "t1", "paso": 1, "titulo": "<paso 1>", "descripcion": "<detalle>", "cli_command": "<comando bash>", "completado": false, "verificacion": "<verificación>"},
       {"id": "t2", "paso": 2, "titulo": "<paso 2>", "descripcion": "<detalle>", "cli_command": "<comando bash>", "completado": false, "verificacion": "<verificación>"}
     ],
+    "diagrama_mermaid": "flowchart TD\\n    A[Inicio] --> B[Proceso]\\n    B --> C[Fin]",
     "director_cut": [
       {
         "id": "d1",

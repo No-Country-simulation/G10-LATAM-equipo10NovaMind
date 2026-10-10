@@ -130,6 +130,7 @@ export interface AdaptedContentPackage {
     tutorial: TutorialStep[];
     director_cut: DirectorScene[];
     quiz: QuizQuestion[];
+    diagrama_mermaid?: string;
   };
   evaluacion_calidad: {
     anclaje_fuente_score: number; // e.g. 0.98

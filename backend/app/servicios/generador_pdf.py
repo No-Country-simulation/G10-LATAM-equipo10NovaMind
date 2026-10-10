@@ -16,9 +16,14 @@ Compila las estaciones educativas generadas:
 
 from __future__ import annotations
 
+import html
 import io
 import logging
 from typing import Any, Dict, List, Optional
+
+def _escapar(val: Any) -> str:
+    """Escapa entidades HTML/XML (&, <, >) para evitar syntax error en ReportLab Paragraph."""
+    return html.escape(str(val or ""), quote=False)
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -143,9 +148,9 @@ class GeneradorPDFEducativo:
             leading=11,
             textColor=self.color_acento,
         )))
-        elementos.append(Paragraph(f"Dossier Pedagógico: {titulo}", self.styles["TituloDocumento"]))
+        elementos.append(Paragraph(f"Dossier Pedagógico: {_escapar(titulo)}", self.styles["TituloDocumento"]))
         elementos.append(Paragraph(
-            f"<b>Perfil:</b> {perfil} | <b>Nicho:</b> {nicho} | <b>Fidelidad RAG:</b> {anclaje_score * 100:.1f}% | <b>OCI Cloud Ready</b>",
+            f"<b>Perfil:</b> {_escapar(perfil)} | <b>Nicho:</b> {_escapar(nicho)} | <b>Fidelidad RAG:</b> {anclaje_score * 100:.1f}% | <b>OCI Cloud Ready</b>",
             self.styles["Subtitulo"],
         ))
         elementos.append(HRFlowable(width="100%", thickness=1.5, color=self.color_acento, spaceAfter=12))
@@ -156,7 +161,7 @@ class GeneradorPDFEducativo:
         intro_texto = contenido.get("introduccion_contextualizada", "")
         if intro_texto:
             elementos.append(Paragraph("1. Introducción y Propósito Pedagógico", self.styles["SeccionTitulo"]))
-            elementos.append(Paragraph(intro_texto, self.styles["CuerpoDocente"]))
+            elementos.append(Paragraph(_escapar(intro_texto), self.styles["CuerpoDocente"]))
             elementos.append(Spacer(1, 8))
 
         # -------------------------------------------------------------
@@ -168,7 +173,7 @@ class GeneradorPDFEducativo:
             elementos.append(Paragraph("2. Resumen Ninja & Analogía Central", self.styles["SeccionTitulo"]))
             
             caja_analogia = Table(
-                [[Paragraph(f"<b>Analogía Didáctica:</b><br/>{analogia}", self.styles["CajaAnalogia"])]],
+                [[Paragraph(f"<b>Analogía Didáctica:</b><br/>{_escapar(analogia)}", self.styles["CajaAnalogia"])]],
                 colWidths=[540],
             )
             caja_analogia.setStyle(TableStyle([
@@ -188,7 +193,7 @@ class GeneradorPDFEducativo:
                 elementos.append(Paragraph("<b>Conceptos Fundamentales:</b>", self.styles["CuerpoDocente"]))
                 for c in conceptos:
                     txt = c.get("texto", "") if isinstance(c, dict) else str(c)
-                    elementos.append(Paragraph(f"• {txt}", self.styles["CuerpoDocente"]))
+                    elementos.append(Paragraph(f"• {_escapar(txt)}", self.styles["CuerpoDocente"]))
                 elementos.append(Spacer(1, 8))
 
         # -------------------------------------------------------------
@@ -203,9 +208,9 @@ class GeneradorPDFEducativo:
                 pista = fc.get("pista_didactica", "")
                 
                 tabla_fc = Table([
-                    [Paragraph(f"<b>Tarjeta {idx}: {frente}</b>", self.styles["CuerpoDocente"])],
-                    [Paragraph(f"<b>Respuesta:</b> {dorso}", self.styles["CuerpoDocente"])],
-                    [Paragraph(f"<i>Pista:</i> {pista}", self.styles["CajaAnalogia"]) if pista else Paragraph("", self.styles["Normal"])],
+                    [Paragraph(f"<b>Tarjeta {idx}: {_escapar(frente)}</b>", self.styles["CuerpoDocente"])],
+                    [Paragraph(f"<b>Respuesta:</b> {_escapar(dorso)}", self.styles["CuerpoDocente"])],
+                    [Paragraph(f"<i>Pista:</i> {_escapar(pista)}", self.styles["CajaAnalogia"]) if pista else Paragraph("", self.styles["Normal"])],
                 ], colWidths=[540])
                 tabla_fc.setStyle(TableStyle([
                     ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f1f5f9")),
@@ -232,13 +237,13 @@ class GeneradorPDFEducativo:
                 verif = t.get("verificacion", "")
 
                 filas = [
-                    [Paragraph(f"<b>Paso {paso_num}: {t_titulo}</b>", self.styles["CuerpoDocente"])],
-                    [Paragraph(desc, self.styles["CuerpoDocente"])],
+                    [Paragraph(f"<b>Paso {paso_num}: {_escapar(t_titulo)}</b>", self.styles["CuerpoDocente"])],
+                    [Paragraph(_escapar(desc), self.styles["CuerpoDocente"])],
                 ]
                 if cli:
-                    filas.append([Paragraph(f"<b>Comando / Acción:</b> {cli}", self.styles["CodigoCLI"])])
+                    filas.append([Paragraph(f"<b>Comando / Acción:</b> {_escapar(cli)}", self.styles["CodigoCLI"])])
                 if verif:
-                    filas.append([Paragraph(f"<b>Verificación:</b> {verif}", self.styles["CajaAnalogia"])])
+                    filas.append([Paragraph(f"<b>Verificación:</b> {_escapar(verif)}", self.styles["CajaAnalogia"])])
 
                 tabla_t = Table(filas, colWidths=[540])
                 tabla_t.setStyle(TableStyle([
@@ -259,7 +264,7 @@ class GeneradorPDFEducativo:
         if diagrama:
             elementos.append(Paragraph("5. Diagrama de Arquitectura y Flujo", self.styles["SeccionTitulo"]))
             tabla_diag = Table([
-                [Paragraph(f"<b>Sintaxis Arquitectónica (Mermaid.js):</b><br/><pre>{diagrama}</pre>", self.styles["CodigoCLI"])],
+                [Paragraph(f"<b>Sintaxis Arquitectónica (Mermaid.js):</b><br/>{_escapar(diagrama)}", self.styles["CodigoCLI"])],
             ], colWidths=[540])
             tabla_diag.setStyle(TableStyle([
                 ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
@@ -286,18 +291,18 @@ class GeneradorPDFEducativo:
                 cita = q.get("cita_fuente", "")
 
                 filas_q = [
-                    [Paragraph(f"<b>Pregunta {idx}: {preg}</b>", self.styles["CuerpoDocente"])],
+                    [Paragraph(f"<b>Pregunta {idx}: {_escapar(preg)}</b>", self.styles["CuerpoDocente"])],
                 ]
                 for o_idx, opc in enumerate(opciones):
                     marca = "✓ " if o_idx == correcta else "  "
                     peso = "<b>" if o_idx == correcta else ""
                     cierre = " (Correcta)</b>" if o_idx == correcta else ""
-                    filas_q.append([Paragraph(f"{marca}{chr(65+o_idx)}) {peso}{opc}{cierre}", self.styles["CuerpoDocente"])])
+                    filas_q.append([Paragraph(f"{marca}{chr(65+o_idx)}) {peso}{_escapar(opc)}{cierre}", self.styles["CuerpoDocente"])])
 
                 if justif:
-                    filas_q.append([Paragraph(f"<b>Justificación RAG:</b> {justif}", self.styles["CajaAnalogia"])])
+                    filas_q.append([Paragraph(f"<b>Justificación RAG:</b> {_escapar(justif)}", self.styles["CajaAnalogia"])])
                 if cita:
-                    filas_q.append([Paragraph(f"<b>Cita Fuente:</b> \"{cita}\"", self.styles["CajaAnalogia"])])
+                    filas_q.append([Paragraph(f"<b>Cita Fuente:</b> \"{_escapar(cita)}\"", self.styles["CajaAnalogia"])])
 
                 tabla_q = Table(filas_q, colWidths=[540])
                 tabla_q.setStyle(TableStyle([
@@ -310,6 +315,7 @@ class GeneradorPDFEducativo:
                 ]))
                 elementos.append(tabla_q)
                 elementos.append(Spacer(1, 6))
+
 
         # Pie institucional
         elementos.append(Spacer(1, 14))

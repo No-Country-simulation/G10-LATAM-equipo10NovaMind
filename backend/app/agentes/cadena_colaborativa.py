@@ -343,15 +343,12 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
 }}
 """
 
-        modelos_a_probar = ["gemini-2.5-flash", self.gemini_model, "gemini-flash-latest"]
-        # Filtrar duplicados preservando orden
-        modelos_unicos = []
-        for m in modelos_a_probar:
-            if m not in modelos_unicos:
-                modelos_unicos.append(m)
+        modelos_a_probar = ["gemini-2.5-flash"]
+        if self.gemini_model and self.gemini_model != "gemini-flash-latest" and self.gemini_model not in modelos_a_probar:
+            modelos_a_probar.append(self.gemini_model)
 
         ultimo_error: Optional[Exception] = None
-        for modelo in modelos_unicos:
+        for modelo in modelos_a_probar:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={self.gemini_key}"
             body = {
                 "contents": [{"parts": [{"text": prompt}]}],
@@ -361,8 +358,8 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
                 },
             }
             try:
-                logger.info("[cadena_colaborativa] Probando generación con Gemini modelo: %s...", modelo)
-                resp = requests.post(url, json=body, timeout=25.0)
+                logger.info("[cadena_colaborativa] Probando generación con Gemini modelo: %s (timeout 12s)...", modelo)
+                resp = requests.post(url, json=body, timeout=12.0)
                 if resp.status_code == 200:
                     data = resp.json()
                     candidates = data.get("candidates", [])
@@ -414,7 +411,7 @@ AFIRMACIONES A VERIFICAR:
 
 FRAGMENTOS FUENTE:
 \"\"\"
-{texto_fuente[:100000]}
+{texto_fuente[:24000]}
 \"\"\"
 
 Determina:
@@ -683,7 +680,7 @@ Nicho: "{solicitud.nicho_sector}"
 
 Texto fuente:
 \"\"\"
-{solicitud.documento_contenido[:80000]}
+{solicitud.documento_contenido[:24000]}
 \"\"\"
 
 Debes responder ÚNICAMENTE con esta estructura JSON:
