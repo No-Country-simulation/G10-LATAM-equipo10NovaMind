@@ -16,11 +16,12 @@ import os
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import ValidationError
 
+from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
 from app.core.config import ConfigError
 from app.core.ingestion import IngestionError, cargar_documento_desde_bytes
 from app.core.schemas import (
@@ -32,6 +33,7 @@ from app.core.schemas import (
     SolicitudAdaptacion,
 )
 from app.orquestador import OrquestadorNuevaMente, crear_orquestador
+from app.servicios.servicio_correo import ServicioCorreo
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("nuevamente.backend")
@@ -61,6 +63,9 @@ app.add_middleware(
 
 
 _orquestador_singleton: Optional[OrquestadorNuevaMente] = None
+_cadena_singleton: Optional[CadenaColaborativaMultiModelo] = None
+_servicio_correo_singleton: Optional[ServicioCorreo] = None
+
 # Semáforo de concurrencia: limita ejecuciones pesadas simultáneas para proteger la RAM de 1 GB en OCI Always Free
 _SEMAFORO_CONCURRENCIA = asyncio.Semaphore(1)
 
@@ -77,6 +82,73 @@ def get_orquestador() -> OrquestadorNuevaMente:
                 detail=f"Configuración del orquestador incompleta: {exc}",
             ) from exc
     return _orquestador_singleton
+
+
+def get_cadena_colaborativa() -> CadenaColaborativaMultiModelo:
+    global _cadena_singleton
+    if _cadena_singleton is None:
+        _cadena_singleton = CadenaColaborativaMultiModelo()
+    return _cadena_singleton
+
+
+def get_servicio_correo() -> ServicioCorreo:
+    global _servicio_correo_singleton
+    if _servicio_correo_singleton is None:
+        _servicio_correo_singleton = ServicioCorreo()
+    return _servicio_correo_singleton
+
+
+def _ejecutar_tareas_segundo_plano(
+    solicitud: SolicitudAdaptacion,
+    respuesta: RespuestaAdaptacion,
+    email_destinatario: Optional[str] = None,
+) -> None:
+    """
+    Tareas en segundo plano:
+    1. RAG Silencioso: Indexa el documento original en ChromaDB sin bloquear la respuesta.
+    2. Envío Silencioso: Genera el dossier PDF estandarizado (sin audiovisual) y lo envía/respalda en OCI.
+    """
+    # 1. Indexación silenciosa en ChromaDB
+    try:
+        orquestador = get_orquestador()
+        if hasattr(orquestador, "indexador") and solicitud.documento_contenido:
+            doc_id = solicitud.documento_id or (
+                respuesta.orquestacion.documento_id if respuesta.orquestacion else "doc-auto"
+            )
+            orquestador.indexador.indexar(
+                documento_id=doc_id,
+                titulo=solicitud.documento_titulo,
+                contenido=solicitud.documento_contenido,
+            )
+            logger.info("[background] Documento '%s' indexado silenciosamente en ChromaDB.", doc_id)
+    except Exception as exc_idx:
+        logger.warning("[background] Fallo no crítico en indexación silenciosa ChromaDB: %s", exc_idx)
+
+    # 2. Despacho silencioso de PDF y correo
+    try:
+        servicio_correo = get_servicio_correo()
+        contenido_dict = (
+            respuesta.contenido_adaptado.model_dump()
+            if hasattr(respuesta.contenido_adaptado, "model_dump")
+            else (respuesta.contenido_adaptado or {})
+        )
+        destinatario = email_destinatario or os.getenv("CORREO_NOTIFICACION_DEFAULT", "estudiante@novamind.lat")
+        anclaje = (
+            respuesta.evaluacion_calidad.anclaje_fuente_score
+            if respuesta.evaluacion_calidad
+            else 0.95
+        )
+        servicio_correo.enviar_dossier_pedagogico_silencioso(
+            destinatario=destinatario,
+            titulo_documento=solicitud.documento_titulo,
+            perfil=solicitud.perfil_destinatario,
+            nicho=solicitud.nicho_sector,
+            contenido_adaptado=contenido_dict,
+            doc_id=solicitud.documento_id,
+            anclaje_score=anclaje,
+        )
+    except Exception as exc_mail:
+        logger.warning("[background] Fallo no crítico en despacho de PDF/correo: %s", exc_mail)
 
 
 @app.get("/health", tags=["Salud"])
@@ -192,6 +264,7 @@ async def _extraer_solicitud(
     tags=["Adaptación Pedagógica"],
 )
 async def adaptar_contenido(
+    background_tasks: BackgroundTasks,
     archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
     texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
     titulo: Optional[str] = Form(None, description="Título del documento"),
@@ -201,10 +274,14 @@ async def adaptar_contenido(
     nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
     tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
     documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
+    modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (colaborativo ultrarrápido) o 'clasico' (LangGraph)"),
+    email_notificacion: Optional[str] = Form(None, description="Correo electrónico opcional para recibir dossier en PDF"),
 ) -> RespuestaAdaptacion:
     """
-    Endpoint principal síncrono: recibe el documento y los parámetros pedagógicos,
-    ejecuta el grafo multi-agente en hilo no bloqueante y devuelve el contenido adaptado con métricas.
+    Endpoint principal: recibe el documento y los parámetros pedagógicos.
+    Por defecto ejecuta la Cadena Colaborativa Multi-Modelo (Vectorless In-Context RAG + Groq LPU + Cohere).
+    Si hay saturación o agotamiento de cuotas (Failover 2), conmuta al Orquestador Clásico notificando al usuario.
+    En segundo plano indexa en ChromaDB y despacha el PDF estandarizado por correo.
     """
     solicitud = await _extraer_solicitud(
         archivo=archivo,
@@ -218,21 +295,51 @@ async def adaptar_contenido(
         documento_contenido=documento_contenido,
     )
 
-    orquestador = get_orquestador()
-    logger.info(
-        "Iniciando orquestación: '%s' | %s | %s",
-        solicitud.documento_titulo,
-        solicitud.perfil_destinatario,
-        solicitud.formato_salida,
-    )
+    respuesta: RespuestaAdaptacion
 
-    async with _SEMAFORO_CONCURRENCIA:
-        respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
+    if modo_rag.lower() == "vectorless":
+        cadena = get_cadena_colaborativa()
+        logger.info(
+            "Iniciando Cadena Colaborativa Multi-Modelo (Vectorless): '%s' | %s | %s",
+            solicitud.documento_titulo,
+            solicitud.perfil_destinatario,
+            solicitud.formato_salida,
+        )
+        try:
+            async with _SEMAFORO_CONCURRENCIA:
+                respuesta = await asyncio.to_thread(cadena.ejecutar, solicitud)
+        except Exception as exc_cadena:
+            logger.warning(
+                "Fallo en Cadena Colaborativa (%s). Conmutando a Respaldo 2 (LangGraph Clásico)...",
+                exc_cadena,
+            )
+            orquestador = get_orquestador()
+            async with _SEMAFORO_CONCURRENCIA:
+                respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
+            respuesta.advertencias.append(
+                "⚠️ Alta demanda detectada en la red ultrarrápida. Contenido procesado mediante orquestación LangGraph profunda con respaldo semántico."
+            )
+    else:
+        # Modo Clásico directo (LangGraph + ChromaDB)
+        orquestador = get_orquestador()
+        logger.info(
+            "Iniciando Orquestación Clásica LangGraph: '%s' | %s | %s",
+            solicitud.documento_titulo,
+            solicitud.perfil_destinatario,
+            solicitud.formato_salida,
+        )
+        async with _SEMAFORO_CONCURRENCIA:
+            respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
 
-    logger.info(
-        "Orquestación finalizada con status: %s | Duración: %.2fs",
-        respuesta.status,
-        respuesta.orquestacion.duracion_segundos,
+    duracion = respuesta.orquestacion.duracion_segundos if respuesta.orquestacion else 0.0
+    logger.info("Adaptación finalizada con status: %s | Duración: %.2fs", respuesta.status, duracion)
+
+    # Programar tareas silenciosas en background (ChromaDB + PDF correo)
+    background_tasks.add_task(
+        _ejecutar_tareas_segundo_plano,
+        solicitud=solicitud,
+        respuesta=respuesta,
+        email_destinatario=email_notificacion,
     )
 
     return respuesta
@@ -252,10 +359,13 @@ async def adaptar_contenido_stream(
     nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
     tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
     documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
+    modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (colaborativo ultrarrápido) o 'clasico' (LangGraph)"),
+    email_notificacion: Optional[str] = Form(None, description="Correo electrónico opcional para recibir dossier en PDF"),
 ) -> StreamingResponse:
     """
     Endpoint con Server-Sent Events (SSE) y heartbeats periódicos (cada 15s)
     para evitar el timeout 524 de Cloudflare (100s) durante orquestaciones complejas.
+    Soporta modo colaborativo 'vectorless' ultrarrápido y modo 'clasico'.
     """
     solicitud = await _extraer_solicitud(
         archivo=archivo,
@@ -269,68 +379,109 @@ async def adaptar_contenido_stream(
         documento_contenido=documento_contenido,
     )
 
-    orquestador = get_orquestador()
-
     async def generador_eventos() -> AsyncGenerator[str, None]:
         # 1. Evento inicial de conexión establecida
         yield f"data: {json.dumps({'tipo': 'inicio', 'mensaje': 'Solicitud recibida. Iniciando orquestación pedagógica...'}, ensure_ascii=False)}\n\n"
 
+        cola_progreso: asyncio.Queue[tuple[str, int]] = asyncio.Queue()
+
+        def _progreso_callback(mensaje: str, paso: int) -> None:
+            try:
+                cola_progreso.put_nowait((mensaje, paso))
+            except Exception:
+                pass
+
         async def _ejecutar():
             async with _SEMAFORO_CONCURRENCIA:
-                return await asyncio.to_thread(orquestador.ejecutar, solicitud)
+                if modo_rag.lower() == "vectorless":
+                    cadena = get_cadena_colaborativa()
+                    try:
+                        return await asyncio.to_thread(cadena.ejecutar, solicitud, _progreso_callback)
+                    except Exception as exc_cadena:
+                        logger.warning(
+                            "Fallo en Cadena Colaborativa stream (%s). Conmutando a Respaldo 2 (LangGraph Clásico)...",
+                            exc_cadena,
+                        )
+                        cola_progreso.put_nowait((
+                            "⚠️ Conmutando a Orquestador Clásico LangGraph por alta demanda...",
+                            1,
+                        ))
+                        orquestador = get_orquestador()
+                        resp = await asyncio.to_thread(orquestador.ejecutar, solicitud)
+                        resp.advertencias.append(
+                            "⚠️ Alta demanda detectada en la red ultrarrápida. Contenido procesado mediante orquestación LangGraph profunda con respaldo semántico."
+                        )
+                        return resp
+                else:
+                    orquestador = get_orquestador()
+                    return await asyncio.to_thread(orquestador.ejecutar, solicitud)
 
         tarea = asyncio.create_task(_ejecutar())
 
-        # 2. Bucle de progresión granular en tiempo real cada 3s mientras la tarea está en curso
         segundos_transcurridos = 0
         while not tarea.done():
+            # Emitir mensajes de la cola si los hay
+            while not cola_progreso.empty():
+                try:
+                    p_msg, p_paso = cola_progreso.get_nowait()
+                    yield f"data: {json.dumps({'tipo': 'progreso', 'segundos': segundos_transcurridos, 'mensaje': p_msg, 'etapa': f'paso_{p_paso}', 'estacion_desbloqueada': p_paso}, ensure_ascii=False)}\n\n"
+                except asyncio.QueueEmpty:
+                    break
+
             try:
-                await asyncio.wait_for(asyncio.shield(tarea), timeout=3.0)
+                await asyncio.wait_for(asyncio.shield(tarea), timeout=2.5)
             except asyncio.TimeoutError:
                 segundos_transcurridos += 3
-
-                # Determinación de etapa pedagógica y estación desbloqueada según tiempo
-                if segundos_transcurridos <= 6:
-                    etapa = "ingesta"
-                    estacion = 0
-                    msg = "Agente 1 (RAG): Ingestando documento y extrayendo texto estructurado..."
-                elif segundos_transcurridos <= 18:
-                    etapa = "investigacion"
-                    estacion = 0
-                    msg = "Agente 1 (RAG): Generando embeddings vectoriales y recuperando fragmentos..."
-                elif segundos_transcurridos <= 36:
-                    etapa = "redaccion_estacion_1"
-                    estacion = 0
-                    msg = "Agente 2 (Productor): Redactando Estación 1 · Resumen Ninja (TL;DR)..."
-                elif segundos_transcurridos <= 60:
-                    etapa = "redaccion_estacion_2"
-                    estacion = 1
-                    msg = "Agente 2 (Productor): Generando Estación 2 · Flashcard Quest 3D..."
-                elif segundos_transcurridos <= 85:
-                    etapa = "redaccion_estacion_3"
-                    estacion = 2
-                    msg = "Agente 2 (Productor): Elaborando Estación 3 · Tutorial Quest (Laboratorio)..."
-                elif segundos_transcurridos <= 110:
-                    etapa = "redaccion_estacion_4"
-                    estacion = 3
-                    msg = "Agente 2 (Productor): Diseñando Estación 4 · Director Cut (Storyboard)..."
-                elif segundos_transcurridos <= 135:
-                    etapa = "redaccion_estacion_5"
-                    estacion = 4
-                    msg = "Agente 2 (Productor): Formulando Estación 5 · The Final Trial (Quiz RAG)..."
-                else:
-                    etapa = "auditoria"
-                    estacion = 4
-                    msg = f"Agente 3 (Crítico): Auditando fidelidad RAG y anclaje a fuentes ({segundos_transcurridos}s)..."
-
-                # Comentario SSE keep-alive anti-timeout para Cloudflare/Nginx
+                # Keep-alive SSE
                 yield f": ping - heartbeat ({segundos_transcurridos}s)\n\n"
-                # Evento informativo para sincronización de UI
-                yield f"data: {json.dumps({'tipo': 'progreso', 'segundos': segundos_transcurridos, 'mensaje': msg, 'etapa': etapa, 'estacion_desbloqueada': estacion}, ensure_ascii=False)}\n\n"
+                if modo_rag.lower() != "vectorless":
+                    # Simulación de pasos para modo clásico
+                    if segundos_transcurridos <= 6:
+                        etapa = "ingesta"
+                        estacion = 0
+                        msg = "Agente 1 (RAG): Ingestando documento y extrayendo texto estructurado..."
+                    elif segundos_transcurridos <= 18:
+                        etapa = "investigacion"
+                        estacion = 0
+                        msg = "Agente 1 (RAG): Generando embeddings vectoriales y recuperando fragmentos..."
+                    elif segundos_transcurridos <= 36:
+                        etapa = "redaccion_estacion_1"
+                        estacion = 0
+                        msg = "Agente 2 (Productor): Redactando Estación 1 · Resumen Ninja (TL;DR)..."
+                    elif segundos_transcurridos <= 60:
+                        etapa = "redaccion_estacion_2"
+                        estacion = 1
+                        msg = "Agente 2 (Productor): Generando Estación 2 · Flashcard Quest 3D..."
+                    elif segundos_transcurridos <= 85:
+                        etapa = "redaccion_estacion_3"
+                        estacion = 2
+                        msg = "Agente 2 (Productor): Elaborando Estación 3 · Tutorial Quest (Laboratorio)..."
+                    elif segundos_transcurridos <= 110:
+                        etapa = "redaccion_estacion_4"
+                        estacion = 3
+                        msg = "Agente 2 (Productor): Diseñando Estación 4 · Director Cut (Storyboard)..."
+                    elif segundos_transcurridos <= 135:
+                        etapa = "redaccion_estacion_5"
+                        estacion = 4
+                        msg = "Agente 2 (Productor): Formulando Estación 5 · The Final Trial (Quiz RAG)..."
+                    else:
+                        etapa = "auditoria"
+                        estacion = 4
+                        msg = f"Agente 3 (Crítico): Auditando fidelidad RAG y anclaje a fuentes ({segundos_transcurridos}s)..."
+                    yield f"data: {json.dumps({'tipo': 'progreso', 'segundos': segundos_transcurridos, 'mensaje': msg, 'etapa': etapa, 'estacion_desbloqueada': estacion}, ensure_ascii=False)}\n\n"
 
         # 3. Emisión de resultado final o error
         try:
             respuesta: RespuestaAdaptacion = tarea.result()
+            # Despachar tareas silenciosas en segundo plano
+            asyncio.create_task(
+                asyncio.to_thread(
+                    _ejecutar_tareas_segundo_plano,
+                    solicitud=solicitud,
+                    respuesta=respuesta,
+                    email_destinatario=email_notificacion,
+                )
+            )
             yield f"data: {json.dumps({'tipo': 'resultado', 'datos': respuesta.model_dump()}, ensure_ascii=False)}\n\n"
         except Exception as exc:
             logger.exception("Error en orquestación vía stream: %s", exc)

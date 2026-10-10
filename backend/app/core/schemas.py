@@ -281,6 +281,8 @@ class MetadatosSalida(BaseModel):
 
 
 class ContenidoAdaptado(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     titulo: str = Field(default="Adaptación Pedagógica Especializada", min_length=1)
     introduccion_contextualizada: str = Field(
         default="Fundamentos técnicos y pedagógicos contextualizados a partir de la fuente.",
@@ -290,6 +292,7 @@ class ContenidoAdaptado(BaseModel):
     resumen_ninja: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
     flashcards: Optional[List[Dict[str, Any]]] = None
     tutorial: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
+    diagrama_mermaid: Optional[str] = None
     director_cut: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
     quiz: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
 
