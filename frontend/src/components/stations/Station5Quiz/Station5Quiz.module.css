@@ -462,6 +462,29 @@
   border-color: var(--border-subtle);
 }
 
+/* Alerta de Intento Incorrecto */
+.wrongAttemptAlert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: var(--color-rose-300, #fda4af);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  animation: shakeAlert 0.4s ease-out;
+}
+
+@keyframes shakeAlert {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
 /* Caja de Justificación RAG */
 .ragGroundingBox {
   padding: 1.25rem;

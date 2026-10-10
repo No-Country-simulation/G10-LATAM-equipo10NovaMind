@@ -45,6 +45,7 @@ export const Station5FinalTrial = ({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isEvaluated, setIsEvaluated] = useState<boolean>(false);
+  const [isWrongAttempt, setIsWrongAttempt] = useState<boolean>(false);
   const [userAnswers, setUserAnswers] = useState<Record<number, boolean>>({});
   const [isQuizCompleted, setIsQuizCompleted] = useState<boolean>(false);
 
@@ -54,6 +55,7 @@ export const Station5FinalTrial = ({
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setIsEvaluated(false);
+    setIsWrongAttempt(false);
     setUserAnswers({});
     setIsQuizCompleted(false);
   }
@@ -230,14 +232,25 @@ export const Station5FinalTrial = ({
   // 3. Manejo de Selección y Evaluación
   const handleSelectOption = (index: number) => {
     if (isEvaluated) return;
-    setSelectedOption(index);
-    setIsEvaluated(true);
 
     const isCorrect = index === currentQ.respuesta_correcta;
-    setUserAnswers((prev) => ({ ...prev, [currentQuestionIndex]: isCorrect }));
 
-    if (!isCorrect) {
+    if (isCorrect) {
+      // Respuesta correcta: marcar, guardar y mostrar justificación RAG
+      setSelectedOption(index);
+      setIsEvaluated(true);
+      setIsWrongAttempt(false);
+      setUserAnswers((prev) => ({ ...prev, [currentQuestionIndex]: true }));
+    } else {
+      // Respuesta incorrecta: pierde escudo, feedback visual momentáneo, permite reintentar
+      setSelectedOption(index);
+      setIsWrongAttempt(true);
       onDeductShield();
+      // Limpiar selección tras feedback para permitir nuevo intento (3s para que lo pueda leer)
+      setTimeout(() => {
+        setSelectedOption(null);
+        setIsWrongAttempt(false);
+      }, 3000);
     }
   };
 
@@ -246,6 +259,7 @@ export const Station5FinalTrial = ({
       setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedOption(null);
       setIsEvaluated(false);
+      setIsWrongAttempt(false);
     } else {
       setIsQuizCompleted(true);
       const correctCount = Object.values(userAnswers).filter(Boolean).length;
@@ -262,6 +276,7 @@ export const Station5FinalTrial = ({
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setIsEvaluated(false);
+    setIsWrongAttempt(false);
     setUserAnswers({});
     setIsQuizCompleted(false);
   };
@@ -431,20 +446,28 @@ export const Station5FinalTrial = ({
           <h4 className={styles.questionTitle}>{currentQ.pregunta}</h4>
         </div>
 
+        {isWrongAttempt && (
+          <div className={styles.wrongAttemptAlert}>
+            <XCircle size={16} color="var(--color-rose-400)" />
+            <span>Respuesta incorrecta. Perdiste un escudo. ¡Intentalo de nuevo!</span>
+          </div>
+        )}
+
         <div className={styles.optionsList}>
           {currentQ.opciones.map((op, idx) => {
             const isSelected = selectedOption === idx;
-            const isCorrectAnswer = idx === currentQ.respuesta_correcta;
 
             let optionClass = styles.optionButton;
             if (isEvaluated) {
-              if (isCorrectAnswer) {
+              // Solo resaltar la correcta cuando el usuario la acertó
+              if (isSelected) {
                 optionClass = `${styles.optionButton} ${styles.optionCorrect}`;
-              } else if (isSelected && !isCorrectAnswer) {
-                optionClass = `${styles.optionButton} ${styles.optionIncorrect}`;
               } else {
                 optionClass = `${styles.optionButton} ${styles.optionMuted}`;
               }
+            } else if (isWrongAttempt && isSelected) {
+              // Feedback momentáneo de error sin revelar la correcta
+              optionClass = `${styles.optionButton} ${styles.optionIncorrect}`;
             }
 
             return (
@@ -452,20 +475,21 @@ export const Station5FinalTrial = ({
                 key={idx}
                 type="button"
                 onClick={() => handleSelectOption(idx)}
-                disabled={isEvaluated}
+                disabled={isEvaluated || isWrongAttempt}
                 className={optionClass}
               >
                 <span>{op}</span>
-                {isEvaluated && (
+                {isEvaluated && isSelected && (
                   <span>
-                    {isCorrectAnswer ? (
-                      <CheckCircle2
-                        size={20}
-                        color="var(--color-emerald-400)"
-                      />
-                    ) : isSelected ? (
-                      <XCircle size={20} color="var(--color-rose-400)" />
-                    ) : null}
+                    <CheckCircle2
+                      size={20}
+                      color="var(--color-emerald-400)"
+                    />
+                  </span>
+                )}
+                {isWrongAttempt && isSelected && (
+                  <span>
+                    <XCircle size={20} color="var(--color-rose-400)" />
                   </span>
                 )}
               </button>
