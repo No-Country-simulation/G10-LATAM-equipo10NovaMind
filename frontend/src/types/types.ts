@@ -113,6 +113,7 @@ export interface ResumenNinjaData {
 }
 
 export interface AdaptedContentPackage {
+  persistencia?: { proveedor: string; package_id: string };
   status: 'exito' | 'error';
   metadatos: {
     perfil_aplicado: RecipientProfile;

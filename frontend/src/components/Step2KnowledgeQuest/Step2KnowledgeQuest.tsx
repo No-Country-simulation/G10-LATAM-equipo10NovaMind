@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import type { AdaptedContentPackage } from '../../types/types';
+import type { QuizState } from '../../services/persistence';
 import { Station1ResumenNinja } from '../stations/Station1ResumenNinja/Station1ResumenNinja';
 import { Station2FlashcardQuest } from '../stations/Station2FlashcardQuest/Station2FlashcardQuest';
 import { Station3TutorialQuest } from '../stations/Station3TutorialQuest/Station3TutorialQuest';
@@ -20,6 +21,8 @@ import { Station5FinalTrial } from '../stations/Station5Quiz/Station5Quiz';
 import styles from './Step2KnowledgeQuest.module.css';
 
 interface Step2Props {
+  quizState: QuizState;
+  onQuizChange: (update: (previous: QuizState) => QuizState) => void;
   contentPackage: AdaptedContentPackage;
   completedStations: Record<number, boolean>;
   activeStationIndex: number;
@@ -41,6 +44,8 @@ interface Step2Props {
 }
 
 export const Step2KnowledgeQuest = ({
+  quizState,
+  onQuizChange,
   contentPackage,
   completedStations,
   activeStationIndex,
@@ -338,6 +343,8 @@ export const Step2KnowledgeQuest = ({
 
             {activeStationIndex === 4 && (
               <Station5FinalTrial
+                quizState={quizState}
+                onQuizChange={onQuizChange}
                 questions={
                   Array.isArray(contentPackage.contenido_adaptado.quiz)
                     ? contentPackage.contenido_adaptado.quiz

@@ -53,10 +53,10 @@ class OCIObjectStorageClient:
         config_file = os.getenv("OCI_CONFIG_FILE", os.path.expanduser("~/.oci/config"))
         profile = os.getenv("OCI_CONFIG_PROFILE", "DEFAULT")
 
-        # Prioridad 1: Archivo de configuración existente
-        if os.path.exists(config_file):
+        # Explicit application credentials take precedence over unrelated local profiles.
+        if os.path.exists(config_file) and not (os.getenv("OCI_USER") and os.getenv("OCI_TENANCY")):
             config = oci.config.from_file(file_location=config_file, profile_name=profile)
-        # Prioridad 2: Variables de entorno explícitas
+        # Variables de entorno explícitas
         elif os.getenv("OCI_USER") and os.getenv("OCI_TENANCY"):
             key_content = os.getenv("OCI_KEY_CONTENT")
             key_file = os.getenv("OCI_KEY_FILE")
@@ -92,7 +92,7 @@ class OCIObjectStorageClient:
                 "ni variables de entorno OCI_USER / OCI_TENANCY."
             )
 
-        self.client = oci.object_storage.ObjectStorageClient(config)
+        self.client = oci.object_storage.ObjectStorageClient(config, timeout=(5, 30))
 
     def _put(self, object_name: str, data: bytes, content_type: str) -> None:
         try:

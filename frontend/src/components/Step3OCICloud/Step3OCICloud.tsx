@@ -71,6 +71,10 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
   return (
     <div className={styles.container}>
       {/* Top Banner */}
+      {contentPackage.persistencia?.package_id && <p role="status">
+        Contenido privado guardado en Supabase · {contentPackage.persistencia.package_id}.
+        El almacenamiento OCI se informa por separado y requiere credenciales válidas.
+      </p>}
       <div className={styles.topBanner}>
         <div className={styles.bannerContent}>
           <div className={styles.bannerTagRow}>

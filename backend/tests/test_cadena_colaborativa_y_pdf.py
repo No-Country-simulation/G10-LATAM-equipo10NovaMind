@@ -17,8 +17,18 @@ from fastapi.testclient import TestClient
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
 from app.core.schemas import RespuestaAdaptacion, SolicitudAdaptacion
 from app.main import app
+from app.auth import Principal, require_user
 from app.servicios.generador_pdf import GeneradorPDFEducativo
 from app.servicios.servicio_correo import ServicioCorreo
+
+
+@pytest.fixture(autouse=True)
+def authenticated_test_context():
+    app.dependency_overrides[require_user] = lambda: Principal('11111111-1111-4111-8111-111111111111', 'test-only')
+    with patch('app.main.persist_result', side_effect=lambda principal, solicitud, respuesta: respuesta), \
+         patch('app.main._ejecutar_tareas_segundo_plano'):
+        yield
+    app.dependency_overrides.pop(require_user, None)
 
 
 @pytest.fixture

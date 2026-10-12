@@ -349,7 +349,7 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
 
         ultimo_error: Optional[Exception] = None
         for modelo in modelos_a_probar:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={self.gemini_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent"
             body = {
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {
@@ -359,7 +359,7 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
             }
             try:
                 logger.info("[cadena_colaborativa] Probando generación con Gemini modelo: %s (timeout 12s)...", modelo)
-                resp = requests.post(url, json=body, timeout=12.0)
+                resp = requests.post(url, headers={'x-goog-api-key': self.gemini_key}, json=body, timeout=12.0)
                 if resp.status_code == 200:
                     data = resp.json()
                     candidates = data.get("candidates", [])

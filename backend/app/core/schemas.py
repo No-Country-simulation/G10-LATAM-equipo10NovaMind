@@ -692,6 +692,7 @@ class RespuestaAdaptacion(BaseModel):
     evaluacion_calidad: Optional[EvaluacionCalidad] = None
     almacenamiento_oci: Optional[AlmacenamientoOCI] = None
     advertencias: List[str] = Field(default_factory=list)
+    persistencia: Optional[Dict[str, str]] = None
     error: Optional[ErrorFlujo] = None
     orquestacion: MetricasOrquestacion
 

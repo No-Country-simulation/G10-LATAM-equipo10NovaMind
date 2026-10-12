@@ -11,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.auth import require_user, Principal
 from app.core.schemas import (
     AfirmacionEvaluada,
     AlmacenamientoOCI,
@@ -22,6 +23,14 @@ from app.core.schemas import (
 )
 
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def authenticated_api_fixture():
+    app.dependency_overrides[require_user] = lambda: Principal('11111111-1111-4111-8111-111111111111', 'test-only')
+    with patch('app.main.persist_result', side_effect=lambda principal, solicitud, respuesta: respuesta), \
+         patch('app.main._ejecutar_tareas_segundo_plano'):
+        yield
+    app.dependency_overrides.pop(require_user, None)
 
 
 def test_health_endpoint():
@@ -131,7 +140,8 @@ def test_adaptar_valida_esquema_con_texto_directo():
 
 
 def test_listar_paquetes_endpoint():
-    response = client.get("/api/v1/paquetes")
+    with patch('app.main.private_query', return_value=[]):
+        response = client.get("/api/v1/paquetes")
     assert response.status_code == 200
     data = response.json()
     assert "origen" in data

@@ -11,6 +11,7 @@ import type {
   DetailLevel,
 } from '../types/types';
 import { SCENARIOS } from '../data/mockScenarios';
+import { bearerHeaders } from './supabase';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -40,6 +41,8 @@ export async function solicitarAdaptacion(
   onProgress?: StationProgressCallback
 ): Promise<AdaptedContentPackage> {
   const { docTitle, docContent, profile, format, niche, detail, selectedScenarioId, rawFile } = params;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300000);
 
   // 1. Intentar comunicación con el Backend FastAPI vía SSE Streaming
   try {
@@ -59,17 +62,12 @@ export async function solicitarAdaptacion(
       formData.append('texto_directo', docContent);
     }
 
-    const controller = new AbortController();
-    // 300s timeout para procesar documentos pesados (ej. reportes extensos)
-    const timeoutId = setTimeout(() => controller.abort(), 300000);
-
     const response = await fetch(`${BASE_URL}/api/v1/adaptar/stream`, {
       method: 'POST',
+      headers: await bearerHeaders(),
       body: formData,
       signal: controller.signal,
     });
-
-    clearTimeout(timeoutId);
 
     if (response.ok && response.body) {
       const reader = response.body.getReader();
@@ -139,6 +137,8 @@ export async function solicitarAdaptacion(
       );
     }
     console.warn('Backend no disponible para demo offline explícita.');
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   // 2. Modo Demo Offline únicamente si se solicitó explícitamente demo-offline-swap

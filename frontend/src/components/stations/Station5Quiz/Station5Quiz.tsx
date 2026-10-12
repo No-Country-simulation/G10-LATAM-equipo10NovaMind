@@ -1,4 +1,4 @@
-import { useState } from "react";
+import type { QuizState } from '../../../services/persistence';
 import {
   Lock,
   Award,
@@ -17,6 +17,8 @@ import { triggerCelebrationConfetti } from "../../../utils/confetti";
 import styles from "./Station5Quiz.module.css";
 
 interface Station5Props {
+  quizState: QuizState;
+  onQuizChange: (update: (previous: QuizState) => QuizState) => void;
   questions: QuizQuestion[];
   completedStationsCount: number;
   isUnlocked: boolean;
@@ -30,6 +32,8 @@ interface Station5Props {
 }
 
 export const Station5FinalTrial = ({
+  quizState,
+  onQuizChange,
   questions = [],
   completedStationsCount,
   isUnlocked,
@@ -41,22 +45,16 @@ export const Station5FinalTrial = ({
   onOpenMasterBadge,
   onDownloadArtifact,
 }: Station5Props) => {
-  const [prevQuestions, setPrevQuestions] = useState(questions);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [isEvaluated, setIsEvaluated] = useState<boolean>(false);
-  const [userAnswers, setUserAnswers] = useState<Record<number, boolean>>({});
-  const [isQuizCompleted, setIsQuizCompleted] = useState<boolean>(false);
-
-  // Sincronización limpia en render sin useEffect
-  if (questions !== prevQuestions) {
-    setPrevQuestions(questions);
-    setCurrentQuestionIndex(0);
-    setSelectedOption(null);
-    setIsEvaluated(false);
-    setUserAnswers({});
-    setIsQuizCompleted(false);
-  }
+  const { currentQuestionIndex, selectedOption, isEvaluated, userAnswers, isQuizCompleted } = quizState;
+  const setCurrentQuestionIndex = (value: number | ((previous: number) => number)) =>
+    onQuizChange(prev => ({ ...prev, currentQuestionIndex: typeof value === 'function' ? value(prev.currentQuestionIndex) : value }));
+  const setSelectedOption = (value: number | null) => onQuizChange(prev => ({ ...prev, selectedOption: value,
+    selectedAnswers: value === null ? prev.selectedAnswers : { ...prev.selectedAnswers, [prev.currentQuestionIndex]: value } }));
+  const setIsEvaluated = (value: boolean) => onQuizChange(prev => ({ ...prev, isEvaluated: value }));
+  const setUserAnswers = (value: Record<number, boolean> | ((previous: Record<number, boolean>) => Record<number, boolean>)) =>
+    onQuizChange(prev => ({ ...prev, userAnswers: typeof value === 'function' ? value(prev.userAnswers) : value,
+      selectedAnswers: typeof value === 'function' ? prev.selectedAnswers : {} }));
+  const setIsQuizCompleted = (value: boolean) => onQuizChange(prev => ({ ...prev, isQuizCompleted: value }));
 
   const safeQuestions =
     questions.length > 0

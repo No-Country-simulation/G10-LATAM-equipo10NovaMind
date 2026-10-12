@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { supabase, authUser, requireSupabase } from './services/supabase';
+import { listPackages, createPackage, readState, writeState, EMPTY_QUIZ } from './services/persistence';
+import type { PackageRow, QuizState } from './services/persistence';
 import { AuthModal } from "./components/AuthModal/AuthModal";
 import type { AuthUser } from "./components/AuthModal/AuthModal";
 import { Header } from "./components/Header/Header";
@@ -65,6 +68,90 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [unlockedStations, setUnlockedStations] = useState<number[]>([0, 1, 2, 3, 4]);
   const [generatingMessage, setGeneratingMessage] = useState<string>("");
+  const [history, setHistory] = useState<PackageRow[]>([]);
+  const [packageId, setPackageId] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const [quizState, setQuizState] = useState<QuizState>(EMPTY_QUIZ);
+  const [syncMessage, setSyncMessage] = useState('Comprobando sesión…');
+  const accountVersion = useRef(0);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+  const latestState = useRef({ currentStep, activeStationIndex, completedStations, cognitiveShields, xp, achievements, quizState });
+  latestState.current = { currentStep, activeStationIndex, completedStations, cognitiveShields, xp, achievements, quizState };
+
+  const restorePackage = async (row: PackageRow, version: number) => {
+    const { progress, state } = await readState(row.id);
+    if (version !== accountVersion.current) return;
+    setCurrentPackage(row.payload); setPackageId(row.id);
+    setCurrentStep(progress?.current_step || 2);
+    setActiveStationIndex(progress?.active_station_index || 0);
+    setCompletedStations(progress?.completed_stations || {});
+    setCognitiveShields(progress?.cognitive_shields ?? 3);
+    setQuizState({ ...EMPTY_QUIZ, ...(progress?.quiz_answers || {}) });
+    setXp(state.xp);
+    setAchievements(state.achievements.length ? state.achievements : INITIAL_ACHIEVEMENTS);
+  };
+
+  useEffect(() => {
+    if (!supabase) { setSyncMessage('Falta configurar Supabase en frontend/.env.local.'); return; }
+    let disposed = false;
+    let currentOwner: string | null | undefined;
+    const refresh = async () => {
+      try {
+        const { data, error } = await supabase!.auth.getUser();
+        if (disposed) return;
+        const nextOwner = data.user?.id || null;
+        if (nextOwner === currentOwner) return;
+        currentOwner = nextOwner;
+        const version = ++accountVersion.current;
+        setReady(false); setUser(null); setHistory([]); setPackageId(null);
+        setCurrentPackage(SCENARIOS[0].data); setCurrentStep(1); setActiveStationIndex(0);
+        setCompletedStations({}); setCognitiveShields(3); setXp(0);
+        setQuizState(EMPTY_QUIZ);
+        setIsProcessing(false); setIsGenerating(false); setProcessingStage(''); setGeneratingMessage('');
+        setAchievements(INITIAL_ACHIEVEMENTS); setIsTrophyModalOpen(false); setSelectedBadgeForModal(null);
+        if (!data.user) { setSyncMessage(error && error.name !== 'AuthSessionMissingError' ? error.message : 'Inicia sesión para guardar tu trabajo.'); return; }
+        setUser(authUser(data.user)); setIsAuthOpen(false);
+        const rows = await listPackages();
+        const state = await supabase!.from('user_state').select('*').eq('user_id', nextOwner).single();
+        if (state.error) throw state.error;
+        if (disposed || version !== accountVersion.current) return;
+        setHistory(rows); setXp(state.data.xp);
+        setAchievements(state.data.achievements.length ? state.data.achievements : INITIAL_ACHIEVEMENTS);
+        const last = rows.find(r => r.id === state.data.preferences.last_package_id);
+        if (last) await restorePackage(last, version);
+        if (!disposed && version === accountVersion.current) { setReady(true); setSyncMessage('Historial recuperado desde Supabase.'); }
+      } catch (error) { if (!disposed) setSyncMessage('No se pudo recuperar la cuenta: ' + (error instanceof Error ? error.message : String(error))); }
+    };
+    void refresh();
+    const { data } = supabase.auth.onAuthStateChange(() => { setTimeout(() => { if (!disposed) void refresh(); }, 0); });
+    return () => { disposed = true; accountVersion.current++; data.subscription.unsubscribe(); };
+  }, []);
+
+  useEffect(() => {
+    if (!user || !ready) return;
+    const ownerId = user.id; const version = accountVersion.current;
+    const timer = setTimeout(() => {
+      const snapshot = { ...latestState.current };
+      setSyncMessage('Guardando progreso…');
+      saveQueue.current = saveQueue.current.catch(() => {}).then(async () => {
+        if (version !== accountVersion.current) return;
+        await writeState(ownerId, packageId, snapshot);
+        if (version === accountVersion.current) setSyncMessage('Progreso guardado en Supabase.');
+      }).catch(error => { if (version === accountVersion.current) setSyncMessage('Error de guardado: ' + error.message); });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [user, ready, packageId, currentStep, activeStationIndex, completedStations, cognitiveShields, xp, achievements, quizState]);
+
+  const logout = async () => {
+    try {
+      if (user && ready) {
+        await saveQueue.current;
+        await writeState(user.id, packageId, latestState.current);
+      }
+      const { error } = await requireSupabase().auth.signOut({ scope: 'local' });
+      if (error) throw error;
+    } catch (error) { setSyncMessage('No se cerró la sesión: ' + (error instanceof Error ? error.message : String(error))); }
+  };
 
   const completedStationsCount =
     Object.values(completedStations).filter(Boolean).length;
@@ -100,7 +187,7 @@ export default function App() {
 
   // Desbloqueo y apertura de modal para una medalla
   const handleUnlockBadge = (badgeId: string) => {
-    const timestamp = "2026-10-05T00:00:00.000Z";
+    const timestamp = new Date().toISOString();
     setAchievements((prev) =>
       prev.map((b) => {
         if (b.id === badgeId) {
@@ -138,14 +225,22 @@ export default function App() {
     pdfBase64?: string | null,
     rawFile?: File | null,
   ) => {
+    if (!user || !ready) { setIsAuthOpen(true); return; }
+    const version = accountVersion.current;
+    const startingOwner = user.id;
+    const priorState = { ...latestState.current };
+    setReady(false);
     setIsProcessing(true);
     setIsGenerating(true);
     setProcessingStage("Iniciando orquestación con agentes de NovaMind...");
     setGeneratingMessage("Conectando con el orquestador multi-agente de NovaMind...");
     setCompletedStations({});
     setActiveStationIndex(0);
+    setQuizState(EMPTY_QUIZ);
 
     try {
+      await saveQueue.current;
+      await writeState(startingOwner, packageId, priorState);
       const adaptedPkg = await solicitarAdaptacion(
         {
           docTitle: title,
@@ -165,16 +260,29 @@ export default function App() {
       );
 
       // Finalización exitosa: cargamos el nuevo paquete y abrimos la Ruta Cognitiva
+      if (version !== accountVersion.current) return;
+      const verified = await requireSupabase().auth.getUser();
+      if (verified.data.user?.id !== startingOwner) throw new Error('La cuenta cambió durante la generación.');
+      const saved = adaptedPkg.persistencia?.package_id
+        ? { id: adaptedPkg.persistencia.package_id, title: adaptedPkg.contenido_adaptado.titulo, payload: adaptedPkg }
+        : await createPackage(adaptedPkg, { profile, format, niche, detail, selectedScenarioId, source: selectedScenarioId === 'demo-offline-swap' ? 'explicit-demo' : 'backend' }, startingOwner);
+      if (version !== accountVersion.current) return;
+      setPackageId(saved.id); setHistory(prev => [saved, ...prev]);
       setCurrentPackage(adaptedPkg);
       setUnlockedStations([0, 1, 2, 3, 4]);
       setCurrentStep(2);
       triggerSmallConfetti();
     } catch (err: unknown) {
+      if (version !== accountVersion.current) return;
+      setCompletedStations(priorState.completedStations); setQuizState(priorState.quizState);
+      setActiveStationIndex(priorState.activeStationIndex);
       console.error("Error en el pipeline de NovaMind:", err);
       const errMsg = err instanceof Error ? err.message : String(err);
       alert(`⚠️ ${errMsg}`);
       setCurrentStep(1);
     } finally {
+      if (version !== accountVersion.current) return;
+      if (version === accountVersion.current) setReady(true);
       setIsGenerating(false);
       setIsProcessing(false);
       setProcessingStage("");
@@ -251,6 +359,7 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
 
   // Reinicio pedagógico del circuito al agotar los 3 escudos
   const handleResetCircuit = () => {
+    setQuizState(EMPTY_QUIZ);
     setCognitiveShields(3);
     setCompletedStations({});
     setActiveStationIndex(0);
@@ -264,12 +373,12 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
         onSelectStep={(step) => setCurrentStep(step)}
         user={user}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onLogout={() => setUser(null)}
+        onLogout={() => void logout()}
       />
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLoginSuccess={(loggedUser) => setUser(loggedUser)}
+        onLoginSuccess={() => setIsAuthOpen(false)}
       />
 
       {/* 2. Gamified Player HUD */}
@@ -293,8 +402,38 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>
+        <section aria-label="Mi historial" style={{ padding: '1rem', marginBottom: '1rem' }}>
+          <p role="status">{syncMessage}</p>
+          {user && <><h2>Mi historial</h2>
+            <button disabled={!ready || isProcessing} onClick={() => {
+              const version = accountVersion.current; setReady(false);
+              void (async () => {
+                await saveQueue.current;
+                await writeState(user.id, packageId, latestState.current);
+                const example = structuredClone(SCENARIOS[0].data);
+                example.contenido_adaptado.titulo = 'Ejemplo de demostración · prueba de persistencia';
+                example.metadatos.fecha_generacion = new Date().toISOString();
+                const row = await createPackage(example, { source: 'explicit-demo' }, user.id);
+                if (version !== accountVersion.current) return;
+                setHistory(previous => [row, ...previous]);
+                await restorePackage(row, version);
+              })().catch(error => setSyncMessage('No se pudo guardar el ejemplo: ' + error.message))
+                .finally(() => { if (version === accountVersion.current) setReady(true); });
+            }}>Guardar ejemplo de demostración en mi cuenta</button>
+            {history.length === 0 && <p>Aún no tienes contenidos guardados en esta versión.</p>}
+            {history.map(row => <button key={row.id} disabled={!ready || isProcessing} onClick={() => {
+              const version = accountVersion.current; setReady(false);
+              void (async () => {
+                await saveQueue.current;
+                await writeState(user.id, packageId, latestState.current);
+                await restorePackage(row, version);
+              })().catch(error => setSyncMessage('No se pudo abrir: ' + error.message))
+                .finally(() => { if (version === accountVersion.current) setReady(true); });
+            }}>{row.title}</button>)}</>}
+        </section>
         {currentStep === 1 && (
           <Step1Ingestion
+            key={user?.id || 'guest'}
             onStartPipeline={handleStartPipeline}
             isProcessing={isProcessing}
             processingStage={processingStage}
@@ -303,6 +442,9 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
 
         {currentStep === 2 && (
           <Step2KnowledgeQuest
+            key={`${user?.id || 'guest'}:${packageId || 'demo'}`}
+            quizState={quizState}
+            onQuizChange={setQuizState}
             contentPackage={currentPackage}
             completedStations={completedStations}
             activeStationIndex={activeStationIndex}

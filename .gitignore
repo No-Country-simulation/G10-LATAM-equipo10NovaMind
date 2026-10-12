@@ -56,6 +56,7 @@ historial_progreso/*.pdf
 
 # Herramientas
 .pytest_cache/
+pytest-cache-files-*/
 .mypy_cache/
 
 # Archivos confidenciales de infraestructura, secretos y respaldos locales

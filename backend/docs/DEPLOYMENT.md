@@ -55,7 +55,7 @@ npm run dev
 | `COHERE_MODEL` | Modelo de redacción (Agente 2) | `command-r-08-2024` (~18s latencia) |
 | `COHERE_EMBEDDING_MODEL` | Modelo embedding en Config | `embed-multilingual-v3.0` (1024 dims) |
 | `PROVEEDOR_CRITICO` | Proveedor del Agente 3 | `gemini` (predeterminado), `groq` o `cohere` |
-| `MODELO_CRITICO` | Modelo del Agente 3 Crítico | `gemini-2.5-flash` (~2s latencia) |
+| `MODELO_CRITICO` | Modelo del Agente 3 Crítico | `gemini-2.5-flash` |
 | `PROVEEDOR_CRITICO_FALLBACK` | Fallback de contingencia Agente 3 | `groq` o `cohere` |
 | `GEMINI_API_KEY` | API Key Google AI Studio | Clave para evaluación neutral del Crítico |
 | `GROQ_API_KEY` | API Key Groq | Clave opcional para evaluación LPU (<1.5s) |

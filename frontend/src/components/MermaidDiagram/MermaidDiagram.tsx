@@ -19,7 +19,7 @@ interface MermaidDiagramProps {
 mermaid.initialize({
   startOnLoad: false,
   theme: 'dark',
-  securityLevel: 'loose',
+  securityLevel: 'strict',
   fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
   themeVariables: {
     darkMode: true,

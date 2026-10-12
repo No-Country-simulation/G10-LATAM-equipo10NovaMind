@@ -13,6 +13,8 @@ import asyncio
 import json
 import logging
 import os
+from dataclasses import replace
+from uuid import UUID
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
@@ -23,13 +25,15 @@ if (_ROOT_DIR / ".env").exists():
     load_dotenv(_ROOT_DIR / ".env")
 load_dotenv()
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, status
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, status, Depends
+from app.auth import Principal, require_user, private_query, persist_result
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import ValidationError
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
-from app.core.config import ConfigError
+from app.core.config import Config, ConfigError
+from app.integration.private_pipeline import PrivateCadena, PrivateCorreo, notification_recipient
 from app.core.ingestion import IngestionError, cargar_documento_desde_bytes
 from app.core.schemas import (
     FormatoSalida,
@@ -69,43 +73,28 @@ app.add_middleware(
 )
 
 
-_orquestador_singleton: Optional[OrquestadorNuevaMente] = None
-_cadena_singleton: Optional[CadenaColaborativaMultiModelo] = None
-_servicio_correo_singleton: Optional[ServicioCorreo] = None
-
 # Semáforo de concurrencia: límite de 5 solicitudes simultáneas para evitar encolamiento innecesario
 _SEMAFORO_CONCURRENCIA = asyncio.Semaphore(5)
 
 
-def get_orquestador() -> OrquestadorNuevaMente:
-    global _orquestador_singleton
-    if _orquestador_singleton is None:
-        try:
-            _orquestador_singleton = crear_orquestador()
-        except ConfigError as exc:
-            logger.error("Error de configuración al iniciar orquestador: %s", exc)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Configuración del orquestador incompleta: {exc}",
-            ) from exc
-    return _orquestador_singleton
+def get_orquestador(principal: Principal) -> OrquestadorNuevaMente:
+    # One isolated collection per owner. No tokens or per-user state in a singleton.
+    cfg = Config.desde_entorno()
+    cfg = replace(cfg, collection_name='owner_' + principal.user_id.replace('-', ''))
+    from app.storage.private_storage import storage_for
+    return crear_orquestador(config=cfg, almacenador=storage_for(principal.user_id))
 
 
-def get_cadena_colaborativa() -> CadenaColaborativaMultiModelo:
-    global _cadena_singleton
-    if _cadena_singleton is None:
-        _cadena_singleton = CadenaColaborativaMultiModelo()
-    return _cadena_singleton
+def get_cadena_colaborativa(principal: Principal) -> CadenaColaborativaMultiModelo:
+    return PrivateCadena(principal.user_id)
 
 
-def get_servicio_correo() -> ServicioCorreo:
-    global _servicio_correo_singleton
-    if _servicio_correo_singleton is None:
-        _servicio_correo_singleton = ServicioCorreo()
-    return _servicio_correo_singleton
+def get_servicio_correo(principal: Principal) -> ServicioCorreo:
+    return PrivateCorreo(principal.user_id)
 
 
 def _ejecutar_tareas_segundo_plano(
+    principal: Principal,
     solicitud: SolicitudAdaptacion,
     respuesta: RespuestaAdaptacion,
     email_destinatario: Optional[str] = None,
@@ -115,31 +104,31 @@ def _ejecutar_tareas_segundo_plano(
     1. RAG Silencioso: Indexa el documento original en ChromaDB sin bloquear la respuesta.
     2. Envío Silencioso: Genera el dossier PDF estandarizado (sin audiovisual) y lo envía/respalda en OCI.
     """
+    if respuesta.status == 'error':
+        return
     # 1. Indexación silenciosa en ChromaDB
     try:
-        orquestador = get_orquestador()
-        if hasattr(orquestador, "indexador") and solicitud.documento_contenido:
+        orquestador = get_orquestador(principal)
+        investigador = orquestador._investigador
+        if solicitud.documento_contenido:
             doc_id = solicitud.documento_id or (
                 respuesta.orquestacion.documento_id if respuesta.orquestacion else "doc-auto"
             )
-            orquestador.indexador.indexar(
-                documento_id=doc_id,
-                titulo=solicitud.documento_titulo,
-                contenido=solicitud.documento_contenido,
-            )
+            if investigador.contar_chunks(doc_id) == 0:
+                investigador.ingerir_documento(doc_id, solicitud.documento_titulo, solicitud.documento_contenido)
             logger.info("[background] Documento '%s' indexado silenciosamente en ChromaDB.", doc_id)
     except Exception as exc_idx:
         logger.warning("[background] Fallo no crítico en indexación silenciosa ChromaDB: %s", exc_idx)
 
     # 2. Despacho silencioso de PDF y correo
     try:
-        servicio_correo = get_servicio_correo()
+        servicio_correo = get_servicio_correo(principal)
         contenido_dict = (
             respuesta.contenido_adaptado.model_dump()
             if hasattr(respuesta.contenido_adaptado, "model_dump")
             else (respuesta.contenido_adaptado or {})
         )
-        destinatario = email_destinatario or os.getenv("CORREO_NOTIFICACION_DEFAULT", "estudiante@novamind.lat")
+        destinatario = notification_recipient(principal, email_destinatario)
         anclaje = (
             respuesta.evaluacion_calidad.anclaje_fuente_score
             if respuesta.evaluacion_calidad
@@ -272,6 +261,7 @@ async def _extraer_solicitud(
 )
 async def adaptar_contenido(
     background_tasks: BackgroundTasks,
+    principal: Principal = Depends(require_user),
     archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
     texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
     titulo: Optional[str] = Form(None, description="Título del documento"),
@@ -303,9 +293,10 @@ async def adaptar_contenido(
     )
 
     respuesta: RespuestaAdaptacion
+    email_notificacion = notification_recipient(principal, email_notificacion)
 
     if modo_rag.lower() == "vectorless":
-        cadena = get_cadena_colaborativa()
+        cadena = get_cadena_colaborativa(principal)
         logger.info(
             "Iniciando Cadena Colaborativa Multi-Modelo (Vectorless): '%s' | %s | %s",
             solicitud.documento_titulo,
@@ -320,7 +311,7 @@ async def adaptar_contenido(
                 "Fallo en Cadena Colaborativa (%s). Conmutando a Respaldo 2 (LangGraph Clásico)...",
                 exc_cadena,
             )
-            orquestador = get_orquestador()
+            orquestador = get_orquestador(principal)
             async with _SEMAFORO_CONCURRENCIA:
                 respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
             respuesta.advertencias.append(
@@ -328,7 +319,7 @@ async def adaptar_contenido(
             )
     else:
         # Modo Clásico directo (LangGraph + ChromaDB)
-        orquestador = get_orquestador()
+        orquestador = get_orquestador(principal)
         logger.info(
             "Iniciando Orquestación Clásica LangGraph: '%s' | %s | %s",
             solicitud.documento_titulo,
@@ -338,12 +329,14 @@ async def adaptar_contenido(
         async with _SEMAFORO_CONCURRENCIA:
             respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
 
+    respuesta = await asyncio.to_thread(persist_result, principal, solicitud, respuesta)
     duracion = respuesta.orquestacion.duracion_segundos if respuesta.orquestacion else 0.0
     logger.info("Adaptación finalizada con status: %s | Duración: %.2fs", respuesta.status, duracion)
 
     # Programar tareas silenciosas en background (ChromaDB + PDF correo)
     background_tasks.add_task(
         _ejecutar_tareas_segundo_plano,
+        principal=principal,
         solicitud=solicitud,
         respuesta=respuesta,
         email_destinatario=email_notificacion,
@@ -357,6 +350,7 @@ async def adaptar_contenido(
     tags=["Adaptación Pedagógica"],
 )
 async def adaptar_contenido_stream(
+    principal: Principal = Depends(require_user),
     archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
     texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
     titulo: Optional[str] = Form(None, description="Título del documento"),
@@ -386,24 +380,26 @@ async def adaptar_contenido_stream(
         documento_contenido=documento_contenido,
     )
 
+    email_notificacion = notification_recipient(principal, email_notificacion)
     async def generador_eventos() -> AsyncGenerator[str, None]:
         # 1. Evento inicial de conexión establecida
         yield f"data: {json.dumps({'tipo': 'inicio', 'mensaje': 'Solicitud recibida. Iniciando orquestación pedagógica...'}, ensure_ascii=False)}\n\n"
 
         cola_progreso: asyncio.Queue[tuple[str, int]] = asyncio.Queue()
+        loop = asyncio.get_running_loop()
 
         def _progreso_callback(mensaje: str, paso: int) -> None:
             try:
-                cola_progreso.put_nowait((mensaje, paso))
+                loop.call_soon_threadsafe(cola_progreso.put_nowait, (mensaje, paso))
             except Exception:
                 pass
 
         async def _ejecutar():
             async with _SEMAFORO_CONCURRENCIA:
                 if modo_rag.lower() == "vectorless":
-                    cadena = get_cadena_colaborativa()
+                    cadena = get_cadena_colaborativa(principal)
                     try:
-                        return await asyncio.to_thread(cadena.ejecutar, solicitud, _progreso_callback)
+                        resp = await asyncio.to_thread(cadena.ejecutar, solicitud, _progreso_callback)
                     except Exception as exc_cadena:
                         logger.warning(
                             "Fallo en Cadena Colaborativa stream (%s). Conmutando a Respaldo 2 (LangGraph Clásico)...",
@@ -413,15 +409,15 @@ async def adaptar_contenido_stream(
                             "⚠️ Conmutando a Orquestador Clásico LangGraph por alta demanda...",
                             1,
                         ))
-                        orquestador = get_orquestador()
+                        orquestador = get_orquestador(principal)
                         resp = await asyncio.to_thread(orquestador.ejecutar, solicitud)
                         resp.advertencias.append(
                             "⚠️ Alta demanda detectada en la red ultrarrápida. Contenido procesado mediante orquestación LangGraph profunda con respaldo semántico."
                         )
-                        return resp
                 else:
-                    orquestador = get_orquestador()
-                    return await asyncio.to_thread(orquestador.ejecutar, solicitud)
+                    orquestador = get_orquestador(principal)
+                    resp = await asyncio.to_thread(orquestador.ejecutar, solicitud)
+                return await asyncio.to_thread(persist_result, principal, solicitud, resp)
 
         tarea = asyncio.create_task(_ejecutar())
 
@@ -484,6 +480,7 @@ async def adaptar_contenido_stream(
             asyncio.create_task(
                 asyncio.to_thread(
                     _ejecutar_tareas_segundo_plano,
+                    principal=principal,
                     solicitud=solicitud,
                     respuesta=respuesta,
                     email_destinatario=email_notificacion,
@@ -513,66 +510,28 @@ def handle_ingestion_error(_, exc: IngestionError) -> JSONResponse:
     )
 
 
-@app.get("/api/v1/paquetes", tags=["Persistencia OCI"])
-def listar_paquetes() -> Dict[str, Any]:
-    """Lista los paquetes generados en OCI Object Storage o almacenamiento local."""
-    if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
-        try:
-            from app.storage.oci_client import OCIObjectStorageClient
-            cliente = OCIObjectStorageClient()
-            return {"origen": "oci", "paquetes": cliente.listar_contenidos_generados()}
-        except Exception as exc:
-            logger.warning("Fallo al listar paquetes desde OCI: %s", exc)
-
-    from pathlib import Path
-
-    posibles_dirs = [
-        Path("data/outputs/contenidos_generados"),
-        Path("backend/data/outputs/contenidos_generados"),
-    ]
-    archivos = []
-    dir_gen = next((d for d in posibles_dirs if d.exists()), None)
-    if dir_gen:
-        for f in dir_gen.glob("*.json"):
-            archivos.append({
-                "nombre": f.name,
-                "tamanio_bytes": f.stat().st_size,
-                "creado_en": str(f.stat().st_mtime),
-            })
-    return {"origen": "local", "paquetes": archivos}
+@app.get("/api/v1/paquetes", tags=["Historial privado"])
+def listar_paquetes(principal: Principal = Depends(require_user)) -> Dict[str, Any]:
+    rows = private_query(principal, 'learning_packages', {
+        'select': 'id,title,created_at', 'user_id': 'eq.' + principal.user_id,
+        'parameters': 'cs.{"application":"fullstack-v2"}',
+        'order': 'created_at.desc', 'limit': '50',
+    })
+    return {'origen': 'supabase', 'paquetes': rows}
 
 
-@app.get("/api/v1/paquetes/{objeto_id:path}", tags=["Persistencia OCI"])
-def descargar_paquete(objeto_id: str) -> Dict[str, Any]:
-    """Descarga el contenido JSON de un paquete generado."""
-    if os.getenv("OCI_NAMESPACE") and os.getenv("OCI_BUCKET_NAME"):
-        try:
-            from app.storage.oci_client import OCIObjectStorageClient
-
-            cliente = OCIObjectStorageClient()
-            prefijo = "contenidos-generados/"
-            nombre_objeto_oci = (
-                objeto_id if objeto_id.startswith(prefijo) else f"{prefijo}{objeto_id}"
-            )
-            try:
-                datos = cliente.descargar_objeto(nombre_objeto_oci)
-            except Exception:
-                datos = cliente.descargar_objeto(objeto_id)
-            return json.loads(datos.decode("utf-8"))
-        except Exception as exc:
-            logger.warning("Fallo al descargar paquete desde OCI: %s", exc)
-
-    from pathlib import Path
-
-    nombre_limpio = Path(objeto_id).name
-    posibles_rutas = [
-        Path("data/outputs/contenidos_generados") / nombre_limpio,
-        Path("backend/data/outputs/contenidos_generados") / nombre_limpio,
-    ]
-    for archivo in posibles_rutas:
-        if archivo.exists():
-            return json.loads(archivo.read_text(encoding="utf-8"))
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paquete no encontrado.")
+@app.get("/api/v1/paquetes/{objeto_id:path}", tags=["Historial privado"])
+def descargar_paquete(objeto_id: str, principal: Principal = Depends(require_user)) -> Dict[str, Any]:
+    try:
+        package_id = str(UUID(objeto_id))
+    except ValueError:
+        raise HTTPException(404, 'Paquete no encontrado.') from None
+    rows = private_query(principal, 'learning_packages', {
+        'select': 'payload', 'id': 'eq.' + package_id, 'user_id': 'eq.' + principal.user_id,
+    })
+    if not rows:
+        raise HTTPException(404, 'Paquete no encontrado.')
+    return rows[0]['payload']
 
 
 def _obtener_directorio_documentos() -> Path:
