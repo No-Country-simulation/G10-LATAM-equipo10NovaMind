@@ -47,14 +47,20 @@ if (_ROOT_DIR / ".env").exists():
 load_dotenv()
 
 from app.core.schemas import (
+    DIRECTIVAS_NICHO_SECTOR,
+    DIRECTIVAS_PERFIL_DESTINATARIO,
     AlmacenamientoOCI,
     ContenidoAdaptado,
+    EscenaDirectorCut,
+    EspecificacionVisual,
     EvaluacionCalidad,
+    FuenteRAG,
     MetadatosSalida,
     MetricasOrquestacion,
     ParametrosGeneracion,
     RespuestaAdaptacion,
     SolicitudAdaptacion,
+    VideoJobSpec,
 )
 from app.storage.oci_client import OCIObjectStorageClient, _slugify
 
@@ -220,19 +226,222 @@ class CadenaColaborativaMultiModelo:
                 "    C --> D[Estudiante / Usuario]\n"
             )
 
-        # 6. Director Cut (Guion audiovisual)
-        if not isinstance(paquete.get("director_cut"), list):
-            paquete["director_cut"] = [
+        # 6. Director Cut (Guion audiovisual) y Contrato VideoJobSpec (Estación 4)
+        raw_dc = paquete.get("director_cut")
+        raw_scenes: List[Dict[str, Any]] = []
+        if isinstance(raw_dc, dict):
+            raw_scenes = list(raw_dc.get("escenas") or raw_dc.get("scenes") or [raw_dc])
+        elif isinstance(raw_dc, list):
+            raw_scenes = [s for s in raw_dc if isinstance(s, dict)]
+
+        if not raw_scenes:
+            doc_titulo = solicitud.documento_titulo or "el contenido"
+            nicho = solicitud.nicho_sector or "General"
+            raw_scenes = [
                 {
                     "id": "sc-1",
                     "escena": 1,
-                    "tiempo": "00:00 - 00:20",
-                    "titulo": "Apertura y Reto Didáctico",
-                    "guion_locutor": f"¡Hola! Hoy veremos qué hace único a {solicitud.documento_titulo} y cómo aplicarlo.",
-                    "storyboard_visual": "Pantalla dividida con animación conceptual.",
-                    "consejo_pedagogico": "Mantener tono claro y pausado.",
-                }
+                    "tiempo": "00:00 - 00:18",
+                    "duracion_segundos": 18.0,
+                    "titulo": f"Apertura: Fundamentos de {doc_titulo}",
+                    "guion_locutor": (
+                        f"¡Hola! Hoy exploramos {doc_titulo}. "
+                        "Vamos a comprender sus fundamentos técnicos y cómo resolver los retos clave "
+                        f"en el sector {nicho} con máxima precisión."
+                    ),
+                    "storyboard_visual": (
+                        f"Plano principal del docente con gráfico animado lateral que introduce {doc_titulo} "
+                        "y sus elementos distintivos."
+                    ),
+                    "consejo_pedagogico": "Contacto visual directo, dicción enérgica y ritmo constante para captar la atención.",
+                    "objetivo_pedagogico": "Presentar el valor estratégico y contextualizar la lección.",
+                    "visual": {
+                        "tipo": "ppt_concepto",
+                        "titulo": f"Fundamentos de {doc_titulo}",
+                        "puntos_clave": ["Contexto operativo", "Problema central", "Propuesta pedagógica"],
+                    },
+                    "fuentes": [
+                        {
+                            "chunk_id": "chk-01",
+                            "pagina": 1,
+                            "texto_fuente": (solicitud.documento_contenido[:140].strip() or f"Documentación oficial de {doc_titulo}"),
+                        }
+                    ],
+                },
+                {
+                    "id": "sc-2",
+                    "escena": 2,
+                    "tiempo": "00:18 - 00:38",
+                    "duracion_segundos": 20.0,
+                    "titulo": "Arquitectura y Mecánica Operativa",
+                    "guion_locutor": (
+                        "El corazón de la solución reside en su arquitectura modular. "
+                        "Analicemos el flujo paso a paso para asegurar un rendimiento óptimo "
+                        "y prevenir cuellos de botella en producción."
+                    ),
+                    "storyboard_visual": "Diagrama de bloques secuencial que se ilumina gradualmente conforme avanza el flujo de datos.",
+                    "consejo_pedagogico": "Modula la entonación señalando cada bloque para guiar la atención del alumno.",
+                    "objetivo_pedagogico": "Explicar el funcionamiento interno y la secuencia técnica.",
+                    "visual": {
+                        "tipo": "diagrama_bloques",
+                        "titulo": "Flujo de Arquitectura Técnica",
+                        "puntos_clave": ["Ingesta / Entrada", "Validación y Procesamiento", "Salida y Persistencia"],
+                        "codigo_o_estructura": "Entrada -> Validación -> Procesamiento -> Persistencia",
+                    },
+                    "fuentes": [
+                        {
+                            "chunk_id": "chk-02",
+                            "pagina": 1,
+                            "texto_fuente": (solicitud.documento_contenido[140:300].strip() or "Arquitectura y componentes del sistema."),
+                        }
+                    ],
+                },
+                {
+                    "id": "sc-3",
+                    "escena": 3,
+                    "tiempo": "00:38 - 00:58",
+                    "duracion_segundos": 20.0,
+                    "titulo": "Implementación Práctica y Cierre",
+                    "guion_locutor": (
+                        f"Con estas bases, aplicar este conocimiento en {nicho} es directo y confiable. "
+                        "Recuerda monitorear métricas clave y desplegar en entornos controlados para garantizar el éxito."
+                    ),
+                    "storyboard_visual": "Pantalla dividida con tarjeta resumen de mejores prácticas y llamada a la acción.",
+                    "consejo_pedagogico": "Cierre motivador, sonrisa profesional y ritmo pausado en la conclusión.",
+                    "objetivo_pedagogico": "Consolidar el aprendizaje y motivar la puesta en práctica.",
+                    "visual": {
+                        "tipo": "palabras_clave",
+                        "titulo": "Mejores Prácticas de Implementación",
+                        "puntos_clave": ["Modularidad comprobada", "Control de latencia", "Impacto medible"],
+                    },
+                    "fuentes": [
+                        {
+                            "chunk_id": "chk-03",
+                            "pagina": 1,
+                            "texto_fuente": (solicitud.documento_contenido[300:460].strip() or "Recomendaciones finales de implementación."),
+                        }
+                    ],
+                },
             ]
+
+        norm_scenes: List[Dict[str, Any]] = []
+        acum_segundos = 0.0
+
+        for i, raw in enumerate(raw_scenes[:3], start=1):
+            sc_id = str(raw.get("id") or f"sc-{i}")
+            sc_num = i
+            guion = str(
+                raw.get("guion_locutor")
+                or raw.get("script")
+                or raw.get("guion")
+                or f"Explicación didáctica de la etapa {i}."
+            ).strip()
+            num_palabras = len(guion.split()) if guion else 20
+            estim_palabras = int(raw.get("estimacion_palabras") or num_palabras)
+
+            dur_calc = round(estim_palabras / 2.3, 1)
+            raw_dur = raw.get("duracion_segundos")
+            try:
+                dur_seg = float(raw_dur) if raw_dur is not None else dur_calc
+            except (ValueError, TypeError):
+                dur_seg = dur_calc
+            dur_seg = max(5.0, min(30.0, dur_seg))
+
+            fin_segundos = acum_segundos + dur_seg
+            t_str = raw.get("tiempo")
+            if not t_str or not isinstance(t_str, str) or "-" not in t_str:
+                m1, s1 = divmod(int(acum_segundos), 60)
+                m2, s2 = divmod(int(fin_segundos), 60)
+                t_str = f"{m1:02d}:{s1:02d} - {m2:02d}:{s2:02d}"
+            acum_segundos = fin_segundos
+
+            titulo_sc = str(raw.get("titulo") or f"Escena {i}: Desarrollo Pedagógico").strip()
+            sb_visual = str(
+                raw.get("storyboard_visual")
+                or raw.get("visual_description")
+                or "Enfoque claro en el concepto central con soporte infográfico lateral."
+            ).strip()
+            cp_pedag = str(
+                raw.get("consejo_pedagogico")
+                or "Locución clara, velocidad moderada y énfasis en términos clave."
+            ).strip()
+            obj_pedag = raw.get("objetivo_pedagogico") or f"Transmitir con claridad el concepto {i}."
+
+            v_dict = raw.get("visual")
+            if not isinstance(v_dict, dict):
+                v_dict = {
+                    "tipo": "ppt_concepto",
+                    "titulo": titulo_sc,
+                    "puntos_clave": [titulo_sc, "Concepto clave", "Aplicación práctica"],
+                }
+            else:
+                tipo_v = v_dict.get("tipo")
+                if tipo_v not in ("diagrama_bloques", "ppt_concepto", "palabras_clave", "comparativa"):
+                    tipo_v = "ppt_concepto"
+                puntos_v = [str(p) for p in v_dict.get("puntos_clave", []) if p]
+                if not puntos_v:
+                    puntos_v = [titulo_sc, "Concepto clave"]
+                v_dict = {
+                    "tipo": tipo_v,
+                    "titulo": str(v_dict.get("titulo") or titulo_sc),
+                    "puntos_clave": puntos_v[:4],
+                    "codigo_o_estructura": v_dict.get("codigo_o_estructura"),
+                    "prompt_grafico": v_dict.get("prompt_grafico"),
+                }
+
+            f_list = raw.get("fuentes")
+            norm_fuentes: List[Dict[str, Any]] = []
+            if isinstance(f_list, list) and f_list:
+                for f in f_list:
+                    if isinstance(f, dict) and f.get("texto_fuente"):
+                        norm_fuentes.append({
+                            "chunk_id": str(f.get("chunk_id") or f"chk-0{i}"),
+                            "pagina": f.get("pagina"),
+                            "texto_fuente": str(f["texto_fuente"]).strip(),
+                        })
+            if not norm_fuentes:
+                texto_ref = (
+                    solicitud.documento_contenido[(i - 1) * 150 : (i - 1) * 150 + 120].strip()
+                    or f"Referencia fáctica del fragmento #{i}."
+                )
+                norm_fuentes.append({
+                    "chunk_id": f"chk-0{i}",
+                    "pagina": 1,
+                    "texto_fuente": texto_ref,
+                })
+
+            norm_sc = {
+                "id": sc_id,
+                "escena": sc_num,
+                "tiempo": t_str,
+                "duracion_segundos": dur_seg,
+                "titulo": titulo_sc,
+                "guion_locutor": guion,
+                "estimacion_palabras": estim_palabras,
+                "storyboard_visual": sb_visual,
+                "consejo_pedagogico": cp_pedag,
+                "objetivo_pedagogico": str(obj_pedag) if obj_pedag else None,
+                "visual": v_dict,
+                "fuentes": norm_fuentes,
+            }
+            EscenaDirectorCut.model_validate(norm_sc)
+            norm_scenes.append(norm_sc)
+
+        paquete["director_cut"] = norm_scenes
+
+        doc_id_slug = solicitud.documento_id or f"doc-{_slugify(solicitud.documento_titulo)[:12]}"
+        escenas_objs = [EscenaDirectorCut.model_validate(s) for s in norm_scenes]
+        job_spec = VideoJobSpec(
+            video_job_id=f"vjob-{doc_id_slug}",
+            document_id=doc_id_slug,
+            target_duration=50,
+            max_duration=60,
+            aspect_ratio="9:16",
+            idioma="es",
+            estado="contract_ready",
+            escenas=escenas_objs,
+        )
+        paquete["video_job_spec"] = job_spec.model_dump()
 
         # 7. Quiz
         quiz = paquete.get("quiz")
@@ -284,6 +493,14 @@ class CadenaColaborativaMultiModelo:
         if not self.gemini_key:
             raise RuntimeError("GEMINI_API_KEY no configurada para Paso 1.")
 
+        directiva_nicho = DIRECTIVAS_NICHO_SECTOR.get(
+            solicitud.nicho_sector,
+            DIRECTIVAS_NICHO_SECTOR.get("General", "")
+        )
+        directiva_perfil = DIRECTIVAS_PERFIL_DESTINATARIO.get(
+            solicitud.perfil_destinatario, ""
+        )
+
         prompt = f"""
 Eres NovaMind, un Sistema Inteligente de Adaptación y Generación de Contenido Educativo Multi-Agente.
 Analiza la siguiente DOCUMENTACIÓN FUENTE y genera un paquete educativo estructurado y coherente.
@@ -291,7 +508,11 @@ Analiza la siguiente DOCUMENTACIÓN FUENTE y genera un paquete educativo estruct
 PARÁMETROS:
 - Título: "{solicitud.documento_titulo}"
 - Perfil Destinatario: "{solicitud.perfil_destinatario}"
+- Directiva Pedagógica para el Perfil:
+  {directiva_perfil}
 - Nicho / Contexto: "{solicitud.nicho_sector}"
+- Directiva Sectorial del Destinatario:
+  {directiva_nicho}
 - Nivel de Detalle: "{solicitud.nivel_detalle}"
 - Formato Solicitado: "{solicitud.formato_salida}"
 
@@ -305,7 +526,7 @@ DIRECTIVAS DIDÁCTICAS PARA LAS ESTACIONES:
 2. "flashcards": Si el perfil es técnico, genera 4 a 6 tarjetas de active recall con "id", "frente", "dorso" y "pista_didactica". Si es perfil ejecutivo, genera 4 a 6 conceptos clave con impacto en negocio y ROI.
 3. "tutorial": 3 a 4 pasos prácticos progresivos ("id", "paso", "titulo", "descripcion", "cli_command" (o acción práctica), "completado": false, "verificacion").
 4. "diagrama_mermaid": Un diagrama explicativo en sintaxis Mermaid.js válida (ej. `flowchart TD` o `sequenceDiagram`) que modele la arquitectura o el flujo principal.
-5. "director_cut": 2 a 3 escenas para guion de microclase (teleprompter de 60s) con "id", "escena", "tiempo", "titulo", "guion_locutor" (locución clara del profesor), "storyboard_visual" y "consejo_pedagogico".
+5. "director_cut": 2 o 3 escenas de microclase/teleprompter (25 a 40 palabras por escena, total 110-125 palabras para microclase <= 60s) con "id", "escena", "tiempo", "duracion_segundos", "titulo", "guion_locutor", "estimacion_palabras", "storyboard_visual", "consejo_pedagogico", "objetivo_pedagogico", "visual" (objeto con "tipo": "ppt_concepto"|"diagrama_bloques"|"palabras_clave"|"comparativa", "titulo", "puntos_clave") y "fuentes" (lista con "chunk_id" y "texto_fuente").
 6. "quiz": 3 a 4 preguntas con "id", "pregunta", "opciones" (lista de 4 alternativas), "respuesta_correcta" (índice 0-3 entero), "justificacion_rag" (explicación basada en la fuente) y "cita_fuente".
 
 RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
@@ -335,7 +556,7 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
   ],
   "diagrama_mermaid": "flowchart TD\\n    A[Inicio] --> B[Proceso]\\n    B --> C[Fin]",
   "director_cut": [
-    {{"id": "sc-1", "escena": 1, "tiempo": "00:00 - 00:20", "titulo": "Introducción", "guion_locutor": "Texto locución", "storyboard_visual": "Qué se ve en pantalla", "consejo_pedagogico": "Consejo docente"}}
+    {{"id": "sc-1", "escena": 1, "tiempo": "00:00 - 00:18", "duracion_segundos": 18.0, "titulo": "Apertura y Reto Didáctico", "guion_locutor": "Texto de locución pedagógica clara de 25 a 40 palabras", "estimacion_palabras": 28, "storyboard_visual": "Plano frontal con infografía lateral", "consejo_pedagogico": "Ritmo claro y mirada a cámara", "objetivo_pedagogico": "Presentar el valor estratégico", "visual": {{"tipo": "ppt_concepto", "titulo": "Concepto Central", "puntos_clave": ["Punto 1", "Punto 2"]}}, "fuentes": [{{"chunk_id": "chk-01", "texto_fuente": "Cita textual del documento"}}]}}
   ],
   "quiz": [
     {{"id": "q-1", "pregunta": "¿Pregunta técnica?", "opciones": ["A", "B", "C", "D"], "respuesta_correcta": 0, "justificacion_rag": "Explicación fáctica", "cita_fuente": "Cita textual del documento"}}
@@ -486,12 +707,24 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON:
         intro_actual = paquete_base.get("introduccion_contextualizada", "")
         resumen_actual = paquete_base.get("resumen_ninja", {}).get("analogia_central", "")
 
+        directiva_nicho = DIRECTIVAS_NICHO_SECTOR.get(
+            solicitud.nicho_sector,
+            DIRECTIVAS_NICHO_SECTOR.get("General", "")
+        )
+        directiva_perfil = DIRECTIVAS_PERFIL_DESTINATARIO.get(
+            solicitud.perfil_destinatario, ""
+        )
+
         prompt = f"""
 Eres el Especialista en Pedagogía y Tono Editorial de NovaMind.
 Tu objetivo es humanizar y adaptar el lenguaje al perfil y nicho del estudiante sin alterar los datos técnicos.
 
 PERFIL: "{solicitud.perfil_destinatario}"
+DIRECTIVA DE AUDIENCIA DEL PERFIL:
+{directiva_perfil}
 NICHO / SECTOR: "{solicitud.nicho_sector}"
+DIRECTIVA DE ENFOQUE DEL SECTOR:
+{directiva_nicho}
 NIVEL: "{solicitud.nivel_detalle}"
 
 TEXTO ACTUAL DE INTRODUCCIÓN:
@@ -672,11 +905,23 @@ RESPONDE ÚNICAMENTE CON UN JSON:
         if not self.groq_key:
             raise RuntimeError("Ni Gemini ni Groq están disponibles.")
 
+        directiva_nicho = DIRECTIVAS_NICHO_SECTOR.get(
+            solicitud.nicho_sector,
+            DIRECTIVAS_NICHO_SECTOR.get("General", "")
+        )
+        directiva_perfil = DIRECTIVAS_PERFIL_DESTINATARIO.get(
+            solicitud.perfil_destinatario, ""
+        )
+
         prompt = f"""
 Eres NovaMind. Genera un paquete educativo en formato JSON estricto con las 6 estaciones de aprendizaje:
 Título: "{solicitud.documento_titulo}"
 Perfil: "{solicitud.perfil_destinatario}"
+Directiva de Perfil Pedagógico:
+{directiva_perfil}
 Nicho: "{solicitud.nicho_sector}"
+Directiva Sectorial:
+{directiva_nicho}
 
 Texto fuente:
 \"\"\"
@@ -710,7 +955,7 @@ Debes responder ÚNICAMENTE con esta estructura JSON:
   ],
   "diagrama_mermaid": "flowchart TD\\n    A[Inicio] --> B[Proceso]\\n    B --> C[Fin]",
   "director_cut": [
-    {{"id": "sc-1", "escena": 1, "tiempo": "00:00 - 00:20", "titulo": "Introducción", "guion_locutor": "Texto locución", "storyboard_visual": "Visual", "consejo_pedagogico": "Consejo"}}
+    {{"id": "sc-1", "escena": 1, "tiempo": "00:00 - 00:18", "duracion_segundos": 18.0, "titulo": "Apertura Didáctica", "guion_locutor": "Locución clara de 25 a 40 palabras", "estimacion_palabras": 25, "storyboard_visual": "Visual interactivo", "consejo_pedagogico": "Consejo didáctico", "visual": {{"tipo": "ppt_concepto", "titulo": "Visual", "puntos_clave": ["Clave 1", "Clave 2"]}}, "fuentes": [{{"chunk_id": "chk-01", "texto_fuente": "Cita"}}]}}
   ],
   "quiz": [
     {{"id": "q-1", "pregunta": "¿Pregunta?", "opciones": ["A", "B", "C", "D"], "respuesta_correcta": 0, "justificacion_rag": "Justificación fáctica", "cita_fuente": "Cita textual"}}

@@ -900,3 +900,72 @@ def test_contrato_audiovisual_escena_director_cut():
     assert job.duracion_total_estimada == round(16 / 2.3, 1)
     assert len(job.escenas) == 1
 
+
+def test_normalizar_paquete_base_director_cut_y_video_job_spec():
+    """Valida que _normalizar_paquete_base genere escenas 60s completas y VideoJobSpec."""
+    from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
+    from app.core.schemas import ContenidoAdaptado, SolicitudAdaptacion
+
+    cadena = CadenaColaborativaMultiModelo()
+    solicitud = SolicitudAdaptacion(
+        documento_titulo="Tutorial de Memoria Swap en OCI",
+        documento_contenido="El kernel de Linux administra memoria swap en disco para evitar OOM.",
+        perfil_destinatario="Principiante",
+        formato_salida="Paquete Educativo Completo (5 Estaciones)",
+        nicho_sector="Tecnología e Informática",
+    )
+
+    # Caso 1: Paquete vacío sin director_cut
+    paquete_vacio = {}
+    normalizado = cadena._normalizar_paquete_base(paquete_vacio, solicitud)
+
+    assert "director_cut" in normalizado
+    assert len(normalizado["director_cut"]) == 3
+    for sc in normalizado["director_cut"]:
+        assert sc["id"].startswith("sc-")
+        assert sc["duracion_segundos"] >= 5.0
+        assert sc["estimacion_palabras"] > 0
+        assert sc["visual"]["tipo"] in ("ppt_concepto", "diagrama_bloques", "palabras_clave", "comparativa")
+        assert len(sc["fuentes"]) >= 1
+
+    assert "video_job_spec" in normalizado
+    job = normalizado["video_job_spec"]
+    assert job["estado"] == "contract_ready"
+    assert job["aspect_ratio"] == "9:16"
+    assert job["total_palabras"] > 0
+    assert job["duracion_total_estimada"] > 0.0
+
+    # Caso 2: Validar que ContenidoAdaptado lo asimile con tipado estricto
+    contenido = ContenidoAdaptado.model_validate(normalizado)
+    assert contenido.video_job_spec is not None
+    assert contenido.video_job_spec.estado == "contract_ready"
+    assert len(contenido.director_cut) == 3
+
+
+def test_contenido_adaptado_con_director_cut_anidado():
+    """Valida que ContenidoAdaptado desenvuelva director_cut si viene en objeto con 'escenas'."""
+    from app.core.schemas import ContenidoAdaptado
+
+    payload = {
+        "titulo": "Microclase RAG",
+        "introduccion_contextualizada": "Introducción de prueba.",
+        "director_cut": {
+            "escenas": [
+                {
+                    "id": "sc-1",
+                    "escena": 1,
+                    "tiempo": "00:00 - 00:20",
+                    "titulo": "Escena 1",
+                    "guion_locutor": "Guion docente de prueba.",
+                    "storyboard_visual": "Visual prueba",
+                    "consejo_pedagogico": "Consejo prueba",
+                }
+            ]
+        },
+    }
+    contenido = ContenidoAdaptado.model_validate(payload)
+    assert isinstance(contenido.director_cut, list)
+    assert len(contenido.director_cut) == 1
+    assert contenido.director_cut[0]["id"] == "sc-1"
+
+

@@ -357,10 +357,17 @@ export const Step1Ingestion = ({
                 onChange={(e) => setNiche(e.target.value as IndustryNiche)}
                 className={styles.selectInput}
               >
-                <option value="General">General (Cloud Infrastructure)</option>
-                <option value="Fintech">Fintech & Banca</option>
-                <option value="Salud">Salud & Biotech</option>
-                <option value="E-commerce">E-commerce & Retail</option>
+                <option value="Tecnología e Informática">Tecnología e Informática</option>
+                <option value="Medicina y Salud">Medicina y Salud</option>
+                <option value="Ingeniería y Construcción">Ingeniería y Construcción</option>
+                <option value="Finanzas y Contabilidad">Finanzas y Contabilidad</option>
+                <option value="Administración y Negocios">Administración y Negocios</option>
+                <option value="Marketing y Ventas">Marketing y Ventas</option>
+                <option value="Leyes y Legal">Leyes y Legal</option>
+                <option value="Educación y Academia">Educación y Academia</option>
+                <option value="Ciencias e Investigación">Ciencias e Investigación</option>
+                <option value="Industria y Operaciones">Industria y Operaciones</option>
+                <option value="General">General (Multisectorial)</option>
               </select>
             </div>
 

@@ -13,6 +13,16 @@ export type OutputFormat =
   | 'Guion de Clase / Video';
 
 export type IndustryNiche = 
+  | 'Tecnología e Informática'
+  | 'Medicina y Salud'
+  | 'Ingeniería y Construcción'
+  | 'Finanzas y Contabilidad'
+  | 'Administración y Negocios'
+  | 'Marketing y Ventas'
+  | 'Leyes y Legal'
+  | 'Educación y Academia'
+  | 'Ciencias e Investigación'
+  | 'Industria y Operaciones'
   | 'General'
   | 'Fintech'
   | 'Salud'

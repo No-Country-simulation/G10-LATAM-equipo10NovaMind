@@ -36,6 +36,8 @@ from app.core.config import Config, ConfigError
 from app.integration.private_pipeline import PrivateCadena, PrivateCorreo, notification_recipient
 from app.core.ingestion import IngestionError, cargar_documento_desde_bytes
 from app.core.schemas import (
+    DIRECTIVAS_NICHO_SECTOR,
+    DIRECTIVAS_PERFIL_DESTINATARIO,
     FormatoSalida,
     NichoSector,
     NivelDetalle,
@@ -174,12 +176,7 @@ def obtener_opciones_configuracion() -> Dict[str, List[str]]:
             "Resumen Ejecutivo (TL;DR)",
             "Guion de Clase / Video",
         ],
-        "nichos_sector": [
-            "Fintech",
-            "Salud",
-            "E-commerce",
-            "General",
-        ],
+        "nichos_sector": list(DIRECTIVAS_NICHO_SECTOR.keys()),
         "niveles_detalle": [
             "Didáctico",
             "Intermedio",
