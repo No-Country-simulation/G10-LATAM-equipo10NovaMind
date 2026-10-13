@@ -57,7 +57,7 @@ def test_other_owners_package_is_not_found():
         app.dependency_overrides.pop(require_user, None)
 
 def test_rag_and_disk_storage_are_owner_scoped():
-    with patch('app.main.crear_orquestador') as factory, patch('app.storage.private_storage.almacenador_local') as disk:
+    with patch('app.main.crear_orquestador') as factory, patch('app.storage.private_storage.almacenador_local') as disk, patch.dict('os.environ', {'OCI_KEY_FILE': ''}):
         get_orquestador(Principal(USER_A, 'test'))
         cfg = factory.call_args.kwargs['config']
         assert cfg.collection_name == 'owner_' + UUID(USER_A).hex
