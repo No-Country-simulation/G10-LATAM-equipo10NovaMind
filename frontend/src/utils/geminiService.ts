@@ -225,14 +225,19 @@ PARÁMETROS:
 ${docContent ? `DOCUMENTACIÓN FUENTE:\n"""\n${docContent}\n"""` : 'El material fuente ha sido adjuntado para análisis e interpretación multimodal completa.'}
 
 DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
-1. Adapta el lenguaje, ejemplos y analogías al perfil "${profile}" en el contexto de "${niche}".
+1. El sistema es COMPLETAMENTE AGNÓSTICO: el contenido puede ser de cualquier disciplina (literatura, ciencia, filosofía, historia, arte, ingeniería, etc.). Adapta el lenguaje, ejemplos y analogías al perfil "${profile}" en el contexto de "${niche}". JAMÁS asumas ni menciones temas ajenos como infraestructura cloud u OCI a menos que la documentación fuente trate explícitamente sobre eso.
 2. Genera las 5 estaciones pedagógicas completas:
-   - resumen_ninja: analogía central pedagógica, 3 o 4 conceptos clave verificados y métricas rápidas.
+   - resumen_ninja: analogía central pedagógica, 3 o 4 conceptos clave verificados y métricas rápidas (en 'tipo_oci' define la categoría temático-conceptual del tema, ej: 'Literatura Alegórica', 'Filosofía Práctica', 'Biología Molecular'; en 'costo' la accesibilidad o nivel de esfuerzo cognitivo).
    - flashcards: mínimo 3 tarjetas de active recall con pregunta (frente), respuesta (dorso) y pista didáctica analógica.
-   - tutorial: 3 a 4 pasos prácticos progresivos con instrucciones reproducibles y validación técnica.
-   - director_cut: mínimo 4 a 6 escenas completas de storyboard para el guion didáctico audiovisual (cubriendo introducción/gancho, explicación del concepto central, desglose de componentes/casos, y conclusión pedagógica, cada una con su guion de locución, indicación visual de storyboard y consejo didáctico).
+   - tutorial: 3 a 4 pasos prácticos o interactivos progresivos con instrucciones reproducibles y validación didáctica.
+   - director_cut: mínimo 4 a 6 escenas completas de storyboard para el guion didáctico audiovisual (cubriendo introducción/gancho, planteamiento del conflicto/problema, desglose conceptual, y conclusión didáctica). Cada escena DEBE incluir:
+     * 'titulo': Título descriptivo de la escena.
+     * 'tiempo': Duración estimada (ej. '00:00 - 01:30').
+     * 'guion_locutor': LOCUCIÓN DOCENTE EXTENSA, DESCRIPTIVA Y CONCEPTUAL (OBLIGATORIO: Mínimo 100 a 180 palabras, 2 a 3 párrafos fluidos por escena). NUNCA generes frases cortas de una línea. El guion de locución debe EXPLICAR A FONDO los conceptos fundamentales de la escena, detallando las causas, las metáforas o mecanismos técnicos/conceptuales, su significado y el aprendizaje concreto que el estudiante debe asimilar en ese momento.
+     * 'storyboard_visual': DESCRIPCIÓN VISUAL Y DE PUESTA EN ESCENA (QUÉ SE VE EN PANTALLA: composición, personajes, ambientación, elementos en escena, iluminación, encuadre cinematográfico, 100% fiel al tema).
+     * 'consejo_pedagogico': Recomendación didáctica para transmitir eficazmente la idea.
    - quiz: mínimo 3 preguntas didácticas con opciones, índice de la respuesta correcta (0-indexed) y justificación referenciando citas directas.
-3. En 'almacenamiento_oci', define:
+3. En 'almacenamiento_oci', define los metadatos técnicos de persistencia de artefacto:
    - bucket: "nuevamente-edtech-artifacts"
    - objeto_id: "artifact-${timestamp}.json"
    - status_upload: "completado"
@@ -295,4 +300,92 @@ DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
   }
 
   throw lastError || new Error('No se pudo generar la adaptación con los modelos activos de tu clave.');
+}
+
+export async function enrichSceneVisualDescription(
+  docTitle: string,
+  sceneTitle: string,
+  currentVisual: string,
+  scriptText: string
+): Promise<string> {
+  const prompt = `Eres un director audiovisual pedagógico y artista de storyboard.
+Contexto o Título de la lección: "${docTitle || 'Lección Didáctica'}"
+Escena: "${sceneTitle}"
+Guion de locución docente: "${scriptText}"
+Descripción visual previa: "${currentVisual}"
+
+Instrucción didáctica OBLIGATORIA:
+Genera una descripción visual y de puesta en escena enriquecida (storyboard cinematográfico-didáctico) que represente con alta fidelidad esta escena.
+Describe:
+- Encuadre y plano de cámara (ej. plano general, plano medio, plano detalle simbólico).
+- Iluminación, ambientación y paleta cromática acorde al tono de la escena.
+- Elementos focales, personajes/objetos y acción en pantalla que transmiten visualmente el concepto sin distracciones.
+- Metáfora o recurso visual que ayuda al estudiante a interiorizar el aprendizaje.
+
+Devuelve ÚNICAMENTE la descripción visual en un párrafo conciso y evocador (entre 60 y 90 palabras), en español, sin preámbulos, sin asteriscos ni encabezados.`;
+
+  const availableModels = await getAvailableBestModels();
+  for (const modelName of availableModels) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: [prompt],
+        config: {
+          temperature: 0.3,
+        },
+      });
+      if (response && response.text) {
+        return response.text.trim();
+      }
+    } catch (err: unknown) {
+      console.warn(`Error enriqueciendo escena con ${modelName}:`, err);
+      continue;
+    }
+  }
+  return currentVisual;
+}
+
+export async function expandSceneScript(
+  docTitle: string,
+  sceneTitle: string,
+  currentScript: string,
+  visualDescription: string,
+  pedagogyTip: string
+): Promise<string> {
+  const prompt = `Eres un docente experto y narrador pedagógico de alto nivel.
+Contexto o Título de la obra/lección: "${docTitle || 'Lección Didáctica'}"
+Escena actual: "${sceneTitle}"
+Guion de locución breve actual: "${currentScript}"
+Descripción visual de la escena: "${visualDescription}"
+Enfoque pedagógico: "${pedagogyTip}"
+
+MISIÓN OBLIGATORIA:
+Reescribe y expande el guion de locución del docente para el teleprompter de esta escena.
+La locución DEBE ser más larga, fluida, inmersiva y profundamente descriptiva (entre 120 y 180 palabras, 2 o 3 párrafos pedagógicos).
+Debe:
+1. EXPLICAR CON CLARIDAD Y PROFUNDIDAD los conceptos clave que suceden en esta escena, sus causas, implicaciones o metáforas centrales.
+2. Describir la situación conectando la reflexión didáctica con lo que el estudiante ve en pantalla.
+3. Proporcionar un aprendizaje concreto y memorable, manteniendo un ritmo de dicción natural y cautivador para la síntesis de voz.
+
+Devuelve ÚNICAMENTE el texto narrativo en español listo para locutar, sin títulos, sin viñetas, sin comillas externas ni aclaraciones adicionales.`;
+
+  const availableModels = await getAvailableBestModels();
+  for (const modelName of availableModels) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: [prompt],
+        config: {
+          temperature: 0.35,
+        },
+      });
+      if (response && response.text) {
+        return response.text.trim();
+      }
+    } catch (err: unknown) {
+      console.warn(`Error ampliando locución con ${modelName}:`, err);
+      continue;
+    }
+  }
+  return currentScript;
 }
