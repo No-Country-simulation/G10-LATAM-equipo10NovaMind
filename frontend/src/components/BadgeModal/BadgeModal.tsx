@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { X, Award, CheckCircle2, Sparkles, Flame, Shield, Calendar, RotateCcw, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Award, CheckCircle2, Sparkles, Flame, Shield, Calendar, RotateCcw, Trophy } from 'lucide-react';
 import type { Achievement } from '../../types/types';
 import styles from './BadgeModal.module.css';
 
@@ -24,8 +24,11 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
   streakDays,
   onContinueQuest,
   onRestartToStation1,
-  onReviewStations,
 }) => {
+  // Estado para forzar la vista de vitrina cuando el usuario hace clic en el botón del capstone
+  const [showcaseForced, setShowcaseForced] = useState<boolean>(false);
+
+  // Escuchar tecla Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -38,6 +41,9 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Derivamos la vista: si no hay medalla individual o el usuario forzó la vitrina, se muestra la vitrina
+  const isDisplayingShowcase = !singleBadge || showcaseForced;
+
   const currentLevel = Math.floor(xp / 100) + 1;
   const getRankTitle = (lvl: number) => {
     if (lvl >= 4) return 'Máster de Dominio Cognitivo';
@@ -48,7 +54,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   const unlockedCount = allBadges.filter((b) => b.desbloqueado).length;
 
-  // Detección estricta: solo es la medalla capstone/final si es el quiz/evaluación final
+  // Detección estricta de la medalla Capstone/Quiz
   const badgeId = (singleBadge?.id || '').toLowerCase();
   const badgeTitle = (singleBadge?.titulo || '').toLowerCase();
 
@@ -62,42 +68,40 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
     badgeTitle.includes('quiz');
 
   const handleContinue = () => {
+    setShowcaseForced(false);
     onClose();
     if (onContinueQuest) {
       onContinueQuest();
     }
   };
 
-  const handleFinish = () => {
-    onClose();
-    if (onReviewStations) {
-      onReviewStations();
-    } else if (onContinueQuest) {
-      onContinueQuest();
-    }
-  };
-
   const handleRestartToStart = () => {
+    setShowcaseForced(false);
     onClose();
     if (onRestartToStation1) {
       onRestartToStation1();
     }
   };
 
+  const handleModalClose = () => {
+    setShowcaseForced(false);
+    onClose();
+  };
+
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={handleModalClose}>
       <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
         {/* Botón de cierre */}
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleModalClose}
           className={styles.closeButton}
           aria-label="Cerrar modal"
         >
           <X size={18} />
         </button>
 
-        {singleBadge ? (
+        {!isDisplayingShowcase && singleBadge ? (
           /* Celebración de medalla individual recién desbloqueada */
           <div className={styles.celebrationWrapper}>
             <div className={styles.badgeIconContainer}>
@@ -127,11 +131,11 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
               <div className={styles.finalActionsContainer}>
                 <button
                   type="button"
-                  onClick={handleFinish}
+                  onClick={() => setShowcaseForced(true)}
                   className={styles.ctaContinueButton}
                 >
-                  <Check size={16} />
-                  <span>Finalizar y Repasar Estaciones</span>
+                  <Trophy size={16} />
+                  <span>Finalizar y Ver Vitrina de Trofeos</span>
                 </button>
 
                 {onRestartToStation1 && (
@@ -156,7 +160,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
             )}
           </div>
         ) : (
-          /* Vitrina completa de trofeos */
+          /* Vitrina completa de trofeos y medallas */
           <div className={styles.showcaseWrapper}>
             <div className={styles.showcaseHeader}>
               <div className={styles.showcaseTitleGroup}>
@@ -242,7 +246,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleModalClose}
               className={styles.closeSecondaryButton}
             >
               Cerrar Vitrina
