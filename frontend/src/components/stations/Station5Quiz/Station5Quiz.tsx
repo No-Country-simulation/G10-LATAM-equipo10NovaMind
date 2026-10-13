@@ -80,8 +80,8 @@ export const Station5FinalTrial = ({
         ];
 
   const totalQuestions = safeQuestions.length;
-  const minRequiredToPass = Math.max(1, Math.ceil(totalQuestions * 0.6));
-  const minPercentage = Math.round((minRequiredToPass / totalQuestions) * 100);
+  // Regla del 100%: responder correctamente la totalidad de las preguntas
+  const minRequiredToPass = totalQuestions;
   const currentQ = safeQuestions[currentQuestionIndex] || safeQuestions[0];
 
   // 1. Pantalla: Bloqueo por requisitos previos
@@ -236,17 +236,14 @@ export const Station5FinalTrial = ({
     const isCorrect = index === currentQ.respuesta_correcta;
 
     if (isCorrect) {
-      // Respuesta correcta: marcar, guardar y mostrar justificación RAG
       setSelectedOption(index);
       setIsEvaluated(true);
       setIsWrongAttempt(false);
       setUserAnswers((prev) => ({ ...prev, [currentQuestionIndex]: true }));
     } else {
-      // Respuesta incorrecta: pierde escudo, feedback visual momentáneo, permite reintentar
       setSelectedOption(index);
       setIsWrongAttempt(true);
       onDeductShield();
-      // Limpiar selección tras feedback para permitir nuevo intento (3s para que lo pueda leer)
       setTimeout(() => {
         setSelectedOption(null);
         setIsWrongAttempt(false);
@@ -264,7 +261,8 @@ export const Station5FinalTrial = ({
       setIsQuizCompleted(true);
       const correctCount = Object.values(userAnswers).filter(Boolean).length;
 
-      if (correctCount >= minRequiredToPass) {
+      // Requiere el 100% de respuestas correctas
+      if (correctCount === minRequiredToPass) {
         triggerCelebrationConfetti();
         onCompleteStation(100);
         onOpenMasterBadge();
@@ -285,7 +283,7 @@ export const Station5FinalTrial = ({
   const userScorePercentage = Math.round(
     (correctAnswersCount / totalQuestions) * 100,
   );
-  const isSuccess = correctAnswersCount >= minRequiredToPass;
+  const isSuccess = correctAnswersCount === minRequiredToPass;
 
   // 4. Pantalla: Resultado Final
   if (isQuizCompleted) {
@@ -319,8 +317,7 @@ export const Station5FinalTrial = ({
           </div>
 
           <h3 className={styles.lockedTitle}>
-            {correctAnswersCount} de {totalQuestions} Aciertos (
-            {userScorePercentage}%)
+            {correctAnswersCount} de {totalQuestions} Aciertos ({userScorePercentage}%)
           </h3>
 
           <p
@@ -331,8 +328,8 @@ export const Station5FinalTrial = ({
             }}
           >
             {isSuccess
-              ? `Has superado el umbral requerido (mínimo ${minRequiredToPass} de ${totalQuestions} - ${minPercentage}%) demostrando anclaje conceptual riguroso.`
-              : `Se requieren al menos ${minRequiredToPass} respuestas correctas (${minPercentage}%) para superar la estación y reclamar la Medalla Master.`}
+              ? `Has superado el 100% del examen (${totalQuestions} de ${totalQuestions}) demostrando anclaje conceptual riguroso.`
+              : `Se requiere el 100% de aciertos (${totalQuestions} de ${totalQuestions}) para superar la estación y reclamar la Medalla Master.`}
           </p>
         </div>
 
@@ -390,8 +387,7 @@ export const Station5FinalTrial = ({
               Estación 05 · The Final Trial (Quiz Capstone)
             </span>
             <span className={styles.examApprovalPill}>
-              Aprobación: ≥{minRequiredToPass}/{totalQuestions} ({minPercentage}
-              %)
+              Aprobación: {minRequiredToPass}/{totalQuestions} (100%)
             </span>
           </div>
           <h3
@@ -449,7 +445,7 @@ export const Station5FinalTrial = ({
         {isWrongAttempt && (
           <div className={styles.wrongAttemptAlert}>
             <XCircle size={16} color="var(--color-rose-400)" />
-            <span>Respuesta incorrecta. Perdiste un escudo. ¡Intentalo de nuevo!</span>
+            <span>Respuesta incorrecta. Perdiste un escudo. ¡Inténtalo de nuevo!</span>
           </div>
         )}
 
@@ -459,14 +455,12 @@ export const Station5FinalTrial = ({
 
             let optionClass = styles.optionButton;
             if (isEvaluated) {
-              // Solo resaltar la correcta cuando el usuario la acertó
               if (isSelected) {
                 optionClass = `${styles.optionButton} ${styles.optionCorrect}`;
               } else {
                 optionClass = `${styles.optionButton} ${styles.optionMuted}`;
               }
             } else if (isWrongAttempt && isSelected) {
-              // Feedback momentáneo de error sin revelar la correcta
               optionClass = `${styles.optionButton} ${styles.optionIncorrect}`;
             }
 
