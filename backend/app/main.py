@@ -13,6 +13,8 @@ import asyncio
 import json
 import logging
 import os
+import time
+from contextlib import asynccontextmanager
 from dataclasses import replace
 from uuid import UUID
 from pathlib import Path
@@ -26,15 +28,19 @@ if (_ROOT_DIR / ".env").exists():
 load_dotenv()
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, status, Depends
-from app.auth import Principal, require_user, private_query, persist_result
+from app.auth import Principal, ensure_document, persist_result, private_query, require_user
+from app.auth import settings as supabase_settings
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import ValidationError
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
+from app.agentes.generacion_paralela import NOMBRES_RECURSO, GeneradorParalelo
 from app.core.config import Config, ConfigError
+from app.servicios.registro_tareas import RegistroSupabase, RegistroTareas
+from app.servicios.servicio_gemini import ClienteGemini
 from app.integration.private_pipeline import PrivateCadena, PrivateCorreo, notification_recipient
-from app.core.ingestion import IngestionError, cargar_documento_desde_bytes
+from app.core.ingestion import IngestionError, cargar_documento_desde_bytes, detectar_secciones
 from app.core.schemas import (
     DIRECTIVAS_NICHO_SECTOR,
     DIRECTIVAS_PERFIL_DESTINATARIO,
@@ -51,10 +57,33 @@ from app.servicios.servicio_correo import ServicioCorreo
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("nuevamente.backend")
 
+# Un cliente Gemini por proceso (y bucle de eventos): su semáforo reparte entre todas las
+# solicitudes la cuota, que Google aplica por proyecto y no por usuario.
+_GEMINI_MAX_CONCURRENCIA = int(os.getenv("GEMINI_MAX_CONCURRENCIA", "4"))
+_CLIENTE_GEMINI: Optional[tuple] = None  # (bucle, ClienteGemini)
+
+
+def _cliente_gemini() -> ClienteGemini:
+    global _CLIENTE_GEMINI
+    bucle = asyncio.get_running_loop()
+    if _CLIENTE_GEMINI is None or _CLIENTE_GEMINI[0] is not bucle:
+        cliente = ClienteGemini(Config.desde_entorno().gemini_api_key, max_concurrencia=_GEMINI_MAX_CONCURRENCIA)
+        _CLIENTE_GEMINI = (bucle, cliente)
+    return _CLIENTE_GEMINI[1]
+
+
+@asynccontextmanager
+async def _ciclo_de_vida(_app: FastAPI):
+    yield
+    if _CLIENTE_GEMINI is not None and _CLIENTE_GEMINI[0] is asyncio.get_running_loop():
+        await _CLIENTE_GEMINI[1].aclose()
+
+
 app = FastAPI(
     title="NuevaMente API",
     description="Backend de Adaptación y Generación de Contenido Educativo con Agentes.",
     version="2.0.0",
+    lifespan=_ciclo_de_vida,
 )
 
 # CORS habilitado con soporte explícito para desarrollo local (Vite/Streamlit) y producción
@@ -77,6 +106,30 @@ app.add_middleware(
 
 # Semáforo de concurrencia: límite de 5 solicitudes simultáneas para evitar encolamiento innecesario
 _SEMAFORO_CONCURRENCIA = asyncio.Semaphore(5)
+# Los invitados comparten un token público: como máximo ocupan este número de los 5 cupos,
+# de modo que nunca pueden dejar sin servicio a los usuarios autenticados.
+_SEMAFORO_INVITADOS = asyncio.Semaphore(int(os.getenv("MAX_INVITADOS_CONCURRENTES", "2")))
+MAX_BYTES_ARCHIVO = int(os.getenv("MAX_BYTES_ARCHIVO", str(15 * 1024 * 1024)))
+TIEMPO_MAX_ADAPTACION_S = float(os.getenv("TIEMPO_MAX_ADAPTACION_S", "300"))
+_TAREAS_FONDO: set = set()  # referencias fuertes: asyncio no retiene tareas sueltas
+
+
+@asynccontextmanager
+async def _cupo(principal: Principal):
+    if principal.is_guest:
+        async with _SEMAFORO_INVITADOS:
+            async with _SEMAFORO_CONCURRENCIA:
+                yield
+    else:
+        async with _SEMAFORO_CONCURRENCIA:
+            yield
+
+
+def _aviso_respaldo(exc: Exception) -> str:
+    return (
+        f"⚠️ La cadena colaborativa no completó la generación ({type(exc).__name__}); "
+        "el contenido se generó con el orquestador clásico (LangGraph + ChromaDB)."
+    )
 
 
 def get_orquestador(principal: Principal) -> OrquestadorNuevaMente:
@@ -95,6 +148,94 @@ def get_servicio_correo(principal: Principal) -> ServicioCorreo:
     return PrivateCorreo(principal.user_id)
 
 
+def get_generador_paralelo(principal: Principal, registro: Optional[RegistroTareas] = None) -> GeneradorParalelo:
+    from app.storage.private_storage import storage_for
+    return GeneradorParalelo(
+        _cliente_gemini(),
+        Config.desde_entorno(),
+        # Invitados: nada se archiva (comparten identidad).
+        almacenar=None if principal.is_guest else storage_for(principal.user_id),
+        registro=registro,
+        propietario=principal.user_id,
+    )
+
+
+async def _registro_tareas(principal: Principal, solicitud: SolicitudAdaptacion) -> Optional[RegistroTareas]:
+    """
+    Registro en generation_tasks (RLS con el JWT del usuario). La fila de `documents`
+    se crea al empezar, no al final. Invitados: solo memoria, sin registro.
+    """
+    if principal.is_guest:
+        return None
+    try:
+        document_id = await asyncio.to_thread(ensure_document, principal, solicitud)
+        url, clave = supabase_settings()
+        return RegistroSupabase(url, clave, principal.token, principal.user_id, document_id)
+    except Exception as exc:
+        logger.warning("Generación sin registro de tareas (%s).", type(exc).__name__)
+        return None
+
+
+ProgresoCallback = Optional[Any]  # Callable[[str, int], None], invocable desde hilos
+
+
+async def _cadena_o_clasico(
+    principal: Principal, solicitud: SolicitudAdaptacion, on_progress: ProgresoCallback = None
+) -> RespuestaAdaptacion:
+    """Cadena colaborativa; si falla, orquestador clásico (Respaldo 2)."""
+    cadena = get_cadena_colaborativa(principal)
+    try:
+        args = (solicitud, on_progress) if on_progress else (solicitud,)
+        return await asyncio.to_thread(cadena.ejecutar, *args)
+    except Exception as exc_cadena:
+        logger.warning(
+            "Fallo en Cadena Colaborativa (%s). Conmutando a Respaldo 2 (LangGraph Clásico)...", exc_cadena
+        )
+        if on_progress:
+            on_progress("⚠️ Conmutando a Orquestador Clásico LangGraph por alta demanda...", 1)
+        resp = await asyncio.to_thread(get_orquestador(principal).ejecutar, solicitud)
+        resp.advertencias.append(_aviso_respaldo(exc_cadena))
+        return resp
+
+
+async def _generar(
+    principal: Principal,
+    solicitud: SolicitudAdaptacion,
+    modo_rag: str,
+    publicar=None,
+    on_progress: ProgresoCallback = None,
+) -> RespuestaAdaptacion:
+    """paralelo → (cadena → clásico) · vectorless → (cadena → clásico) · otro → clásico."""
+    modo = modo_rag.lower()
+    if modo == "paralelo":
+        registro = await _registro_tareas(principal, solicitud)
+        try:
+            generador = get_generador_paralelo(principal, registro)
+            return await generador.generar(solicitud, publicar or (lambda _e: None))
+        except Exception as exc_paralelo:  # sin clave, ninguna tarea útil, error inesperado
+            logger.warning("Modo paralelo sin resultado (%s). Conmutando a la cadena colaborativa...", exc_paralelo)
+            if on_progress:
+                on_progress("⚠️ La generación paralela no respondió; conmutando a la cadena colaborativa...", 1)
+            resp = await _cadena_o_clasico(principal, solicitud, on_progress)
+            resp.advertencias.insert(
+                0, f"⚠️ La generación paralela no produjo recursos ({type(exc_paralelo).__name__}); "
+                   "se usó la cadena colaborativa.",
+            )
+            if resp.status == "exito":
+                resp.status = "exito_con_advertencias"
+            return resp
+        finally:
+            if registro is not None:
+                await registro.aclose()
+    if modo == "vectorless":
+        return await _cadena_o_clasico(principal, solicitud, on_progress)
+    return await asyncio.to_thread(get_orquestador(principal).ejecutar, solicitud)
+
+
+# Estación que cada recurso del modo paralelo desbloquea en el frontend actual.
+_ESTACION_POR_RECURSO = {"resumen": 0, "flashcards": 1, "tutorial": 2, "guion": 3, "cuestionario": 4}
+
+
 def _ejecutar_tareas_segundo_plano(
     principal: Principal,
     solicitud: SolicitudAdaptacion,
@@ -106,7 +247,8 @@ def _ejecutar_tareas_segundo_plano(
     1. RAG Silencioso: Indexa el documento original en ChromaDB sin bloquear la respuesta.
     2. Envío Silencioso: Genera el dossier PDF estandarizado (sin audiovisual) y lo envía/respalda en OCI.
     """
-    if respuesta.status == 'error':
+    if respuesta.status == 'error' or principal.is_guest:
+        # Invitados: no se indexan ni archivan documentos en espacios compartidos.
         return
     # 1. Indexación silenciosa en ChromaDB
     try:
@@ -199,11 +341,18 @@ async def _extraer_solicitud(
     """Extrae el contenido documental y valida los parámetros de la solicitud pedagógica."""
     contenido_texto = ""
     doc_titulo = titulo or "Documento Técnico"
+    paginas: List[Any] = []
+    secciones: List[Any] = []
 
     texto_candidato = (texto_directo or "").strip() or (documento_contenido or "").strip()
 
     if archivo and archivo.filename:
-        contenido_bytes = await archivo.read()
+        contenido_bytes = await archivo.read(MAX_BYTES_ARCHIVO + 1)
+        if len(contenido_bytes) > MAX_BYTES_ARCHIVO:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"El archivo supera el máximo de {MAX_BYTES_ARCHIVO // (1024 * 1024)} MB.",
+            )
         if not contenido_bytes:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -215,6 +364,8 @@ async def _extraer_solicitud(
             )
             contenido_texto = doc_ingresado.texto
             doc_titulo = doc_ingresado.titulo
+            paginas = doc_ingresado.paginas
+            secciones = doc_ingresado.secciones
         except IngestionError as exc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -222,6 +373,8 @@ async def _extraer_solicitud(
             ) from exc
     elif texto_candidato:
         contenido_texto = texto_candidato
+        # El texto pegado suele venir en Markdown; sin paginación real.
+        secciones = detectar_secciones(texto_candidato, ".md")
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -238,6 +391,8 @@ async def _extraer_solicitud(
                 "nicho_sector": nicho_sector,
                 "nivel_detalle": nivel_detalle,
                 "tema_consulta": tema_consulta,
+                "paginas": paginas,
+                "secciones": secciones,
             }
         )
     except ValidationError as exc:
@@ -268,7 +423,7 @@ async def adaptar_contenido(
     nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
     tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
     documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
-    modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (colaborativo ultrarrápido) o 'clasico' (LangGraph)"),
+    modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (cadena colaborativa), 'paralelo' (Gemini concurrente con publicación incremental) o 'clasico' (LangGraph)"),
     email_notificacion: Optional[str] = Form(None, description="Correo electrónico opcional para recibir dossier en PDF"),
 ) -> RespuestaAdaptacion:
     """
@@ -289,42 +444,13 @@ async def adaptar_contenido(
         documento_contenido=documento_contenido,
     )
 
-    respuesta: RespuestaAdaptacion
     email_notificacion = notification_recipient(principal, email_notificacion)
-
-    if modo_rag.lower() == "vectorless":
-        cadena = get_cadena_colaborativa(principal)
-        logger.info(
-            "Iniciando Cadena Colaborativa Multi-Modelo (Vectorless): '%s' | %s | %s",
-            solicitud.documento_titulo,
-            solicitud.perfil_destinatario,
-            solicitud.formato_salida,
-        )
-        try:
-            async with _SEMAFORO_CONCURRENCIA:
-                respuesta = await asyncio.to_thread(cadena.ejecutar, solicitud)
-        except Exception as exc_cadena:
-            logger.warning(
-                "Fallo en Cadena Colaborativa (%s). Conmutando a Respaldo 2 (LangGraph Clásico)...",
-                exc_cadena,
-            )
-            orquestador = get_orquestador(principal)
-            async with _SEMAFORO_CONCURRENCIA:
-                respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
-            respuesta.advertencias.append(
-                "⚠️ Alta demanda detectada en la red ultrarrápida. Contenido procesado mediante orquestación LangGraph profunda con respaldo semántico."
-            )
-    else:
-        # Modo Clásico directo (LangGraph + ChromaDB)
-        orquestador = get_orquestador(principal)
-        logger.info(
-            "Iniciando Orquestación Clásica LangGraph: '%s' | %s | %s",
-            solicitud.documento_titulo,
-            solicitud.perfil_destinatario,
-            solicitud.formato_salida,
-        )
-        async with _SEMAFORO_CONCURRENCIA:
-            respuesta = await asyncio.to_thread(orquestador.ejecutar, solicitud)
+    logger.info(
+        "Iniciando adaptación (modo %s): '%s' | %s | %s",
+        modo_rag, solicitud.documento_titulo, solicitud.perfil_destinatario, solicitud.formato_salida,
+    )
+    async with _cupo(principal):
+        respuesta = await _generar(principal, solicitud, modo_rag)
 
     respuesta = await asyncio.to_thread(persist_result, principal, solicitud, respuesta)
     duracion = respuesta.orquestacion.duracion_segundos if respuesta.orquestacion else 0.0
@@ -357,7 +483,7 @@ async def adaptar_contenido_stream(
     nivel_detalle: str = Form("Didáctico", description="Nivel de profundidad pedagógica"),
     tema_consulta: Optional[str] = Form(None, description="Tema o pregunta focal"),
     documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
-    modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (colaborativo ultrarrápido) o 'clasico' (LangGraph)"),
+    modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (cadena colaborativa), 'paralelo' (Gemini concurrente con publicación incremental) o 'clasico' (LangGraph)"),
     email_notificacion: Optional[str] = Form(None, description="Correo electrónico opcional para recibir dossier en PDF"),
 ) -> StreamingResponse:
     """
@@ -382,59 +508,77 @@ async def adaptar_contenido_stream(
         # 1. Evento inicial de conexión establecida
         yield f"data: {json.dumps({'tipo': 'inicio', 'mensaje': 'Solicitud recibida. Iniciando orquestación pedagógica...'}, ensure_ascii=False)}\n\n"
 
-        cola_progreso: asyncio.Queue[tuple[str, int]] = asyncio.Queue()
+        # Eventos ya formados ({'tipo': ...}); los de 'progreso' reciben 'segundos' al emitirse.
+        cola_eventos: asyncio.Queue[Dict[str, Any]] = asyncio.Queue()
         loop = asyncio.get_running_loop()
+        modo = modo_rag.lower()
+        estacion_max = 0
+
+        def _evento_progreso(mensaje: str, paso: int, etapa: Optional[str] = None) -> Dict[str, Any]:
+            return {'tipo': 'progreso', 'mensaje': mensaje, 'etapa': etapa or f'paso_{paso}', 'estacion_desbloqueada': paso}
 
         def _progreso_callback(mensaje: str, paso: int) -> None:
+            # Invocado desde el hilo de la cadena: hay que volver al bucle de eventos.
             try:
-                loop.call_soon_threadsafe(cola_progreso.put_nowait, (mensaje, paso))
+                loop.call_soon_threadsafe(cola_eventos.put_nowait, _evento_progreso(mensaje, paso))
             except Exception:
                 pass
 
+        def _publicar(evento: Dict[str, Any]) -> None:
+            """Eventos del modo paralelo (mismo bucle). Se traducen además a 'progreso'
+            para que el frontend actual, que solo entiende 'progreso'/'resultado', avance."""
+            nonlocal estacion_max
+            cola_eventos.put_nowait(evento)
+            if evento.get('tipo') == 'recurso' and evento['estado']['estado'] == 'completado':
+                recurso = evento['recurso']
+                estacion_max = max(estacion_max, _ESTACION_POR_RECURSO.get(recurso, 0))
+                cola_eventos.put_nowait(_evento_progreso(
+                    f"✅ {NOMBRES_RECURSO.get(recurso, recurso)} listo (verificación pendiente)",
+                    estacion_max, etapa=f'recurso_{recurso}',
+                ))
+            elif evento.get('tipo') == 'tarea' and evento.get('tarea') == 'auditoria' and evento['estado'] == 'en_curso':
+                cola_eventos.put_nowait(_evento_progreso(
+                    "🛡️ Auditando la fidelidad de los recursos contra el documento...", estacion_max, etapa='auditoria',
+                ))
+
         async def _ejecutar():
-            async with _SEMAFORO_CONCURRENCIA:
-                if modo_rag.lower() == "vectorless":
-                    cadena = get_cadena_colaborativa(principal)
-                    try:
-                        resp = await asyncio.to_thread(cadena.ejecutar, solicitud, _progreso_callback)
-                    except Exception as exc_cadena:
-                        logger.warning(
-                            "Fallo en Cadena Colaborativa stream (%s). Conmutando a Respaldo 2 (LangGraph Clásico)...",
-                            exc_cadena,
-                        )
-                        cola_progreso.put_nowait((
-                            "⚠️ Conmutando a Orquestador Clásico LangGraph por alta demanda...",
-                            1,
-                        ))
-                        orquestador = get_orquestador(principal)
-                        resp = await asyncio.to_thread(orquestador.ejecutar, solicitud)
-                        resp.advertencias.append(
-                            "⚠️ Alta demanda detectada en la red ultrarrápida. Contenido procesado mediante orquestación LangGraph profunda con respaldo semántico."
-                        )
-                else:
-                    orquestador = get_orquestador(principal)
-                    resp = await asyncio.to_thread(orquestador.ejecutar, solicitud)
+            async with _cupo(principal):
+                resp = await _generar(
+                    principal, solicitud, modo,
+                    publicar=_publicar,
+                    on_progress=_progreso_callback if modo in ("vectorless", "paralelo") else None,
+                )
                 return await asyncio.to_thread(persist_result, principal, solicitud, resp)
 
         tarea = asyncio.create_task(_ejecutar())
 
+        inicio = time.monotonic()
         segundos_transcurridos = 0
         while not tarea.done():
-            # Emitir mensajes de la cola si los hay
-            while not cola_progreso.empty():
+            if time.monotonic() - inicio > TIEMPO_MAX_ADAPTACION_S:
+                # Libera el cupo del semáforo. El hilo de trabajo no se puede interrumpir y
+                # termina por su cuenta; su resultado se descarta.
+                tarea.cancel()
+                logger.error("Adaptación vía stream superó %.0fs; se cancela.", TIEMPO_MAX_ADAPTACION_S)
+                yield f"data: {json.dumps({'tipo': 'error', 'detalle': 'La generación tardó demasiado. Inténtalo de nuevo en unos minutos.'}, ensure_ascii=False)}\n\n"
+                return
+            # Emitir los eventos acumulados (progreso y, en modo paralelo, recursos)
+            while not cola_eventos.empty():
                 try:
-                    p_msg, p_paso = cola_progreso.get_nowait()
-                    yield f"data: {json.dumps({'tipo': 'progreso', 'segundos': segundos_transcurridos, 'mensaje': p_msg, 'etapa': f'paso_{p_paso}', 'estacion_desbloqueada': p_paso}, ensure_ascii=False)}\n\n"
+                    evento = cola_eventos.get_nowait()
                 except asyncio.QueueEmpty:
                     break
+                if evento.get('tipo') == 'progreso':
+                    evento = {**evento, 'segundos': segundos_transcurridos}
+                yield f"data: {json.dumps(evento, ensure_ascii=False, default=str)}\n\n"
 
             try:
                 await asyncio.wait_for(asyncio.shield(tarea), timeout=2.5)
             except asyncio.TimeoutError:
-                segundos_transcurridos += 3
+                segundos_transcurridos = int(time.monotonic() - inicio)
                 # Keep-alive SSE
                 yield f": ping - heartbeat ({segundos_transcurridos}s)\n\n"
-                if modo_rag.lower() != "vectorless":
+                if modo not in ("vectorless", "paralelo"):
                     # Simulación de pasos para modo clásico
                     if segundos_transcurridos <= 6:
                         etapa = "ingesta"
@@ -470,11 +614,18 @@ async def adaptar_contenido_stream(
                         msg = f"Agente 3 (Crítico): Auditando fidelidad RAG y anclaje a fuentes ({segundos_transcurridos}s)..."
                     yield f"data: {json.dumps({'tipo': 'progreso', 'segundos': segundos_transcurridos, 'mensaje': msg, 'etapa': etapa, 'estacion_desbloqueada': estacion}, ensure_ascii=False)}\n\n"
 
+        # Eventos que llegaron justo antes de terminar (último recurso, auditoría)
+        while not cola_eventos.empty():
+            evento = cola_eventos.get_nowait()
+            if evento.get('tipo') == 'progreso':
+                evento = {**evento, 'segundos': int(time.monotonic() - inicio)}
+            yield f"data: {json.dumps(evento, ensure_ascii=False, default=str)}\n\n"
+
         # 3. Emisión de resultado final o error
         try:
             respuesta: RespuestaAdaptacion = tarea.result()
             # Despachar tareas silenciosas en segundo plano
-            asyncio.create_task(
+            tarea_fondo = asyncio.create_task(
                 asyncio.to_thread(
                     _ejecutar_tareas_segundo_plano,
                     principal=principal,
@@ -483,10 +634,14 @@ async def adaptar_contenido_stream(
                     email_destinatario=email_notificacion,
                 )
             )
-            yield f"data: {json.dumps({'tipo': 'resultado', 'datos': respuesta.model_dump()}, ensure_ascii=False)}\n\n"
+            _TAREAS_FONDO.add(tarea_fondo)
+            tarea_fondo.add_done_callback(_TAREAS_FONDO.discard)
+            yield f"data: {json.dumps({'tipo': 'resultado', 'datos': respuesta.model_dump(mode='json')}, ensure_ascii=False)}\n\n"
         except Exception as exc:
             logger.exception("Error en orquestación vía stream: %s", exc)
-            yield f"data: {json.dumps({'tipo': 'error', 'detalle': str(exc)}, ensure_ascii=False)}\n\n"
+            # Al cliente solo se le muestra un mensaje seguro; el detalle técnico queda en el log.
+            detalle = exc.detail if isinstance(exc, HTTPException) else "No se pudo completar la adaptación. Inténtalo de nuevo."
+            yield f"data: {json.dumps({'tipo': 'error', 'detalle': detalle}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(
         generador_eventos(),

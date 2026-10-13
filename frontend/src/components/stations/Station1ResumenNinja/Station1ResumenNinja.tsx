@@ -14,6 +14,7 @@ import {
 import type { ResumenNinjaData } from "../../../types/types";
 import { triggerLevelUpConfetti } from "../../../utils/confetti";
 import { MermaidDiagram } from "../../MermaidDiagram/MermaidDiagram";
+import { FuenteChip } from "../../RecursoEstado/RecursoEstado";
 import styles from "./Station1ResumenNinja.module.css";
 
 interface Station1Props {
@@ -157,6 +158,10 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
                   >
                     {item.texto}
                   </p>
+                  {item.explicacion && (
+                    <p className={styles.conceptExplanation}>{item.explicacion}</p>
+                  )}
+                  <FuenteChip fuente={item.fuente} />
                 </div>
               </button>
             );
@@ -164,7 +169,8 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
         </div>
       </div>
 
-      {/* Grid de Métricas Técnicas */}
+      {/* Grid de Métricas Técnicas: solo si el paquete las trae (no se rellenan con valores genéricos) */}
+      {data?.metricas_rapidas && (
       <div className={styles.metricsGrid}>
         <div className={styles.metricBox}>
           <div className={styles.metricHeader}>
@@ -172,7 +178,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             <span className={styles.metricLabel}>Riesgo / Desafío</span>
           </div>
           <div className={styles.metricValue}>
-            {data?.metricas_rapidas?.riesgo || "Evaluado"}
+            {data.metricas_rapidas.riesgo || "—"}
           </div>
         </div>
 
@@ -182,7 +188,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             <span className={styles.metricLabel}>Despliegue</span>
           </div>
           <div className={styles.metricValue}>
-            {data?.metricas_rapidas?.despliegue || "Inmediato"}
+            {data.metricas_rapidas.despliegue || "—"}
           </div>
         </div>
 
@@ -192,7 +198,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             <span className={styles.metricLabel}>Entorno / Tipo</span>
           </div>
           <div className={styles.metricValue}>
-            {data?.metricas_rapidas?.tipo_oci || "Cloud Native"}
+            {data.metricas_rapidas.tipo_oci || "—"}
           </div>
         </div>
 
@@ -202,16 +208,19 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             <span className={styles.metricLabel}>Costo / Capa</span>
           </div>
           <div className={`${styles.metricValue} ${styles.metricValueEmerald}`}>
-            {data?.metricas_rapidas?.costo || "Always Free"}
+            {data.metricas_rapidas.costo || "—"}
           </div>
         </div>
       </div>
+      )}
 
-      {/* Diagrama de Arquitectura y Flujo Mermaid */}
-      <MermaidDiagram
-        chart={diagramaMermaid}
-        title="Diagrama de Arquitectura y Flujo del Documento"
-      />
+      {/* Diagrama de Arquitectura y Flujo Mermaid (solo si se generó uno para este documento) */}
+      {diagramaMermaid?.trim() && (
+        <MermaidDiagram
+          chart={diagramaMermaid}
+          title="Diagrama de Arquitectura y Flujo del Documento"
+        />
+      )}
 
       {/* CTA de Asimilación */}
       <div className={styles.assimilationBar}>

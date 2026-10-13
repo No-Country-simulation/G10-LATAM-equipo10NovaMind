@@ -38,6 +38,7 @@ export interface FlashcardItem {
   dorso: string;
   pista_didactica: string;
   dominado?: boolean;
+  fuente?: FuenteCita;
 }
 
 export interface TutorialStep {
@@ -109,6 +110,16 @@ export interface VideoJobSpec {
   video_url_oci?: string;
 }
 
+/**
+ * Cita localizada por el backend en el documento (modo paralelo). `pagina` y
+ * `verificada` se derivan de dónde aparece el texto, nunca de lo que declare el modelo.
+ */
+export interface FuenteCita {
+  texto: string;
+  pagina: number | null;
+  verificada: boolean;
+}
+
 export interface QuizQuestion {
   id: string;
   pregunta: string;
@@ -116,13 +127,25 @@ export interface QuizQuestion {
   respuesta_correcta: number; // 0-indexed
   justificacion_rag: string;
   cita_fuente: string;
+  /** Una explicación por alternativa, en el mismo orden (modo paralelo) */
+  explicaciones_opciones?: string[];
+  fuente?: FuenteCita;
+}
+
+export interface ConceptoClave {
+  id: string;
+  texto: string;
+  verificado: boolean;
+  explicacion?: string;
+  fuente?: FuenteCita;
 }
 
 export interface ResumenNinjaData {
   titulo: string;
   analogia_central: string;
-  conceptos_clave: { id: string; texto: string; verificado: boolean }[];
-  metricas_rapidas: {
+  conceptos_clave: ConceptoClave[];
+  /** Solo si el documento las aporta; el modo paralelo no las inventa */
+  metricas_rapidas?: {
     riesgo: string;
     despliegue: string;
     tipo_oci: string;
@@ -130,9 +153,60 @@ export interface ResumenNinjaData {
   };
 }
 
+export interface ResumenEjecutivo {
+  texto: string;
+  por_secciones: { seccion: string; resumen: string; fuente: FuenteCita }[];
+  conclusiones: string[];
+}
+
+export interface TerminoGlosario {
+  termino: string;
+  definicion: string;
+  fuente: FuenteCita;
+}
+
+export interface Diapositiva {
+  orden: number;
+  titulo: string;
+  puntos_clave: string[];
+  concepto_visual: string;
+  fuente: FuenteCita;
+}
+
+/** Recursos publicados por separado en modo paralelo (claves de estado_recursos). */
+export type RecursoId =
+  | 'resumen'
+  | 'flashcards'
+  | 'cuestionario'
+  | 'glosario'
+  | 'objetivos'
+  | 'guion'
+  | 'diapositivas'
+  | 'tutorial'
+  | 'diagrama';
+
+export interface EstadoRecurso {
+  recurso: RecursoId;
+  tarea: string;
+  estado: 'completado' | 'fallido';
+  /** pendiente: pasó las comprobaciones deterministas y espera la auditoría */
+  verificacion: 'pendiente' | 'auditada' | 'no_auditada';
+  modelo?: string | null;
+  intentos: number;
+  latencia_s: number;
+  citas_totales: number;
+  citas_verificadas: number;
+  avisos: string[];
+  error_codigo?: string | null;
+  /** Tomado de una generación idéntica anterior */
+  reutilizado?: boolean;
+}
+
 export interface AdaptedContentPackage {
   persistencia?: { proveedor: string; package_id: string };
-  status: 'exito' | 'error';
+  status: 'exito' | 'exito_con_advertencias' | 'error';
+  advertencias?: string[];
+  orquestacion?: { documento_id?: string | null; duracion_segundos?: number };
   metadatos: {
     perfil_aplicado: RecipientProfile;
     formato_generado: OutputFormat;
@@ -144,13 +218,19 @@ export interface AdaptedContentPackage {
   contenido_adaptado: {
     titulo: string;
     introduccion_contextualizada: string;
-    resumen_ninja: ResumenNinjaData;
-    flashcards: FlashcardItem[];
-    tutorial: TutorialStep[];
-    director_cut: DirectorScene[];
-    quiz: QuizQuestion[];
-    diagrama_mermaid?: string;
-    video_job_spec?: VideoJobSpec;
+    // null/ausente si el recurso falló o aún no llegó (modo paralelo): nunca hay relleno inventado
+    resumen_ninja?: ResumenNinjaData | null;
+    flashcards?: FlashcardItem[] | null;
+    tutorial?: TutorialStep[] | null;
+    director_cut?: DirectorScene[] | null;
+    quiz?: QuizQuestion[] | null;
+    diagrama_mermaid?: string | null;
+    video_job_spec?: VideoJobSpec | null;
+    resumen_ejecutivo?: ResumenEjecutivo | null;
+    glosario?: TerminoGlosario[] | null;
+    objetivos_aprendizaje?: string[] | null;
+    diapositivas?: Diapositiva[] | null;
+    estado_recursos?: Partial<Record<RecursoId, EstadoRecurso>> | null;
   };
   evaluacion_calidad: {
     /** null cuando la auditoría no se ejecutó */

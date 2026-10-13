@@ -70,12 +70,14 @@ def test_backend_persists_extracted_source_and_package_with_verified_owner():
         perfil_destinatario='Principiante', formato_salida='Flashcards', nicho_sector='General', nivel_detalle='Didáctico')
     respuesta = SimpleNamespace(status='exito', contenido_adaptado=SimpleNamespace(titulo='Test package'),
         model_dump=lambda mode: {'status':'exito'}, persistencia=None)
-    with patch('app.auth.private_insert', side_effect=[{'id':USER_B}, {}]) as insert:
+    with patch('app.auth.private_upsert', return_value={'id':USER_B}) as upsert,          patch('app.auth.private_insert', return_value={}) as insert:
         result = persist_result(Principal(USER_A, 'test'), solicitud, respuesta)
         assert result.persistencia['proveedor'] == 'supabase'
-        document, package = insert.call_args_list
+        document = upsert.call_args
+        (package,) = insert.call_args_list
         assert document.args[2]['user_id'] == USER_A
         assert document.args[2]['source_text'] == 'Extracted text'
+        assert len(document.args[2]['content_hash']) == 64 and document.args[3] == 'user_id,content_hash'
         assert package.args[2]['user_id'] == USER_A
         assert package.args[2]['document_id'] == USER_B
         assert package.args[2]['id'] == result.persistencia['package_id']
@@ -85,3 +87,11 @@ def test_error_results_are_not_saved_as_successful_packages():
         result = SimpleNamespace(status='error')
         assert persist_result(Principal(USER_A, 'test'), None, result) is result
         insert.assert_not_called()
+
+def test_document_falls_back_to_insert_without_content_hash_migration():
+    from fastapi import HTTPException
+    from app.auth import ensure_document
+    solicitud = SimpleNamespace(documento_titulo='Doc', documento_contenido='Texto')
+    with patch('app.auth.private_upsert', side_effect=HTTPException(503, 'x')),          patch('app.auth.private_insert', return_value={'id': USER_B}) as insert:
+        assert ensure_document(Principal(USER_A, 'test'), solicitud) == USER_B
+        assert 'content_hash' not in insert.call_args.args[2]

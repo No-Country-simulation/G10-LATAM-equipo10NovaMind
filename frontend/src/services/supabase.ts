@@ -18,8 +18,12 @@ export function authUser(user: User): AuthUser {
     provider: user.app_metadata.provider === 'google' ? 'google' : 'local' };
 }
 export async function bearerHeaders() {
-  const { data, error } = await requireSupabase().auth.getSession();
-  if (error) throw error;
-  if (!data.session) throw new Error('Inicia sesión antes de procesar un documento.');
+  if (!supabase) {
+    return { Authorization: 'Bearer guest-demo-token' };
+  }
+  const { data } = await supabase.auth.getSession();
+  if (!data?.session) {
+    return { Authorization: 'Bearer guest-demo-token' };
+  }
   return { Authorization: `Bearer ${data.session.access_token}` };
 }

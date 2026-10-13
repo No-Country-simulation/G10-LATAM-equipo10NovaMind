@@ -12,8 +12,31 @@ import type {
 } from '../types/types';
 import { SCENARIOS } from '../data/mockScenarios';
 import { bearerHeaders } from './supabase';
+import {
+  NOMBRE_RECURSO,
+  aplicarEvento,
+  esEventoGeneracion,
+  motivoError,
+  paqueteEnConstruccion,
+} from '../utils/paqueteIncremental';
+import type { EventoGeneracion } from '../utils/paqueteIncremental';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// paralelo: recursos publicados uno a uno (el backend conmuta solo a la cadena/clásico si falla)
+const MODO_RAG = import.meta.env.VITE_MODO_RAG || 'paralelo';
+
+function mensajeDeEvento(evento: EventoGeneracion): string {
+  if (evento.tipo === 'auditoria') {
+    return evento.auditoria_ejecutada
+      ? '🛡️ Auditoría de fidelidad completada.'
+      : '⚠️ La auditoría de fidelidad no se pudo ejecutar; el contenido queda sin auditar.';
+  }
+  const nombre = NOMBRE_RECURSO[evento.recurso] ?? evento.recurso;
+  if (evento.estado.estado === 'fallido') return `⚠️ ${nombre}: no disponible (${motivoError(evento.estado.error_codigo)}).`;
+  return evento.estado.reutilizado
+    ? `♻️ ${nombre} recuperado de una generación anterior idéntica.`
+    : `✅ ${nombre} listo · verificación pendiente.`;
+}
 
 export interface AdaptarParams {
   docTitle: string;
@@ -29,7 +52,8 @@ export interface AdaptarParams {
 
 export type StationProgressCallback = (
   stage: string,
-  partialPackage?: Partial<AdaptedContentPackage>,
+  /** Paquete acumulado hasta ahora (modo paralelo); los recursos aún no listos están ausentes */
+  partialPackage?: AdaptedContentPackage,
   unlockedStationIndex?: number
 ) => void;
 
@@ -54,6 +78,7 @@ export async function solicitarAdaptacion(
     formData.append('formato_salida', format);
     formData.append('nicho_sector', niche);
     formData.append('nivel_detalle', detail);
+    formData.append('modo_rag', MODO_RAG);
 
     if (rawFile) {
       formData.append('archivo', rawFile, rawFile.name);
@@ -74,6 +99,7 @@ export async function solicitarAdaptacion(
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
       let resultadoPaquete: AdaptedContentPackage | null = null;
+      let parcial = paqueteEnConstruccion(docTitle, profile, format);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -101,6 +127,10 @@ export async function solicitarAdaptacion(
             } else if (evento.tipo === 'progreso') {
               const stationIdx = typeof evento.estacion_desbloqueada === 'number' ? evento.estacion_desbloqueada : 0;
               onProgress?.(evento.mensaje || 'Procesando estación...', undefined, stationIdx);
+            } else if (esEventoGeneracion(evento)) {
+              // Modo paralelo: cada recurso se publica en cuanto supera las comprobaciones
+              parcial = aplicarEvento(parcial, evento);
+              onProgress?.(mensajeDeEvento(evento), parcial);
             } else if (evento.tipo === 'resultado' && evento.datos) {
               resultadoPaquete = evento.datos as AdaptedContentPackage;
             } else if (evento.tipo === 'error') {

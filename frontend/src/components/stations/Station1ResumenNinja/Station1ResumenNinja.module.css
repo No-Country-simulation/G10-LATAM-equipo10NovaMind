@@ -238,6 +238,13 @@
   color: var(--color-text-secondary);
 }
 
+.conceptExplanation {
+  margin: 0.25rem 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
 .conceptTextChecked {
   color: #fff;
   font-weight: 500;

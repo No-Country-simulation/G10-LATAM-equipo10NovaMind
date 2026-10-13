@@ -122,13 +122,21 @@ def _armar(tmp_path, evaluaciones):
     return OrquestadorNuevaMente(investigador, productor, critico, config=config), cohere_falso
 
 
+def _chunk_real() -> str:
+    """Primer chunk que el investigador real genera para SOLICITUD (id por contenido)."""
+    from app.core.schemas import SolicitudAdaptacion, calcular_documento_id
+
+    s = SolicitudAdaptacion.model_validate(SOLICITUD)
+    return f"{calcular_documento_id(s.documento_titulo, s.documento_contenido)}_0"
+
+
 def _auditoria(respaldadas: List[bool]) -> Dict[str, Any]:
     return {
         "afirmaciones": [
             {
                 "afirmacion": f"Afirmación {i}",
                 "respaldada": ok,
-                "chunk_id_evidencia": "x" if ok else None,
+                "chunk_id_evidencia": _chunk_real() if ok else None,
                 "comentario": None if ok else "No aparece en la fuente",
             }
             for i, ok in enumerate(respaldadas)

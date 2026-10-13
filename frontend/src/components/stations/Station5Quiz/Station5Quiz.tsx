@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { QuizQuestion } from "../../../types/types";
 import { triggerCelebrationConfetti } from "../../../utils/confetti";
+import { FuenteChip } from "../../RecursoEstado/RecursoEstado";
 import styles from "./Station5Quiz.module.css";
 
 interface Station5Props {
@@ -56,29 +57,20 @@ export const Station5FinalTrial = ({
       selectedAnswers: typeof value === 'function' ? prev.selectedAnswers : {} }));
   const setIsQuizCompleted = (value: boolean) => onQuizChange(prev => ({ ...prev, isQuizCompleted: value }));
 
-  const safeQuestions =
-    questions.length > 0
-      ? questions
-      : [
-          {
-            id: "quiz-fallback-1",
-            pregunta: "¿Cuál es el propósito central del contenido analizado?",
-            opciones: [
-              "Comprensión profunda de los conceptos clave",
-              "Memorización sin contexto",
-              "Ignorar las fuentes",
-            ],
-            respuesta_correcta: 0,
-            justificacion_rag:
-              "El objetivo principal de la adaptación pedagógica es asimilar los principios clave sin alucinaciones.",
-            cita_fuente: "Documento procesado",
-          },
-        ];
+  // Sin preguntas no se inventa ninguna: Step2 muestra «no disponible» antes de llegar aquí.
+  const safeQuestions = questions;
 
   const totalQuestions = safeQuestions.length;
   const minRequiredToPass = Math.max(1, Math.ceil(totalQuestions * 0.6));
-  const minPercentage = Math.round((minRequiredToPass / totalQuestions) * 100);
+  const minPercentage = totalQuestions ? Math.round((minRequiredToPass / totalQuestions) * 100) : 0;
   const currentQ = safeQuestions[currentQuestionIndex] || safeQuestions[0];
+  // Explicación de la alternativa elegida, si el backend la generó (modo paralelo)
+  const explicacionElegida =
+    selectedOption !== null && selectedOption !== currentQ?.respuesta_correcta
+      ? currentQ?.explicaciones_opciones?.[selectedOption]
+      : undefined;
+
+  if (!currentQ) return null;
 
   // 1. Pantalla: Bloqueo por requisitos previos
   if (!isUnlocked) {
@@ -478,7 +470,14 @@ export const Station5FinalTrial = ({
               <span>Fundamentación RAG</span>
             </div>
 
+            {explicacionElegida && (
+              <p className={styles.ragJustificationText}>
+                <strong>Tu respuesta:</strong> {explicacionElegida}
+              </p>
+            )}
+
             <p className={styles.ragJustificationText}>
+              {explicacionElegida && <strong>Respuesta correcta: </strong>}
               {currentQ.justificacion_rag}
             </p>
 
@@ -487,7 +486,8 @@ export const Station5FinalTrial = ({
                 <strong style={{ color: "var(--color-violet-300)" }}>
                   Cita textual fuente:
                 </strong>{" "}
-                {currentQ.cita_fuente}
+                {currentQ.cita_fuente}{" "}
+                <FuenteChip fuente={currentQ.fuente} />
               </div>
             )}
 

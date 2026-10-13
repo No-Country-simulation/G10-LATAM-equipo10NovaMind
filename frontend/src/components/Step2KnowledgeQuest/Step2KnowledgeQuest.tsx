@@ -18,6 +18,9 @@ import { Station2FlashcardQuest } from '../stations/Station2FlashcardQuest/Stati
 import { Station3TutorialQuest } from '../stations/Station3TutorialQuest/Station3TutorialQuest';
 import { Station4DirectorCut } from '../stations/Station4DirectorCut/Station4DirectorCut';
 import { Station5FinalTrial } from '../stations/Station5Quiz/Station5Quiz';
+import { EstadoRecursoBar, ListaRecursos, RecursoNoDisponible } from '../RecursoEstado/RecursoEstado';
+import { RecursosApoyo } from '../RecursosApoyo/RecursosApoyo';
+import { RECURSO_POR_ESTACION, estacionDisponible, estadoDe } from '../../utils/paqueteIncremental';
 import styles from './Step2KnowledgeQuest.module.css';
 
 interface Step2Props {
@@ -134,6 +137,10 @@ export const Step2KnowledgeQuest = ({
   };
 
   const isCurrentStationReady = !isGenerating || unlockedList.includes(activeStationIndex);
+  const contenido = contentPackage.contenido_adaptado;
+  const recursoActivo = RECURSO_POR_ESTACION[activeStationIndex];
+  const estadoActivo = estadoDe(contentPackage, recursoActivo);
+  const isCurrentStationAvailable = estacionDisponible(contentPackage, activeStationIndex);
 
   return (
     <div className={styles.container}>
@@ -195,6 +202,7 @@ export const Step2KnowledgeQuest = ({
             const isSelected = activeStationIndex === node.index;
             const isDone = !!completedStations[node.index];
             const isStationReady = !isGenerating || unlockedList.includes(node.index);
+            const isStationFailed = estadoDe(contentPackage, RECURSO_POR_ESTACION[node.index])?.estado === 'fallido';
             const NodeIcon = node.icon;
 
             const selectedClass = isSelected ? styles[`nodeSelected_${node.index}`] : '';
@@ -231,6 +239,10 @@ export const Step2KnowledgeQuest = ({
                   {!isStationReady ? (
                     <span className={styles.nodeGeneratingPill}>
                       ⏳ Generando...
+                    </span>
+                  ) : isStationFailed ? (
+                    <span className={styles.nodeGeneratingPill}>
+                      ⚠️ No disponible
                     </span>
                   ) : isGenerating ? (
                     <span className={styles.nodeReadyPill}>
@@ -280,28 +292,33 @@ export const Step2KnowledgeQuest = ({
               <div className={styles.generatingProgressShimmer} />
             </div>
             <div className={styles.generatingMetaRow}>
-              <span>✦ Ingesta Vectorial ChromaDB</span>
-              <span>✦ Agente Productor Cohere</span>
-              <span>✦ Auditoría RAG Gemini/Groq</span>
-              <span>✦ Persistencia OCI</span>
+              {contenido.estado_recursos ? (
+                <ListaRecursos estados={contenido.estado_recursos} />
+              ) : (
+                <span>✦ Generando y verificando los recursos contra el documento…</span>
+              )}
             </div>
           </div>
+        ) : !isCurrentStationAvailable ? (
+          <RecursoNoDisponible recurso={recursoActivo} estado={estadoActivo} />
         ) : (
           <>
-            {activeStationIndex === 0 && (
+            <EstadoRecursoBar estado={estadoActivo} />
+
+            {activeStationIndex === 0 && contenido.resumen_ninja && (
               <Station1ResumenNinja
-                data={contentPackage.contenido_adaptado.resumen_ninja}
+                data={contenido.resumen_ninja}
                 isCompleted={!!completedStations[0]}
                 onCompleteStation={(xp) => onCompleteStation(0, xp)}
                 onOpenNinjaBadge={onOpenNinjaBadge}
-                diagramaMermaid={contentPackage.contenido_adaptado.diagrama_mermaid}
+                diagramaMermaid={contenido.diagrama_mermaid ?? undefined}
                 onNextStation={() => handleSelectStation(1)}
               />
             )}
 
             {activeStationIndex === 1 && (
               <Station2FlashcardQuest
-                cards={contentPackage.contenido_adaptado.flashcards}
+                cards={contenido.flashcards ?? []}
                 isCompleted={!!completedStations[1]}
                 onCompleteStation={(xp) => onCompleteStation(1, xp)}
                 onOpenStreakBadge={onOpenStreakBadge}
@@ -327,7 +344,11 @@ export const Step2KnowledgeQuest = ({
 
             {activeStationIndex === 3 && (
               <Station4DirectorCut
-                documentId={contentPackage.almacenamiento_oci?.objeto_id || 'doc-novamind'}
+                documentId={
+                  contentPackage.orquestacion?.documento_id ||
+                  contenido.video_job_spec?.document_id ||
+                  'doc-novamind'
+                }
                 degradaciones={contentPackage.contenido_adaptado.video_job_spec?.degradaciones}
                 scenes={
                   Array.isArray(contentPackage.contenido_adaptado.director_cut)
@@ -367,6 +388,9 @@ export const Step2KnowledgeQuest = ({
             )}
           </>
         )}
+
+        {/* Objetivos, resumen ejecutivo, glosario y diapositivas junto a su estación */}
+        {isCurrentStationReady && <RecursosApoyo paquete={contentPackage} estacion={activeStationIndex} />}
       </div>
 
       {/* Quick Navigation Footer */}

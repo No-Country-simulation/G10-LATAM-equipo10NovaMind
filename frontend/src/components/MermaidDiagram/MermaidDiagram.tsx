@@ -49,14 +49,15 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
   const [showCode, setShowCode] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
-  // Fallback si no viene chart o viene vacío
-  const cleanChart = (chart || '').trim() || `flowchart TD
-    A[Fuente de Datos / PDF] --> B[Pipeline NovaMind]
-    B --> C[Adaptación Pedagógica]
-    C --> D[Estudiante / Destinatario]`;
+  // Sin diagrama no se dibuja uno genérico: el llamador decide si mostrar el componente.
+  const cleanChart = (chart || '').trim();
 
   useEffect(() => {
     let isMounted = true;
+    if (!cleanChart) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setRenderError(null);
 
@@ -102,6 +103,8 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
       // Ignorar si clipboard falla
     }
   };
+
+  if (!cleanChart) return null;
 
   return (
     <div className={styles.mermaidCard}>

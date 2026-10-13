@@ -15,9 +15,17 @@ export const MAX_MICROCLASS_SECONDS = 60;
 export const TARGET_WORDS_MIN = 110;
 export const TARGET_WORDS_MAX = 125;
 
+/**
+ * Unión explícita de \s (JS) y str.isspace() (Python): por sí solos difieren en
+ * U+001C-U+001F, U+0085 y U+FEFF. Espejo literal de _SEPARADORES_PALABRA en schemas.py.
+ */
+const WORD_SEPARATORS =
+  // eslint-disable-next-line no-control-regex -- U+001C-U+001F son separadores en Python y deben serlo aquí
+  /[\t\n\v\f\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/;
+
 /** Palabras reales del guion. Nunca se usa `estimacion_palabras` del LLM. */
 export const splitWords = (text: string | null | undefined): string[] =>
-  (text ?? '').trim().split(/\s+/).filter(Boolean);
+  (text ?? '').split(WORD_SEPARATORS).filter(Boolean);
 
 export const countWords = (text: string | null | undefined): number => splitWords(text).length;
 

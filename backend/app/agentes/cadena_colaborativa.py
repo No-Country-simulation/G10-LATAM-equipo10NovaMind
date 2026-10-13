@@ -58,6 +58,7 @@ from app.core.schemas import (
     FuenteRAG,
     MAX_TEXTO_FUENTE,
     MetadatosSalida,
+    calcular_documento_id,
     formatear_tramo,
     MetricasOrquestacion,
     ParametrosGeneracion,
@@ -65,6 +66,7 @@ from app.core.schemas import (
     SolicitudAdaptacion,
     VideoJobSpec,
 )
+from app.core.fuentes import pagina_de_cita
 from app.storage.oci_client import OCIObjectStorageClient, _slugify
 
 logger = logging.getLogger("novamind.cadena_colaborativa")
@@ -93,17 +95,12 @@ def _limpiar_json(texto: str) -> Dict[str, Any]:
 # -----------------------------------------------------------------------------
 _MAX_ESCENAS_DIRECTOR_CUT = 3
 _UMBRAL_ANCLAJE_CADENA = 0.75
-_MIN_LARGO_CITA = 20
+_MAX_CONTEXTO_AUDITORIA = 24000  # caracteres de la fuente que ve el auditor
+_MAX_AFIRMACIONES_AUDITORIA = 16
 
 
 def _normalizar_espacios(texto: str) -> str:
     return " ".join(texto.split())
-
-
-def _cita_verificable(texto: str, documento: str) -> bool:
-    """True si la cita aparece literalmente en el documento (sin distinguir espacios ni mayúsculas)."""
-    cita = _normalizar_espacios(texto).lower()
-    return len(cita) >= _MIN_LARGO_CITA and cita in _normalizar_espacios(documento).lower()
 
 
 def _texto_no_vacio(*valores: Any) -> Optional[str]:
@@ -124,14 +121,6 @@ def _lista_str(valor: Any) -> List[str]:
     if not isinstance(valor, list):
         return []
     return [str(v).strip() for v in valor if isinstance(v, (str, int, float)) and str(v).strip()]
-
-
-def _entero_positivo(valor: Any) -> Optional[int]:
-    try:
-        n = int(valor)
-    except (TypeError, ValueError):
-        return None
-    return n if n >= 1 else None
 
 
 def _recortar(texto: str, maximo: int) -> str:
@@ -308,12 +297,15 @@ class CadenaColaborativaMultiModelo:
             texto = _recortar(_normalizar_espacios(texto), MAX_TEXTO_FUENTE)
             # Idempotente: un extracto automático de una pasada previa nunca asciende a cita verificada
             es_extracto = f.get("origen") == "extracto_automatico"
+            # La página se deriva de dónde aparece la cita en el documento; la que declare
+            # el LLM se ignora (una página no localizada es peor que ninguna).
+            localizada, pagina = pagina_de_cita(texto, documento, solicitud.paginas)
             fuentes.append({
                 "chunk_id": (_texto_no_vacio(f.get("chunk_id")) or f"llm-{indice}-{j}")[:64],
-                "pagina": _entero_positivo(f.get("pagina")),
+                "pagina": pagina,
                 "texto_fuente": texto,
                 "origen": "extracto_automatico" if es_extracto else "llm",
-                "verificada": False if es_extracto else _cita_verificable(texto, documento),
+                "verificada": localizada and not es_extracto,
             })
 
         if not fuentes:
@@ -321,7 +313,7 @@ class CadenaColaborativaMultiModelo:
             if extracto:
                 fuentes.append({
                     "chunk_id": f"extracto-{indice}",
-                    "pagina": None,
+                    "pagina": pagina_de_cita(extracto, documento, solicitud.paginas)[1],
                     "texto_fuente": extracto,
                     "origen": "extracto_automatico",
                     "verificada": False,
@@ -524,7 +516,9 @@ class CadenaColaborativaMultiModelo:
             degradaciones = list(dict.fromkeys([*previas, *degradaciones]))
         paquete["director_cut"] = [e.model_dump() for e in escenas]
 
-        doc_id_slug = solicitud.documento_id or f"doc-{_slugify(solicitud.documento_titulo)[:12]}"
+        doc_id_slug = solicitud.documento_id or calcular_documento_id(
+            solicitud.documento_titulo, solicitud.documento_contenido
+        )
         job_spec = VideoJobSpec(
             video_job_id=f"vjob-{doc_id_slug}",
             document_id=doc_id_slug,
@@ -697,33 +691,36 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
         self,
         paquete_base: Dict[str, Any],
         texto_fuente: str,
+        afirmaciones: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
-        """Audita fílmicamente el Quiz y el Tutorial contra la fuente en < 1.5s."""
+        """
+        Audita afirmaciones del contenido contra la fuente. Por defecto las toma del Quiz,
+        el Tutorial y el guion; el modo paralelo pasa su propia muestra en `afirmaciones`.
+        """
         if not self.groq_key:
             logger.warning("GROQ_API_KEY no disponible; la auditoría de fidelidad no se ejecuta.")
             return _auditoria_no_ejecutada("GROQ_API_KEY no configurada")
 
-        quiz_items = paquete_base.get("quiz", [])
-        tutorial_items = paquete_base.get("tutorial", [])
-        afirmaciones_a_evaluar = []
-        for q in quiz_items:
-            afirmaciones_a_evaluar.append(f"Pregunta: {q.get('pregunta')} -> Justificación: {q.get('justificacion_rag')}")
-        for t in tutorial_items:
-            afirmaciones_a_evaluar.append(f"Tutorial Paso: {t.get('titulo')} -> {t.get('descripcion')}")
-        for sc in paquete_base.get("director_cut", []):
-            if isinstance(sc, dict) and sc.get("guion_locutor"):
-                afirmaciones_a_evaluar.append(f"Guion escena {sc.get('escena')}: {sc.get('guion_locutor')}")
+        afirmaciones_a_evaluar: List[str] = list(afirmaciones or [])
+        if afirmaciones is None:
+            for q in paquete_base.get("quiz", []):
+                afirmaciones_a_evaluar.append(f"Pregunta: {q.get('pregunta')} -> Justificación: {q.get('justificacion_rag')}")
+            for t in paquete_base.get("tutorial", []):
+                afirmaciones_a_evaluar.append(f"Tutorial Paso: {t.get('titulo')} -> {t.get('descripcion')}")
+            for sc in paquete_base.get("director_cut", []):
+                if isinstance(sc, dict) and sc.get("guion_locutor"):
+                    afirmaciones_a_evaluar.append(f"Guion escena {sc.get('escena')}: {sc.get('guion_locutor')}")
 
         prompt = f"""
 Actúa como un Auditor de Calidad RAG y Verificación Fáctica (Agente Crítico de NovaMind).
 Evalúa si las siguientes afirmaciones técnicas están respaldadas por el texto fuente:
 
 AFIRMACIONES A VERIFICAR:
-{json.dumps(afirmaciones_a_evaluar[:12], ensure_ascii=False, indent=2)}
+{json.dumps(afirmaciones_a_evaluar[:_MAX_AFIRMACIONES_AUDITORIA], ensure_ascii=False, indent=2)}
 
 FRAGMENTOS FUENTE:
 \"\"\"
-{texto_fuente[:24000]}
+{texto_fuente[:_MAX_CONTEXTO_AUDITORIA]}
 \"\"\"
 
 Determina:
@@ -771,6 +768,7 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON:
                         continue
                     resultado["anclaje_fuente_score"] = score
                     resultado["auditoria_ejecutada"] = True
+                    resultado["auditoria_parcial"] = len(texto_fuente) > _MAX_CONTEXTO_AUDITORIA
                     return resultado
                 logger.warning("[cadena_colaborativa] Groq modelo %s respondió HTTP %s", gm, resp.status_code)
             except Exception as exc_groq:
@@ -794,7 +792,7 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON:
 
         import cohere
 
-        cliente = cohere.ClientV2(api_key=self.cohere_key)
+        cliente = cohere.ClientV2(api_key=self.cohere_key, timeout=20.0)
         intro_actual = paquete_base.get("introduccion_contextualizada", "")
         resumen_actual = paquete_base.get("resumen_ninja", {}).get("analogia_central", "")
 
@@ -864,7 +862,9 @@ RESPONDE ÚNICAMENTE CON UN JSON:
         resiliencia con failover automático.
         """
         t_inicio = time.perf_counter()
-        doc_id = solicitud.documento_id or f"doc-{_slugify(solicitud.documento_titulo)[:12]}"
+        doc_id = solicitud.documento_id or calcular_documento_id(
+            solicitud.documento_titulo, solicitud.documento_contenido
+        )
 
         # 1. PASO 1: Generación base con Gemini Flash
         if on_progress:
@@ -983,7 +983,12 @@ RESPONDE ÚNICAMENTE CON UN JSON:
             advertencias.append(
                 "La auditoría de fidelidad no se ejecutó; el contenido no está verificado contra la fuente."
             )
-        elif score is not None and score < _UMBRAL_ANCLAJE_CADENA:
+        if auditoria_ejecutada and evaluacion.get("auditoria_parcial"):
+            advertencias.append(
+                f"La auditoría solo contrastó los primeros {_MAX_CONTEXTO_AUDITORIA:,} caracteres del documento "
+                f"(de {len(solicitud.documento_contenido):,}); las afirmaciones sobre el resto no se verificaron."
+            )
+        if auditoria_ejecutada and score is not None and score < _UMBRAL_ANCLAJE_CADENA:
             advertencias.append(
                 f"Anclaje a la fuente {score:.2f} por debajo del umbral {_UMBRAL_ANCLAJE_CADENA:.2f}; se recomienda revisión humana."
             )

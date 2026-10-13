@@ -86,9 +86,10 @@ class AgenteCriticoContenido:
         self._cliente = cohere.ClientV2(api_key=clave_cohere, timeout=self._timeout) if clave_cohere else None
 
     @staticmethod
-    def _generar_evaluacion_rapida(observaciones: str = "Aprobación automática para integración de infraestructura") -> EvaluacionCalidad:
+    def _evaluacion_mock(observaciones: str = "MOCK_CRITICO activo: evaluación simulada, no auditada") -> EvaluacionCalidad:
         """
-        Construye una evaluación válida inmediata con fidelidad 1.0 (100%).
+        Evaluación simulada para MOCK_CRITICO (nunca en prod). Solo para pruebas de
+        infraestructura: no representa una auditoría real.
         """
         afirmacion_valida = AfirmacionEvaluada(
             afirmacion="Contenido pedagógico respaldado por la fuente técnica.",
@@ -113,7 +114,7 @@ class AgenteCriticoContenido:
         Evalúa el contenido generado frente a los fragmentos fuente.
         """
         if self._bypass:
-            return self._generar_evaluacion_rapida()
+            return self._evaluacion_mock()
 
         if not fragmentos or not str(fragmentos).strip():
             raise CriticoGenerationError(
@@ -173,29 +174,11 @@ class AgenteCriticoContenido:
             except Exception as exc:
                 errores.append(f"cohere: {exc}")
 
-        # 4. Fallback de contingencia segura si todos los proveedores fallan
-        logger.warning(
-            "[agente3_critico] Proveedores externos fallaron (%s). Activando evaluación de contingencia segura.",
-            "; ".join(errores),
-        )
-        return self._generar_evaluacion_rapida(f"Proveedores no disponibles: {'; '.join(errores)}")
-
-    @staticmethod
-    def _generar_evaluacion_rapida(razon: str) -> EvaluacionCalidad:
-        """Genera una evaluación determinista cuando los proveedores externos no responden."""
-        from app.core.schemas import AfirmacionEvaluada
-        return EvaluacionCalidad(
-            anclaje_fuente_score=0.88,
-            claridad_pedagogica="Alta",
-            observaciones=f"Evaluación de contingencia operativa: {razon}",
-            afirmaciones=[
-                AfirmacionEvaluada(
-                    afirmacion="El contenido pedagógico sintetiza los conceptos clave del material técnico de origen.",
-                    respaldada=True,
-                    comentario="Validación de anclaje por contingencia pedagógica.",
-                )
-            ],
-            sugerencias_correccion=[],
+        # 4. Ningún proveedor auditó: se informa, nunca se inventa una nota. El orquestador
+        #    lo convierte en ERROR_CRITICO o entrega el mejor intento verificado con advertencia.
+        logger.warning("[agente3_critico] Ningún proveedor pudo auditar: %s", "; ".join(errores))
+        raise CriticoGenerationError(
+            "Ningún proveedor del crítico respondió: " + ("; ".join(errores) or "sin proveedores configurados")
         )
 
     def _evaluar_gemini(self, prompt: str) -> EvaluacionCalidad:

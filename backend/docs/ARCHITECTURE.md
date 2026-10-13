@@ -94,3 +94,54 @@ sequenceDiagram
   UI->>Usuario: Renderiza visualizador interactivo 3D y dashboard de anclaje
 ```
 
+## Modo de generación paralela (`modo_rag=paralelo`)
+
+Disponible en `POST /api/v1/adaptar` y `POST /api/v1/adaptar/stream`. Lo implementa `backend/app/agentes/generacion_paralela.py` sobre el cliente asíncrono `backend/app/servicios/servicio_gemini.py` (Interactions API, `store: false`). Los modelos se eligen por configuración (`GEMINI_SUMMARY_MODEL`, `GEMINI_RESOURCES_MODEL`); la clave `GEMINI_API_KEY` solo existe en el backend.
+
+```mermaid
+flowchart LR
+  ING["Ingesta única<br/>texto + páginas + secciones"] --> A["A · Resumen<br/>GEMINI_SUMMARY_MODEL"]
+  ING --> B1["B1 · Flashcards, cuestionario,<br/>glosario, objetivos<br/>GEMINI_RESOURCES_MODEL"]
+  ING --> B2["B2 · Guion + VideoJobSpec, diapositivas,<br/>tutorial, diagrama<br/>GEMINI_RESOURCES_MODEL"]
+  A --> CHK["Comprobaciones deterministas por recurso"]
+  B1 --> CHK
+  B2 --> CHK
+  CHK -->|"SSE 'recurso' · verificación pendiente"| UI["Frontend"]
+  CHK --> AUD["Auditoría de fidelidad (Groq)"]
+  AUD -->|"SSE 'auditoria' + 'resultado'"| UI
+```
+
+- **Concurrencia:** las tres llamadas empiezan a la vez; B no depende de A. Un único `ClienteGemini` por proceso limita las llamadas simultáneas (`GEMINI_MAX_CONCURRENCIA`, por defecto 4), porque la cuota de Gemini es por proyecto.
+- **Comprobaciones antes de publicar:** validación Pydantic del JSON, ubicación de cada cita en el documento (`app/core/fuentes.py`, que ignora espacios, mayúsculas y marcas Markdown en línea; la página se deriva del offset y nunca se toma del modelo), eliminación de duplicados, preguntas con 4 alternativas distintas, cabecera Mermaid válida y el contrato de tiempos del guion (110–125 palabras, ≤ 60 s).
+- **Aislamiento de errores:** el fallo de una tarea o de un recurso solo afecta a ese recurso, que queda ausente con `estado_recursos[recurso].error_codigo`; nunca se rellena con contenido inventado. Tras `PRESUPUESTO_GENERACION_S` (240 s) las tareas pendientes se cancelan (`presupuesto_agotado`). Si ninguna tarea produce recursos, la API conmuta a la cadena colaborativa y, si esta falla, al orquestador clásico.
+- **Verificación:** `pendiente` al publicar; tras la auditoría, `auditada` (recursos cuyas afirmaciones se enviaron al auditor: resumen, flashcards, cuestionario, glosario, guion, tutorial) o `no_auditada`.
+- **Narración:** no se genera aquí. La TTS es una acción bajo demanda y la microclase se reproduce en el navegador; el servidor no renderiza video.
+
+Eventos SSE adicionales (el frontend actual los ignora; además se emiten eventos `progreso` equivalentes):
+
+| `tipo` | Campos |
+|---|---|
+| `tarea` | `tarea` (`A`, `B1`, `B2`, `auditoria`), `estado` (`en_curso`, `completada`, `fallida`), `modelo`, `intentos`, `latencia_s`, `error_codigo` |
+| `recurso` | `recurso`, `estado` (`EstadoRecurso`), `campos`: parche de `contenido_adaptado` listo para fusionar |
+| `auditoria` | `auditoria_ejecutada`, `anclaje_fuente_score` (null si no se ejecutó), `verificacion` por recurso |
+
+Medición real (guía de swap, 7,6 K caracteres, 12-oct-2026): B1 y B2 publicaron 8 recursos a los 7,5 s; A (`gemini-3.8-flash`) tardó 69,5 s; la auditoría, 2,6 s.
+
+### Persistencia por recurso y reutilización (`generation_tasks`)
+
+Migración: `supabase/migrations/202610120001_generation_tasks.sql` (ejecutar en el SQL Editor de Supabase después de `202610080001`). Añade `documents.content_hash` (un documento por usuario y contenido) y la tabla `generation_tasks`, con una fila por (usuario, huella de tarea, recurso), RLS `own_rows` y borrado en cascada con el documento.
+
+- **Al empezar:** el backend crea (o reutiliza) la fila de `documents` con el JWT del usuario, así que RLS impone la propiedad también en la base de datos.
+- **Huella de tarea:** `sha256(documento + perfil + nicho + nivel + tema + modelo + instrucciones + esquema + VERSION_PROCESADO)`. Si cambia el modelo o el prompt, nada se reutiliza.
+- **Ciclo de cada fila:** `en_curso` antes de llamar al modelo → `completado` (con `result = {campos, afirmaciones, estado}`, el recurso ya validado, nunca la respuesta cruda) o `fallido` (`error_code` y un mensaje saneado) → `verification` final tras la auditoría.
+- **Reutilización:** una generación idéntica publica los recursos completados sin llamar a Gemini (`estado_recursos[r].reutilizado = true`; evento `tarea` con estado `reutilizada`). Si una tarea quedó a medias, solo se regeneran sus recursos fallidos y se conservan los demás.
+- **Solicitudes simultáneas idénticas** (doble clic, dos pestañas) del mismo usuario comparten la llamada a Gemini en vuelo.
+- **Mejor esfuerzo:** si Supabase falla, la generación continúa y la respuesta lo advierte. Los invitados no se registran.
+
+### Frontend: publicación incremental
+
+- `frontend/src/services/api.ts` envía `modo_rag=paralelo` (configurable con `VITE_MODO_RAG`) y pliega los eventos `recurso` y `auditoria` con `frontend/src/utils/paqueteIncremental.ts` (puro, con tests en `frontend/tests/paqueteIncremental.test.ts`).
+- El recorrido (Paso 2) se abre con el **primer recurso listo**; cada estación se habilita cuando su recurso termina. Si falla, la estación muestra «no disponible» con el motivo y **nunca contenido de relleno**. Se eliminaron los rellenos inventados: métricas genéricas en la Estación 1, diagrama Mermaid genérico, pregunta de quiz de reserva y «RAG Grounding 98%» en el pie de página.
+- Cada estación muestra la verificación de su recurso (`pendiente` → `auditada` / `sin auditar`), las citas localizadas, la reutilización y los avisos. Las citas indican la página real o «no encontrada en el documento».
+- Recursos de apoyo junto a su estación: objetivos y resumen ejecutivo por secciones (Estación 1), glosario (Estación 2) y diapositivas (Estación 4).
+- `frontend/tests/e2e_sse_paralelo.manual.ts` prueba el flujo contra un backend real; no forma parte de `npm test` porque consume cuota de Gemini.

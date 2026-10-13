@@ -28,6 +28,22 @@ export function AuthModal({ isOpen, onClose, onLoginSuccess }: Props) {
           options: { redirectTo: window.location.origin + '/auth/callback' } });
         if (error) throw error;
       })}>Continuar con Google</button>
+      <button
+        type="button"
+        disabled={busy}
+        className={styles.guestButton}
+        onClick={() => {
+          onLoginSuccess({
+            id: '00000000-0000-0000-0000-000000000000',
+            name: 'Invitado Demo',
+            email: 'invitado@novamind.local',
+            provider: 'local',
+          });
+          onClose();
+        }}
+      >
+        Continuar como invitado (Modo Demo)
+      </button>
       <form className={styles.form} onSubmit={e => { e.preventDefault(); void run(async () => {
         const client = requireSupabase();
         const result = register ? await client.auth.signUp({ email, password,

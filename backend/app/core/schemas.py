@@ -22,7 +22,9 @@ Incluye:
 
 from __future__ import annotations
 
+import hashlib
 import math
+import re
 import unicodedata
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -471,6 +473,32 @@ def _resolver_alias(
 
 MIN_CARACTERES_DOCUMENTO = 40
 MAX_CARACTERES_DOCUMENTO = 400_000
+MAX_SECCIONES_DOCUMENTO = 200
+
+
+class RangoPagina(BaseModel):
+    """Página de origen como rango [inicio, fin) sobre `documento_contenido` (sin duplicar texto)."""
+
+    numero: int = Field(..., ge=1)
+    inicio: int = Field(..., ge=0)
+    fin: int = Field(..., ge=0)
+
+
+class SeccionDocumento(BaseModel):
+    """Encabezado detectado en el documento, con su posición y página de origen."""
+
+    titulo: str = Field(..., min_length=1, max_length=200)
+    nivel: int = Field(default=1, ge=1, le=6)
+    inicio: int = Field(..., ge=0)
+    pagina: Optional[int] = Field(default=None, ge=1)
+
+
+def pagina_de_offset(paginas: List[RangoPagina], offset: int) -> Optional[int]:
+    """Número de página que contiene `offset`, o None si no hay paginación."""
+    for pagina in paginas:
+        if pagina.inicio <= offset < pagina.fin:
+            return pagina.numero
+    return None
 
 
 class SolicitudAdaptacion(BaseModel):
@@ -506,6 +534,22 @@ class SolicitudAdaptacion(BaseModel):
         description="Identificador estable del documento. "
         "Si no se indica, se calcula un hash del contenido.",
     )
+    # Contexto documental compartido: lo construye la ingesta una sola vez (vacío para texto pegado).
+    paginas: List[RangoPagina] = Field(default_factory=list)
+    secciones: List[SeccionDocumento] = Field(default_factory=list, max_length=MAX_SECCIONES_DOCUMENTO)
+
+    @model_validator(mode="after")
+    def _contexto_coherente(self) -> "SolicitudAdaptacion":
+        """Rangos fuera del texto o desordenados se descartan: una página falsa es peor que ninguna."""
+        largo = len(self.documento_contenido)
+        anterior_fin = 0
+        for pagina in self.paginas:
+            if not (anterior_fin <= pagina.inicio <= pagina.fin <= largo):
+                self.paginas = []
+                break
+            anterior_fin = pagina.fin
+        self.secciones = [s for s in self.secciones if s.inicio < largo]
+        return self
 
     @field_validator("perfil_destinatario", mode="before")
     @classmethod
@@ -574,9 +618,27 @@ DURACION_MIN_ESCENA_S = 5.0
 MAX_TEXTO_FUENTE = 600
 
 
+# Unión explícita de str.isspace() de Python y \s de JavaScript. str.split() y /\s+/ difieren
+# en U+001C-U+001F, U+0085 (el "…" de Windows-1252 mal decodificado) y U+FEFF (BOM).
+# Espejo literal en frontend/src/utils/microclassTiming.ts (WORD_SEPARATORS).
+_SEPARADORES_PALABRA = re.compile(
+    "[\t\n\x0b\x0c\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+"
+)
+
+
 def contar_palabras(texto: Optional[str]) -> int:
     """Conteo real de palabras; nunca se confía en la estimación del LLM."""
-    return len((texto or "").split())
+    return sum(1 for p in _SEPARADORES_PALABRA.split(texto or "") if p)
+
+
+def huella_documento(titulo: str, contenido: str) -> str:
+    """sha256 hex de título + contenido (documents.content_hash en Supabase)."""
+    return hashlib.sha256(f"{titulo}\n{contenido}".encode("utf-8")).hexdigest()
+
+
+def calcular_documento_id(titulo: str, contenido: str) -> str:
+    """Id estable por contenido (no por título): dos documentos distintos nunca colisionan."""
+    return f"doc-{huella_documento(titulo, contenido)[:16]}"
 
 
 def redondear_decima(valor: float) -> float:
@@ -707,6 +769,32 @@ class VideoJobSpec(BaseModel):
         return self
 
 
+class EstadoRecurso(BaseModel):
+    """
+    Estado publicado de un recurso del modo paralelo.
+
+    verificacion:
+      - "pendiente": pasó las comprobaciones deterministas (esquema, citas localizadas,
+        duplicados); la auditoría de fidelidad aún no terminó.
+      - "auditada": la auditoría se ejecutó y contrastó afirmaciones de este recurso.
+      - "no_auditada": la auditoría no se ejecutó o no cubre este recurso.
+    """
+
+    recurso: str
+    tarea: str
+    estado: Literal["completado", "fallido"]
+    verificacion: Literal["pendiente", "auditada", "no_auditada"] = "pendiente"
+    modelo: Optional[str] = None
+    intentos: int = 0
+    latencia_s: float = 0.0
+    citas_totales: int = 0
+    citas_verificadas: int = 0
+    avisos: List[str] = Field(default_factory=list)
+    error_codigo: Optional[str] = None
+    # True si se tomó de una generación anterior idéntica (mismo documento, parámetros y modelo)
+    reutilizado: bool = False
+
+
 class ContenidoAdaptado(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -723,6 +811,12 @@ class ContenidoAdaptado(BaseModel):
     director_cut: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
     quiz: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
     video_job_spec: Optional[VideoJobSpec] = None
+    # Recursos del modo paralelo. Cada cita lleva {texto, pagina, verificada}, derivados del documento.
+    resumen_ejecutivo: Optional[Dict[str, Any]] = None
+    glosario: Optional[List[Dict[str, Any]]] = None
+    objetivos_aprendizaje: Optional[List[str]] = None
+    diapositivas: Optional[List[Dict[str, Any]]] = None
+    estado_recursos: Optional[Dict[str, EstadoRecurso]] = None
 
     @model_validator(mode="before")
     @classmethod

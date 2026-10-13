@@ -1,0 +1,136 @@
+.contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.bloque {
+  border-radius: var(--radius-lg);
+  background: var(--color-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  color: var(--color-violet-300);
+  list-style: none;
+}
+.resumen::-webkit-details-marker { display: none; }
+.resumen::before {
+  content: '▸';
+  color: var(--color-text-subtle);
+  transition: transform var(--transition-fast);
+}
+.bloque[open] > .resumen::before { transform: rotate(90deg); }
+.resumen:focus-visible {
+  outline: 2px solid var(--color-violet-400);
+  outline-offset: 2px;
+  border-radius: var(--radius-lg);
+}
+
+.titulo {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.cantidad {
+  font-size: 0.6875rem;
+  padding: 0 0.375rem;
+  border-radius: var(--radius-full);
+  background: var(--color-violet-bg);
+  color: var(--color-violet-300);
+}
+
+.cuerpo {
+  padding: 0 1rem 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.parrafo { margin: 0 0 0.75rem; }
+
+.subtitulo {
+  margin: 1rem 0 0.375rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.lista {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.lista li + li { margin-top: 0.25rem; }
+
+.definiciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin: 0;
+}
+.definiciones dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.definiciones dd { margin: 0.125rem 0 0; }
+
+.diapositivas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diapositiva {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  border-radius: var(--radius-md);
+  background: var(--color-card-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.diapositivaCabecera {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.diapositivaNumero {
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  color: var(--color-violet-400);
+}
+
+.visual {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.fallido {
+  margin: 0;
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-rose-border);
+  color: var(--color-rose-400);
+  font-size: 0.8125rem;
+}

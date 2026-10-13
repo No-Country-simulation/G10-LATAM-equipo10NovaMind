@@ -99,6 +99,12 @@ class Config:
     timeout_llamada_llm: float = 25.0
     entorno: str = "dev"
 
+    # --- Generación paralela con Gemini (modo "paralelo") ---
+    # Verificados contra GET /v1beta/models el 2026-10-12. Cambiar de modelo = cambiar el .env.
+    gemini_summary_model: str = "gemini-3.8-flash"
+    gemini_resources_model: str = "gemini-3.5-flash-lite"
+    gemini_tts_model: str = "gemini-3.8-flash-lite-tts"
+
     @classmethod
     def desde_entorno(cls, cargar_dotenv: bool = True) -> "Config":
         if cargar_dotenv:
@@ -138,6 +144,9 @@ class Config:
             presupuesto_tiempo_segundos=_leer_float("PRESUPUESTO_TIEMPO_SEGUNDOS", 180.0, 10.0, 300.0),
             timeout_llamada_llm=_leer_float("TIMEOUT_LLAMADA_LLM", 45.0, 5.0, 120.0),
             entorno=os.getenv("APP_ENV", "dev").lower(),
+            gemini_summary_model=os.getenv("GEMINI_SUMMARY_MODEL") or "gemini-3.8-flash",
+            gemini_resources_model=os.getenv("GEMINI_RESOURCES_MODEL") or "gemini-3.5-flash-lite",
+            gemini_tts_model=os.getenv("GEMINI_TTS_MODEL") or "gemini-3.8-flash-lite-tts",
         )
 
     def exigir_cohere(self) -> str:

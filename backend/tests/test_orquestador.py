@@ -119,6 +119,7 @@ def evaluacion(respaldadas: int, total: int, **kw: Any) -> EvaluacionCalidad:
         AfirmacionEvaluada(
             afirmacion=f"Afirmación {i}",
             respaldada=i < respaldadas,
+            chunk_id_evidencia="doc-x_0" if i < respaldadas else None,  # chunk de chunks_falsos()
             comentario=None if i < respaldadas else "No aparece en la fuente",
         )
         for i in range(total)

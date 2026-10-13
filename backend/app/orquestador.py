@@ -55,6 +55,7 @@ from tenacity import (
 )
 
 from app.core.config import Config
+from app.core.schemas import calcular_documento_id  # noqa: F401 (re-export)
 from app.core.schemas import (
     AlmacenamientoOCI,
     ErrorFlujo,
@@ -187,12 +188,6 @@ def es_error_transitorio(exc: BaseException) -> bool:
         }:
             return True
     return False
-
-
-def calcular_documento_id(titulo: str, contenido: str) -> str:
-    """Id estable: el mismo documento no se vuelve a embeber entre escenarios."""
-    huella = hashlib.sha256(f"{titulo}\n{contenido}".encode("utf-8")).hexdigest()
-    return f"doc-{huella[:16]}"
 
 
 def formatear_fragmentos(chunks: List[Any]) -> str:
@@ -702,23 +697,21 @@ class OrquestadorNuevaMente:
                 afirmaciones_saneadas = []
                 hubo_ajustes = False
                 for af in evaluacion.afirmaciones:
-                    es_dummy_test = af.chunk_id_evidencia in ("x", "chunk_01", "mock")
-                    if (
-                        af.respaldada
-                        and af.chunk_id_evidencia
-                        and not es_dummy_test
-                        and af.chunk_id_evidencia not in chunks_validos
-                    ):
+                    # "Respaldada" exige evidencia verificable: un chunk_id que exista entre
+                    # los fragmentos recuperados. Sin cita, o con cita inventada, no cuenta.
+                    if af.respaldada and af.chunk_id_evidencia not in chunks_validos:
                         hubo_ajustes = True
-                        logger.info(
-                            "[criticar] Afirmación citó chunk inexistente '%s'. Corrigiendo respaldada a False.",
-                            af.chunk_id_evidencia,
+                        motivo = (
+                            f"chunk '{af.chunk_id_evidencia}' no existe"
+                            if af.chunk_id_evidencia
+                            else "no cita ningún chunk"
                         )
+                        logger.info("[criticar] Afirmación sin evidencia válida (%s): respaldada=False.", motivo)
                         afirmaciones_saneadas.append(
                             af.model_copy(
                                 update={
                                     "respaldada": False,
-                                    "comentario": f"Evidencia no encontrada en fuentes (chunk '{af.chunk_id_evidencia}' no existe).",
+                                    "comentario": f"Evidencia no encontrada en fuentes ({motivo}).",
                                 }
                             )
                         )

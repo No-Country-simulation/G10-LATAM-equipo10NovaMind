@@ -26,6 +26,7 @@ import type {
 } from "./types/types";
 import { triggerLevelUpConfetti, triggerSmallConfetti } from "./utils/confetti";
 import { solicitarAdaptacion } from "./services/api";
+import { estacionesResueltas } from "./utils/paqueteIncremental";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -70,6 +71,9 @@ export default function App() {
   const [generatingMessage, setGeneratingMessage] = useState<string>("");
   const [history, setHistory] = useState<PackageRow[]>([]);
   const [packageId, setPackageId] = useState<string | null>(null);
+  // Identidad del recorrido montado en el Paso 2. Se fija al abrir un paquete o al empezar a
+  // recibir recursos, y no cambia cuando llega el paquete final: así la estación en uso no se reinicia.
+  const [questKey, setQuestKey] = useState<string>('demo');
   const [ready, setReady] = useState(false);
   const [quizState, setQuizState] = useState<QuizState>(EMPTY_QUIZ);
   const [syncMessage, setSyncMessage] = useState('Comprobando sesión…');
@@ -81,7 +85,7 @@ export default function App() {
   const restorePackage = async (row: PackageRow, version: number) => {
     const { progress, state } = await readState(row.id);
     if (version !== accountVersion.current) return;
-    setCurrentPackage(row.payload); setPackageId(row.id);
+    setCurrentPackage(row.payload); setPackageId(row.id); setQuestKey(row.id);
     setCurrentStep(progress?.current_step || 2);
     setActiveStationIndex(progress?.active_station_index || 0);
     setCompletedStations(progress?.completed_stations || {});
@@ -92,7 +96,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!supabase) { setSyncMessage('Falta configurar Supabase en frontend/.env.local.'); return; }
+    if (!supabase) {
+      setSyncMessage('Modo local (sin Supabase). Tu trabajo se guardará en esta sesión.');
+      setReady(true);
+      return;
+    }
     let disposed = false;
     let currentOwner: string | null | undefined;
     const refresh = async () => {
@@ -109,7 +117,11 @@ export default function App() {
         setQuizState(EMPTY_QUIZ);
         setIsProcessing(false); setIsGenerating(false); setProcessingStage(''); setGeneratingMessage('');
         setAchievements(INITIAL_ACHIEVEMENTS); setIsTrophyModalOpen(false); setSelectedBadgeForModal(null);
-        if (!data.user) { setSyncMessage(error && error.name !== 'AuthSessionMissingError' ? error.message : 'Inicia sesión para guardar tu trabajo.'); return; }
+        if (!data.user) {
+          setReady(true);
+          setSyncMessage(error && error.name !== 'AuthSessionMissingError' ? error.message : 'Modo Invitado · Inicia sesión si deseas sincronizar en la nube.');
+          return;
+        }
         setUser(authUser(data.user)); setIsAuthOpen(false);
         const rows = await listPackages();
         const state = await supabase!.from('user_state').select('*').eq('user_id', nextOwner).single();
@@ -120,7 +132,14 @@ export default function App() {
         const last = rows.find(r => r.id === state.data.preferences.last_package_id);
         if (last) await restorePackage(last, version);
         if (!disposed && version === accountVersion.current) { setReady(true); setSyncMessage('Historial recuperado desde Supabase.'); }
-      } catch (error) { if (!disposed) setSyncMessage('No se pudo recuperar la cuenta: ' + (error instanceof Error ? error.message : String(error))); }
+      } catch (error) {
+        if (!disposed) {
+          setReady(true);
+          setSyncMessage('No se pudo recuperar la cuenta: ' + (error instanceof Error ? error.message : String(error)));
+        }
+      } finally {
+        if (!disposed) setReady(true);
+      }
     };
     void refresh();
     const { data } = supabase.auth.onAuthStateChange(() => { setTimeout(() => { if (!disposed) void refresh(); }, 0); });
@@ -128,7 +147,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user || !ready) return;
+    if (!user || !ready || user.id === '00000000-0000-0000-0000-000000000000') return;
     const ownerId = user.id; const version = accountVersion.current;
     const timer = setTimeout(() => {
       const snapshot = { ...latestState.current };
@@ -144,12 +163,16 @@ export default function App() {
 
   const logout = async () => {
     try {
-      if (user && ready) {
+      if (user && ready && user.id !== '00000000-0000-0000-0000-000000000000') {
         await saveQueue.current;
         await writeState(user.id, packageId, latestState.current);
       }
-      const { error } = await requireSupabase().auth.signOut({ scope: 'local' });
-      if (error) throw error;
+      if (supabase && user?.id !== '00000000-0000-0000-0000-000000000000') {
+        const { error } = await supabase.auth.signOut({ scope: 'local' });
+        if (error) throw error;
+      }
+      setUser(null);
+      setSyncMessage('Modo Invitado · Inicia sesión si deseas sincronizar en la nube.');
     } catch (error) { setSyncMessage('No se cerró la sesión: ' + (error instanceof Error ? error.message : String(error))); }
   };
 
@@ -225,10 +248,12 @@ export default function App() {
     pdfBase64?: string | null,
     rawFile?: File | null,
   ) => {
-    if (!user || !ready) { setIsAuthOpen(true); return; }
+    if (isProcessing) return;
     const version = accountVersion.current;
-    const startingOwner = user.id;
+    const startingOwner = user?.id || '00000000-0000-0000-0000-000000000000';
     const priorState = { ...latestState.current };
+    const prior = { pkg: currentPackage, packageId, questKey };
+    let recorridoAbierto = false; // ¿ya se mostró algún recurso parcial?
     setReady(false);
     setIsProcessing(true);
     setIsGenerating(true);
@@ -239,8 +264,10 @@ export default function App() {
     setQuizState(EMPTY_QUIZ);
 
     try {
-      await saveQueue.current;
-      await writeState(startingOwner, packageId, priorState);
+      if (startingOwner !== '00000000-0000-0000-0000-000000000000') {
+        await saveQueue.current;
+        await writeState(startingOwner, packageId, priorState);
+      }
       const adaptedPkg = await solicitarAdaptacion(
         {
           docTitle: title,
@@ -253,21 +280,38 @@ export default function App() {
           pdfBase64,
           rawFile,
         },
-        (stage) => {
+        (stage, partialPackage) => {
+          if (version !== accountVersion.current) return;
           setProcessingStage(stage);
           setGeneratingMessage(stage);
+          if (!partialPackage) return;
+          // Publicación incremental: el recorrido se abre con el primer recurso listo
+          setCurrentPackage(partialPackage);
+          setUnlockedStations(estacionesResueltas(partialPackage));
+          if (!recorridoAbierto) {
+            recorridoAbierto = true;
+            setPackageId(null);
+            setQuestKey(`gen-${Date.now()}`);
+            setCurrentStep(2);
+          }
         }
       );
 
       // Finalización exitosa: cargamos el nuevo paquete y abrimos la Ruta Cognitiva
       if (version !== accountVersion.current) return;
-      const verified = await requireSupabase().auth.getUser();
-      if (verified.data.user?.id !== startingOwner) throw new Error('La cuenta cambió durante la generación.');
-      const saved = adaptedPkg.persistencia?.package_id
-        ? { id: adaptedPkg.persistencia.package_id, title: adaptedPkg.contenido_adaptado.titulo, payload: adaptedPkg }
-        : await createPackage(adaptedPkg, { profile, format, niche, detail, selectedScenarioId, source: selectedScenarioId === 'demo-offline-swap' ? 'explicit-demo' : 'backend' }, startingOwner);
+      let saved = null;
+      if (startingOwner === '00000000-0000-0000-0000-000000000000') {
+        saved = { id: adaptedPkg.persistencia?.package_id || `pkg-${Date.now()}`, title: adaptedPkg.contenido_adaptado.titulo, payload: adaptedPkg };
+      } else {
+        const verified = await requireSupabase().auth.getUser();
+        if (verified.data.user?.id !== startingOwner) throw new Error('La cuenta cambió durante la generación.');
+        saved = adaptedPkg.persistencia?.package_id
+          ? { id: adaptedPkg.persistencia.package_id, title: adaptedPkg.contenido_adaptado.titulo, payload: adaptedPkg }
+          : await createPackage(adaptedPkg, { profile, format, niche, detail, selectedScenarioId, source: selectedScenarioId === 'demo-offline-swap' ? 'explicit-demo' : 'backend' }, startingOwner);
+      }
       if (version !== accountVersion.current) return;
       setPackageId(saved.id); setHistory(prev => [saved, ...prev]);
+      if (!recorridoAbierto) setQuestKey(saved.id);
       setCurrentPackage(adaptedPkg);
       setUnlockedStations([0, 1, 2, 3, 4]);
       setCurrentStep(2);
@@ -276,6 +320,10 @@ export default function App() {
       if (version !== accountVersion.current) return;
       setCompletedStations(priorState.completedStations); setQuizState(priorState.quizState);
       setActiveStationIndex(priorState.activeStationIndex);
+      if (recorridoAbierto) {
+        // Se mostraron recursos parciales de una generación que no terminó: volver a lo anterior
+        setCurrentPackage(prior.pkg); setPackageId(prior.packageId); setQuestKey(prior.questKey);
+      }
       console.error("Error en el pipeline de NovaMind:", err);
       const errMsg = err instanceof Error ? err.message : String(err);
       alert(`⚠️ ${errMsg}`);
@@ -307,24 +355,19 @@ export default function App() {
   };
 
   const handleDownloadMarkdown = () => {
-    const mdContent = `# ${currentPackage.contenido_adaptado.titulo}
-Perfil: ${currentPackage.metadatos.perfil_aplicado} | OCI Always Free
-
-## Introducción Contextualizada
-${currentPackage.contenido_adaptado.introduccion_contextualizada}
-
-## Resumen Ninja
-${currentPackage.contenido_adaptado.resumen_ninja.analogia_central}
-
-### Conceptos Clave
-${currentPackage.contenido_adaptado.resumen_ninja.conceptos_clave.map((c) => `- ${c.texto}`).join("\n")}
-
-## Flashcards
-${currentPackage.contenido_adaptado.flashcards.map((f, i) => `### Tarjeta ${i + 1}:${f.frente}\n**Respuesta:** ${f.dorso}\n*Pista:*${f.pista_didactica}\n`).join("\n")}
-
-## Laboratorio Práctico
-${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.titulo}\n\`\`\`bash\n${t.cli_command}\n\`\`\`\n*Verificación:* ${t.verificacion}\n`).join("\n")}
-`;
+    // Cada sección solo se exporta si su recurso existe (en modo paralelo uno puede haber fallado)
+    const c = currentPackage.contenido_adaptado;
+    const secciones = [
+      `# ${c.titulo}\nPerfil: ${currentPackage.metadatos.perfil_aplicado}`,
+      c.introduccion_contextualizada && `## Introducción Contextualizada\n${c.introduccion_contextualizada}`,
+      c.objetivos_aprendizaje?.length && `## Objetivos de aprendizaje\n${c.objetivos_aprendizaje.map((o) => `- ${o}`).join("\n")}`,
+      c.resumen_ejecutivo && `## Resumen ejecutivo\n${c.resumen_ejecutivo.texto}`,
+      c.resumen_ninja && `## Resumen Ninja\n${c.resumen_ninja.analogia_central}\n\n### Conceptos Clave\n${c.resumen_ninja.conceptos_clave.map((k) => `- ${k.texto}`).join("\n")}`,
+      c.glosario?.length && `## Glosario\n${c.glosario.map((g) => `- **${g.termino}:** ${g.definicion}`).join("\n")}`,
+      c.flashcards?.length && `## Flashcards\n${c.flashcards.map((f, i) => `### Tarjeta ${i + 1}: ${f.frente}\n**Respuesta:** ${f.dorso}\n*Pista:* ${f.pista_didactica}\n`).join("\n")}`,
+      c.tutorial?.length && `## Laboratorio Práctico\n${c.tutorial.map((t) => `### Paso ${t.paso}: ${t.titulo}\n\`\`\`bash\n${t.cli_command}\n\`\`\`\n*Verificación:* ${t.verificacion}\n`).join("\n")}`,
+    ];
+    const mdContent = secciones.filter(Boolean).join("\n\n") + "\n";
     const dataStr =
       "data:text/markdown;charset=utf-8," + encodeURIComponent(mdContent);
     const downloadAnchor = document.createElement("a");
@@ -341,7 +384,7 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
   const handleDownloadAnkiCSV = () => {
     const rows = [
       ["Front", "Back"],
-      ...currentPackage.contenido_adaptado.flashcards.map((f) => [
+      ...(currentPackage.contenido_adaptado.flashcards ?? []).map((f) => [
         `"${f.frente.replace(/"/g, '""')}"`,
         `"${f.dorso.replace(/"/g, '""')} <br><em>Hint: ${f.pista_didactica.replace(/"/g, '""')}</em>"`,
       ]),
@@ -378,7 +421,11 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLoginSuccess={() => setIsAuthOpen(false)}
+        onLoginSuccess={(loggedUser) => {
+          setUser(loggedUser);
+          setReady(true);
+          setIsAuthOpen(false);
+        }}
       />
 
       {/* 2. Gamified Player HUD */}
@@ -442,7 +489,7 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
 
         {currentStep === 2 && (
           <Step2KnowledgeQuest
-            key={`${user?.id || 'guest'}:${packageId || 'demo'}`}
+            key={`${user?.id || 'guest'}:${questKey}`}
             quizState={quizState}
             onQuizChange={setQuizState}
             contentPackage={currentPackage}
@@ -493,8 +540,6 @@ ${currentPackage.contenido_adaptado.tutorial.map((t) => `### Paso ${t.paso}:${t.
 
           <div className={styles.footerLinks}>
             <span>Capa Always Free OCI (Cero Costos)</span>
-            <span>·</span>
-            <span>RAG Grounding 98%</span>
             <span>·</span>
             <button
               type="button"
