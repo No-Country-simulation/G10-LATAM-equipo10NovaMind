@@ -28,7 +28,7 @@ export const Station2FlashcardQuest = ({
   const backFaceRef = useRef<HTMLDivElement>(null);
   const [dynamicHeight, setDynamicHeight] = useState<number | undefined>(undefined);
 
-  // Sincronización limpia en fase de render sin useEffect
+  // Sincronización en render cuando cambian las tarjetas
   if (cards !== prevCards) {
     setPrevCards(cards);
     setCurrentIndex(0);
@@ -47,7 +47,8 @@ export const Station2FlashcardQuest = ({
   ];
 
   const totalCards = safeCards.length;
-  const minRequired = Math.max(1, Math.ceil(totalCards * 0.6));
+  // Regla del 100%: se requiere dominar la totalidad de las tarjetas
+  const minRequired = totalCards;
   const currentCard = safeCards[currentIndex] || safeCards[0];
   const cardId = currentCard.id || `card-${currentIndex}`;
 
@@ -65,7 +66,6 @@ export const Station2FlashcardQuest = ({
 
   const handleCardClick = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    // Evitar que el clic en botones, pistas didácticas o elementos interactivos gire la tarjeta
     if (
       target.closest('button') || 
       target.closest(`.${styles.hintSection}`) ||
@@ -102,7 +102,8 @@ export const Station2FlashcardQuest = ({
 
     const totalMastered = Object.values(newMastered).filter(Boolean).length;
 
-    if (totalMastered >= minRequired) {
+    // Solo se completa la estación si se alcanza el 100%
+    if (totalMastered === minRequired) {
       if (!isCompleted) {
         onCompleteStation(50);
       }
@@ -110,23 +111,22 @@ export const Station2FlashcardQuest = ({
       if (onOpenStreakBadge) {
         onOpenStreakBadge();
       }
+    } else {
+      setTimeout(() => {
+        handleNext();
+      }, 350);
     }
-
-    setTimeout(() => {
-      handleNext();
-    }, 350);
   };
 
-  const handleNeedReview = () => {
-    setMasteredCards((prev) => ({ ...prev, [cardId]: false }));
-    handleNext();
-  };
+  // const handleNeedReview = () => {
+  //   setMasteredCards((prev) => ({ ...prev, [cardId]: false }));
+  //   handleNext();
+  // };
 
   const isCurrentMastered = !!masteredCards[cardId];
   const masteredCount = Object.values(masteredCards).filter(Boolean).length;
-  const isPassed = masteredCount >= minRequired;
+  const isPassed = totalCards > 0 && masteredCount === minRequired;
 
-  // Medición y ajuste dinámico robusto del alto de la flashcard
   useEffect(() => {
     const computeHeight = () => {
       const activeFace = isFlipped ? backFaceRef.current : frontFaceRef.current;
@@ -143,17 +143,13 @@ export const Station2FlashcardQuest = ({
       const padBottom = isDesktop ? 26 : 20;
 
       const topH = topEl?.offsetHeight || 24;
-      // centerEl.scrollHeight contiene la totalidad del contenido (pregunta, icono, botón y pista desplegada)
       const centerH = Math.max(centerEl.scrollHeight, centerEl.offsetHeight || 0);
       const bottomH = bottomEl?.offsetHeight || 36;
       const bottomMargin = 16;
-
-      // Margen generoso de respiro para que el botón "Girar tarjeta" mantenga distancia visual holgada
       const breathingRoom = showHint ? 44 : 28;
 
       const totalCalculated = padTop + topH + centerH + bottomMargin + bottomH + padBottom + breathingRoom;
 
-      // Alturas mínimas de base según si la pista está desplegada o no
       const baseline = showHint
         ? (isDesktop ? 480 : 430)
         : (isDesktop ? 360 : 320);
@@ -162,10 +158,7 @@ export const Station2FlashcardQuest = ({
       setDynamicHeight(finalHeight);
     };
 
-    // Actualización inmediata
     computeHeight();
-
-    // Actualización a los 40ms para asegurar renderizado de tipografías y animación de entrada
     const timer = setTimeout(computeHeight, 40);
 
     window.addEventListener('resize', computeHeight);
@@ -195,14 +188,14 @@ export const Station2FlashcardQuest = ({
             Flashcard Quest Interactivo
           </h3>
           <p className={styles.stationSubtitle}>
-            Pon a prueba tu memoria activa con tarjetas 3D. Umbral de aprobación: al menos {minRequired} de {totalCards} dominadas.
+            Pon a prueba tu memoria activa con tarjetas 3D. Umbral de aprobación: domina el 100% ({minRequired} de {totalCards}) para desbloquear la medalla.
           </p>
         </div>
 
         {/* Progress Tracker */}
         <div className={styles.progressBox}>
           <div className={styles.progressTexts}>
-            <div className={styles.progressLabel}>Dominadas (Mín: {minRequired})</div>
+            <div className={styles.progressLabel}>Dominadas (Requerido: {minRequired})</div>
             <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
               {masteredCount} / {totalCards}
             </div>
@@ -350,13 +343,14 @@ export const Station2FlashcardQuest = ({
         </div>
 
         <div className={styles.actionsGroup}>
-          <button
+          {/* Botón activo que utiliza handleNeedReview */}
+          {/* <button
             type="button"
             onClick={handleNeedReview}
             className={styles.reviewButton}
           >
             Necesito repasar
-          </button>
+          </button> */}
 
           {isPassed ? (
             <button
