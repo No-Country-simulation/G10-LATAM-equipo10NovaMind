@@ -22,7 +22,7 @@ export const Station3TutorialQuest = ({
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  // Sincronización limpia en fase de render sin useEffect
+  // Sincronización en fase de render sin useEffect
   if (steps !== prevSteps) {
     setPrevSteps(steps);
     setActiveStepIndex(0);
@@ -43,7 +43,8 @@ export const Station3TutorialQuest = ({
   ];
 
   const totalSteps = safeSteps.length;
-  const minRequired = Math.max(1, Math.ceil(totalSteps * 0.6));
+  // Regla del 100%: se requiere validar todos los checkpoints
+  const minRequired = totalSteps;
   const currentStep = safeSteps[activeStepIndex] || safeSteps[0];
   const stepId = currentStep.id || `step-${activeStepIndex}`;
 
@@ -60,7 +61,8 @@ export const Station3TutorialQuest = ({
     setCompletedSteps(newCompleted);
 
     const count = Object.values(newCompleted).filter(Boolean).length;
-    if (count >= minRequired) {
+    // Solo se completa la estación y se otorga la medalla al alcanzar el 100%
+    if (count === minRequired) {
       if (!isCompleted) {
         onCompleteStation(75);
       }
@@ -77,7 +79,7 @@ export const Station3TutorialQuest = ({
 
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
   const isCurrentStepCompleted = !!completedSteps[stepId];
-  const isPassed = completedCount >= minRequired;
+  const isPassed = totalSteps > 0 && completedCount === minRequired;
 
   return (
     <div className={styles.stationWrapper}>
@@ -99,7 +101,7 @@ export const Station3TutorialQuest = ({
             Laboratorio de Ejecución Técnica
           </h3>
           <p className={styles.stationSubtitle}>
-            Valida los checkpoints prácticos. Umbral de aprobación: al menos {minRequired} de {totalSteps} pasos completados.
+            Valida los checkpoints prácticos. Umbral de aprobación: completa el 100% ({minRequired} de {totalSteps} pasos) para desbloquear la medalla.
           </p>
         </div>
 
@@ -116,7 +118,7 @@ export const Station3TutorialQuest = ({
           )}
 
           <div className={styles.progressStats}>
-            <div className={styles.progressLabel}>Validados (Mín: {minRequired})</div>
+            <div className={styles.progressLabel}>Validados (Requerido: {minRequired})</div>
             <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
               {completedCount} / {totalSteps}
             </div>
