@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
-import { 
-  Clapperboard, 
-  CheckCircle2, 
-  ChevronLeft, 
-  ChevronRight, 
-  Eye, 
-  Award, 
-  Volume2, 
-  VolumeX, 
-  Radio, 
+import { useState, useEffect } from "react";
+import {
+  Clapperboard,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Award,
+  Volume2,
+  VolumeX,
+  Radio,
   Gauge,
   Camera,
   Copy,
@@ -16,12 +16,21 @@ import {
   Sparkles,
   Film,
   Layers,
-  Palette
-} from 'lucide-react';
-import type { DirectorScene, AdaptedContentPackage } from '../../../types/types';
-import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
-import { enrichSceneVisualDescription, expandSceneScript } from '../../../utils/geminiService';
-import styles from './Station4DirectorCut.module.css';
+  Palette,
+} from "lucide-react";
+import type {
+  DirectorScene,
+  AdaptedContentPackage,
+} from "../../../types/types";
+import {
+  triggerLevelUpConfetti,
+  triggerSmallConfetti,
+} from "../../../utils/confetti";
+import {
+  enrichSceneVisualDescription,
+  expandSceneScript,
+} from "../../../utils/geminiService";
+import styles from "./Station4DirectorCut.module.css";
 
 interface Station4Props {
   scenes: DirectorScene[];
@@ -41,34 +50,62 @@ interface SceneVisualDetails {
 }
 
 function getSceneVisualDetails(
-  sceneIndex: number, 
-  scene: DirectorScene, 
-  packageData?: AdaptedContentPackage
+  sceneIndex: number,
+  scene: DirectorScene,
+  packageData?: AdaptedContentPackage,
 ): SceneVisualDetails {
-  const verifiedList = packageData?.contenido_adaptado?.resumen_ninja?.conceptos_clave || [];
+  const verifiedList =
+    packageData?.contenido_adaptado?.resumen_ninja?.conceptos_clave || [];
   const sceneConcept = verifiedList[sceneIndex]?.texto;
-  const anyVerified = verifiedList.find(c => c.verificado)?.texto;
+  const anyVerified = verifiedList.find((c) => c.verificado)?.texto;
 
   const framingPresets = [
-    { framing: 'Plano General Establecedor', stage: 'Apertura & Gancho', atmosphere: 'Inmersiva & Reveladora', dynamic: 'Expositivo Dinámico' },
-    { framing: 'Plano Medio de Conflicto', stage: 'Planteamiento del Desafío', atmosphere: 'Tensión Narrativa', dynamic: 'Tensión Progresiva' },
-    { framing: 'Plano Secuencia Dinámico', stage: 'Desarrollo Conceptual', atmosphere: 'Comprensión Activa', dynamic: 'Flujo Conceptual' },
-    { framing: 'Plano Detalle Simbólico', stage: 'Punto de Quiebre / Clímax', atmosphere: 'Introspectiva & Profunda', dynamic: 'Pausa de Asimilación' },
-    { framing: 'Plano Cenital Panorámico', stage: 'Resolución & Cierre', atmosphere: 'Inspiradora & Consolidada', dynamic: 'Clímax & Síntesis' }
+    {
+      framing: "Plano General Establecedor",
+      stage: "Apertura & Gancho",
+      atmosphere: "Inmersiva & Reveladora",
+      dynamic: "Expositivo Dinámico",
+    },
+    {
+      framing: "Plano Medio de Conflicto",
+      stage: "Planteamiento del Desafío",
+      atmosphere: "Tensión Narrativa",
+      dynamic: "Tensión Progresiva",
+    },
+    {
+      framing: "Plano Secuencia Dinámico",
+      stage: "Desarrollo Conceptual",
+      atmosphere: "Comprensión Activa",
+      dynamic: "Flujo Conceptual",
+    },
+    {
+      framing: "Plano Detalle Simbólico",
+      stage: "Punto de Quiebre / Clímax",
+      atmosphere: "Introspectiva & Profunda",
+      dynamic: "Pausa de Asimilación",
+    },
+    {
+      framing: "Plano Cenital Panorámico",
+      stage: "Resolución & Cierre",
+      atmosphere: "Inspiradora & Consolidada",
+      dynamic: "Clímax & Síntesis",
+    },
   ];
 
   const preset = framingPresets[sceneIndex % framingPresets.length];
 
   const puntosClave: string[] = [
-    scene.storyboard_visual 
-      ? `Puesta en escena: ${scene.storyboard_visual.slice(0, 115)}${scene.storyboard_visual.length > 115 ? '...' : ''}`
-      : 'Puesta en escena visual orientada a ilustrar el concepto central con impacto didáctico.',
-    scene.consejo_pedagogico 
+    scene.storyboard_visual
+      ? `Puesta en escena: ${scene.storyboard_visual.slice(0, 115)}${scene.storyboard_visual.length > 115 ? "..." : ""}`
+      : "Puesta en escena visual orientada a ilustrar el concepto central con impacto didáctico.",
+    scene.consejo_pedagogico
       ? `Enfoque didáctico: ${scene.consejo_pedagogico}`
-      : 'Estrategia pedagógica anclada a la asimilación del estudiante.',
-    sceneConcept 
+      : "Estrategia pedagógica anclada a la asimilación del estudiante.",
+    sceneConcept
       ? `Concepto verificado: ${sceneConcept}`
-      : (anyVerified ? `Anclaje temático: ${anyVerified}` : 'Verificación RAG sin alucinaciones anclada a la fuente.')
+      : anyVerified
+        ? `Anclaje temático: ${anyVerified}`
+        : "Verificación RAG sin alucinaciones anclada a la fuente.",
   ];
 
   return {
@@ -77,7 +114,7 @@ function getSceneVisualDetails(
     atmosphere: preset.atmosphere,
     focalElement: scene.titulo || `Escena 0${sceneIndex + 1}`,
     dynamicLevel: preset.dynamic,
-    puntosClave
+    puntosClave,
   };
 }
 
@@ -90,13 +127,19 @@ export const Station4DirectorCut = ({
 }: Station4Props) => {
   const [prevScenes, setPrevScenes] = useState(scenes);
   const [currentSceneIndex, setCurrentSceneIndex] = useState<number>(0);
-  const [viewedScenes, setViewedScenes] = useState<Record<number, boolean>>({ 0: true });
+  const [viewedScenes, setViewedScenes] = useState<Record<number, boolean>>({
+    0: true,
+  });
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [copiedPrompt, setCopiedPrompt] = useState<boolean>(false);
   const [isEnriching, setIsEnriching] = useState<boolean>(false);
-  const [enrichedVisuals, setEnrichedVisuals] = useState<Record<number, string>>({});
-  const [expandedScripts, setExpandedScripts] = useState<Record<number, string>>({});
+  const [enrichedVisuals, setEnrichedVisuals] = useState<
+    Record<number, string>
+  >({});
+  const [expandedScripts, setExpandedScripts] = useState<
+    Record<number, string>
+  >({});
   const [isExpandingScript, setIsExpandingScript] = useState<boolean>(false);
 
   // Sincronización al cambiar el lote de escenas desde la ingesta RAG
@@ -108,36 +151,55 @@ export const Station4DirectorCut = ({
     setExpandedScripts({});
   }
 
-  const safeScenes = scenes.length > 0 ? scenes : [
-    {
-      id: 'sc-default',
-      escena: 1,
-      tiempo: '00:00 - 01:30',
-      titulo: 'Apertura y Planteamiento del Tema',
-      guion_locutor: 'Bienvenidos a esta sesión de aprendizaje contextualizado. En esta primera escena exploraremos los pilares nucleares del tema: analizaremos las causas iniciales, las dinámicas de fondo y cómo interactúan las ideas centrales para dar forma a este dilema. Presta especial atención al contraste entre la apariencia externa y la realidad estructural que iremos desvelando a lo largo del recorrido para afianzar un dominio conceptual sólido y duradero.',
-      storyboard_visual: 'Composición visual introductoria presentando el contexto inicial, los conceptos nucleares y el propósito pedagógico de la lección con atmósfera inmersiva.',
-      consejo_pedagogico: 'Mantén un ritmo claro, estableciendo empatía inmediata y conectando el contenido con la experiencia cotidiana del estudiante.'
-    }
-  ];
+  const safeScenes =
+    scenes.length > 0
+      ? scenes
+      : [
+          {
+            id: "sc-default",
+            escena: 1,
+            tiempo: "00:00 - 01:30",
+            titulo: "Apertura y Planteamiento del Tema",
+            guion_locutor:
+              "Bienvenidos a esta sesión de aprendizaje contextualizado. En esta primera escena exploraremos los pilares nucleares del tema: analizaremos las causas iniciales, las dinámicas de fondo y cómo interactúan las ideas centrales para dar forma a este dilema. Presta especial atención al contraste entre la apariencia externa y la realidad estructural que iremos desvelando a lo largo del recorrido para afianzar un dominio conceptual sólido y duradero.",
+            storyboard_visual:
+              "Composición visual introductoria presentando el contexto inicial, los conceptos nucleares y el propósito pedagógico de la lección con atmósfera inmersiva.",
+            consejo_pedagogico:
+              "Mantén un ritmo claro, estableciendo empatía inmediata y conectando el contenido con la experiencia cotidiana del estudiante.",
+          },
+        ];
 
   const totalScenes = safeScenes.length;
   // Regla del 100%: se requiere explorar todas las escenas
   const minRequired = totalScenes;
   const currentScene = safeScenes[currentSceneIndex] || safeScenes[0];
-  const visualDetails = getSceneVisualDetails(currentSceneIndex, currentScene, packageData);
+  const visualDetails = getSceneVisualDetails(
+    currentSceneIndex,
+    currentScene,
+    packageData,
+  );
 
-  const currentVisualText = 
-    enrichedVisuals[currentSceneIndex] || 
-    currentScene.storyboard_visual || 
-    'Composición visual didáctica y escenografía enfocada en contextualizar la idea central de la escena con dinamismo y claridad.';
+  const currentVisualText =
+    enrichedVisuals[currentSceneIndex] ||
+    currentScene.storyboard_visual ||
+    "Composición visual didáctica y escenografía enfocada en contextualizar la idea central de la escena con dinamismo y claridad.";
 
-  const currentScriptText = 
-    expandedScripts[currentSceneIndex] || 
-    currentScene.guion_locutor;
+  const currentScriptText =
+    expandedScripts[currentSceneIndex] || currentScene.guion_locutor;
+
+  useEffect(() => {
+    // Precargar voces del navegador en Chrome/Brave/Edge
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }, []);
 
   // Manejo de síntesis de voz en off (Web Speech API)
   const toggleSpeech = () => {
-    if (!('speechSynthesis' in window)) return;
+    if (!("speechSynthesis" in window)) return;
 
     if (isPlayingAudio) {
       window.speechSynthesis.cancel();
@@ -147,13 +209,60 @@ export const Station4DirectorCut = ({
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(currentScriptText);
-    utterance.lang = 'es-ES';
+
+    // Configuramos el idioma base en español de Argentina / Latinoamérica
+    utterance.lang = "es-AR";
     utterance.rate = playbackSpeed;
 
     const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(v => v.lang.startsWith('es'));
-    if (spanishVoice) {
-      utterance.voice = spanishVoice;
+
+    // Cascada de prioridad: Argentina -> Latam Neutro -> México -> Colombia -> Cualquier voz en español
+    const preferredLocales = [
+      "es-AR",
+      "es-419",
+      "es-MX",
+      "es-CO",
+      "es-CL",
+      "es-US",
+    ];
+
+    let chosenVoice: SpeechSynthesisVoice | undefined;
+
+    // 1. Intentar encontrar una voz que coincida exactamente con las regiones prioritarias
+    for (const locale of preferredLocales) {
+      chosenVoice = voices.find(
+        (v) => v.lang.replace("_", "-").toLowerCase() === locale.toLowerCase(),
+      );
+      if (chosenVoice) {
+        utterance.lang = chosenVoice.lang;
+        break;
+      }
+    }
+
+    // 2. Si no hay match exacto, buscar por nombres clave habituales de voces latinas
+    if (!chosenVoice) {
+      chosenVoice = voices.find((v) => {
+        const name = v.name.toLowerCase();
+        return (
+          v.lang.startsWith("es") &&
+          (name.includes("argentina") ||
+            name.includes("latino") ||
+            name.includes("mexico") ||
+            name.includes("paulino") ||
+            name.includes("sabina") ||
+            name.includes("tomas"))
+        );
+      });
+      if (chosenVoice) utterance.lang = chosenVoice.lang;
+    }
+
+    // 3. Fallback: cualquier voz en español disponible
+    if (!chosenVoice) {
+      chosenVoice = voices.find((v) => v.lang.startsWith("es"));
+    }
+
+    if (chosenVoice) {
+      utterance.voice = chosenVoice;
     }
 
     utterance.onend = () => setIsPlayingAudio(false);
@@ -164,7 +273,8 @@ export const Station4DirectorCut = ({
 
   // Cambio de velocidad de locución
   const handleToggleSpeed = () => {
-    const nextSpeed = playbackSpeed === 1.0 ? 1.25 : playbackSpeed === 1.25 ? 1.5 : 1.0;
+    const nextSpeed =
+      playbackSpeed === 1.0 ? 1.25 : playbackSpeed === 1.25 ? 1.5 : 1.0;
     setPlaybackSpeed(nextSpeed);
     if (isPlayingAudio) {
       window.speechSynthesis.cancel();
@@ -175,14 +285,14 @@ export const Station4DirectorCut = ({
   // Cancelar audio al cambiar de escena o desmontar
   useEffect(() => {
     return () => {
-      if ('speechSynthesis' in window) {
+      if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
     };
   }, [currentSceneIndex]);
 
   const handleSelectScene = (index: number) => {
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       setIsPlayingAudio(false);
     }
@@ -224,20 +334,20 @@ export const Station4DirectorCut = ({
     setIsEnriching(true);
     try {
       const enriched = await enrichSceneVisualDescription(
-        packageData?.contenido_adaptado?.titulo || 'Lección Didáctica',
+        packageData?.contenido_adaptado?.titulo || "Lección Didáctica",
         currentScene.titulo,
         currentVisualText,
-        currentScene.guion_locutor
+        currentScene.guion_locutor,
       );
       if (enriched && enriched.trim()) {
         setEnrichedVisuals((prev) => ({
           ...prev,
-          [currentSceneIndex]: enriched.trim()
+          [currentSceneIndex]: enriched.trim(),
         }));
         triggerSmallConfetti();
       }
     } catch (err) {
-      console.error('Error enriqueciendo descripción visual:', err);
+      console.error("Error enriqueciendo descripción visual:", err);
     } finally {
       setIsEnriching(false);
     }
@@ -248,21 +358,21 @@ export const Station4DirectorCut = ({
     setIsExpandingScript(true);
     try {
       const expanded = await expandSceneScript(
-        packageData?.contenido_adaptado?.titulo || 'Lección Didáctica',
+        packageData?.contenido_adaptado?.titulo || "Lección Didáctica",
         currentScene.titulo,
         currentScriptText,
         currentVisualText,
-        currentScene.consejo_pedagogico
+        currentScene.consejo_pedagogico,
       );
       if (expanded && expanded.trim()) {
         setExpandedScripts((prev) => ({
           ...prev,
-          [currentSceneIndex]: expanded.trim()
+          [currentSceneIndex]: expanded.trim(),
         }));
         triggerSmallConfetti();
       }
     } catch (err) {
-      console.error('Error ampliando locución docente:', err);
+      console.error("Error ampliando locución docente:", err);
     } finally {
       setIsExpandingScript(false);
     }
@@ -291,7 +401,9 @@ export const Station4DirectorCut = ({
             Director Cut: Narrativa Pedagógica & Storyboard
           </h3>
           <p className={styles.stationSubtitle}>
-            Estudio interactivo de locución y visualización de storyboard para la transmisión didáctica de la lección. Requisito para aprobar: explora el 100% ({minRequired} de {totalScenes} escenas).
+            Estudio interactivo de locución y visualización de storyboard para
+            la transmisión didáctica de la lección. Requisito para aprobar:
+            explora el 100% ({minRequired} de {totalScenes} escenas).
           </p>
         </div>
 
@@ -308,8 +420,12 @@ export const Station4DirectorCut = ({
           )}
 
           <div className={styles.progressStats}>
-            <div className={styles.progressLabel}>Escenas Exploradas (Requerido: {minRequired})</div>
-            <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
+            <div className={styles.progressLabel}>
+              Escenas Exploradas (Requerido: {minRequired})
+            </div>
+            <div
+              className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ""}`}
+            >
               {viewedCount} / {totalScenes}
             </div>
           </div>
@@ -331,17 +447,15 @@ export const Station4DirectorCut = ({
                 isCurrent
                   ? styles.sceneButtonActive
                   : isViewed
-                  ? styles.sceneButtonViewed
-                  : ''
+                    ? styles.sceneButtonViewed
+                    : ""
               }`}
             >
               <div className={styles.sceneMeta}>
                 <span className={styles.sceneTag}>
                   Escena 0{idx + 1} · {sc.tiempo}
                 </span>
-                <span className={styles.sceneTitleText}>
-                  {sc.titulo}
-                </span>
+                <span className={styles.sceneTitleText}>{sc.titulo}</span>
               </div>
               <div className={styles.sceneIconBox}>
                 {isViewed ? (
@@ -357,17 +471,20 @@ export const Station4DirectorCut = ({
 
       {/* Estudio Principal (Doble Panel: Teleprompter + Pizarra Didáctica de Storyboard) */}
       <div className={styles.studioViewport}>
-        
         {/* PANEL 1: Teleprompter · Guion Docente (Locución Sincronizada) */}
         <div className={styles.teleprompterCard}>
           <div className={styles.panelHeader}>
             <div className={styles.panelTitleGroup}>
-              <Radio size={15} color="#e879f9" className={isPlayingAudio ? styles.pulsingRadio : ''} />
+              <Radio
+                size={15}
+                color="#e879f9"
+                className={isPlayingAudio ? styles.pulsingRadio : ""}
+              />
               <span className={styles.panelTitleFuchsia}>
                 Teleprompter · Guion Docente
               </span>
             </div>
-            
+
             <div className={styles.audioControlsGroup}>
               <button
                 type="button"
@@ -376,8 +493,13 @@ export const Station4DirectorCut = ({
                 className={styles.expandScriptBtn}
                 title="Ampliar la locución docente con explicaciones conceptuales profundas mediante IA"
               >
-                <Sparkles size={12} className={isExpandingScript ? styles.spinningIcon : ''} />
-                <span>{isExpandingScript ? 'Ampliando...' : 'Profundizar Concepto'}</span>
+                <Sparkles
+                  size={12}
+                  className={isExpandingScript ? styles.spinningIcon : ""}
+                />
+                <span>
+                  {isExpandingScript ? "Ampliando..." : "Profundizar Concepto"}
+                </span>
               </button>
 
               <button
@@ -393,13 +515,17 @@ export const Station4DirectorCut = ({
               <button
                 type="button"
                 onClick={toggleSpeech}
-                className={`${styles.audioNarrateBtn} ${isPlayingAudio ? styles.audioNarrateBtnPlaying : ''}`}
-                title={isPlayingAudio ? 'Detener locución' : 'Escuchar locución en off'}
+                className={`${styles.audioNarrateBtn} ${isPlayingAudio ? styles.audioNarrateBtnPlaying : ""}`}
+                title={
+                  isPlayingAudio
+                    ? "Detener locución"
+                    : "Escuchar locución en off"
+                }
               >
                 {isPlayingAudio ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                <span>{isPlayingAudio ? 'Detener' : 'Locutar'}</span>
+                <span>{isPlayingAudio ? "Detener" : "Locutar"}</span>
               </button>
-              
+
               <span className={styles.sceneTimeBadge}>
                 ⏱ {currentScene.tiempo}
               </span>
@@ -414,7 +540,9 @@ export const Station4DirectorCut = ({
               <span className={styles.waveBar} />
               <span className={styles.waveBar} />
               <span className={styles.waveBar} />
-              <span className={styles.waveText}>Locución en vivo activa...</span>
+              <span className={styles.waveText}>
+                Locución en vivo activa...
+              </span>
             </div>
           )}
 
@@ -422,7 +550,7 @@ export const Station4DirectorCut = ({
           <div className={styles.scriptBoxContainer}>
             <span className={styles.quoteMark}>“</span>
             <p className={styles.scriptBox}>
-              {currentScriptText.replace(/^["“”]|["“”]$/g, '')}
+              {currentScriptText.replace(/^["“”]|["“”]$/g, "")}
             </p>
             <span className={styles.quoteMarkEnd}>”</span>
           </div>
@@ -430,7 +558,9 @@ export const Station4DirectorCut = ({
           {/* Consejo Pedagógico de la Escena */}
           <div className={styles.pedagogyTip}>
             <div className={styles.pedagogyHeader}>
-              <span className={styles.pedagogyBadge}>💡 Enfoque Didáctico Docente</span>
+              <span className={styles.pedagogyBadge}>
+                💡 Enfoque Didáctico Docente
+              </span>
             </div>
             <p className={styles.pedagogyText}>
               {currentScene.consejo_pedagogico}
@@ -449,13 +579,16 @@ export const Station4DirectorCut = ({
                 </span>
               </div>
               <span className={styles.ragBadge}>
-                <CheckCircle2 size={12} color="var(--color-cyan-400)" /> Anclaje RAG Verificado
+                <CheckCircle2 size={12} color="var(--color-cyan-400)" /> Anclaje
+                RAG Verificado
               </span>
             </div>
 
             {/* Título del Concepto y Puesta en Escena */}
             <div className={styles.conceptHeader}>
-              <span className={styles.conceptCategory}>Storyboard & Puesta en Escena Didáctica</span>
+              <span className={styles.conceptCategory}>
+                Storyboard & Puesta en Escena Didáctica
+              </span>
               <h4 className={styles.conceptTitle}>{currentScene.titulo}</h4>
             </div>
 
@@ -469,14 +602,14 @@ export const Station4DirectorCut = ({
               <div className={styles.viewfinderTopBar}>
                 <div className={styles.viewfinderRecGroup}>
                   <span className={styles.viewfinderRecDot} />
-                  <span className={styles.viewfinderRecText}>TOMA 0{currentSceneIndex + 1}</span>
+                  <span className={styles.viewfinderRecText}>
+                    TOMA 0{currentSceneIndex + 1}
+                  </span>
                 </div>
                 <div className={styles.viewfinderTimecode}>
                   ⏱ {currentScene.tiempo}
                 </div>
-                <div className={styles.viewfinderFps}>
-                  24 FPS · 16:9
-                </div>
+                <div className={styles.viewfinderFps}>24 FPS · 16:9</div>
               </div>
 
               <div className={styles.viewfinderGrid} />
@@ -492,11 +625,13 @@ export const Station4DirectorCut = ({
                     <button
                       type="button"
                       onClick={handleCopyPrompt}
-                      className={`${styles.actionBtn} ${copiedPrompt ? styles.actionBtnActive : ''}`}
+                      className={`${styles.actionBtn} ${copiedPrompt ? styles.actionBtnActive : ""}`}
                       title="Copiar prompt visual detallado para generador de imágenes"
                     >
                       {copiedPrompt ? <Check size={12} /> : <Copy size={12} />}
-                      <span>{copiedPrompt ? '¡Copiado!' : 'Copiar Prompt'}</span>
+                      <span>
+                        {copiedPrompt ? "¡Copiado!" : "Copiar Prompt"}
+                      </span>
                     </button>
 
                     <button
@@ -506,8 +641,13 @@ export const Station4DirectorCut = ({
                       className={styles.enrichBtn}
                       title="Enriquecer descripción visual con IA (detalles de encuadre, iluminación y props)"
                     >
-                      <Sparkles size={12} className={isEnriching ? styles.spinningIcon : ''} />
-                      <span>{isEnriching ? 'Enriqueciendo...' : 'Enriquecer con IA'}</span>
+                      <Sparkles
+                        size={12}
+                        className={isEnriching ? styles.spinningIcon : ""}
+                      />
+                      <span>
+                        {isEnriching ? "Enriqueciendo..." : "Enriquecer con IA"}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -522,17 +662,23 @@ export const Station4DirectorCut = ({
                   <div className={styles.storyboardPillItem}>
                     <Eye size={12} color="#38bdf8" />
                     <span className={styles.pillLabel}>Foco:</span>
-                    <span className={styles.pillValue}>{currentScene.titulo}</span>
+                    <span className={styles.pillValue}>
+                      {currentScene.titulo}
+                    </span>
                   </div>
                   <div className={styles.storyboardPillItem}>
                     <Palette size={12} color="#f0abfc" />
                     <span className={styles.pillLabel}>Atmósfera:</span>
-                    <span className={styles.pillValue}>{visualDetails.atmosphere}</span>
+                    <span className={styles.pillValue}>
+                      {visualDetails.atmosphere}
+                    </span>
                   </div>
                   <div className={styles.storyboardPillItem}>
                     <Layers size={12} color="#34d399" />
                     <span className={styles.pillLabel}>Encuadre:</span>
-                    <span className={styles.pillValue}>{visualDetails.framing}</span>
+                    <span className={styles.pillValue}>
+                      {visualDetails.framing}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -542,15 +688,21 @@ export const Station4DirectorCut = ({
             <div className={styles.techMetricsGrid}>
               <div className={styles.techMetricItem}>
                 <span className={styles.techMetricLabel}>Duración</span>
-                <span className={styles.techMetricValue}>{currentScene.tiempo}</span>
+                <span className={styles.techMetricValue}>
+                  {currentScene.tiempo}
+                </span>
               </div>
               <div className={styles.techMetricItem}>
                 <span className={styles.techMetricLabel}>Etapa Narrativa</span>
-                <span className={styles.techMetricValue}>{visualDetails.stageName}</span>
+                <span className={styles.techMetricValue}>
+                  {visualDetails.stageName}
+                </span>
               </div>
               <div className={styles.techMetricItem}>
                 <span className={styles.techMetricLabel}>Dinamismo</span>
-                <span className={styles.techMetricValue}>{visualDetails.dynamicLevel}</span>
+                <span className={styles.techMetricValue}>
+                  {visualDetails.dynamicLevel}
+                </span>
               </div>
               <div className={styles.techMetricItem}>
                 <span className={styles.techMetricLabel}>Verificación</span>
@@ -560,11 +712,17 @@ export const Station4DirectorCut = ({
 
             {/* Puntos Clave Pedagógicos y Visuales */}
             <div className={styles.verifiedPointsContainer}>
-              <span className={styles.verifiedPointsTitle}>Puntos Clave Didácticos & Visuales:</span>
+              <span className={styles.verifiedPointsTitle}>
+                Puntos Clave Didácticos & Visuales:
+              </span>
               <ul className={styles.verifiedPointsList}>
                 {visualDetails.puntosClave.map((punto, pIdx) => (
                   <li key={pIdx} className={styles.verifiedPointItem}>
-                    <CheckCircle2 size={13} color="var(--color-cyan-400)" className={styles.pointCheckIcon} />
+                    <CheckCircle2
+                      size={13}
+                      color="var(--color-cyan-400)"
+                      className={styles.pointCheckIcon}
+                    />
                     <span>{punto}</span>
                   </li>
                 ))}
@@ -599,7 +757,6 @@ export const Station4DirectorCut = ({
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
