@@ -134,7 +134,7 @@ def _ejecutar_tareas_segundo_plano(
         anclaje = (
             respuesta.evaluacion_calidad.anclaje_fuente_score
             if respuesta.evaluacion_calidad
-            else 0.95
+            else None
         )
         servicio_correo.enviar_dossier_pedagogico_silencioso(
             destinatario=destinatario,

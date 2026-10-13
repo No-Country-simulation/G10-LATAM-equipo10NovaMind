@@ -49,7 +49,7 @@ class ServicioCorreo:
         nicho: str,
         contenido_adaptado: Dict[str, Any],
         doc_id: Optional[str] = None,
-        anclaje_score: float = 0.95,
+        anclaje_score: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Genera el PDF estandarizado de las estaciones (sin audiovisual),

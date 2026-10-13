@@ -897,8 +897,19 @@ def test_contrato_audiovisual_escena_director_cut():
     )
     assert job.estado == "contract_ready"
     assert job.total_palabras == 16
+    assert job.wpm == 138
     assert job.duracion_total_estimada == round(16 / 2.3, 1)
     assert len(job.escenas) == 1
+
+    # Prueba con WPM personalizado
+    job_pausado = VideoJobSpec(
+        video_job_id="vjob-test-102",
+        document_id="doc-oci-swap",
+        wpm=120,
+        escenas=[escena],
+    )
+    assert job_pausado.wpm == 120
+    assert job_pausado.duracion_total_estimada == round(16 / (120 / 60.0), 1)
 
 
 def test_normalizar_paquete_base_director_cut_y_video_job_spec():

@@ -41,10 +41,12 @@ export const MetricsView: React.FC<MetricsViewProps> = ({ data, onBack }) => {
     URL.revokeObjectURL(url);
   };
 
-  const rawScore = data.evaluacion_calidad?.anclaje_fuente_score ?? 0.95;
-  const fidelityPercentage = Math.round(rawScore * 100);
+  // Sin score (auditoría no ejecutada) se muestra N/D: nunca un porcentaje inventado
+  const rawScore = data.evaluacion_calidad?.anclaje_fuente_score;
+  const isAudited = typeof rawScore === 'number';
+  const fidelityPercentage = isAudited ? Math.round(rawScore * 100) : 0;
   const observaciones = data.evaluacion_calidad?.observaciones || 'Contenido adaptado y verificado contra fuentes técnicas oficiales.';
-  const chunksRecuperados = data.orquestacion?.chunks_recuperados ?? 6;
+  const chunksRecuperados = data.orquestacion?.chunks_recuperados ?? 0;
   const intentos = data.orquestacion?.intentos_redaccion ?? 1;
   const duracion = data.orquestacion?.duracion_segundos;
 
@@ -82,12 +84,12 @@ export const MetricsView: React.FC<MetricsViewProps> = ({ data, onBack }) => {
           <div className={styles.gaugeWrap}>
             <div className={styles.gauge}>
               <div className={styles.gaugeContent}>
-                <strong>{fidelityPercentage}%</strong>
+                <strong>{isAudited ? `${fidelityPercentage}%` : 'N/D'}</strong>
                 <span>RAG FIDELITY</span>
               </div>
             </div>
             <div className={styles.gaugeInfo}>
-              <h3>Zero Hallucination</h3>
+              <h3>{isAudited ? 'Zero Hallucination' : 'Sin auditoría de fidelidad'}</h3>
               <p>{observaciones}</p>
               <div className={styles.miniProgress}>
                 <span style={{ width: `${fidelityPercentage}%` }} />

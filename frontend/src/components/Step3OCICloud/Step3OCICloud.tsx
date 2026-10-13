@@ -66,7 +66,10 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
     modelo_llm: 'gemini-2.5-flash',
   };
 
-  const groundingPercent = Math.round((evaluacion.anclaje_fuente_score ?? 0.98) * 100);
+  // Sin score (auditoría no ejecutada) se muestra N/D: nunca un porcentaje inventado
+  const groundingScore = evaluacion.anclaje_fuente_score;
+  const isAudited = typeof groundingScore === 'number';
+  const groundingLabel = isAudited ? `${Math.round(groundingScore * 100)}%` : 'N/D';
 
   return (
     <div className={styles.container}>
@@ -106,14 +109,14 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
               </h3>
             </div>
             <span className={styles.verifiedPill}>
-              Zero-Hallucination Verified
+              {isAudited ? 'Zero-Hallucination Verified' : 'Sin auditar'}
             </span>
           </div>
 
           {/* Medidor de Score */}
           <div className={styles.scoreGaugeBox}>
             <div className={styles.gaugeCircle}>
-              <span className={styles.gaugeValue}>{groundingPercent}%</span>
+              <span className={styles.gaugeValue}>{groundingLabel}</span>
             </div>
             <div className={styles.gaugeTexts}>
               <div className={styles.gaugeLabel}>
@@ -135,14 +138,14 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
             <div className={styles.metricTile}>
               <span className={styles.metricTileLabel}>Chunks Procesados</span>
               <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
-                {evaluacion.chunks_procesados || 8} fragmentos (overlap 50t)
+                {evaluacion.chunks_procesados ? `${evaluacion.chunks_procesados} fragmentos` : 'N/D'}
               </span>
             </div>
 
             <div className={styles.metricTile}>
               <span className={styles.metricTileLabel}>Similitud Coseno Media</span>
               <span className={styles.metricTileValue} style={{ color: 'var(--color-emerald-400)', fontFamily: 'var(--font-code)' }}>
-                {evaluacion.similitud_coseno_promedio || 0.94}
+                {evaluacion.similitud_coseno_promedio ?? 'N/D'}
               </span>
             </div>
 

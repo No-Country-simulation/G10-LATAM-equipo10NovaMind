@@ -123,7 +123,7 @@ class GeneradorPDFEducativo:
         perfil: str,
         nicho: str,
         contenido: Dict[str, Any],
-        anclaje_score: float = 0.95,
+        anclaje_score: Optional[float] = None,
     ) -> bytes:
         """Compila las estaciones en un búfer binario PDF en memoria."""
         buffer = io.BytesIO()
@@ -150,7 +150,7 @@ class GeneradorPDFEducativo:
         )))
         elementos.append(Paragraph(f"Dossier Pedagógico: {_escapar(titulo)}", self.styles["TituloDocumento"]))
         elementos.append(Paragraph(
-            f"<b>Perfil:</b> {_escapar(perfil)} | <b>Nicho:</b> {_escapar(nicho)} | <b>Fidelidad RAG:</b> {anclaje_score * 100:.1f}% | <b>OCI Cloud Ready</b>",
+            f"<b>Perfil:</b> {_escapar(perfil)} | <b>Nicho:</b> {_escapar(nicho)} | <b>Fidelidad RAG:</b> {f'{anclaje_score * 100:.1f}%' if anclaje_score is not None else 'Sin auditar'} | <b>OCI Cloud Ready</b>",
             self.styles["Subtitulo"],
         ))
         elementos.append(HRFlowable(width="100%", thickness=1.5, color=self.color_acento, spaceAfter=12))

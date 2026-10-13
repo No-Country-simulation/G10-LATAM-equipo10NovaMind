@@ -111,7 +111,9 @@ export interface Metadatos {
 
 // Evaluación de fidelidad RAG
 export interface EvaluacionCalidad {
-  anclaje_fuente_score: number;
+  /** null cuando la auditoría no se ejecutó */
+  anclaje_fuente_score: number | null;
+  auditoria_ejecutada?: boolean;
   claridad_pedagogica: string;
   observaciones: string;
   sugerencias_correccion?: string[];

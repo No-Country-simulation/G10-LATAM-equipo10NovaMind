@@ -40,6 +40,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
+from pydantic import ValidationError
 
 _ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 if (_ROOT_DIR / ".env").exists():
@@ -55,7 +56,9 @@ from app.core.schemas import (
     EspecificacionVisual,
     EvaluacionCalidad,
     FuenteRAG,
+    MAX_TEXTO_FUENTE,
     MetadatosSalida,
+    formatear_tramo,
     MetricasOrquestacion,
     ParametrosGeneracion,
     RespuestaAdaptacion,
@@ -85,6 +88,81 @@ def _limpiar_json(texto: str) -> Dict[str, Any]:
         raise
 
 
+# -----------------------------------------------------------------------------
+# Utilidades de normalización del Director Cut (Estación 4)
+# -----------------------------------------------------------------------------
+_MAX_ESCENAS_DIRECTOR_CUT = 3
+_UMBRAL_ANCLAJE_CADENA = 0.75
+_MIN_LARGO_CITA = 20
+
+
+def _normalizar_espacios(texto: str) -> str:
+    return " ".join(texto.split())
+
+
+def _cita_verificable(texto: str, documento: str) -> bool:
+    """True si la cita aparece literalmente en el documento (sin distinguir espacios ni mayúsculas)."""
+    cita = _normalizar_espacios(texto).lower()
+    return len(cita) >= _MIN_LARGO_CITA and cita in _normalizar_espacios(documento).lower()
+
+
+def _texto_no_vacio(*valores: Any) -> Optional[str]:
+    """Primer valor que, convertido a texto y sin espacios, no quede vacío."""
+    for v in valores:
+        if v is None or isinstance(v, (dict, list)):
+            continue
+        texto = str(v).strip()
+        if texto:
+            return texto
+    return None
+
+
+def _lista_str(valor: Any) -> List[str]:
+    """Lista de strings no vacíos; acepta un string separado por comas/; o saltos de línea."""
+    if isinstance(valor, str):
+        valor = re.split(r"[,;\n]", valor)
+    if not isinstance(valor, list):
+        return []
+    return [str(v).strip() for v in valor if isinstance(v, (str, int, float)) and str(v).strip()]
+
+
+def _entero_positivo(valor: Any) -> Optional[int]:
+    try:
+        n = int(valor)
+    except (TypeError, ValueError):
+        return None
+    return n if n >= 1 else None
+
+
+def _recortar(texto: str, maximo: int) -> str:
+    """Recorta en frontera de palabra para respetar el max_length del contrato."""
+    if len(texto) <= maximo:
+        return texto
+    return texto[:maximo].rsplit(" ", 1)[0].rstrip(" ,;:") or texto[:maximo]
+
+
+def _extraer_oracion(documento: str, indice: int) -> Optional[str]:
+    """Oración real y completa del documento (>= 8 palabras) para usar como extracto automático."""
+    oraciones = [
+        o.strip()
+        for o in re.split(r"(?<=[.!?])\s+", _normalizar_espacios(documento))
+        if len(o.split()) >= 8
+    ]
+    if not oraciones:
+        return None
+    return _recortar(oraciones[indice % len(oraciones)], MAX_TEXTO_FUENTE)
+
+
+def _auditoria_no_ejecutada(motivo: str) -> Dict[str, Any]:
+    """Resultado honesto cuando el auditor no responde: sin score inventado."""
+    return {
+        "auditoria_ejecutada": False,
+        "anclaje_fuente_score": None,
+        "claridad_pedagogica": "Media",
+        "observaciones": f"Auditoría de fidelidad no ejecutada: {motivo}. Se recomienda revisión humana.",
+    }
+
+
 class CadenaColaborativaMultiModelo:
     """Orquestador colaborativo ultrarrápido con 3 modelos de IA especializados."""
 
@@ -104,6 +182,218 @@ class CadenaColaborativaMultiModelo:
         self.gemini_model = gemini_model or os.getenv("MODELO_CRITICO", "gemini-2.5-flash")
         self.groq_model = groq_model or os.getenv("MODELO_CRITICO_FALLBACK", "openai/gpt-oss-120b")
         self.cohere_model = cohere_model or os.getenv("COHERE_MODEL", "command-r-08-2024")
+
+    # -------------------------------------------------------------------------
+    # Director Cut: normalización escena por escena con procedencia explícita
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _escenas_plantilla(solicitud: SolicitudAdaptacion) -> List[Dict[str, Any]]:
+        """
+        Escenas genéricas de respaldo. Son deliberadamente neutras: no afirman
+        nada técnico sobre el documento (eso sería una alucinación del sistema)
+        y quedan marcadas como origen="plantilla". Total ~110-120 palabras según el título.
+        """
+        doc_titulo = solicitud.documento_titulo or "el contenido"
+        nicho = solicitud.nicho_sector or "General"
+        return [
+            {
+                "id": "sc-1",
+                "titulo": "Apertura y contexto",
+                "guion_locutor": (
+                    f"¡Hola! En esta microclase vamos a recorrer {doc_titulo}. Primero ubicaremos el "
+                    "contexto general del documento y luego identificaremos las ideas que más te "
+                    f"servirán en el sector {nicho}. Anota los términos que se repiten."
+                ),
+                "storyboard_visual": f"Plano frontal del docente con el título «{doc_titulo}» en un panel lateral.",
+                "consejo_pedagogico": "Contacto visual directo y ritmo constante para captar la atención.",
+                "objetivo_pedagogico": "Presentar el documento y orientar la escucha.",
+                "visual": {
+                    "tipo": "ppt_concepto",
+                    "titulo": f"Mapa de {doc_titulo}",
+                    "puntos_clave": ["Contexto del documento", "Ideas principales", f"Aplicación en {nicho}"],
+                },
+            },
+            {
+                "id": "sc-2",
+                "titulo": "Núcleo del material",
+                "guion_locutor": (
+                    "Ahora vamos al núcleo del material. Revisa cada concepto en el orden en que "
+                    "aparece y pregúntate qué problema resuelve. Si una idea no te queda clara, "
+                    "vuelve a la sección original antes de avanzar."
+                ),
+                "storyboard_visual": "Diagrama de tres bloques que se ilumina a medida que avanza la explicación.",
+                "consejo_pedagogico": "Señala cada bloque al nombrarlo para guiar la atención.",
+                "objetivo_pedagogico": "Modelar una estrategia de lectura comprensiva.",
+                "visual": {
+                    "tipo": "diagrama_bloques",
+                    "titulo": "Estrategia de estudio",
+                    "puntos_clave": ["Leer el concepto", "Preguntar qué resuelve", "Volver a la fuente"],
+                },
+            },
+            {
+                "id": "sc-3",
+                "titulo": "Cierre y práctica",
+                "guion_locutor": (
+                    "Para cerrar, repasa las ideas principales con tus propias palabras e intenta "
+                    f"aplicarlas a un caso real de tu entorno en {nicho}. Contrasta siempre tus "
+                    "conclusiones con el documento fuente y usa las demás estaciones para practicar "
+                    "lo aprendido."
+                ),
+                "storyboard_visual": "Tarjeta resumen con llamada a la acción hacia las siguientes estaciones.",
+                "consejo_pedagogico": "Cierre motivador y ritmo pausado en la conclusión.",
+                "objetivo_pedagogico": "Consolidar el aprendizaje y motivar la práctica.",
+                "visual": {
+                    "tipo": "palabras_clave",
+                    "titulo": "Próximos pasos",
+                    "puntos_clave": ["Repaso activo", "Aplicación práctica", "Contraste con la fuente"],
+                },
+            },
+        ]
+
+    def _normalizar_escena(
+        self,
+        raw: Dict[str, Any],
+        indice: int,
+        solicitud: SolicitudAdaptacion,
+        es_plantilla: bool,
+    ) -> tuple[EscenaDirectorCut, List[str]]:
+        """
+        Convierte una escena cruda del LLM en EscenaDirectorCut. Devuelve también
+        las degradaciones aplicadas. Lanza ValidationError/ValueError si la escena
+        es irreparable (el llamador la sustituye por plantilla).
+        """
+        degradaciones: List[str] = []
+        reparada = False
+
+        def campo(*claves: str, defecto: str) -> str:
+            nonlocal reparada
+            valor = _texto_no_vacio(*(raw.get(c) for c in claves))
+            if valor is None:
+                reparada = True
+                return defecto
+            return valor
+
+        guion = _texto_no_vacio(raw.get("guion_locutor"), raw.get("script"), raw.get("guion"))
+        if guion is None:
+            raise ValueError(f"escena {indice} sin guion_locutor")
+
+        titulo = campo("titulo", defecto=f"Escena {indice}")
+        storyboard = campo("storyboard_visual", "visual_description", defecto="Plano del docente con apoyo gráfico del concepto central.")
+        consejo = campo("consejo_pedagogico", defecto="Locución clara, velocidad moderada y énfasis en términos clave.")
+        objetivo = _texto_no_vacio(raw.get("objetivo_pedagogico"))
+
+        visual_raw = raw.get("visual")
+        if isinstance(visual_raw, dict):
+            tipo = visual_raw.get("tipo")
+            if tipo not in ("diagrama_bloques", "ppt_concepto", "palabras_clave", "comparativa"):
+                tipo, reparada = "ppt_concepto", True
+            visual: Optional[Dict[str, Any]] = {
+                "tipo": tipo,
+                "titulo": _texto_no_vacio(visual_raw.get("titulo")) or titulo,
+                "puntos_clave": _lista_str(visual_raw.get("puntos_clave"))[:4],
+                "codigo_o_estructura": _texto_no_vacio(visual_raw.get("codigo_o_estructura")),
+                "prompt_grafico": _texto_no_vacio(visual_raw.get("prompt_grafico")),
+            }
+        else:
+            visual = None
+
+        documento = solicitud.documento_contenido or ""
+        fuentes: List[Dict[str, Any]] = []
+        for j, f in enumerate(raw.get("fuentes") or [], start=1):
+            if not isinstance(f, dict):
+                continue
+            texto = _texto_no_vacio(f.get("texto_fuente"))
+            if texto is None:
+                continue
+            texto = _recortar(_normalizar_espacios(texto), MAX_TEXTO_FUENTE)
+            # Idempotente: un extracto automático de una pasada previa nunca asciende a cita verificada
+            es_extracto = f.get("origen") == "extracto_automatico"
+            fuentes.append({
+                "chunk_id": (_texto_no_vacio(f.get("chunk_id")) or f"llm-{indice}-{j}")[:64],
+                "pagina": _entero_positivo(f.get("pagina")),
+                "texto_fuente": texto,
+                "origen": "extracto_automatico" if es_extracto else "llm",
+                "verificada": False if es_extracto else _cita_verificable(texto, documento),
+            })
+
+        if not fuentes:
+            extracto = _extraer_oracion(documento, indice - 1)
+            if extracto:
+                fuentes.append({
+                    "chunk_id": f"extracto-{indice}",
+                    "pagina": None,
+                    "texto_fuente": extracto,
+                    "origen": "extracto_automatico",
+                    "verificada": False,
+                })
+            degradaciones.append(f"escena_{indice}_fuentes_automaticas")
+
+        origen = "plantilla" if es_plantilla else ("llm_reparada" if reparada else "llm")
+        # Idempotente: la re-normalización (tras Cohere) no puede "limpiar" una procedencia previa
+        rango = {"llm": 0, "llm_reparada": 1, "plantilla": 2}
+        origen_previo = raw.get("origen")
+        if origen_previo in rango and rango[origen_previo] > rango[origen]:
+            origen = origen_previo
+        escena = EscenaDirectorCut.model_validate({
+            "id": _texto_no_vacio(raw.get("id")) or f"sc-{indice}",
+            "escena": indice,
+            "tiempo": "00:00 - 00:00",  # se recalcula en VideoJobSpec al acumular duraciones
+            "titulo": titulo,
+            "guion_locutor": guion,
+            "storyboard_visual": storyboard,
+            "consejo_pedagogico": consejo,
+            "objetivo_pedagogico": objetivo,
+            "visual": visual,
+            "fuentes": fuentes,
+            "origen": origen,
+        })
+        return escena, degradaciones
+
+    def _normalizar_director_cut(
+        self,
+        raw_dc: Any,
+        solicitud: SolicitudAdaptacion,
+    ) -> tuple[List[EscenaDirectorCut], List[str]]:
+        """
+        Normaliza el director_cut escena por escena. Una escena irreparable se
+        sustituye por plantilla (y se registra) en lugar de abortar toda la cadena.
+        Los tramos `tiempo` se derivan de las duraciones acumuladas.
+        """
+        raw_scenes: List[Dict[str, Any]] = []
+        if isinstance(raw_dc, dict):
+            candidatas = raw_dc.get("escenas") or raw_dc.get("scenes") or [raw_dc]
+            raw_scenes = [s for s in candidatas if isinstance(s, dict)]
+        elif isinstance(raw_dc, list):
+            raw_scenes = [s for s in raw_dc if isinstance(s, dict)]
+
+        plantillas = self._escenas_plantilla(solicitud)
+        degradaciones: List[str] = []
+        usar_plantilla = not raw_scenes
+        if usar_plantilla:
+            raw_scenes = plantillas
+            degradaciones.append("director_cut_plantilla")
+        elif len(raw_scenes) > _MAX_ESCENAS_DIRECTOR_CUT:
+            degradaciones.append(f"escenas_truncadas_{len(raw_scenes)}_a_{_MAX_ESCENAS_DIRECTOR_CUT}")
+
+        escenas: List[EscenaDirectorCut] = []
+        for i, raw in enumerate(raw_scenes[:_MAX_ESCENAS_DIRECTOR_CUT], start=1):
+            try:
+                escena, deg = self._normalizar_escena(raw, i, solicitud, es_plantilla=usar_plantilla)
+            except (ValidationError, ValueError, TypeError) as exc:
+                logger.warning("[cadena_colaborativa] Escena %d irreparable (%s); se usa plantilla.", i, exc)
+                escena, deg = self._normalizar_escena(plantillas[i - 1], i, solicitud, es_plantilla=True)
+                deg = [f"escena_{i}_plantilla", *deg]
+            escenas.append(escena)
+            degradaciones.extend(deg)
+
+        # Tramos derivados (mismo cálculo que VideoJobSpec a WPM base)
+        acumulado = 0.0
+        for escena in escenas:
+            duracion = escena.duracion_segundos or 0.0
+            escena.tiempo = formatear_tramo(acumulado, acumulado + duracion)
+            acumulado += duracion
+
+        return escenas, degradaciones
 
     def _normalizar_paquete_base(
         self,
@@ -227,210 +517,14 @@ class CadenaColaborativaMultiModelo:
             )
 
         # 6. Director Cut (Guion audiovisual) y Contrato VideoJobSpec (Estación 4)
-        raw_dc = paquete.get("director_cut")
-        raw_scenes: List[Dict[str, Any]] = []
-        if isinstance(raw_dc, dict):
-            raw_scenes = list(raw_dc.get("escenas") or raw_dc.get("scenes") or [raw_dc])
-        elif isinstance(raw_dc, list):
-            raw_scenes = [s for s in raw_dc if isinstance(s, dict)]
-
-        if not raw_scenes:
-            doc_titulo = solicitud.documento_titulo or "el contenido"
-            nicho = solicitud.nicho_sector or "General"
-            raw_scenes = [
-                {
-                    "id": "sc-1",
-                    "escena": 1,
-                    "tiempo": "00:00 - 00:18",
-                    "duracion_segundos": 18.0,
-                    "titulo": f"Apertura: Fundamentos de {doc_titulo}",
-                    "guion_locutor": (
-                        f"¡Hola! Hoy exploramos {doc_titulo}. "
-                        "Vamos a comprender sus fundamentos técnicos y cómo resolver los retos clave "
-                        f"en el sector {nicho} con máxima precisión."
-                    ),
-                    "storyboard_visual": (
-                        f"Plano principal del docente con gráfico animado lateral que introduce {doc_titulo} "
-                        "y sus elementos distintivos."
-                    ),
-                    "consejo_pedagogico": "Contacto visual directo, dicción enérgica y ritmo constante para captar la atención.",
-                    "objetivo_pedagogico": "Presentar el valor estratégico y contextualizar la lección.",
-                    "visual": {
-                        "tipo": "ppt_concepto",
-                        "titulo": f"Fundamentos de {doc_titulo}",
-                        "puntos_clave": ["Contexto operativo", "Problema central", "Propuesta pedagógica"],
-                    },
-                    "fuentes": [
-                        {
-                            "chunk_id": "chk-01",
-                            "pagina": 1,
-                            "texto_fuente": (solicitud.documento_contenido[:140].strip() or f"Documentación oficial de {doc_titulo}"),
-                        }
-                    ],
-                },
-                {
-                    "id": "sc-2",
-                    "escena": 2,
-                    "tiempo": "00:18 - 00:38",
-                    "duracion_segundos": 20.0,
-                    "titulo": "Arquitectura y Mecánica Operativa",
-                    "guion_locutor": (
-                        "El corazón de la solución reside en su arquitectura modular. "
-                        "Analicemos el flujo paso a paso para asegurar un rendimiento óptimo "
-                        "y prevenir cuellos de botella en producción."
-                    ),
-                    "storyboard_visual": "Diagrama de bloques secuencial que se ilumina gradualmente conforme avanza el flujo de datos.",
-                    "consejo_pedagogico": "Modula la entonación señalando cada bloque para guiar la atención del alumno.",
-                    "objetivo_pedagogico": "Explicar el funcionamiento interno y la secuencia técnica.",
-                    "visual": {
-                        "tipo": "diagrama_bloques",
-                        "titulo": "Flujo de Arquitectura Técnica",
-                        "puntos_clave": ["Ingesta / Entrada", "Validación y Procesamiento", "Salida y Persistencia"],
-                        "codigo_o_estructura": "Entrada -> Validación -> Procesamiento -> Persistencia",
-                    },
-                    "fuentes": [
-                        {
-                            "chunk_id": "chk-02",
-                            "pagina": 1,
-                            "texto_fuente": (solicitud.documento_contenido[140:300].strip() or "Arquitectura y componentes del sistema."),
-                        }
-                    ],
-                },
-                {
-                    "id": "sc-3",
-                    "escena": 3,
-                    "tiempo": "00:38 - 00:58",
-                    "duracion_segundos": 20.0,
-                    "titulo": "Implementación Práctica y Cierre",
-                    "guion_locutor": (
-                        f"Con estas bases, aplicar este conocimiento en {nicho} es directo y confiable. "
-                        "Recuerda monitorear métricas clave y desplegar en entornos controlados para garantizar el éxito."
-                    ),
-                    "storyboard_visual": "Pantalla dividida con tarjeta resumen de mejores prácticas y llamada a la acción.",
-                    "consejo_pedagogico": "Cierre motivador, sonrisa profesional y ritmo pausado en la conclusión.",
-                    "objetivo_pedagogico": "Consolidar el aprendizaje y motivar la puesta en práctica.",
-                    "visual": {
-                        "tipo": "palabras_clave",
-                        "titulo": "Mejores Prácticas de Implementación",
-                        "puntos_clave": ["Modularidad comprobada", "Control de latencia", "Impacto medible"],
-                    },
-                    "fuentes": [
-                        {
-                            "chunk_id": "chk-03",
-                            "pagina": 1,
-                            "texto_fuente": (solicitud.documento_contenido[300:460].strip() or "Recomendaciones finales de implementación."),
-                        }
-                    ],
-                },
-            ]
-
-        norm_scenes: List[Dict[str, Any]] = []
-        acum_segundos = 0.0
-
-        for i, raw in enumerate(raw_scenes[:3], start=1):
-            sc_id = str(raw.get("id") or f"sc-{i}")
-            sc_num = i
-            guion = str(
-                raw.get("guion_locutor")
-                or raw.get("script")
-                or raw.get("guion")
-                or f"Explicación didáctica de la etapa {i}."
-            ).strip()
-            num_palabras = len(guion.split()) if guion else 20
-            estim_palabras = int(raw.get("estimacion_palabras") or num_palabras)
-
-            dur_calc = round(estim_palabras / 2.3, 1)
-            raw_dur = raw.get("duracion_segundos")
-            try:
-                dur_seg = float(raw_dur) if raw_dur is not None else dur_calc
-            except (ValueError, TypeError):
-                dur_seg = dur_calc
-            dur_seg = max(5.0, min(30.0, dur_seg))
-
-            fin_segundos = acum_segundos + dur_seg
-            t_str = raw.get("tiempo")
-            if not t_str or not isinstance(t_str, str) or "-" not in t_str:
-                m1, s1 = divmod(int(acum_segundos), 60)
-                m2, s2 = divmod(int(fin_segundos), 60)
-                t_str = f"{m1:02d}:{s1:02d} - {m2:02d}:{s2:02d}"
-            acum_segundos = fin_segundos
-
-            titulo_sc = str(raw.get("titulo") or f"Escena {i}: Desarrollo Pedagógico").strip()
-            sb_visual = str(
-                raw.get("storyboard_visual")
-                or raw.get("visual_description")
-                or "Enfoque claro en el concepto central con soporte infográfico lateral."
-            ).strip()
-            cp_pedag = str(
-                raw.get("consejo_pedagogico")
-                or "Locución clara, velocidad moderada y énfasis en términos clave."
-            ).strip()
-            obj_pedag = raw.get("objetivo_pedagogico") or f"Transmitir con claridad el concepto {i}."
-
-            v_dict = raw.get("visual")
-            if not isinstance(v_dict, dict):
-                v_dict = {
-                    "tipo": "ppt_concepto",
-                    "titulo": titulo_sc,
-                    "puntos_clave": [titulo_sc, "Concepto clave", "Aplicación práctica"],
-                }
-            else:
-                tipo_v = v_dict.get("tipo")
-                if tipo_v not in ("diagrama_bloques", "ppt_concepto", "palabras_clave", "comparativa"):
-                    tipo_v = "ppt_concepto"
-                puntos_v = [str(p) for p in v_dict.get("puntos_clave", []) if p]
-                if not puntos_v:
-                    puntos_v = [titulo_sc, "Concepto clave"]
-                v_dict = {
-                    "tipo": tipo_v,
-                    "titulo": str(v_dict.get("titulo") or titulo_sc),
-                    "puntos_clave": puntos_v[:4],
-                    "codigo_o_estructura": v_dict.get("codigo_o_estructura"),
-                    "prompt_grafico": v_dict.get("prompt_grafico"),
-                }
-
-            f_list = raw.get("fuentes")
-            norm_fuentes: List[Dict[str, Any]] = []
-            if isinstance(f_list, list) and f_list:
-                for f in f_list:
-                    if isinstance(f, dict) and f.get("texto_fuente"):
-                        norm_fuentes.append({
-                            "chunk_id": str(f.get("chunk_id") or f"chk-0{i}"),
-                            "pagina": f.get("pagina"),
-                            "texto_fuente": str(f["texto_fuente"]).strip(),
-                        })
-            if not norm_fuentes:
-                texto_ref = (
-                    solicitud.documento_contenido[(i - 1) * 150 : (i - 1) * 150 + 120].strip()
-                    or f"Referencia fáctica del fragmento #{i}."
-                )
-                norm_fuentes.append({
-                    "chunk_id": f"chk-0{i}",
-                    "pagina": 1,
-                    "texto_fuente": texto_ref,
-                })
-
-            norm_sc = {
-                "id": sc_id,
-                "escena": sc_num,
-                "tiempo": t_str,
-                "duracion_segundos": dur_seg,
-                "titulo": titulo_sc,
-                "guion_locutor": guion,
-                "estimacion_palabras": estim_palabras,
-                "storyboard_visual": sb_visual,
-                "consejo_pedagogico": cp_pedag,
-                "objetivo_pedagogico": str(obj_pedag) if obj_pedag else None,
-                "visual": v_dict,
-                "fuentes": norm_fuentes,
-            }
-            EscenaDirectorCut.model_validate(norm_sc)
-            norm_scenes.append(norm_sc)
-
-        paquete["director_cut"] = norm_scenes
+        escenas, degradaciones = self._normalizar_director_cut(paquete.get("director_cut"), solicitud)
+        spec_previo = paquete.get("video_job_spec")
+        if isinstance(spec_previo, dict):
+            previas = [d for d in spec_previo.get("degradaciones") or [] if isinstance(d, str)]
+            degradaciones = list(dict.fromkeys([*previas, *degradaciones]))
+        paquete["director_cut"] = [e.model_dump() for e in escenas]
 
         doc_id_slug = solicitud.documento_id or f"doc-{_slugify(solicitud.documento_titulo)[:12]}"
-        escenas_objs = [EscenaDirectorCut.model_validate(s) for s in norm_scenes]
         job_spec = VideoJobSpec(
             video_job_id=f"vjob-{doc_id_slug}",
             document_id=doc_id_slug,
@@ -439,7 +533,8 @@ class CadenaColaborativaMultiModelo:
             aspect_ratio="9:16",
             idioma="es",
             estado="contract_ready",
-            escenas=escenas_objs,
+            escenas=escenas,
+            degradaciones=degradaciones,
         )
         paquete["video_job_spec"] = job_spec.model_dump()
 
@@ -605,15 +700,8 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
     ) -> Dict[str, Any]:
         """Audita fílmicamente el Quiz y el Tutorial contra la fuente en < 1.5s."""
         if not self.groq_key:
-            logger.info("GROQ_API_KEY no disponible; usando auditoría heurística interna.")
-            return {
-                "anclaje_fuente_score": 0.96,
-                "claridad_pedagogica": "Alta",
-                "observaciones": "Auditoría interna validada contra contexto fuente.",
-                "mitigacion_alucinaciones": "Fidelidad fáctica confirmada.",
-                "chunks_procesados": 6,
-                "similitud_coseno_promedio": 0.94,
-            }
+            logger.warning("GROQ_API_KEY no disponible; la auditoría de fidelidad no se ejecuta.")
+            return _auditoria_no_ejecutada("GROQ_API_KEY no configurada")
 
         quiz_items = paquete_base.get("quiz", [])
         tutorial_items = paquete_base.get("tutorial", [])
@@ -622,13 +710,16 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
             afirmaciones_a_evaluar.append(f"Pregunta: {q.get('pregunta')} -> Justificación: {q.get('justificacion_rag')}")
         for t in tutorial_items:
             afirmaciones_a_evaluar.append(f"Tutorial Paso: {t.get('titulo')} -> {t.get('descripcion')}")
+        for sc in paquete_base.get("director_cut", []):
+            if isinstance(sc, dict) and sc.get("guion_locutor"):
+                afirmaciones_a_evaluar.append(f"Guion escena {sc.get('escena')}: {sc.get('guion_locutor')}")
 
         prompt = f"""
 Actúa como un Auditor de Calidad RAG y Verificación Fáctica (Agente Crítico de NovaMind).
 Evalúa si las siguientes afirmaciones técnicas están respaldadas por el texto fuente:
 
 AFIRMACIONES A VERIFICAR:
-{json.dumps(afirmaciones_a_evaluar[:8], ensure_ascii=False, indent=2)}
+{json.dumps(afirmaciones_a_evaluar[:12], ensure_ascii=False, indent=2)}
 
 FRAGMENTOS FUENTE:
 \"\"\"
@@ -646,9 +737,7 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON:
   "anclaje_fuente_score": 0.98,
   "claridad_pedagogica": "Alta",
   "observaciones": "Las afirmaciones técnicas clave se derivan directamente del documento fuente.",
-  "mitigacion_alucinaciones": "Sin alucinaciones detectadas; justificaciones ancladas.",
-  "chunks_procesados": 6,
-  "similitud_coseno_promedio": 0.95
+  "mitigacion_alucinaciones": "Sin alucinaciones detectadas; justificaciones ancladas."
 }}
 """
         url = "https://api.groq.com/openai/v1/chat/completions"
@@ -672,21 +761,23 @@ RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON:
                 if resp.status_code == 200:
                     data = resp.json()
                     texto = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    return _limpiar_json(texto)
+                    resultado = _limpiar_json(texto)
+                    try:
+                        score = float(resultado.get("anclaje_fuente_score"))
+                    except (TypeError, ValueError):
+                        score = -1.0
+                    if not 0.0 <= score <= 1.0:
+                        logger.warning("[cadena_colaborativa] Groq %s devolvió un score inválido; se descarta.", gm)
+                        continue
+                    resultado["anclaje_fuente_score"] = score
+                    resultado["auditoria_ejecutada"] = True
+                    return resultado
                 logger.warning("[cadena_colaborativa] Groq modelo %s respondió HTTP %s", gm, resp.status_code)
             except Exception as exc_groq:
                 logger.warning("[cadena_colaborativa] Error llamando a Groq %s: %s", gm, exc_groq)
 
-        # Fallback a auditoría heurística si Groq presenta limitación de cuota
-        logger.info("[cadena_colaborativa] Usando auditoría heurística por contingencia en Groq.")
-        return {
-            "anclaje_fuente_score": 0.97,
-            "claridad_pedagogica": "Alta",
-            "observaciones": "Auditoría asistida completada con alta fidelidad a las fuentes documentales.",
-            "mitigacion_alucinaciones": "Afirmaciones ancladas a la documentación técnica.",
-            "chunks_procesados": 6,
-            "similitud_coseno_promedio": 0.96,
-        }
+        logger.warning("[cadena_colaborativa] Ningún modelo Groq auditó el contenido.")
+        return _auditoria_no_ejecutada("ningún modelo auditor respondió")
 
     # -------------------------------------------------------------------------
     # PASO 3: Humanización y Adaptación de Nicho con Cohere Command R
@@ -796,36 +887,30 @@ RESPONDE ÚNICAMENTE CON UN JSON:
         # Blindaje defensivo de las 6 estaciones
         paquete_base = self._normalizar_paquete_base(paquete_base, solicitud)
 
-        # 2. PASO 2: Auditoría RAG con Groq LPU
+        # 2. PASO 2: Humanización Pedagógica con Cohere.
+        # Va ANTES de la auditoría: se audita exactamente el texto que recibe el usuario.
         if on_progress:
-            on_progress("🛡️ [2/3] Groq LPU: Auditando fidelidad fáctica y anclaje RAG contra fuentes...", 2)
-        logger.info("[cadena_colaborativa] Paso 2: Auditoría RAG con Groq LPU...")
+            on_progress("✍️ [2/3] Cohere Command: Humanizando lenguaje y aplicando nicho editorial...", 2)
+        logger.info("[cadena_colaborativa] Paso 2: Humanización y Nicho con Cohere...")
+
+        try:
+            paquete_humanizado = self._paso3_humanizar_con_cohere(paquete_base, solicitud)
+            # Re-normalizar por si Cohere mutó campos (idempotente respecto a la procedencia)
+            paquete_base = self._normalizar_paquete_base(paquete_humanizado, solicitud)
+        except Exception as exc_cohere:
+            logger.warning("[cadena_colaborativa] Cohere no disponible (%s); conservando texto normalizado.", exc_cohere)
+
+        # 3. PASO 3: Auditoría de fidelidad con Groq LPU sobre el texto final
+        if on_progress:
+            on_progress("🛡️ [3/3] Groq LPU: Auditando fidelidad fáctica del texto final contra la fuente...", 3)
+        logger.info("[cadena_colaborativa] Paso 3: Auditoría de fidelidad con Groq LPU...")
 
         evaluacion: Dict[str, Any]
         try:
             evaluacion = self._paso2_auditar_con_groq(paquete_base, solicitud.documento_contenido)
         except Exception as exc_groq:
-            logger.warning("[cadena_colaborativa] Falló Groq auditor (%s). Usando auditoría contingente.", exc_groq)
-            evaluacion = {
-                "anclaje_fuente_score": 0.95,
-                "claridad_pedagogica": "Alta",
-                "observaciones": "Auditoría completada con anclaje fáctico garantizado.",
-                "mitigacion_alucinaciones": "Fidelidad RAG confirmada.",
-                "chunks_procesados": 6,
-                "similitud_coseno_promedio": 0.93,
-            }
-
-        # 3. PASO 3: Humanización Pedagógica con Cohere
-        if on_progress:
-            on_progress("✍️ [3/3] Cohere Command: Humanizando lenguaje y aplicando nicho editorial...", 3)
-        logger.info("[cadena_colaborativa] Paso 3: Humanización y Nicho con Cohere...")
-
-        try:
-            paquete_base = self._paso3_humanizar_con_cohere(paquete_base, solicitud)
-            # Re-normalizar por si Cohere mutó campos
-            paquete_base = self._normalizar_paquete_base(paquete_base, solicitud)
-        except Exception as exc_cohere:
-            logger.warning("[cadena_colaborativa] Cohere no disponible (%s); conservando texto validado.", exc_cohere)
+            logger.warning("[cadena_colaborativa] Falló Groq auditor (%s).", exc_groq)
+            evaluacion = _auditoria_no_ejecutada(f"error del auditor ({type(exc_groq).__name__})")
 
         duracion_total = round(time.perf_counter() - t_inicio, 2)
         logger.info("[cadena_colaborativa] Cadena completa en %.2f segundos.", duracion_total)
@@ -870,28 +955,47 @@ RESPONDE ÚNICAMENTE CON UN JSON:
             prerrequisitos=[],
         )
 
+        auditoria_ejecutada = bool(evaluacion.get("auditoria_ejecutada"))
+        score = evaluacion.get("anclaje_fuente_score") if auditoria_ejecutada else None
         eval_calidad_resp = EvaluacionCalidad(
-            anclaje_fuente_score=float(evaluacion.get("anclaje_fuente_score", 0.97)),
-            claridad_pedagogica=evaluacion.get("claridad_pedagogica", "Alta"),
-            observaciones=evaluacion.get("observaciones", "Validación completa."),
+            anclaje_fuente_score=score,
+            auditoria_ejecutada=auditoria_ejecutada,
+            claridad_pedagogica=evaluacion.get("claridad_pedagogica", "Media"),
+            observaciones=evaluacion.get("observaciones", ""),
             afirmaciones=[],
             sugerencias_correccion=[],
         )
 
         metricas_orq = MetricasOrquestacion(
             intentos_redaccion=1,
-            scores_por_intento=[float(evaluacion.get("anclaje_fuente_score", 0.97))],
-            umbral_anclaje=0.75,
+            scores_por_intento=[score] if score is not None else [],
+            umbral_anclaje=_UMBRAL_ANCLAJE_CADENA,
             max_reintentos=2,
             duracion_segundos=duracion_total,
             documento_id=doc_id,
-            chunks_recuperados=int(evaluacion.get("chunks_procesados", 6)),
+            chunks_recuperados=0,  # modo vectorless: no hay recuperación por chunks
         )
 
         contenido_adaptado_obj = ContenidoAdaptado.model_validate(paquete_base)
 
+        advertencias: List[str] = []
+        if not auditoria_ejecutada:
+            advertencias.append(
+                "La auditoría de fidelidad no se ejecutó; el contenido no está verificado contra la fuente."
+            )
+        elif score is not None and score < _UMBRAL_ANCLAJE_CADENA:
+            advertencias.append(
+                f"Anclaje a la fuente {score:.2f} por debajo del umbral {_UMBRAL_ANCLAJE_CADENA:.2f}; se recomienda revisión humana."
+            )
+        spec = contenido_adaptado_obj.video_job_spec
+        if spec and spec.degradaciones:
+            advertencias.append(
+                "Director Cut con sustituciones del sistema: " + ", ".join(spec.degradaciones) + "."
+            )
+
         return RespuestaAdaptacion(
-            status="exito",
+            status="exito_con_advertencias" if advertencias else "exito",
+            advertencias=advertencias,
             metadatos=metadatos_resp,
             contenido_adaptado=contenido_adaptado_obj,
             fuentes_utilizadas=[],

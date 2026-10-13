@@ -22,6 +22,7 @@ Incluye:
 
 from __future__ import annotations
 
+import math
 import unicodedata
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -564,12 +565,53 @@ class MetadatosSalida(BaseModel):
 # ----------------------------------------------------------------------
 
 
-class FuenteRAG(BaseModel):
-    """Cita exacta a un fragmento recuperado del RAG que respalda el guion."""
+# Modelo de tiempo único de locución. Espejo exacto en
+# frontend/src/utils/microclassTiming.ts; ambos lados se validan contra
+# contracts/fixtures/director_cut_golden.json.
+PALABRAS_POR_SEGUNDO_LOCUCION = 2.3
+WPM_BASE_LOCUCION = 138  # 2.3 palabras/s * 60
+DURACION_MIN_ESCENA_S = 5.0
+MAX_TEXTO_FUENTE = 600
 
-    chunk_id: str = Field(..., min_length=1)
-    pagina: Optional[int] = None
-    texto_fuente: str = Field(..., min_length=1)
+
+def contar_palabras(texto: Optional[str]) -> int:
+    """Conteo real de palabras; nunca se confía en la estimación del LLM."""
+    return len((texto or "").split())
+
+
+def redondear_decima(valor: float) -> float:
+    """Redondeo half-up a 0.1 (idéntico a Math.floor(x * 10 + 0.5) / 10 en JS)."""
+    return math.floor(valor * 10 + 0.5) / 10
+
+
+def duracion_locucion(palabras: int, wpm: int = WPM_BASE_LOCUCION) -> float:
+    """Segundos de locución de una escena al ritmo indicado, con piso de 5 s."""
+    return redondear_decima(max(DURACION_MIN_ESCENA_S, palabras / (wpm / 60.0)))
+
+
+def formatear_tramo(inicio_s: float, fin_s: float) -> str:
+    """Tramo 'MM:SS - MM:SS' truncando a segundos enteros."""
+    m1, s1 = divmod(int(inicio_s), 60)
+    m2, s2 = divmod(int(fin_s), 60)
+    return f"{m1:02d}:{s1:02d} - {m2:02d}:{s2:02d}"
+
+
+class FuenteRAG(BaseModel):
+    """
+    Cita que respalda el guion.
+
+    - origen="llm": el modelo la citó. `verificada` es True solo si el texto
+      aparece literalmente (normalizando espacios y mayúsculas) en el documento.
+    - origen="extracto_automatico": el normalizador extrajo una oración real del
+      documento porque el LLM no citó nada. Existe en la fuente, pero nadie
+      comprobó que respalde el guion, así que nunca es `verificada`.
+    """
+
+    chunk_id: str = Field(..., min_length=1, max_length=64)
+    pagina: Optional[int] = Field(default=None, ge=1)
+    texto_fuente: str = Field(..., min_length=1, max_length=MAX_TEXTO_FUENTE)
+    origen: Literal["llm", "extracto_automatico"] = "llm"
+    verificada: bool = False
 
 
 class EspecificacionVisual(BaseModel):
@@ -591,20 +633,25 @@ class EscenaDirectorCut(BaseModel):
     id: str = Field(..., min_length=1)
     escena: int = Field(..., ge=1)
     tiempo: str = Field(..., min_length=1)
-    duracion_segundos: Optional[float] = Field(default=15.0, ge=3.0, le=30.0)
+    # Derivado: segundos de locución a WPM_BASE_LOCUCION (o al wpm del VideoJobSpec que la contiene)
+    duracion_segundos: Optional[float] = Field(default=None, ge=DURACION_MIN_ESCENA_S, le=60.0)
     titulo: str = Field(..., min_length=1)
     guion_locutor: str = Field(..., min_length=1)
+    # Derivado: conteo real de palabras de guion_locutor
     estimacion_palabras: Optional[int] = None
     storyboard_visual: str = Field(..., min_length=1)
     consejo_pedagogico: str = Field(..., min_length=1)
     objetivo_pedagogico: Optional[str] = None
     visual: Optional[EspecificacionVisual] = None
     fuentes: List[FuenteRAG] = Field(default_factory=list)
+    # llm: tal cual del modelo · llm_reparada: el normalizador completó campos · plantilla: texto genérico del sistema
+    origen: Literal["llm", "llm_reparada", "plantilla"] = "llm"
 
     @model_validator(mode="after")
-    def _calcular_palabras(self) -> "EscenaDirectorCut":
-        if not self.estimacion_palabras and self.guion_locutor:
-            self.estimacion_palabras = len(self.guion_locutor.split())
+    def _derivar_tiempos(self) -> "EscenaDirectorCut":
+        # Palabras y duración se derivan siempre del guion: los valores del LLM se descartan.
+        self.estimacion_palabras = contar_palabras(self.guion_locutor)
+        self.duracion_segundos = duracion_locucion(self.estimacion_palabras)
         return self
 
 
@@ -633,21 +680,30 @@ class VideoJobSpec(BaseModel):
     escenas: List[EscenaDirectorCut] = Field(default_factory=list)
     total_palabras: int = 0
     duracion_total_estimada: float = 0.0
+    wpm: int = Field(
+        default=WPM_BASE_LOCUCION, ge=80, le=220, description="Velocidad de locución en palabras por minuto"
+    )
+    # Sustituciones hechas por el sistema (p. ej. "escena_2_plantilla", "escena_1_fuentes_automaticas")
+    degradaciones: List[str] = Field(default_factory=list)
     manifiesto_url_oci: Optional[str] = None
     video_url_oci: Optional[str] = None
 
     @model_validator(mode="after")
     def _calcular_totales(self) -> "VideoJobSpec":
-        if self.escenas:
-            calc_palabras = sum(
-                (e.estimacion_palabras or len(e.guion_locutor.split()))
-                for e in self.escenas
-            )
-            if not self.total_palabras:
-                self.total_palabras = calc_palabras
-            if not self.duracion_total_estimada:
-                # ~2.3 palabras por segundo
-                self.duracion_total_estimada = round(calc_palabras / 2.3, 1)
+        """
+        Totales, duraciones y tramos se recalculan siempre al `wpm` del contrato:
+        un valor entrante inconsistente (de un cliente o del LLM) nunca sobrevive.
+        """
+        acumulado = 0.0
+        for escena in self.escenas:
+            palabras = contar_palabras(escena.guion_locutor)
+            duracion = duracion_locucion(palabras, self.wpm)
+            escena.estimacion_palabras = palabras
+            escena.duracion_segundos = duracion
+            escena.tiempo = formatear_tramo(acumulado, acumulado + duracion)
+            acumulado += duracion
+        self.total_palabras = sum(e.estimacion_palabras or 0 for e in self.escenas)
+        self.duracion_total_estimada = redondear_decima(acumulado)
         return self
 
 
@@ -731,7 +787,9 @@ class EvaluacionCalidad(BaseModel):
     se calcula automáticamente a partir de las afirmaciones.
     """
 
-    anclaje_fuente_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    # None solo cuando la auditoría no llegó a ejecutarse (auditoria_ejecutada=False)
+    anclaje_fuente_score: Optional[float] = Field(default=0.0, ge=0.0, le=1.0)
+    auditoria_ejecutada: bool = True
     claridad_pedagogica: Literal["Alta", "Media", "Baja"] = "Alta"
     observaciones: str = ""
     afirmaciones: List[AfirmacionEvaluada] = Field(default_factory=list)
@@ -759,12 +817,16 @@ class EvaluacionCalidad(BaseModel):
 
     @model_validator(mode="after")
     def _calcular_score(self) -> "EvaluacionCalidad":
-        if self.afirmaciones:
+        if not self.auditoria_ejecutada:
+            self.anclaje_fuente_score = None
+        elif self.afirmaciones:
             respaldadas = sum(1 for a in self.afirmaciones if a.respaldada)
             self.anclaje_fuente_score = round(
                 respaldadas / len(self.afirmaciones), 4
             )
-        else:
+        elif "anclaje_fuente_score" not in self.model_fields_set:
+            # Valor heredado del orquestador clásico cuando el crítico no lista afirmaciones.
+            # Un score explícito (p. ej. el de la auditoría de la cadena) ya no se sobrescribe.
             self.anclaje_fuente_score = 0.85
         return self
 

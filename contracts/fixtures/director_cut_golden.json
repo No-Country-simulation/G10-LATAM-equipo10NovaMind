@@ -1,0 +1,124 @@
+{
+  "descripcion": "Fixture dorado del modelo de tiempo de locución (Estación 04). Lo validan backend/tests/test_contrato_tiempos.py y frontend/tests/microclassTiming.test.ts. Si cambias la fórmula en un lado, este archivo debe regenerarse y ambos tests deben pasar.",
+  "reglas": {
+    "palabras_por_segundo": 2.3,
+    "wpm_base": 138,
+    "duracion_min_escena_s": 5.0,
+    "redondeo": "half-up a 0.1 por escena; total = suma de escenas redondeada half-up a 0.1",
+    "tramo": "MM:SS - MM:SS truncando segundos acumulados"
+  },
+  "casos": [
+    {
+      "nombre": "microclase_natural_138",
+      "wpm": 138,
+      "guiones": [
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover",
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover páginas inactivas al",
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover páginas inactivas"
+      ],
+      "esperado": {
+        "palabras": [
+          38,
+          41,
+          40
+        ],
+        "duraciones": [
+          16.5,
+          17.8,
+          17.4
+        ],
+        "tiempos": [
+          "00:00 - 00:16",
+          "00:16 - 00:34",
+          "00:34 - 00:51"
+        ],
+        "total_palabras": 119,
+        "duracion_total": 51.7
+      }
+    },
+    {
+      "nombre": "ritmo_pausado_120_excede_60s",
+      "wpm": 120,
+      "guiones": [
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover páginas inactivas al disco",
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover páginas inactivas al disco",
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover páginas inactivas al"
+      ],
+      "esperado": {
+        "palabras": [
+          42,
+          42,
+          41
+        ],
+        "duraciones": [
+          21.0,
+          21.0,
+          20.5
+        ],
+        "tiempos": [
+          "00:00 - 00:21",
+          "00:21 - 00:42",
+          "00:42 - 01:02"
+        ],
+        "total_palabras": 125,
+        "duracion_total": 62.5
+      }
+    },
+    {
+      "nombre": "ritmo_agil_160",
+      "wpm": 160,
+      "guiones": [
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover",
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover páginas inactivas al",
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active el OOM killer de forma abrupta. La memoria swap permite al kernel de Linux mover páginas inactivas"
+      ],
+      "esperado": {
+        "palabras": [
+          38,
+          41,
+          40
+        ],
+        "duraciones": [
+          14.3,
+          15.4,
+          15.0
+        ],
+        "tiempos": [
+          "00:00 - 00:14",
+          "00:14 - 00:29",
+          "00:29 - 00:44"
+        ],
+        "total_palabras": 119,
+        "duracion_total": 44.7
+      }
+    },
+    {
+      "nombre": "piso_5s_y_espacios_raros",
+      "wpm": 138,
+      "guiones": [
+        "Hola  a\ttodos",
+        "Uno dos tres\ncuatro cinco",
+        "La memoria swap permite al kernel de Linux mover páginas inactivas al disco cuando la RAM se agota, evitando que el sistema active"
+      ],
+      "esperado": {
+        "palabras": [
+          3,
+          5,
+          23
+        ],
+        "duraciones": [
+          5.0,
+          5.0,
+          10.0
+        ],
+        "tiempos": [
+          "00:00 - 00:05",
+          "00:05 - 00:10",
+          "00:10 - 00:20"
+        ],
+        "total_palabras": 31,
+        "duracion_total": 20.0
+      }
+    }
+  ]
+}

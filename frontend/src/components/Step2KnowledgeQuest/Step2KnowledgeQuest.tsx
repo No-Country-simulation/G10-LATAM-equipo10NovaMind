@@ -327,6 +327,8 @@ export const Step2KnowledgeQuest = ({
 
             {activeStationIndex === 3 && (
               <Station4DirectorCut
+                documentId={contentPackage.almacenamiento_oci?.objeto_id || 'doc-novamind'}
+                degradaciones={contentPackage.contenido_adaptado.video_job_spec?.degradaciones}
                 scenes={
                   Array.isArray(contentPackage.contenido_adaptado.director_cut)
                     ? contentPackage.contenido_adaptado.director_cut

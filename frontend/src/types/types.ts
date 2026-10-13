@@ -52,8 +52,12 @@ export interface TutorialStep {
 
 export interface FuenteRAG {
   chunk_id: string;
-  pagina?: number;
+  pagina?: number | null;
   texto_fuente: string;
+  /** llm: citada por el modelo · extracto_automatico: oración real elegida por el normalizador */
+  origen?: 'llm' | 'extracto_automatico';
+  /** true solo si el modelo la citó y aparece literalmente en el documento */
+  verificada?: boolean;
 }
 
 export interface EspecificacionVisual {
@@ -77,6 +81,7 @@ export interface DirectorScene {
   objetivo_pedagogico?: string;
   visual?: EspecificacionVisual;
   fuentes?: FuenteRAG[];
+  origen?: 'llm' | 'llm_reparada' | 'plantilla';
 }
 
 export interface VideoJobSpec {
@@ -97,6 +102,9 @@ export interface VideoJobSpec {
   escenas: DirectorScene[];
   total_palabras: number;
   duracion_total_estimada: number;
+  wpm?: number;
+  /** Sustituciones del sistema, p. ej. "escena_2_plantilla" */
+  degradaciones?: string[];
   manifiesto_url_oci?: string;
   video_url_oci?: string;
 }
@@ -142,9 +150,12 @@ export interface AdaptedContentPackage {
     director_cut: DirectorScene[];
     quiz: QuizQuestion[];
     diagrama_mermaid?: string;
+    video_job_spec?: VideoJobSpec;
   };
   evaluacion_calidad: {
-    anclaje_fuente_score: number; // e.g. 0.98
+    /** null cuando la auditoría no se ejecutó */
+    anclaje_fuente_score: number | null;
+    auditoria_ejecutada?: boolean;
     claridad_pedagogica: 'Alta' | 'Media' | 'Sobresaliente';
     observaciones: string;
     mitigacion_alucinaciones: string;
