@@ -210,22 +210,29 @@ export async function generatePedagogicalPackage(
 
   const promptText = `
 Eres un Diseñador Instruccional Senior y Especialista en Pedagogía Técnica de NuevaMente.
-Tu misión es transformar el material técnico provisto en una ruta educativa gamificada de 5 estaciones, anclada 100% en la fuente original (sin alucinaciones) y adaptada de manera estricta a los tres parámetros seleccionados.
+Tu misión es transformar el material técnico provisto en una ruta educativa gamificada de 5 estaciones, anclada 100% en la fuente original (RAG Grounding sin alucinaciones) y adaptada de manera estricta a los tres parámetros seleccionados.
 
 ============================================================
 PARÁMETROS OBLIGATORIOS DE ADAPTACIÓN:
 ============================================================
-1. PERFIL DEL DESTINATARIO: "${profile}"
+- Título Identificado: "${docTitle || 'Documento Técnico'}"
+- Perfil del Destinatario: "${profile}"
+- Formato Solicitado: "${format}"
+- Nicho / Enfoque: "${niche}"
+- Nivel de Profundidad: "${detail}"
+
+DIRECTIVAS ESPECÍFICAS POR PERFIL:
+1. PERFIL: "${profile}"
    - Si es "Principiante" o "Gestor / Ejecutivo (No Técnico)":
      * Prohibido dar por sentados conceptos previos o usar acrónimos sin desglosar.
-     * Si es Principiante: explica los términos con lenguaje formativo y amigable.
-     * Si es Gestor: enfoca las implicaciones en costos, gobernanza, impacto de negocio y continuidad operativa.
+     * Si es Principiante: explica los términos con lenguaje formativo, amigable y progresivo.
+     * Si es Gestor: enfoca las implicaciones en costos, gobernanza, impacto de negocio, continuidad operativa y SLAs.
    - Si es "Desarrollador Junior":
-     * Enfócate en el flujo de trabajo práctico, lógica de implementación y cómo evitar errores de configuración habituales.
+     * Enfócate en el flujo de trabajo práctico, lógica de implementación y cómo evitar errores habituales de configuración.
    - Si es "Líder Técnico / Arquitecto":
-     * Usa terminología rigurosa, conceptos de alta disponibilidad, seguridad por capas, tolerancia a fallos y mejores prácticas de arquitectura empresarial.
+     * Usa terminología rigurosa, conceptos de alta disponibilidad, seguridad por capas, tolerancia a fallos y decisiones de diseño técnico empresarial.
 
-2. NICHO / SECTOR DE APLICACIÓN: "${niche}"
+2. NICHO: "${niche}"
    - TODAS las analogías, metáforas, pistas didácticas y ejemplos DEBEN contextualizarse dentro del sector "${niche}":
      * Si es "Fintech": formula ejemplos con transacciones bancarias, pasarelas de pago, registros contables inmutables, cumplimiento PCI-DSS y prevención de fraude.
      * Si es "Salud": formula ejemplos con registros médicos electrónicos (EHR), confidencialidad de historias clínicas, telemedicina o monitores hospitalarios.
@@ -234,9 +241,17 @@ PARÁMETROS OBLIGATORIOS DE ADAPTACIÓN:
 
 3. NIVEL DE DETALLE: "${detail}"
    - Si es "Didáctico":
-     * Prioriza modelos mentales intuitivos, analogías conceptuales en la pista didáctica y comandos introductorios claros.
+     * Prioriza modelos mentales intuitivos, analogías conceptuales en las pistas didácticas y comandos introductorios claros.
    - Si es "Técnico Profundo":
-     * Proporciona comandos de terminal precisos (ej. comandos de OCI CLI con flags reales como --cidr-block, --compartment-id, etc.), consideraciones de subredes, topología y configuraciones exactas.
+     * Proporciona comandos de terminal precisos (ej. comandos de OCI CLI con flags reales como --cidr-block, --compartment-id, --is-pv-encryption-in-transit-enabled, etc.), consideraciones de subredes, topología y configuraciones exactas.
+
+============================================================
+DIRECTIVA DE GESTIÓN DE FUENTES MÚLTIPLES (MULTI-DOC):
+============================================================
+Si el material fuente incluye varios documentos o secciones:
+1. Identifica el hilo conductor o tema principal dominante y estructura la ruta de aprendizaje en torno a él.
+2. Integra los diferentes archivos como módulos o facetas complementarias de la misma lección.
+3. Si los documentos tratan temas completamente dispares, prioriza el tema con mayor profundidad técnica/estructural para construir las 5 estaciones, asegurando un recorrido didáctico enfocado, sólido y sin dispersión conceptual.
 
 ============================================================
 DOCUMENTACIÓN FUENTE:
@@ -249,14 +264,14 @@ ESTRUCTURA DE LAS 5 ESTACIONES A GENERAR:
 1. "resumen_ninja":
    - "titulo": Título pedagógico ajustado al perfil "${profile}".
    - "analogia_central": Metáfora central adaptada al nicho "${niche}".
-   - "conceptos_clave": 3 o 4 conceptos verificados en la fuente.
-   - "metricas_rapidas": riesgo, despliegue, tipo_oci (ej: la categoría temática de la lección) y costo (esfuerzo cognitivo o capa de servicio).
+   - "conceptos_clave": 3 o 4 conceptos verificados en la fuente original.
+   - "metricas_rapidas": riesgo, despliegue, tipo_oci (categoría temática de la lección) y costo (esfuerzo cognitivo o capa de servicio).
 
 2. "flashcards":
    - Mínimo 3 tarjetas de active recall.
-   - En "frente": Pregunta o reto conceptual desafiante.
-   - En "dorso": Respuesta explicada según el perfil "${profile}".
-   - En "pista_didactica": Pista analógica ambientada exclusivamente en el nicho "${niche}".
+   - "frente": Pregunta o reto conceptual desafiante.
+   - "dorso": Respuesta explicada con precisión según el perfil "${profile}".
+   - "pista_didactica": Pista analógica ambientada exclusivamente en el nicho "${niche}".
 
 3. "tutorial":
    - 3 o 4 pasos prácticos progresivos.

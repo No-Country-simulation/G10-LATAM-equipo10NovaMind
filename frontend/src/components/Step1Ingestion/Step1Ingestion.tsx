@@ -12,6 +12,7 @@ import {
   File,
   Trash2,
   X,
+  Info,
 } from 'lucide-react';
 import type {
   RecipientProfile,
@@ -342,8 +343,8 @@ export const Step1Ingestion = ({
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>
-                Carga de Archivos (PDF, MD o TXT) — Soporta Carga Múltiple
+              <label className={`${styles.fieldLabel} ${styles.fieldLabelRow}`}>
+                <span>Carga de Fuentes (.pdf, .md, .txt) — Temática Complementaria</span>
               </label>
               <label
                 className={`${styles.fileDropzone} ${isDragging ? styles.fileDropzoneActive : ''}`}
@@ -359,7 +360,7 @@ export const Step1Ingestion = ({
                     </span>
                   ) : (
                     <span>
-                      Haz clic o arrastra múltiples archivos (.pdf, .md, .txt)
+                      Haz clic o arrastra documentos complementarios del mismo tema
                     </span>
                   )}
                 </div>
@@ -376,6 +377,12 @@ export const Step1Ingestion = ({
                   style={{ display: 'none' }}
                 />
               </label>
+
+              {/* Guía didáctica para orientar al usuario en la carga múltiple */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                <Info size={13} color="var(--color-cyan-400)" />
+                <span>Para un aprendizaje coherente, agrupa fuentes o anexos de un mismo tema o módulo.</span>
+              </div>
 
               {ingestedFiles.length > 0 && (
                 <div className={styles.filesContainer}>
