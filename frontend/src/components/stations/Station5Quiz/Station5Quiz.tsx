@@ -162,7 +162,7 @@ export const Station5FinalTrial = ({
   }
 
   // 2. Pantalla: Sobrecarga Cognitiva (0 Escudos)
-  if (cognitiveShields === 0 && !isQuizCompleted) {
+if (cognitiveShields === 0 && !isQuizCompleted) {
     return (
       <div className={styles.dangerCard}>
         <div className={styles.dangerIconBox}>
@@ -184,7 +184,7 @@ export const Station5FinalTrial = ({
             </span>
           </div>
 
-          <h3 className={styles.dangerTitle}>El error es parte del dominio</h3>
+          <h3 className={styles.dangerTitle}>El error es parte del aprendizaje</h3>
 
           <p
             style={{
@@ -193,9 +193,10 @@ export const Station5FinalTrial = ({
               lineHeight: 1.6,
             }}
           >
-            Consumiste tus 3 reservas de atención frente a conceptos no
-            consolidados. En la ciencia cognitiva, la curva del olvido se vence
-            mediante la repetición espaciada, no forzando respuestas al azar.
+            Cada intento es una oportunidad para fortalecer lo aprendido. 
+            En lugar de adivinar, la clave para dominar conceptos complejos 
+            está en dar un paso atrás y repasar a tu propio ritmo. 
+            Reconstruyamos las bases para que vuelvas al desafío con total seguridad.
           </p>
 
           <div className={styles.dangerNotice}>
@@ -208,9 +209,9 @@ export const Station5FinalTrial = ({
               }}
             />
             <p>
-              Recuperaremos tus <strong>3 escudos al 100%</strong> y
-              reiniciaremos el recorrido desde la <strong>Estación 01</strong>{" "}
-              para que reconstruyas la intuición con una base sólida.
+              Restauraremos tus <strong>3 escudos al 100%</strong> y 
+              recorreremos la ruta desde la <strong>Estación 01</strong> para 
+              fijar cada concepto clave antes de volver a intentarlo.
             </p>
           </div>
         </div>
@@ -222,7 +223,7 @@ export const Station5FinalTrial = ({
             className={styles.restartCircuitBtn}
           >
             <RotateCcw size={16} />
-            <span>Restaurar Escudos y Reiniciar Ruta Cognitiva</span>
+            <span>Restaurar Escudos y Reforzar Conceptos</span>
           </button>
         </div>
       </div>
