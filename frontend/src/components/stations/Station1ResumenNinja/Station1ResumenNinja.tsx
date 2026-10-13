@@ -186,7 +186,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             <span className={styles.metricLabel}>Entorno / Tipo</span>
           </div>
           <div className={styles.metricValue}>
-            {data?.metricas_rapidas?.tipo_oci || "Cloud Native"}
+            {data?.metricas_rapidas?.tipo_oci || "Universal / Multidisciplinario"}
           </div>
         </div>
 
@@ -196,7 +196,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             <span className={styles.metricLabel}>Costo / Capa</span>
           </div>
           <div className={`${styles.metricValue} ${styles.metricValueEmerald}`}>
-            {data?.metricas_rapidas?.costo || "Always Free"}
+            {data?.metricas_rapidas?.costo || "Accesible / Abierto"}
           </div>
         </div>
       </div>
