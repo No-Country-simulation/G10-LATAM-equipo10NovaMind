@@ -121,7 +121,8 @@ export const Station4DirectorCut = ({
   ];
 
   const totalScenes = safeScenes.length;
-  const minRequired = Math.max(1, Math.ceil(totalScenes * 0.6));
+  // Regla del 100%: se requiere explorar todas las escenas
+  const minRequired = totalScenes;
   const currentScene = safeScenes[currentSceneIndex] || safeScenes[0];
   const visualDetails = getSceneVisualDetails(currentSceneIndex, currentScene, packageData);
 
@@ -190,7 +191,8 @@ export const Station4DirectorCut = ({
     setViewedScenes(updated);
 
     const viewedCount = Object.values(updated).filter(Boolean).length;
-    if (viewedCount >= minRequired && !isCompleted) {
+    // Solo se aprueba la estación y se abre la medalla al explorar el 100% de las escenas
+    if (viewedCount === minRequired && !isCompleted) {
       triggerSmallConfetti();
       triggerLevelUpConfetti();
       onCompleteStation(50);
@@ -267,7 +269,7 @@ export const Station4DirectorCut = ({
   };
 
   const viewedCount = Object.values(viewedScenes).filter(Boolean).length;
-  const isPassed = viewedCount >= minRequired;
+  const isPassed = totalScenes > 0 && viewedCount === minRequired;
 
   return (
     <div className={styles.stationWrapper}>
@@ -289,7 +291,7 @@ export const Station4DirectorCut = ({
             Director Cut: Narrativa Pedagógica & Storyboard
           </h3>
           <p className={styles.stationSubtitle}>
-            Estudio interactivo de locución y visualización de storyboard para la transmisión didáctica de la lección. Mínimo para aprobar: {minRequired} de {totalScenes} escenas.
+            Estudio interactivo de locución y visualización de storyboard para la transmisión didáctica de la lección. Requisito para aprobar: explora el 100% ({minRequired} de {totalScenes} escenas).
           </p>
         </div>
 
@@ -306,7 +308,7 @@ export const Station4DirectorCut = ({
           )}
 
           <div className={styles.progressStats}>
-            <div className={styles.progressLabel}>Escenas Exploradas</div>
+            <div className={styles.progressLabel}>Escenas Exploradas (Requerido: {minRequired})</div>
             <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
               {viewedCount} / {totalScenes}
             </div>
@@ -459,13 +461,11 @@ export const Station4DirectorCut = ({
 
             {/* Viewfinder / Monitor de Director Cinematográfico */}
             <div className={styles.viewfinderContainer}>
-              {/* 4 Camera Corner Viewfinder Marks */}
               <div className={styles.viewfinderCornerTL} />
               <div className={styles.viewfinderCornerTR} />
               <div className={styles.viewfinderCornerBL} />
               <div className={styles.viewfinderCornerBR} />
 
-              {/* Viewfinder Top Bar */}
               <div className={styles.viewfinderTopBar}>
                 <div className={styles.viewfinderRecGroup}>
                   <span className={styles.viewfinderRecDot} />
@@ -479,10 +479,8 @@ export const Station4DirectorCut = ({
                 </div>
               </div>
 
-              {/* Rule of Thirds Cinematic Grid */}
               <div className={styles.viewfinderGrid} />
 
-              {/* Contenido Visual Central del Storyboard */}
               <div className={styles.storyboardContentBox}>
                 <div className={styles.storyboardHeaderRow}>
                   <div className={styles.storyboardHeaderPill}>
@@ -514,14 +512,12 @@ export const Station4DirectorCut = ({
                   </div>
                 </div>
 
-                {/* Texto de la Descripción Visual */}
                 <div className={styles.storyboardVisualTextContainer}>
                   <p className={styles.storyboardVisualText}>
                     {currentVisualText}
                   </p>
                 </div>
 
-                {/* Etiquetas de Puesta en Escena */}
                 <div className={styles.storyboardPillsRow}>
                   <div className={styles.storyboardPillItem}>
                     <Eye size={12} color="#38bdf8" />
