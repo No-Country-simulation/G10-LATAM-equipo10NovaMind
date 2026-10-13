@@ -38,6 +38,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
   }
 
   const conceptos = data?.conceptos_clave || [];
+  const totalConcepts = conceptos.length;
 
   const toggleConcept = (id: string) => {
     setCheckedConcepts((prev) => ({
@@ -47,7 +48,8 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
   };
 
   const checkedCount = Object.values(checkedConcepts).filter(Boolean).length;
-  const allChecked = conceptos.length > 0 && checkedCount === conceptos.length;
+  // Validación estricta del 100% de conceptos asimilados
+  const isAllChecked = totalConcepts > 0 && checkedCount === totalConcepts;
 
   const handleAssimilation = () => {
     if (isCompleted) {
@@ -56,7 +58,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
       return;
     }
 
-    if (!allChecked) return;
+    if (!isAllChecked) return;
 
     onCompleteStation(50);
     triggerLevelUpConfetti();
@@ -112,10 +114,10 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
           </h4>
           <span
             className={`${styles.conceptsRatio} ${
-              allChecked ? styles.conceptsRatioAllChecked : ""
+              isAllChecked ? styles.conceptsRatioAllChecked : ""
             }`}
           >
-            {checkedCount}/{conceptos.length} Asimilados
+            {checkedCount}/{totalConcepts} Asimilados
           </span>
         </div>
 
@@ -212,20 +214,20 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
           <div className={styles.assimilationSub}>
             {isCompleted
               ? "Has completado la asimilación y reclamado la Medalla Ninja."
-              : allChecked
+              : isAllChecked
                 ? "¡Excelente! Todos los puntos validados. Ya puedes asimilar y reclamar tu medalla."
-                : `Marca todos los conceptos clave (${checkedCount}/${conceptos.length}) para asimilar y ganar XP.`}
+                : `Marca todos los conceptos clave (${checkedCount}/${totalConcepts}) para asimilar y ganar XP.`}
           </div>
         </div>
 
         <button
           type="button"
           onClick={handleAssimilation}
-          disabled={!isCompleted && !allChecked}
+          disabled={!isCompleted && !isAllChecked}
           className={`${styles.assimilationButton} ${
             isCompleted
               ? styles.buttonCompleted
-              : allChecked
+              : isAllChecked
                 ? styles.buttonReady
                 : styles.buttonDisabled
           }`}
@@ -239,13 +241,13 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             <>
               <Zap
                 size={16}
-                color={allChecked ? "#fde047" : "var(--color-text-subtle)"}
-                fill={allChecked ? "#fde047" : "none"}
+                color={isAllChecked ? "#fde047" : "var(--color-text-subtle)"}
+                fill={isAllChecked ? "#fde047" : "none"}
               />
               <span>
-                {allChecked
+                {isAllChecked
                   ? "Asimilar Conceptos (+50 XP)"
-                  : `Asimilar (${checkedCount}/${conceptos.length})`}
+                  : `Asimilar (${checkedCount}/${totalConcepts})`}
               </span>
             </>
           )}
