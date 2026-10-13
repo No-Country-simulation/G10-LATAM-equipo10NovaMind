@@ -510,7 +510,7 @@
   box-shadow: 0 0 0 1px var(--color-violet-500);
 }
 
-/* Grilla de 4 Parámetros Pedagógicos */
+/* Grilla de Parámetros de Personalización */
 .paramsGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -521,13 +521,7 @@
 
 @media (min-width: 640px) {
   .paramsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .paramsGrid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

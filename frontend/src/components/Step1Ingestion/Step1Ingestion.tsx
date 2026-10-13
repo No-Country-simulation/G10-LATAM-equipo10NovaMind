@@ -60,7 +60,7 @@ export const Step1Ingestion = ({
   const [docTitle, setDocTitle] = useState<string>(SCENARIOS[0].titulo);
   const [docContent, setDocContent] = useState<string>(SCENARIOS[0].contenido);
   const [profile, setProfile] = useState<RecipientProfile>('Principiante');
-  const [format, setFormat] = useState<OutputFormat>(
+  const [format] = useState<OutputFormat>(
     'Paquete Educativo Completo (5 Estaciones)',
   );
   const [niche, setNiche] = useState<IndustryNiche>('General');
@@ -490,7 +490,7 @@ export const Step1Ingestion = ({
             />
           </div>
 
-          {/* 4 Parámetros Pedagógicos */}
+          {/* Parámetros de Personalización */}
           <div className={styles.paramsGrid}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>
@@ -510,32 +510,6 @@ export const Step1Ingestion = ({
                 </option>
                 <option value="Gestor / Ejecutivo (No Técnico)">
                   Gestor / Ejecutivo (No Técnico)
-                </option>
-              </select>
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>
-                Formato Pedagógico
-              </label>
-              <select
-                value={format}
-                onChange={(e) => setFormat(e.target.value as OutputFormat)}
-                className={styles.selectInput}
-              >
-                <option value="Paquete Educativo Completo (5 Estaciones)">
-                  Paquete Completo (5 Estaciones)
-                </option>
-                <option value="Flashcards">Flashcards de Memorización</option>
-                <option value="Tutorial">Guía Práctica Paso a Paso</option>
-                <option value="Quiz Interactivo">
-                  Quiz Interactivo con Justificaciones
-                </option>
-                <option value="Resumen Ejecutivo (TL;DR)">
-                  Resumen Ejecutivo (TL;DR)
-                </option>
-                <option value="Guion de Clase / Video">
-                  Guion de Clase / Video
                 </option>
               </select>
             </div>
