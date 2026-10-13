@@ -39,17 +39,17 @@ const adaptationSchema: Schema = {
           properties: {
             titulo: { type: Type.STRING },
             analogia_central: { type: Type.STRING },
-            conceptos_clave: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  texto: { type: Type.STRING },
-                  verificado: { type: Type.BOOLEAN }
-                },
-                required: ['id', 'texto', 'verificado']
-              }
+            conceptos_clave: { 
+              type: Type.ARRAY, 
+              items: { 
+                type: Type.OBJECT, 
+                properties: { 
+                  id: { type: Type.STRING }, 
+                  texto: { type: Type.STRING }, 
+                  verificado: { type: Type.BOOLEAN } 
+                }, 
+                required: ['id', 'texto', 'verificado'] 
+              } 
             },
             metricas_rapidas: {
               type: Type.OBJECT,
@@ -160,12 +160,10 @@ const adaptationSchema: Schema = {
 async function getAvailableBestModels(): Promise<string[]> {
   try {
     const modelListResponse = await ai.models.list();
-    
     const candidateNames: string[] = [];
     for await (const m of modelListResponse) {
       const name = m.name?.replace('models/', '') || '';
-      
-      const isSpecializedAudioOrImage = 
+      const isSpecialized = 
         name.includes('tts') || 
         name.includes('transcribe') || 
         name.includes('image') || 
@@ -173,17 +171,15 @@ async function getAvailableBestModels(): Promise<string[]> {
         name.includes('robotics') ||
         name.includes('banana');
 
-      if (!isSpecializedAudioOrImage) {
+      if (!isSpecialized) {
         candidateNames.push(name);
       }
     }
 
     const priorityList = [
-      'gemini-3.1-flash-lite',
-      'gemini-3.5-flash',
+      'gemini-2.5-flash',
       'gemini-flash-latest',
-      'gemini-pro-latest',
-      'gemini-2.5-flash'
+      'gemini-pro-latest'
     ];
 
     const sorted = candidateNames.sort((a, b) => {
@@ -197,7 +193,7 @@ async function getAvailableBestModels(): Promise<string[]> {
     return sorted.length > 0 ? sorted : priorityList;
   } catch (err: unknown) {
     console.warn("Aviso al listar modelos, usando lista base:", err);
-    return ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+    return ['gemini-2.5-flash', 'gemini-flash-latest'];
   }
 }
 
@@ -211,33 +207,75 @@ export async function generatePedagogicalPackage(
   pdfBase64?: string | string[] | null
 ): Promise<AdaptedContentPackage> {
   const timestamp = Date.now();
+
   const promptText = `
-Eres un Sistema Inteligente de Adaptación y Generación de Contenido Educativo (NuevaMente).
-Tu misión es procesar el material ingresado (analizando el texto provisto o los archivos adjuntos multimodalmente) y generar un paquete educativo completo anclado estrictamente a la fuente (RAG Grounding), mitigando cualquier alucinación.
+Eres un Diseñador Instruccional Senior y Especialista en Pedagogía Técnica de NuevaMente.
+Tu misión es transformar el material técnico provisto en una ruta educativa gamificada de 5 estaciones, anclada 100% en la fuente original (sin alucinaciones) y adaptada de manera estricta a los tres parámetros seleccionados.
 
-PARÁMETROS:
-- Título Identificado: "${docTitle || 'Documento sin título'}"
-- Perfil del Destinatario: "${profile}"
-- Formato Solicitado: "${format}"
-- Nicho / Enfoque: "${niche}"
-- Nivel de Profundidad: "${detail}"
+============================================================
+PARÁMETROS OBLIGATORIOS DE ADAPTACIÓN:
+============================================================
+1. PERFIL DEL DESTINATARIO: "${profile}"
+   - Si es "Principiante" o "Gestor / Ejecutivo (No Técnico)":
+     * Prohibido dar por sentados conceptos previos o usar acrónimos sin desglosar.
+     * Si es Principiante: explica los términos con lenguaje formativo y amigable.
+     * Si es Gestor: enfoca las implicaciones en costos, gobernanza, impacto de negocio y continuidad operativa.
+   - Si es "Desarrollador Junior":
+     * Enfócate en el flujo de trabajo práctico, lógica de implementación y cómo evitar errores de configuración habituales.
+   - Si es "Líder Técnico / Arquitecto":
+     * Usa terminología rigurosa, conceptos de alta disponibilidad, seguridad por capas, tolerancia a fallos y mejores prácticas de arquitectura empresarial.
 
-${docContent ? `DOCUMENTACIÓN FUENTE:\n"""\n${docContent}\n"""` : 'El material fuente ha sido adjuntado para análisis e interpretación multimodal completa.'}
+2. NICHO / SECTOR DE APLICACIÓN: "${niche}"
+   - TODAS las analogías, metáforas, pistas didácticas y ejemplos DEBEN contextualizarse dentro del sector "${niche}":
+     * Si es "Fintech": formula ejemplos con transacciones bancarias, pasarelas de pago, registros contables inmutables, cumplimiento PCI-DSS y prevención de fraude.
+     * Si es "Salud": formula ejemplos con registros médicos electrónicos (EHR), confidencialidad de historias clínicas, telemedicina o monitores hospitalarios.
+     * Si es "E-commerce": formula ejemplos con inventario, carritos de compras, picos de demanda en Black Friday y catálogos distribuidos.
+     * Si es "General": utiliza analogías de sistemas urbanos, logística o infraestructura digital estándar.
 
-DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
-1. El sistema es COMPLETAMENTE AGNÓSTICO: el contenido puede ser de cualquier disciplina (literatura, ciencia, filosofía, historia, arte, ingeniería, etc.). Adapta el lenguaje, ejemplos y analogías al perfil "${profile}" en el contexto de "${niche}". JAMÁS asumas ni menciones temas ajenos como infraestructura cloud u OCI a menos que la documentación fuente trate explícitamente sobre eso.
-2. Genera las 5 estaciones pedagógicas completas:
-   - resumen_ninja: analogía central pedagógica, 3 o 4 conceptos clave verificados y métricas rápidas (en 'tipo_oci' define la categoría temático-conceptual del tema, ej: 'Literatura Alegórica', 'Filosofía Práctica', 'Biología Molecular'; en 'costo' la accesibilidad o nivel de esfuerzo cognitivo).
-   - flashcards: mínimo 3 tarjetas de active recall con pregunta (frente), respuesta (dorso) y pista didáctica analógica.
-   - tutorial: 3 a 4 pasos prácticos o interactivos progresivos con instrucciones reproducibles y validación didáctica.
-   - director_cut: mínimo 4 a 6 escenas completas de storyboard para el guion didáctico audiovisual (cubriendo introducción/gancho, planteamiento del conflicto/problema, desglose conceptual, y conclusión didáctica). Cada escena DEBE incluir:
-     * 'titulo': Título descriptivo de la escena.
-     * 'tiempo': Duración estimada (ej. '00:00 - 01:30').
-     * 'guion_locutor': LOCUCIÓN DOCENTE EXTENSA, DESCRIPTIVA Y CONCEPTUAL (OBLIGATORIO: Mínimo 100 a 180 palabras, 2 a 3 párrafos fluidos por escena). NUNCA generes frases cortas de una línea. El guion de locución debe EXPLICAR A FONDO los conceptos fundamentales de la escena, detallando las causas, las metáforas o mecanismos técnicos/conceptuales, su significado y el aprendizaje concreto que el estudiante debe asimilar en ese momento.
-     * 'storyboard_visual': DESCRIPCIÓN VISUAL Y DE PUESTA EN ESCENA (QUÉ SE VE EN PANTALLA: composición, personajes, ambientación, elementos en escena, iluminación, encuadre cinematográfico, 100% fiel al tema).
-     * 'consejo_pedagogico': Recomendación didáctica para transmitir eficazmente la idea.
-   - quiz: mínimo 3 preguntas didácticas con opciones, índice de la respuesta correcta (0-indexed) y justificación referenciando citas directas.
-3. En 'almacenamiento_oci', define los metadatos técnicos de persistencia de artefacto:
+3. NIVEL DE DETALLE: "${detail}"
+   - Si es "Didáctico":
+     * Prioriza modelos mentales intuitivos, analogías conceptuales en la pista didáctica y comandos introductorios claros.
+   - Si es "Técnico Profundo":
+     * Proporciona comandos de terminal precisos (ej. comandos de OCI CLI con flags reales como --cidr-block, --compartment-id, etc.), consideraciones de subredes, topología y configuraciones exactas.
+
+============================================================
+DOCUMENTACIÓN FUENTE:
+============================================================
+${docContent ? `"""\n${docContent}\n"""` : 'Documento adjunto para análisis multimodal directo.'}
+
+============================================================
+ESTRUCTURA DE LAS 5 ESTACIONES A GENERAR:
+============================================================
+1. "resumen_ninja":
+   - "titulo": Título pedagógico ajustado al perfil "${profile}".
+   - "analogia_central": Metáfora central adaptada al nicho "${niche}".
+   - "conceptos_clave": 3 o 4 conceptos verificados en la fuente.
+   - "metricas_rapidas": riesgo, despliegue, tipo_oci (ej: la categoría temática de la lección) y costo (esfuerzo cognitivo o capa de servicio).
+
+2. "flashcards":
+   - Mínimo 3 tarjetas de active recall.
+   - En "frente": Pregunta o reto conceptual desafiante.
+   - En "dorso": Respuesta explicada según el perfil "${profile}".
+   - En "pista_didactica": Pista analógica ambientada exclusivamente en el nicho "${niche}".
+
+3. "tutorial":
+   - 3 o 4 pasos prácticos progresivos.
+   - Si el nivel es "Técnico Profundo", "cli_command" debe contener sintaxis técnica o flags detallados. Si es "Didáctico", comandos formativos claros.
+   - "verificacion": Criterio de validación del paso.
+
+4. "director_cut":
+   - 4 a 5 escenas de storyboard didáctico.
+   - "guion_locutor": Locución docente extensa (100 a 160 palabras por escena) que explique los conceptos con el tono adecuado al perfil "${profile}".
+   - "storyboard_visual": Descripción cinematográfica y de puesta en escena coherente con el nicho "${niche}".
+   - "consejo_pedagogico": Recomendación de dicción o énfasis didáctico.
+
+5. "quiz":
+   - Mínimo 3 preguntas de opción múltiple contextualizadas en el nicho "${niche}".
+   - "respuesta_correcta": Índice numérico base 0.
+   - "justificacion_rag": Justificación directa citando el documento original.
+   - "cita_fuente": Fragmento textual de la fuente de donde se extrajo.
+
+6. "almacenamiento_oci":
    - bucket: "nuevamente-edtech-artifacts"
    - objeto_id: "artifact-${timestamp}.json"
    - status_upload: "completado"
@@ -277,7 +315,7 @@ DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
         config: {
           responseMimeType: 'application/json',
           responseSchema: adaptationSchema,
-          temperature: 0.2,
+          temperature: 0.25,
         },
       });
 
@@ -289,13 +327,14 @@ DIRECTIVAS DIDÁCTICAS OBLIGATORIAS:
 
         const parsed = JSON.parse(jsonCleaned) as AdaptedContentPackage;
         parsed.metadatos.modelo_llm = modelName;
+        parsed.metadatos.perfil_aplicado = profile;
         return parsed;
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       console.warn(`Intento fallido con ${modelName}:`, errorMsg);
       lastError = err instanceof Error ? err : new Error(String(err));
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 400));
     }
   }
 

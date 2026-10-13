@@ -105,7 +105,6 @@ export const Step1Ingestion = ({
       return;
     }
 
-    // Auto-update title based on uploaded documents
     const cleanNames = fileList.map((f) => f.name.replace(/\.[^/.]+$/, ''));
     if (cleanNames.length === 1) {
       setDocTitle(cleanNames[0]);
@@ -115,7 +114,6 @@ export const Step1Ingestion = ({
       setDocTitle(`${cleanNames[0]} (+${cleanNames.length - 1} documentos)`);
     }
 
-    // Aggregate text contents with clear document headers
     const textParts = fileList
       .filter((f) => !f.isPdf && f.content)
       .map((f) => `--- DOCUMENTO: ${f.name} ---\n${f.content}`);
@@ -264,7 +262,7 @@ export const Step1Ingestion = ({
 
   return (
     <div className={styles.container}>
-      {/* Top Hero / Context Banner */}
+      {/* Top Hero Banner */}
       <div className={styles.heroBanner}>
         <div className={styles.heroContent}>
           <div className={styles.tagRow}>
@@ -328,7 +326,6 @@ export const Step1Ingestion = ({
       {/* Formulario Principal */}
       <form onSubmit={handleSubmit} className={styles.container}>
         <div className={styles.formCard}>
-          {/* File Dropzone & Document Title */}
           <div className={styles.inputGrid}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>
@@ -380,7 +377,6 @@ export const Step1Ingestion = ({
                 />
               </label>
 
-              {/* Lista interactiva de archivos cargados */}
               {ingestedFiles.length > 0 && (
                 <div className={styles.filesContainer}>
                   <div className={styles.filesHeader}>
@@ -469,7 +465,6 @@ export const Step1Ingestion = ({
             </div>
           </div>
 
-          {/* Document Content Textarea */}
           <div className={styles.fieldGroup}>
             <label className={`${styles.fieldLabel} ${styles.fieldLabelRow}`}>
               <span>Cuerpo de la Documentación Técnica</span>
@@ -490,7 +485,6 @@ export const Step1Ingestion = ({
             />
           </div>
 
-          {/* Parámetros de Personalización */}
           <div className={styles.paramsGrid}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>
@@ -549,7 +543,6 @@ export const Step1Ingestion = ({
             </div>
           </div>
 
-          {/* Estado de Animación del Pipeline o Botón de Acción */}
           {isProcessing ? (
             <div className={styles.processingCard}>
               <div className={styles.processingHeader}>
