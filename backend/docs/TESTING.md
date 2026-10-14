@@ -20,10 +20,10 @@ La configuración `backend/pytest.ini` debe revisarse para confirmar rutas/impor
 
 ## Estado de Ejecución y Cobertura Verificada
 La suite automatizada fue ejecutada en su totalidad mediante pytest:
-- **Resultado:** 🟢 **288 pasadas, 0 fallidas (100% de éxito en backend) + 26 pasadas en frontend (`npm test`) y verificación de tipos estricta (`tsc`)**.
-- **Tiempo de ejecución:** ~4 a 35 segundos según el entorno.
+- **Resultado al 14/10/2026:** 🟢 **300 pasadas en backend** (`cd backend && ../.venv/Scripts/python -m pytest -q`) **y 26 en frontend** (`cd frontend && npm test`), con `npx tsc --noEmit -p .` limpio. El número cambia con cada bloque: la cifra válida es la que da el comando.
+- **Tiempo de ejecución:** ~25 a 35 segundos el backend; menos de 1 s el frontend.
 
-### Distribución de los 70 Tests:
+### Distribución original (fase 9, 70 tests):
 1. **`backend/tests/test_api.py` (7 pruebas):**
    - Healthcheck `/health` y opciones canónicas `/api/v1/config/opciones`.
    - Ingesta multipart con archivo y texto directo en `/api/v1/adaptar`.
@@ -53,15 +53,17 @@ La suite ha crecido hasta 288 pruebas backend y 26 pruebas frontend:
 - **Resiliencia Gemini 429 y Semáforos:** `test_servicio_gemini.py` (18 pruebas) y `test_generacion_paralela.py` (24 pruebas) para clasificación de cuota diaria/minuto, fail-fast hasta medianoche PST, y semáforo de concurrencia `GEMINI_CONCURRENCIA_POR_MODELO=2`.
 - **Frontend React 19 (`npm test`):** 26 pruebas unitarias aprobadas que cubren plegado de eventos SSE (`paqueteIncremental.test.ts`), cálculo de tiempos de locución (`duracionLocucion.test.ts`) y extracción de prompts visuales (`promptVisual.test.ts`).
 
-### Benchmark Empírico de Especialización de Nichos (`pruebas_nichos/`):
-Suite de evaluación fuera del repositorio que contrasta ejecuciones reales de Gemini (sin mocks) variando el nicho sectorial para el mismo documento fuente:
-- **Metodología:** 5 ejecuciones reales con `gemini-3.5-flash-lite` (General x2, Medicina y Salud, Leyes y Legal, Finanzas y Contabilidad) con auditoría RAG fáctica.
-- **Relación Señal/Ruido Léxico:**
-  - *Medicina:* +4.93 palabras técnicas / 1000 palabras sobre General (ruido: 0.53, señal/ruido: 9.3x).
-  - *Leyes:* +5.16 palabras jurídicas / 1000 palabras sobre General (ruido: 0.00, señal pura).
-  - *Finanzas:* +12.20 términos financieros / 1000 palabras sobre General (ruido: 0.86, señal/ruido: 14.2x).
-- **Diferenciación Semántica:** Similaridad Jaccard del vocabulario cae de 0.446 (General vs General) a 0.340–0.362 ante nichos especializados.
-- **Fidelidad RAG Conservada:** Anclaje fáctico entre 84.6% y 88.0% verificado contra citas literales en el texto fuente, con 0 citas rotas ni recursos ausentes.
+### Actualización de cobertura (fase 23 · procedencia honesta):
+- **Visor de fuente:** `contexto_de_cita` devuelve el fragmento literal (con ligaduras), no cruza de página y corta en palabras completas; una cita ausente devuelve `None`. Las citas verificadas del resumen y del guion llevan su contexto y las no verificadas no (`test_contexto_documental.py`, `test_generacion_paralela.py`).
+- **Bloques de código:** una cita que une una frase con su comando coincide tanto si omite la marca ```` ```bash ```` como si la copia en la línea; la etiqueta sola («bash») o un comando cambiado siguen sin coincidir.
+- **Nicho:** el límite del sector va en las instrucciones solo con un nicho distinto de General, y el guion lo admite como mucho en una escena.
+- **Correo:** dirección enmascarada en los logs, error SMTP sin la dirección y recibo con la ruta OCI real. Ningún test sube a OCI: el cliente se sustituye en un fixture `autouse`.
+
+### Prueba de nichos (`pruebas_nichos/`, fuera del repositorio, gasta cuota de Gemini):
+Script `prueba_nichos.py` (con `--seco` no hace llamadas) que genera el mismo documento (guía de swap, perfil Principiante, nivel Didáctico) con General ×2, Medicina, Leyes y Finanzas, sin Groq ni ElevenLabs. Mide el léxico de cada sector por mil palabras (sin contar las citas), el parecido entre textos (Jaccard) y las citas verificadas.
+- **1.ª corrida (11:05):** cada nicho sube el léxico de su sector muy por encima de General (Medicina +4,9, Leyes +5,2 y Finanzas +12,2 por mil). La revisión manual encontró que el sector se colaba en afirmaciones sobre el documento, sobre todo en el guion narrado. Se corrigió el prompt.
+- **2.ª corrida (12:02, prompt corregido):** la introducción y el guion describen el documento tal como es y el sector queda en las analogías; la señal sigue clara (Medicina +5,1, Leyes +5,2 y Finanzas +4,0). Con el mismo verificador, las citas únicas verificadas pasan de 91,3 % a 94,4 %. En Medicina, Google devolvió timeout y 503 en la tarea B2 y esos recursos salieron como fallidos, sin relleno.
+- **Límites:** es una corrida por nicho, así que sirve como indicio y no como medida estadística. Falta una 3.ª corrida para confirmar que el sector aparece en una sola escena del guion.
 
 ## Validación End-to-End (E2E) Real con `apache_kafka_introduction.md`
 Certificación en vivo contra el documento técnico oficial de Kafka (11.052 caracteres):

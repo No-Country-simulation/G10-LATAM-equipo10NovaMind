@@ -877,3 +877,28 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
 **Verificación.** `tsc`, `eslint` y los 26 tests del front pasan, y el CRLF se conserva. Las cifras de concurrencia se comprobaron en `main.py` y `config.py`.
 
 **Siguen desactualizados.** Los números de tests en `TESTING.md`, `CHANGELOG.md`, `OPERATIONS.md` y `README.md`, y el modelo del diagrama de `modulos/02_generacion_y_agentes.md`.
+
+
+## 14 oct 2026 · Documentación al día con el código (CHANGELOG 2.7.0)
+
+**Etapa.** Cierre documental de la jornada: procedencia honesta (visor de fuente en las estaciones 1 a 4, nicho acotado, verificador de citas con bloques de código, Estación 3 sin datos inventados), privacidad del correo y persistencia real. Commits: `dbe98dc`, `abd1a54`, `f9ce53b`, `0bae210`, `a24e226` y `a2a77b4`, todos subidos a `origin/feature/fullstack-nuevamente-v2`.
+
+**Problemas encontrados en la documentación** (la escribió otro agente sin contrastarla con el código):
+- `CHANGELOG.md` 2.6.0:
+  - decía que hay 6 nichos, con nombres inexistentes, cuando son 11;
+  - describía una «medalla de procedencia en la Estación 4» que no existe: el cambio fue el texto del `BadgeModal`;
+  - presentaba la 1.ª corrida de nichos como estadística, con un «anclaje RAG» medido sin auditor.
+- `modulos/05`:
+  - nombraba la columna `huella_tarea`, cuando es `content_hash`, y ponía la racha en `profiles`, cuando está en `user_state`;
+  - afirmaba que la caché de invitados «aísla las huellas entre sesiones», cuando es compartida a propósito;
+  - decía que la `service_role` key vive en el `.env` del backend, que no la usa.
+- `modulos/01`: describía la página como sacada de delimitadores `[Página N]`, cuando sale de los rangos de página de la ingesta.
+- **Cifras de tests:** `TESTING.md`, `OPERATIONS.md` y el README presentaban como actuales cifras de 70 y 288 tests.
+
+**Cambios.**
+- `CHANGELOG.md`: nueva versión **2.7.0** con el trabajo del día y sus commits, y corrección de esas tres líneas de 2.6.0.
+- `TESTING.md`: estado al 14/10 (300 en el backend y 26 en el front) con el comando que da la cifra al día, cobertura de la fase 23 y la prueba de nichos contada con sus límites (una corrida por nicho, el 503 de Google en Medicina y la 3.ª corrida pendiente).
+- `OPERATIONS.md` y README: sin cifras fijas de tests en el texto que describe el estado actual. Los apartados históricos (fases, versiones antiguas, auditorías fechadas) se dejaron tal cual, porque registran lo que había en su momento.
+- `modulos/01`, `02`, `05` y `06`: verificador real, `contexto_de_cita`, el modelo de la tarea A (`gemini-3.5-flash-lite`), las 6 tablas, la caché de invitados, el correo, `VisorFuente` y la Estación 3. **Esta carpeta está en `.gitignore`:** sus cambios quedan solo en local.
+
+**Verificación.** Cada dato se contrastó con el código: `DIRECTIVAS_NICHO_SECTOR` (11 claves), `config.py`, `main.py` (semáforos), `registro_tareas.py`, `private_storage.py` y las migraciones. Los finales de línea son los de git (`core.autocrlf=true`).

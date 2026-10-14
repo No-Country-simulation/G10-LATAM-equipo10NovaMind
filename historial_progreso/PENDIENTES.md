@@ -90,6 +90,7 @@ En orden de prioridad:
 7. **Límites conocidos de la verificación de citas:** una nota al pie pegada a un número (`2025295`) y citas que cruzan un salto de página con notas en medio.
 8. **Velocidad de la voz:** si se agranda el guion, revisar `PALABRAS_GUION_MIN` y `PALABRAS_GUION_MAX` (ElevenLabs habla a unas 145 palabras por minuto y Gemini a unas 160).
 9. **Exportar el video como WebM (opcional):** con `MediaRecorder` en el navegador, nunca con FFmpeg en la VM.
+10. **Documentación por módulos sin versionar:** `backend/docs/modulos/` está en `.gitignore`, así que sus correcciones del 14/10 (verificador, tablas, caché de invitados, visor) no llegan al equipo. Decidir si se versiona.
 
 ## 4. Hecho el 14/10 (resumen)
 
