@@ -152,7 +152,8 @@ class VozElevenLabs:
         modelo: str = "eleven_flash_v2_5",
         voz_id: str,
         voz_nombre: str,
-        timeout_s: float = 60.0,
+        # Una escena tarda ~1 s; 25 s deja al respaldo (Gemini) más de la mitad del plazo total
+        timeout_s: float = 25.0,
         concurrencia: int = 2,  # el plan free admite pocas peticiones simultáneas
         transport: Optional[httpx.AsyncBaseTransport] = None,
     ):

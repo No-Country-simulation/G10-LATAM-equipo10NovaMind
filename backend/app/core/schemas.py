@@ -799,6 +799,25 @@ def velocidad_reproduccion(total_s: float, maximo_s: float) -> Optional[float]:
     return velocidad if velocidad <= VELOCIDAD_MAX_REPRODUCCION else None
 
 
+# Ritmo más rápido que alcanza cualquier voz (ElevenLabs ágil ≈ 155, Gemini ≈ 160 palabras/min).
+# Un guion que ni a este ritmo cabe en max_duration se rechaza antes de pagar la voz.
+WPM_MAX_VOZ = 165
+# Los créditos de ElevenLabs se cobran por carácter; el español ronda 6,5 por palabra (holgura
+# para términos técnicos).
+CARACTERES_POR_PALABRA_MAX = 10
+
+
+def exceso_guion_narracion(guiones: List[str], maximo_s: float) -> Optional[str]:
+    """Motivo para no narrar un guion que no puede caber en maximo_s; None si puede."""
+    max_palabras = math.floor(maximo_s * VELOCIDAD_MAX_REPRODUCCION * WPM_MAX_VOZ / 60)
+    palabras = sum(contar_palabras(g) for g in guiones)
+    caracteres = sum(len(g) for g in guiones)
+    if palabras > max_palabras or caracteres > max_palabras * CARACTERES_POR_PALABRA_MAX:
+        return (f"El guion tiene {palabras} palabras y no cabe en {maximo_s:g} s ni con la voz más rápida "
+                f"(máximo {max_palabras}). Acórtalo antes de narrarlo: no se gastó cuota de voz.")
+    return None
+
+
 class VideoJobSpec(BaseModel):
     """
     Contrato diferido de generación audiovisual (contract_ready).
@@ -877,7 +896,8 @@ class RespuestaNarracion(BaseModel):
         supera en menos de un 5 % y video_job_spec.velocidad_reproduccion la hace caber.
       - "excede_duracion": la voz real supera el máximo incluso con ritmo ágil y esa velocidad;
         no se guarda nada.
-      - "error": Gemini no entregó el audio (cuota, red...); `error_codigo` dice por qué.
+      - "error": no hubo audio (cuota, red, plazo agotado o un guion que no puede caber, que se
+        rechaza sin llamar a la voz); `error_codigo` dice por qué.
     """
 
     status: Literal["exito", "excede_duracion", "error"]

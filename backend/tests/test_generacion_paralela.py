@@ -106,9 +106,9 @@ def salida_b1() -> dict:
     }
 
 
-def salida_b2(diagrama: str = "flowchart TD\n  A[Subred] --> B[NAT]") -> dict:
+def salida_b2(diagrama: str = "flowchart TD\n  A[Subred] --> B[NAT]", palabras_escena: int = 40) -> dict:
     escena = lambda i, cita: {  # noqa: E731
-        "titulo": f"Escena {i}", "guion_locutor": _palabras(40, f"e{i}p"),
+        "titulo": f"Escena {i}", "guion_locutor": _palabras(palabras_escena, f"e{i}p"),
         "storyboard_visual": "Plano.", "consejo_pedagogico": "Pausa.", "objetivo_pedagogico": "Comprender.",
         "visual": {"tipo": "ppt_concepto", "titulo": "Idea", "puntos_clave": ["a", "b"]},
         "palabra_clave_imagen": "network router", "citas": [cita],
@@ -143,6 +143,8 @@ def tarea_de(request: httpx.Request) -> str:
         return "A"
     if instr.startswith("Eres el diseñador de evaluación"):
         return "B1"
+    if instr.startswith("Eres el editor de locución"):
+        return "AJUSTE"
     return "B2"
 
 
@@ -344,6 +346,44 @@ def test_guion_reutiliza_el_contrato_de_tiempos():
     assert [e.origen for e in spec.escenas] == ["llm"] * 3
     assert [e.fuentes[0].pagina for e in spec.escenas] == [1, 2, 3]
     assert spec.estado == "contract_ready"  # la narración es bajo demanda, no se lanza aquí
+
+
+def _avisos_guion(eventos):
+    return next(e["estado"]["avisos"] for e in eventos if e["tipo"] == "recurso" and e["recurso"] == "guion")
+
+
+def test_guion_dentro_del_rango_no_gasta_la_llamada_de_ajuste():
+    sim = Simulador()
+    _generar(sim)
+    assert "AJUSTE" not in [t for t, _ in sim.peticiones]
+
+
+def test_guion_largo_se_acorta_antes_de_publicar_y_se_avisa():
+    acortado = lambda: {"guiones": [_palabras(38, f"c{i}p") for i in range(1, 4)]}  # noqa: E731
+    sim = Simulador({"B2": lambda: salida_b2(palabras_escena=50), "AJUSTE": acortado})
+    respuesta, eventos = _generar(sim)
+    spec = respuesta.contenido_adaptado.video_job_spec
+    assert spec.total_palabras == 114 and spec.escenas[0].guion_locutor.startswith("c1p0")
+    assert any("acortado por IA de 150 a 114 palabras" in a for a in _avisos_guion(eventos))
+    # Solo recibe el guion, no el documento: barata y sin material para añadir contenido
+    (cuerpo,) = [c for t, c in sim.peticiones if t == "AJUSTE"]
+    assert "e1p0" in json.dumps(cuerpo) and "NAT Gateway" not in json.dumps(cuerpo)
+    # Los demás recursos de B2 no cambian
+    assert "tutorial" in _recursos(eventos) and "diagrama" in _recursos(eventos)
+
+
+@pytest.mark.parametrize("ajuste", [
+    lambda: {"guiones": [_palabras(45, "x") for _ in range(3)]},   # 135: sigue largo
+    lambda: {"guiones": [_palabras(30, "x")]},                      # faltan escenas
+    lambda: httpx.Response(503, json={"error": {"code": 503, "status": "UNAVAILABLE"}}),
+])
+def test_si_el_ajuste_no_cumple_queda_el_guion_original_con_aviso(ajuste):
+    sim = Simulador({"B2": lambda: salida_b2(palabras_escena=50), "AJUSTE": ajuste})
+    respuesta, eventos = _generar(sim)
+    assert respuesta.contenido_adaptado.video_job_spec.total_palabras == 150
+    avisos = _avisos_guion(eventos)
+    assert any("no se pudo acortar" in a for a in avisos)
+    assert any("150 palabras (objetivo 110-125)" in a for a in avisos)
 
 
 # --- Auditoría posterior --------------------------------------------------------------
