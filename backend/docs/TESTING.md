@@ -20,8 +20,8 @@ La configuración `backend/pytest.ini` debe revisarse para confirmar rutas/impor
 
 ## Estado de Ejecución y Cobertura Verificada
 La suite automatizada fue ejecutada en su totalidad mediante pytest:
-- **Resultado:** 🟢 **275 pasadas, 0 fallidas (100% de éxito en backend) + 23 pasadas en frontend**.
-- **Tiempo de ejecución:** ~3.8 a 16 segundos según el entorno.
+- **Resultado:** 🟢 **288 pasadas, 0 fallidas (100% de éxito en backend) + 26 pasadas en frontend (`npm test`) y verificación de tipos estricta (`tsc`)**.
+- **Tiempo de ejecución:** ~4 a 35 segundos según el entorno.
 
 ### Distribución de los 70 Tests:
 1. **`backend/tests/test_api.py` (7 pruebas):**
@@ -47,11 +47,21 @@ La suite automatizada fue ejecutada en su totalidad mediante pytest:
    - Manejo de caídas transitorias de API mediante backoff exponencial.
 
 
-### Actualización de Cobertura (Fase 21 · Resiliencia Gemini 429 y Concurrencia):
-La suite ha crecido sistemáticamente hasta 275 pruebas backend en `backend/tests/`:
-- **`test_servicio_gemini.py` (18 pruebas):** Clasificación de errores 429 (`cuota_diaria`, `cuota_minuto`, desconocida), expiración hasta medianoche del Pacífico, fail-fast de modelos agotados, y reintentos condicionales con presupuesto.
-- **`test_generacion_paralela.py` (24 pruebas):** Semáforos por modelo (`GEMINI_CONCURRENCIA_POR_MODELO`), fail-fast inmediato a modelo de respaldo sin llamadas de red si el modelo primario está marcado agotado, jitter aleatorio anti-avalancha y advertencias de proveniencia honesta en los recursos generados.
-- **Suite completa:** 275 pasadas en ~33s sin saturar cuotas externas (mocks asíncronos y fixtures controlados).
+### Actualización de Cobertura (Fase 22 · Cuotas de Voz, Poda de Guion y Nichos):
+La suite ha crecido hasta 288 pruebas backend y 26 pruebas frontend:
+- **Control de Longitud y Ajuste de Guion:** Verificación de `exceso_guion_narracion` bloqueando guiones >173 palabras o >1730 caracteres con HTTP 422 (`guion_largo`), y validación de poda semántica asistida (`_ajustar_guion`) acotando la locución al rango pedagógico de 110–125 palabras.
+- **Resiliencia Gemini 429 y Semáforos:** `test_servicio_gemini.py` (18 pruebas) y `test_generacion_paralela.py` (24 pruebas) para clasificación de cuota diaria/minuto, fail-fast hasta medianoche PST, y semáforo de concurrencia `GEMINI_CONCURRENCIA_POR_MODELO=2`.
+- **Frontend React 19 (`npm test`):** 26 pruebas unitarias aprobadas que cubren plegado de eventos SSE (`paqueteIncremental.test.ts`), cálculo de tiempos de locución (`duracionLocucion.test.ts`) y extracción de prompts visuales (`promptVisual.test.ts`).
+
+### Benchmark Empírico de Especialización de Nichos (`pruebas_nichos/`):
+Suite de evaluación fuera del repositorio que contrasta ejecuciones reales de Gemini (sin mocks) variando el nicho sectorial para el mismo documento fuente:
+- **Metodología:** 5 ejecuciones reales con `gemini-3.5-flash-lite` (General x2, Medicina y Salud, Leyes y Legal, Finanzas y Contabilidad) con auditoría RAG fáctica.
+- **Relación Señal/Ruido Léxico:**
+  - *Medicina:* +4.93 palabras técnicas / 1000 palabras sobre General (ruido: 0.53, señal/ruido: 9.3x).
+  - *Leyes:* +5.16 palabras jurídicas / 1000 palabras sobre General (ruido: 0.00, señal pura).
+  - *Finanzas:* +12.20 términos financieros / 1000 palabras sobre General (ruido: 0.86, señal/ruido: 14.2x).
+- **Diferenciación Semántica:** Similaridad Jaccard del vocabulario cae de 0.446 (General vs General) a 0.340–0.362 ante nichos especializados.
+- **Fidelidad RAG Conservada:** Anclaje fáctico entre 84.6% y 88.0% verificado contra citas literales en el texto fuente, con 0 citas rotas ni recursos ausentes.
 
 ## Validación End-to-End (E2E) Real con `apache_kafka_introduction.md`
 Certificación en vivo contra el documento técnico oficial de Kafka (11.052 caracteres):
