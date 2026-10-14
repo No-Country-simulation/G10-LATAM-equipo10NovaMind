@@ -89,7 +89,7 @@ npm run dev
 
 ## Despliegue en Servidor / Nube (Topología OCI Always Free)
 Para despliegues en producción sobre Oracle Cloud Infrastructure (`VM.Standard.E2.1.Micro`, 1 vCPU, 1 GB RAM):
-- **VM 1 (`n8n-vm` - Backend API):** Uvicorn con **1 worker** (`~98.5 MB RAM`), `asyncio.Semaphore(1)` para control estricto de memoria y puerto privado 8000 dentro de la VCN.
+- **VM 1 (`n8n-vm` - Backend API):** Uvicorn con **1 worker** (`~98.5 MB RAM`), como mucho 5 generaciones simultáneas (2 de ellas para invitados) y puerto privado 8000 dentro de la VCN.
 - **VM 2 (`climasmart-bems-vm` - Frontend & Edge):** Nginx (`:8080`, ~6 MB RAM) sirviendo la SPA compilada, proxy inverso de `/api/` con `proxy_buffering off;` para SSE, y expuesto a Internet vía **Cloudflare Tunnel (`novamind.techgk.cl`)**.
 - Documentación detallada en: `historial_progreso/INFORME_ORQUESTACION_MULTI_PROVEEDOR_FASE9.md` y `deploy/README_DESPLIEGUE_OCI.md`.
 

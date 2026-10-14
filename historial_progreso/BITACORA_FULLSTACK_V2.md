@@ -864,3 +864,16 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
   - la consola no muestra errores.
 
   En la primera pasada el foco no volvía, pero era el script de prueba: había cerrado la lista de citas, que viene abierta por defecto. El atajo de teclado de la Estación 4 ya ignora las teclas que se pulsan dentro de un diálogo.
+
+
+## 14 oct 2026 · DATABASE.md reescrito y el disco local ya no se presenta como OCI
+
+**Documentación.**
+- `backend/docs/DATABASE.md` decía que no había base de datos relacional ni migraciones, y citaba un módulo que ya no existe (`servicios/almacenamiento_oci.py`). Se reescribió a partir del código: las 2 migraciones de Supabase, las 6 tablas con su diagrama ER, RLS y permisos, la huella de `generation_tasks`, el uso de la *publishable key* con el JWT del usuario (sin `service_role`), las rutas privadas `users/{user_id}/...` en OCI o en el disco y el caso de los invitados.
+- `SECURITY.md` y `DEPLOYMENT.md` hablaban de `asyncio.Semaphore(1)`. Ahora dicen lo que hace el código: 5 generaciones a la vez, 2 cupos como máximo para invitados, 4 llamadas simultáneas a Gemini y 2 por modelo de respaldo.
+
+**Regla 1 en la Estación 3.** Sin `OCI_KEY_FILE`, `storage/local_storage.py` guarda en el disco del servidor y responde `status_upload="completado"` con `bucket="local-mock-storage"`, así que la Estación 3 mostraba «Guardado en OCI». Ahora reconoce ese bucket y muestra «Guardado en el servidor, no en OCI», con una nota. No se tocó el contrato del backend.
+
+**Verificación.** `tsc`, `eslint` y los 26 tests del front pasan, y el CRLF se conserva. Las cifras de concurrencia se comprobaron en `main.py` y `config.py`.
+
+**Siguen desactualizados.** Los números de tests en `TESTING.md`, `CHANGELOG.md`, `OPERATIONS.md` y `README.md`, y el modelo del diagrama de `modulos/02_generacion_y_agentes.md`.

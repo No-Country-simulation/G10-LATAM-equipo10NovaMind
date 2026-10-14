@@ -1,41 +1,72 @@
 # Datos y persistencia
 
 ## Panorama
-No se identificó una base de datos relacional ni migraciones SQL. La persistencia está compuesta por:
-1. **ChromaDB**: índice vectorial persistente de fragmentos documentales.
-2. **Sistema de archivos local**: documentos cargados y paquetes JSON generados.
-3. **OCI Object Storage**: cliente de almacenamiento de objetos disponible como integración.
 
-## ChromaDB
-En el pipeline oficial de producción (`backend/app/orquestador.py`), ChromaDB opera como almacén vectorial persistente (`./chroma_db` o `data/chroma`) con similitud coseno. Los fragmentos se indexan con embeddings remotos de Cohere (`embed-multilingual-v3.0`, 1024 dimensiones en lotes de hasta 96), lo que preserva la memoria RAM de la instancia Always Free al no requerir modelos de embeddings locales pesados ni reindexaciones frecuentes. Metadatos de fragmento: `doc_id`, título del documento, índice de fragmento y extracto de fuente.
+| Almacén | Qué guarda | Dónde está definido |
+|---|---|---|
+| **Supabase (PostgreSQL + Auth)** | Usuarios, documentos, paquetes, progreso, estado del jugador y caché por recurso | `supabase/migrations/` |
+| **OCI Object Storage** (bucket privado) | Texto original y paquete JSON de cada generación; audio y guion de la narración | `app/storage/private_storage.py`, `app/storage/almacen_narracion.py`, `app/storage/oci_client.py` |
+| **Disco del servidor** (`data/outputs/`) | Lo mismo que OCI cuando no hay credenciales de OCI | `app/storage/local_storage.py`, `app/storage/almacen_narracion.py` |
+| **Memoria del proceso** | Caché de invitados (no se guarda en ningún sitio) | `RegistroMemoria` en `app/servicios/registro_tareas.py` |
 
-Variables observadas: `AGENTE1_CHROMA_PATH` (`./chroma_db`), `AGENTE1_COLLECTION_NAME` (`nuevamente_documentos`), `COHERE_EMBEDDING_MODEL` (`embed-multilingual-v3.0`). El módulo alternativo `rag_pipeline.py` soporta opcionalmente persistencia local en `data/chroma`.
+ChromaDB solo lo usa el modo RAG antiguo (`orquestador.py`, `core/rag_pipeline.py`). El modo por defecto (`paralelo`) no tiene índice vectorial: el anclaje se comprueba localizando cada cita en el documento (`core/fuentes.py`).
 
-## Almacenador Híbrido Resiliente (OCI Cloud + Local)
-En `backend/app/orquestador.py`, la persistencia se gestiona mediante `almacenador_resiliente`, el cual aplica una política de **alta disponibilidad**:
-1. **Prioridad Cloud (OCI Object Storage Always Free):** Intenta persistir de forma nativa en Oracle Cloud si las credenciales y variables de entorno están activas.
-2. **Fallback Automático (Local):** Si OCI no está configurado, si las credenciales fallan o si ocurre una caída transitoria de red, redirige la escritura a `data/outputs/` de manera transparente y silenciosa, garantizando que el usuario siempre reciba su paquete adaptado sin excepciones 500.
+## Supabase
 
-## Archivos locales
-- Documentos cargados por API: `data/documents/{nombre_archivo}` (guardado temporal para auditoría).
-- Documentos originales de salida (fallback): `data/outputs/documentos_originales/{doc_id}.txt`.
-- Paquetes educativos de salida (fallback): `data/outputs/contenidos_generados/{doc_id}-{perfil}-{formato}.json`.
+### Migraciones
 
-El almacenamiento local devuelve metadatos con `bucket="local-mock-storage"` y `status_upload="completado"` cuando la escritura termina correctamente.
+Se aplican en orden desde el SQL Editor, como `postgres`. Cada una va dentro de una transacción: si falla, no deja nada a medias.
 
-## Topología de Objetos en OCI Object Storage
-El cliente real (`backend/app/servicios/almacenamiento_oci.py`) utiliza el SDK oficial de Oracle Cloud (`oci.object_storage.UploadManager`) con autenticación estándar (`~/.oci/config`) o variables de entorno (`OCI_USER`, `OCI_TENANCY`, `OCI_FINGERPRINT`, `OCI_KEY_FILE`, `OCI_REGION`):
-* **Bucket:** `novamind-contenidos-educativos` (Tier Standard, Always Free).
-* **Región:** `sa-santiago-1`.
-* **Namespace:** Configurado dinámicamente vía variable `OCI_NAMESPACE`.
-* **Estructura Jerárquica de Claves Cloud:**
-  - `documentos-originales/{doc_id}.txt`: Archivo plano con el texto completo extraído para auditoría y trazabilidad.
-  - `contenidos-generados/{doc_id}-{perfil}-{formato}.json`: Payload JSON estructurado que incluye metadatos, contenido adaptado en el formato solicitado, métricas de ejecución y evaluación de anclaje RAG.
+1. `202610080001_auth_and_persistence.sql`: tablas `profiles`, `documents`, `learning_packages`, `learning_progress` y `user_state`; trigger que crea el perfil y el estado al registrarse un usuario; bucket de Storage privado `documents` (opcional: hoy los originales van a OCI).
+2. `202610120001_generation_tasks.sql`: columna `documents.content_hash` (un documento por usuario y contenido) y tabla `generation_tasks`.
 
+### Tablas
 
-## Entidades lógicas
-- **Documento**: identificador, título, texto extraído y extensión.
-- **Fragmento**: texto, identificador de documento, índice y metadatos de fuente.
-- **Paquete educativo**: solicitud normalizada, metadatos, contenido, evaluación de calidad y métricas de orquestación.
+```mermaid
+erDiagram
+    AUTH_USERS ||--|| PROFILES : "id"
+    AUTH_USERS ||--|| USER_STATE : "user_id"
+    AUTH_USERS ||--o{ DOCUMENTS : "user_id"
+    DOCUMENTS ||--o{ LEARNING_PACKAGES : "document_id + user_id"
+    LEARNING_PACKAGES ||--o{ LEARNING_PROGRESS : "package_id + user_id"
+    DOCUMENTS ||--o{ GENERATION_TASKS : "document_id + user_id"
+```
 
-No hay diagrama ER porque no se encontraron tablas relacionales. Los modelos Pydantic y sus campos son la fuente de verdad para los contratos JSON.
+| Tabla | Contenido | Quién escribe |
+|---|---|---|
+| `profiles` | Nombre visible y avatar | Trigger `private.handle_new_user` |
+| `documents` | Título, archivo, texto fuente y `content_hash` (sha256 de título + contenido) | Backend (`auth.py`) |
+| `learning_packages` | Paquete educativo completo (`payload` JSON) y parámetros | Backend y front (`services/persistence.ts`) |
+| `learning_progress` | Paso, estación activa, estaciones completadas, respuestas del quiz y escudos | Front |
+| `user_state` | XP, racha, logros y preferencias (lo envía el cliente: no es un ranking fiable) | Front |
+| `generation_tasks` | Una fila por (usuario, huella, recurso): estado, modelo, intentos, latencia, error saneado y resultado ya validado | Backend (`servicios/registro_tareas.py`) |
+
+`generation_tasks.content_hash` es la huella de la tarea: sha256 de documento, perfil, nicho, nivel, tema, modelo, instrucciones y esquema. Si cambia el prompt o el modelo, la huella cambia y no se reutiliza nada viejo. El registro es de mejor esfuerzo: si Supabase falla, la generación sigue y la próxima vez se repite.
+
+### Seguridad
+
+- **RLS activo en las 6 tablas**, con una política `own_rows`: cada usuario solo ve y escribe sus filas (`user_id = auth.uid()`; en `profiles`, `id = auth.uid()`).
+- `anon` no tiene permisos sobre ninguna tabla; `authenticated` tiene `select/insert/update/delete`, siempre filtrado por RLS.
+- **El backend no usa la `service_role` key.** Llama a la API REST de Supabase con la *publishable key* y el JWT del usuario (`auth.py`: `private_query`, `private_insert`, `private_upsert`), así que cada consulta pasa por RLS.
+- Las funciones de `private` (`set_updated_at`, `handle_new_user`) no son ejecutables por `anon` ni `authenticated`.
+
+## OCI Object Storage y disco local
+
+`storage_for(user_id)` (`storage/private_storage.py`) guarda cada generación de un usuario con cuenta:
+
+```
+users/{user_id}/{run_id}/original.txt
+users/{user_id}/{run_id}/package.json
+users/{user_id}/narraciones/...        (audio WAV por escena y guion del video)
+```
+
+- **Con `OCI_KEY_FILE`:** sube al bucket de `OCI_BUCKET_NAME` y **exige que sea privado** (`NoPublicAccess`); si es público, no sube nada. Devuelve `status_upload="completado"` con el bucket y el objeto.
+- **Sin `OCI_KEY_FILE`:** escribe en `data/outputs/users/...` del servidor y devuelve `status_upload="completado"` con `bucket="local-mock-storage"`. La Estación 3 lo muestra como «Guardado en el servidor, no en OCI».
+- **Invitados:** no se guarda nada (`status_upload="omitido"`). Su caché vive en memoria (`MAX_FILAS_CACHE_INVITADOS`, 200 filas por defecto) y se pierde al reiniciar.
+- **Error al subir:** `status_upload="error"` y una advertencia en la respuesta; el paquete se entrega igual.
+
+Las rutas antiguas `documentos-originales/` y `contenidos-generados/` (`storage/oci_client.py`) solo las usan el modo RAG antiguo y el archivado del PDF del correo.
+
+## Contratos
+
+Los modelos Pydantic de `backend/app/core/schemas.py` son la fuente de verdad de los JSON; su espejo en el front es `frontend/src/types/types.ts`.
