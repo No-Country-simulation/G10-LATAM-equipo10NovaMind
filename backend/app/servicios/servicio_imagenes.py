@@ -34,6 +34,10 @@ URL_WIKIMEDIA = "https://commons.wikimedia.org/w/api.php"
 # Wikimedia exige un User-Agent identificable
 AGENTE = "NovaMind/2.0 (plataforma educativa; contacto via repositorio del proyecto)"
 
+# Openverse tarda ~18 s en una búsqueda que no tiene en caché (medido el 2026-10-14; 0,5 s si
+# la tiene). Con 8 s fallaba casi siempre y decidía Wikimedia, peor en significado. Las fotos
+# van en paralelo con la voz y por escenas: el peor caso (25 + 8 s) cabe en PLAZO_VOZ_S.
+TIMEOUT_OPENVERSE_S = 25.0
 ANCHO_MINIMO_PX = 1000
 PROPORCION_MINIMA = 1.3  # ancho / alto: solo apaisadas, el video es 16:9
 MAX_RESULTADOS = 10
@@ -135,7 +139,9 @@ def elegir_wikimedia(paginas: List[Dict[str, Any]], alt: str) -> Optional[Imagen
 
 
 class BuscadorImagenes:
-    def __init__(self, *, timeout_s: float = 8.0, transport: Optional[httpx.AsyncBaseTransport] = None):
+    def __init__(self, *, timeout_s: float = 8.0, timeout_openverse_s: float = TIMEOUT_OPENVERSE_S,
+                 transport: Optional[httpx.AsyncBaseTransport] = None):
+        self._timeout_openverse = timeout_openverse_s
         self._http = httpx.AsyncClient(
             timeout=timeout_s, headers={"User-Agent": AGENTE}, transport=transport,
             follow_redirects=True, trust_env=False,
@@ -165,7 +171,7 @@ class BuscadorImagenes:
         r = await self._http.get(URL_OPENVERSE, params={
             "q": consulta, "page_size": MAX_RESULTADOS, "license_type": "commercial,modification",
             "aspect_ratio": "wide", "mature": "false",
-        })
+        }, timeout=self._timeout_openverse)
         r.raise_for_status()
         return elegir_openverse(r.json().get("results") or [], alt)
 

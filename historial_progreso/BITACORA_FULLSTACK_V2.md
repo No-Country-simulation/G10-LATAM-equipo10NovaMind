@@ -932,3 +932,73 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
 - `LEEME.md` describe la 3.ª corrida.
 
 **Verificación.** Backend: 301 tests (uno nuevo, `test_palabra_clave_ambigua_no_consulta_los_bancos`, con un transporte simulado que comprueba que no sale ninguna petición). Se conserva el CRLF de los dos archivos de `app/`.
+
+
+## 14 oct 2026 · Auditoría de la 3.ª prueba de nichos
+
+**Contexto.** Gemini ejecutó la 3.ª corrida con el commit `3b66437` (`pruebas_nichos/resultados_20261014_1402/`). Las 5 ejecuciones salieron sin errores ni respaldos, en 8 a 10 s cada una, todas con `gemini-3.5-flash-lite`.
+
+**Lo que se confirma, leyendo los 15 guiones:**
+- **Regla de una escena:** Medicina, Leyes y Finanzas llevan el sector solo en la escena 1. En la 2.ª corrida, Leyes lo tenía en 2 escenas y Finanzas en 3.
+- **Medicina:** esta vez el guion sí se generó.
+- **Citas verificadas:** del 95,8 % al 96,3 % en las 5 ejecuciones.
+- **Exceso de léxico del sector sobre General:** +5,7 (Medicina), +4,6 (Leyes) y +6,0 (Finanzas) por mil. El ruido, medido con dos ejecuciones de General, es de 0 a 0,9.
+
+**Lo que el informe de Gemini exageraba:**
+- «Sin inventar en absoluto»: no se midió, porque el auditor de Groq está desactivado en la prueba (la auditoría sale como «fallida» en todas).
+- Los cocientes «~10× sobre el ruido» y el «limpio absoluto»: con dos ejecuciones de General no tienen sentido.
+
+**Hallazgos que el informe no recogía:**
+1. **Leyes, escena 1:** «Al desplegar contratos complejos o validar grandes volúmenes de documentos normativos, la memoria puede saturarse». Atribuye al documento un uso legal que no menciona, que es justo lo que prohíbe `_LIMITE_SECTOR`. Pasó en 1 de 5 ejecuciones. No se cambia el prompt por un solo caso; queda anotado.
+2. **Las palabras clave copiaban los ejemplos del prompt.** 11 de 15 eran «server room», «laptop code» o «fiber optic cables». E1, E3 y E5 repetían el mismo trío, y «fiber optic cables» ilustraba una escena sobre el swap en disco. Es el mismo patrón que la frase de ejemplo copiada en la 2.ª corrida.
+
+**Corrección.** La descripción de `palabra_clave_imagen` ahora pide el objeto del que habla *esa* escena y pone ejemplos de otros temas («green leaf» para la fotosíntesis, «supermarket shelf» para la inflación), con la indicación de no copiarlos. Hace falta otra corrida para confirmarlo.
+
+
+## 14 oct 2026 · Verificador de citas: notas pegadas a un año y saltos de página
+
+**Problema.** Quedaban dos límites conocidos del verificador (`core/fuentes.py`), que rechazaban citas literales:
+- **Nota pegada a un año:** el ENISA dice «globally in 2025295.» (año 2025 + nota 295). `_fin_de_nota` no la quitaba porque va detrás de un dígito, no de una letra.
+- **Salto de página:** al revisar el texto extraído apareció que el problema era más amplio que la nota 548. pypdf conserva la cabecera de cada página («ENISA Threat Landscape 2026 / TLP:CLEAR | September 2026 / 42») y las notas al pie al final de la anterior. **Cualquier** frase partida entre dos páginas fallaba, aunque no hubiera notas en medio.
+
+**Solución.** Solo cuando la búsqueda exacta falla, así que lo que ya se verificaba no cambia:
+- **Año más nota:** se admiten 1 a 3 dígitos detrás de un año de la cita (19xx o 20xx seguido de una letra en la cita), solo si en el original van pegados al año y les sigue algo que no es letra ni dígito.
+- **Salto de página** (`_tramo_entre_paginas`, que necesita `paginas`): la cita se parte en dos.
+  - El principio tiene que cerrar el contenido de su página: detrás solo puede haber la llamada a nota omitida, caracteres que no son letra ni dígito, y luego el fin de página o una línea de nota (`548 https…`).
+  - El resto tiene que abrir la página siguiente justo después de su cabecera. La cabecera se reconoce porque sus líneas abren al menos la mitad de las páginas, o porque es el número de página.
+- `tramo_de_cita` y `ubicar_cita` reciben `paginas` como parámetro opcional, y `pagina_de_cita` y `contexto_de_cita` se lo pasan. Quienes los llaman no cambian.
+- El visor de una cita que cruza de página muestra el tramo real, con la nota y la cabecera en medio.
+
+**Medición con PDF reales** (script fuera del repo). Para cada salto de página se tomaron las 6 últimas palabras del contenido y las 6 primeras de la página siguiente, más tres casos negativos:
+
+| PDF | Cruzan y se verifican | Saltándose una palabra | Con una palabra cambiada | Unidas a otra página |
+|---|---|---|---|---|
+| ENISA (101 págs.) | 99/99 | 99/99 rechazadas | 99/99 rechazadas | 99/99 rechazadas |
+| Snowflake (12 págs.) | 10/10 | 10/10 | 10/10 | 10/10 |
+| El caballero… (47 págs.) | 43/43 | 43/43 | 43/43 | 42/42 |
+
+Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos casos reales de la bitácora (página 56 y nota 548 en la página 74) se verifican.
+
+**Problemas al medir:**
+- La primera versión daba 88/99. La cola de la página no admitía la llamada a nota que la cita omite («EU171.»).
+- Con eso corregido daba 96/99. La lista de puntuación no incluía «%» ni «+» («(16.3%) .»). Ahora admite cualquier carácter que no sea letra ni dígito.
+
+**Verificación.** Backend: 304 tests. Hay tres nuevos en `test_contexto_documental.py`: año con nota, cita entre páginas con notas y cabecera, y salto de página que no admite saltarse ni cambiar texto. Se conserva el CRLF.
+
+
+## 14 oct 2026 · Plazo propio para Openverse y módulos corregidos
+
+**Openverse.** Una búsqueda sin caché tardaba unos 18 s (medido esta mañana), y el plazo común de 8 s la cortaba casi siempre, así que decidía Wikimedia.
+- `servicio_imagenes.py`: `TIMEOUT_OPENVERSE_S = 25`, como plazo propio de esa petición. Wikimedia sigue con 8 s.
+- Las fotos van en paralelo con la voz y por escenas, así que el peor caso (25 + 8 s) cabe en `PLAZO_VOZ_S` (80 s). Un test lo comprueba.
+- Prueba real, sin cuota: 4 búsquedas nuevas dieron foto de Openverse en 4 a 7 s. Esta vez Openverse iba más rápido que por la mañana, así que no se reprodujo el caso de 18 s.
+
+**Módulos (`backend/docs/modulos/`, solo en local).** Gemini los editó en esta carpeta y no en su worktree. Se corrigieron sus errores:
+- **02:** las cifras de los nichos («9,3×», «14,2×» y «92–96 %, 100 % en Leyes») estaban escogidas o no tenían origen. Ahora están las de la 3.ª corrida, con sus límites: una ejecución por nicho, ruido medido con dos de General y sin auditor.
+- **02:** la regla de una escena se describía como algo que hace el código. Ahora consta como instrucción del prompt, con lo observado.
+- **01:** `FuenteCita` no está en `schemas.py`, sino en `types.ts`. Además, ahora se describen las dos reglas nuevas del verificador.
+- **04 y 05:** los comandos de test apuntaban a `test_servicio_voz.py` y `test_almacenamiento.py`, que no existen. Ahora apuntan a `test_narracion.py` y a `test_auth.py`, `test_private_storage.py` y `test_registro_tareas.py`, que pasan.
+
+**Incidente.** A las 14:26:04 se reescribieron a la vez esta bitácora y `PENDIENTES.md` con una versión anterior. Se perdieron la entrada del verificador y los cambios de los puntos 7 y 10 de PENDIENTES. No había nada ajeno que conservar, así que se repusieron añadiendo. El código no se vio afectado.
+
+**Verificación.** Backend: 305 tests.
