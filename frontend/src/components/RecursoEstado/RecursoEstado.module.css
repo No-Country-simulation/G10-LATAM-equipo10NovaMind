@@ -26,6 +26,23 @@
 .fuenteOk { color: var(--color-emerald-300); }
 .fuenteNo { color: var(--color-rose-400); }
 
+/* Chip que abre el visor de fuente */
+.fuenteBoton {
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-emerald-border);
+  background: var(--color-emerald-bg);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.fuenteBoton:hover,
+.fuenteBoton:focus-visible {
+  border-color: var(--color-emerald-300);
+  outline: none;
+  text-decoration: underline;
+}
+
 .barra {
   display: flex;
   flex-direction: column;

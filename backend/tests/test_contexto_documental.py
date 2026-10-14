@@ -12,7 +12,7 @@ from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
-from app.core.fuentes import fragmentos_para_auditoria, pagina_de_cita, ubicar_cita
+from app.core.fuentes import contexto_de_cita, fragmentos_para_auditoria, pagina_de_cita, ubicar_cita
 from app.core.ingestion import _limpiar_headers_repetidos, cargar_documento, detectar_secciones
 from app.core.schemas import RangoPagina, SolicitudAdaptacion
 
@@ -164,6 +164,35 @@ def test_pagina_de_cita():
     assert pagina_de_cita("usa una tabla de rutas propia", DOCUMENTO, PAGINAS) == (True, 2)
     assert pagina_de_cita("usa una tabla de rutas propia", DOCUMENTO, []) == (True, None)
     assert pagina_de_cita("texto que no existe en el documento", DOCUMENTO, PAGINAS) == (False, None)
+
+
+# --- Visor de fuente: el texto real que rodea la cita ------------------------------
+def test_contexto_devuelve_el_fragmento_literal_del_documento_y_no_el_del_modelo():
+    documento = "Introducción.\n\nLa memoria ﬁnita de la VM se amplía con swap. Fin del texto."
+    ctx = contexto_de_cita("la memoria finita de la vm se amplia con swap", documento, [])
+    assert ctx["fragmento"] == "La memoria ﬁnita de la VM se amplía con swap"  # con su ligadura y tildes
+    assert ctx["antes"] == "Introducción.\n\n" and ctx["despues"] == ". Fin del texto."
+    assert not ctx["recortado_inicio"] and not ctx["recortado_fin"]
+
+
+def test_contexto_no_cruza_de_pagina_y_corta_en_palabras_completas():
+    p1 = "Página uno habla de otra cosa. "
+    p2 = "alfa beta gamma delta " * 30 + "AQUÍ ESTÁ LA CITA QUE BUSCAMOS " + "epsilon zeta eta theta " * 30
+    documento = p1 + p2
+    paginas = [RangoPagina(numero=1, inicio=0, fin=len(p1)), RangoPagina(numero=2, inicio=len(p1), fin=len(documento))]
+    ctx = contexto_de_cita("aquí está la cita que buscamos", documento, paginas, margen=40)
+    assert ctx["fragmento"] == "AQUÍ ESTÁ LA CITA QUE BUSCAMOS"
+    assert ctx["recortado_inicio"] and ctx["recortado_fin"]
+    palabras = set("alfa beta gamma delta epsilon zeta eta theta".split())
+    assert set(ctx["antes"].split()) <= palabras and set(ctx["despues"].split()) <= palabras  # sin medias palabras
+    assert "Página uno" not in ctx["antes"]
+    # Cerca del inicio de su página, el contexto se detiene en el límite de la página
+    ctx_borde = contexto_de_cita("alfa beta gamma delta alfa beta", documento, paginas, margen=200)
+    assert ctx_borde["antes"] == "" and not ctx_borde["recortado_inicio"]
+
+
+def test_contexto_de_una_cita_ausente_es_none():
+    assert contexto_de_cita("Kubernetes reinicia los pods cada hora", DOCUMENTO, PAGINAS) is None
 
 
 # --- Cadena: la página sale del documento, nunca del LLM ---------------------------

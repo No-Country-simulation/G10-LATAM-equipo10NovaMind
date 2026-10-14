@@ -3,10 +3,12 @@
  * sin auditar), citas localizadas en el documento, avisos y fallos. Nunca muestra un
  * recurso inventado en lugar de uno que falló.
  */
+import { useCallback, useRef, useState } from 'react';
 import { AlertTriangle, BadgeCheck, Clock, FileSearch, Recycle, ShieldOff } from 'lucide-react';
 import type { EstadoRecurso, FuenteCita, RecursoId } from '../../types/types';
 import { NOMBRE_RECURSO, motivoError } from '../../utils/paqueteIncremental';
 import styles from './RecursoEstado.module.css';
+import { VisorFuente } from './VisorFuente';
 
 const VERIFICACION = {
   pendiente: { texto: 'Verificación pendiente', clase: styles.chipPendiente, Icono: Clock,
@@ -26,19 +28,47 @@ export function ChipVerificacion({ estado }: { estado: EstadoRecurso }) {
   );
 }
 
-/** Página y verificación de una cita, derivadas por el backend de dónde aparece en el documento. */
+/**
+ * Página y verificación de una cita, derivadas por el backend de dónde aparece en el documento.
+ * Si la cita trae su contexto, el chip abre el visor con el pasaje real del documento.
+ */
 export function FuenteChip({ fuente }: { fuente?: FuenteCita | null }) {
+  const [abierto, setAbierto] = useState(false);
+  const chipRef = useRef<HTMLButtonElement>(null);
+  const cerrar = useCallback(() => {
+    setAbierto(false);
+    chipRef.current?.focus();  // el foco vuelve a donde estaba
+  }, []);
   if (!fuente) return null;
   const etiqueta = fuente.verificada
     ? fuente.pagina ? `Fuente · pág. ${fuente.pagina}` : 'Fuente verificada'
     : 'Cita no encontrada en el documento';
+  const clase = `${styles.fuente} ${fuente.verificada ? styles.fuenteOk : styles.fuenteNo}`;
+
+  if (!fuente.verificada || !fuente.contexto) {
+    return (
+      <span className={clase} title={`«${fuente.texto}»`}>
+        <FileSearch size={11} aria-hidden="true" /> {etiqueta}
+      </span>
+    );
+  }
   return (
-    <span
-      className={`${styles.fuente} ${fuente.verificada ? styles.fuenteOk : styles.fuenteNo}`}
-      title={`«${fuente.texto}»`}
-    >
-      <FileSearch size={11} aria-hidden="true" /> {etiqueta}
-    </span>
+    <>
+      <button
+        ref={chipRef}
+        type="button"
+        className={`${clase} ${styles.fuenteBoton}`}
+        onClick={(e) => {
+          e.stopPropagation();  // no dispara la acción de la tarjeta que lo contiene
+          setAbierto(true);
+        }}
+        aria-haspopup="dialog"
+        title="Ver la cita en el documento"
+      >
+        <FileSearch size={11} aria-hidden="true" /> {etiqueta}
+      </button>
+      {abierto && <VisorFuente fuente={fuente} onCerrar={cerrar} />}
+    </>
   );
 }
 

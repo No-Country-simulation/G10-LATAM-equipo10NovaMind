@@ -708,3 +708,65 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
 - con los 5 documentos de la biblioteca, el nicho enviado coincide con la opción visible;
 - no hay desbordamiento horizontal y la consola no tiene errores.
 - **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
+
+---
+
+## 14 oct 2026 · Correo: dirección enmascarada, tests sin OCI real y recibo honesto
+
+**Pedido** (pendiente técnico 2): en modo simulación, `servicio_correo.py` escribía en el log la dirección completa del destinatario.
+
+**Qué se hizo** (`servicio_correo.py`):
+- **`enmascarar_correo`:** `alumno@ejemplo.com` pasa a `al***@ejemplo.com`, y sin destinatario se escribe "(sin destinatario)". Se usa en los 4 logs.
+- **Error SMTP:** el log registra solo el tipo de excepción, porque el texto de `SMTPRecipientsRefused` repite la dirección.
+- **`smtp_from`** se define en la clase base. Antes solo existía en `PrivateCorreo`, y la base fallaba con `AttributeError` al enviar de verdad. Se quitó la línea duplicada y el `import os` que quedó sin uso en `private_pipeline.py`.
+
+**Problemas encontrados de paso.**
+1. **Los tests subían PDF reales a OCI.**
+   - **Causa:** `ServicioCorreo()` crea un `OCIObjectStorageClient` con las credenciales del `.env`, así que `test_servicio_correo_modo_simulacion` subía en cada ejecución `documentos-originales/doc-arquitectura.pdf`. Los 2 tests nuevos añadían también `doc-t.pdf` hasta corregirlo.
+   - **Corrección:** el *fixture autouse* del módulo impide crear el cliente OCI, como ya hacía `test_private_pipeline.py`. Ahora hay 0 subidas, y los avisos de la suite bajan de 7 a 2, porque los otros 5 venían del cliente real.
+   - **Pendiente:** esos 2 objetos de prueba siguen en el bucket. Borrarlos o no lo decide el equipo.
+2. **El recibo de la clase base mentía.**
+   - **Qué pasaba:** el log decía "respaldado en `reportes-pdf/dossier-…`", pero el PDF se guarda en `documentos-originales/…`. Y el recibo devolvía esa ruta con "archivado en OCI" aunque no hubiera cliente o la subida fallara. `PrivateCorreo` (producción) ya lo sobrescribía, pero la base contradecía la regla 1.
+   - **Corrección:** ahora usa la ruta que devuelve la subida real, o `None` con el mensaje "no se archivó en OCI".
+
+**Verificación.** Hay 4 tests nuevos y 1 reforzado: la máscara, la ausencia de la dirección completa en los logs en modo simulación y con error SMTP, `smtp_from` en la base, el recibo sin OCI y el recibo con la ruta real. La suite del backend pasa con 292 tests.
+
+---
+
+## 14 oct 2026 · Visor de fuente: la cita, dentro de su página real
+
+**Qué es.** Es la idea de NotebookLM con mejor relación entre valor y coste. Al pulsar el chip "Fuente · pág. N" de una cita, se abre un panel con el pasaje **literal** del documento y la cita resaltada. Muestra en un clic lo que distingue a NovaMind: que las citas existen de verdad en el documento.
+
+**Diagnóstico previo** (con un subagente de exploración):
+- El front nunca tenía el texto del documento ni los rangos de página. Solo recibía `{texto, pagina, verificada}`.
+- `ubicar_cita` calculaba el offset de la cita y lo descartaba.
+- El texto se guarda en `documents.source_text` de Supabase, pero el front no lo lee nunca, y para los invitados no existe.
+
+**Diseño.** En lugar de mandar el documento entero (hasta 350 000 caracteres), cada **cita verificada** lleva su contexto real: unos 280 caracteres antes y después, sin salir de su página. Pesa unos 30 KB por paquete, viaja dentro del propio paquete (así que funciona al recargar y para invitados) y no necesita un endpoint nuevo.
+
+**Backend** (`fuentes.py` y `generacion_paralela.py`):
+- `tramo_de_cita` devuelve el inicio **y el fin** del tramo en el texto original. `ubicar_cita` lo reutiliza y no cambia su comportamiento.
+- `contexto_de_cita` devuelve `{antes, fragmento, despues, recortado_inicio, recortado_fin}`. El fragmento es el texto **del documento**, con su tipografía (ligaduras, tildes y mayúsculas), no el que escribió el modelo. No cruza el límite de su página y corta en palabras completas.
+- `_fuente` añade `contexto` **solo a las citas verificadas**. Una cita inventada sigue sin contexto.
+- `VERSION_PROCESADO` no se subió: los paquetes en caché no traen contexto, y su chip sigue siendo texto, como antes.
+
+**Front:**
+- **`VisorFuente`:** un diálogo modal (`role=dialog`, `aria-modal`, título enlazado) montado en un portal.
+  - Se cierra con Esc, con la X o haciendo clic fuera, y devuelve el foco al chip.
+  - Pone puntos suspensivos donde el texto está recortado.
+  - Lleva la nota "Texto literal del documento…".
+- **`FuenteChip`:** es un botón si la cita tiene contexto; si no, sigue como texto.
+- **Estación 1:** el chip estaba **dentro del `<button>`** de la tarjeta de concepto. Se movió a un hermano posicionado sobre la tarjeta, porque anidar botones es HTML inválido y el clic habría marcado el concepto.
+- **Lo que no cubre:** la Estación 4 usa otro tipo de cita (`FuenteRAG`), que todavía no tiene visor.
+
+**Verificación.**
+- **Backend:** 4 tests nuevos.
+  - el fragmento literal con ligadura y tildes;
+  - que no cruza de página y corta en palabras completas;
+  - que una cita ausente da `None`;
+  - que en la generación las verificadas llevan contexto y la inventada no.
+- **Suite del backend:** 296 tests.
+- **Chrome real con CDP, sin gastar cuota:** `/adaptar/stream` se intercepta con un paquete generado por el backend real y el modelo simulado de los tests. El visor muestra "Documento original · pág. 2" con el pasaje y la cita resaltada, el clic no marca el concepto (sigue en 0/3), Esc lo cierra, el foco vuelve al chip y la consola no tiene errores.
+- **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
+
+**Incidencia.** A las 11:23 y 11:28, otro agente (Gemini) modificó `backend/docs/API.md` y `backend/docs/CHANGELOG.md` en la carpeta principal, en contra de las directivas de worktree. No se tocaron ni se incluyen en este bloque.

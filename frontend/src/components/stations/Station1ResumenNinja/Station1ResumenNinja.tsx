@@ -131,14 +131,15 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             const conceptId = item.id || `concept-${idx}`;
             const isChecked = !!checkedConcepts[conceptId];
 
+            // El chip de la fuente va fuera del botón de la tarjeta: también es un botón (abre el visor)
             return (
+              <div key={conceptId} className={styles.conceptRow}>
               <button
-                key={conceptId}
                 type="button"
                 onClick={() => toggleConcept(conceptId)}
                 className={`${styles.conceptItem} ${
                   isChecked ? styles.conceptItemChecked : ""
-                }`}
+                } ${item.fuente ? styles.conceptItemConFuente : ""}`}
               >
                 <div className={styles.checkboxIcon}>
                   {isChecked ? (
@@ -161,9 +162,14 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
                   {item.explicacion && (
                     <p className={styles.conceptExplanation}>{item.explicacion}</p>
                   )}
-                  <FuenteChip fuente={item.fuente} />
                 </div>
               </button>
+              {item.fuente && (
+                <div className={styles.conceptFuente}>
+                  <FuenteChip fuente={item.fuente} />
+                </div>
+              )}
+              </div>
             );
           })}
         </div>

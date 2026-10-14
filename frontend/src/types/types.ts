@@ -181,6 +181,17 @@ export interface FuenteCita {
   texto: string;
   pagina: number | null;
   verificada: boolean;
+  /** Texto literal del documento alrededor de la cita (solo si se localizó). Paquetes antiguos no lo traen. */
+  contexto?: ContextoCita | null;
+}
+
+/** Lo que muestra el visor de fuente: el fragmento exacto del documento y lo que lo rodea en su página. */
+export interface ContextoCita {
+  antes: string;
+  fragmento: string;
+  despues: string;
+  recortado_inicio: boolean;
+  recortado_fin: boolean;
 }
 
 export interface QuizQuestion {

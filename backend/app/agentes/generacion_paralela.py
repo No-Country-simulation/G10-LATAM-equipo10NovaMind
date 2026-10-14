@@ -46,7 +46,7 @@ from app.agentes.cadena_colaborativa import (
     _recortar,
 )
 from app.core.config import Config
-from app.core.fuentes import fragmentos_para_auditoria, pagina_de_cita
+from app.core.fuentes import contexto_de_cita, fragmentos_para_auditoria, pagina_de_cita
 from app.core.schemas import (
     DIRECTIVAS_NICHO_SECTOR,
     DIRECTIVAS_NIVEL_DETALLE,
@@ -311,7 +311,10 @@ def _fuente(cita: str, solicitud: SolicitudAdaptacion) -> Dict[str, Any]:
     """La página y la verificación salen de dónde aparece la cita, nunca del modelo."""
     texto = _recortar(_normalizar_espacios(cita), MAX_TEXTO_FUENTE)
     verificada, pagina = pagina_de_cita(texto, solicitud.documento_contenido, solicitud.paginas)
-    return {"texto": texto, "pagina": pagina, "verificada": verificada}
+    fuente: Dict[str, Any] = {"texto": texto, "pagina": pagina, "verificada": verificada}
+    if verificada:  # el visor de fuente muestra el texto real que rodea la cita
+        fuente["contexto"] = contexto_de_cita(texto, solicitud.documento_contenido, solicitud.paginas)
+    return fuente
 
 
 def _sin_duplicados(items: List[Any], clave: Callable[[Any], str]) -> Tuple[List[Any], int]:

@@ -339,6 +339,17 @@ def test_citas_paginas_y_duplicados():
     assert c.objetivos_aprendizaje == ["Configurar swap", "Explicar el NAT Gateway"]
 
 
+def test_las_citas_verificadas_llevan_el_contexto_real_para_el_visor():
+    respuesta, _ = _generar(Simulador())
+    c = respuesta.contenido_adaptado
+    contexto = c.resumen_ninja["conceptos_clave"][1]["fuente"]["contexto"]  # NAT Gateway, página 2
+    assert contexto["fragmento"] == C2
+    # No cruza a otras páginas: lo que rodea la cita es solo de la página 2
+    assert (contexto["antes"] + contexto["fragmento"] + contexto["despues"]).strip() == P2.strip()
+    # La cita inventada no tiene contexto: el visor no muestra nada que no esté en el documento
+    assert "contexto" not in c.flashcards[-1]["fuente"]
+
+
 def test_guion_reutiliza_el_contrato_de_tiempos():
     respuesta, _ = _generar(Simulador())
     spec = respuesta.contenido_adaptado.video_job_spec
