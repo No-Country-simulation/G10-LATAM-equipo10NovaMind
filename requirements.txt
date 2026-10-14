@@ -1,6 +1,4 @@
 # ==============================================================================
-# Dependencias Unificadas para Entorno Local / Desarrollo (Python 3.12.7)
+# Dependencias Backend FastAPI / LangGraph / RAG (Python 3.12.x)
 # ==============================================================================
 -r backend/requirements.txt
--r frontend/requirements.txt
-

@@ -1,5 +1,6 @@
 @echo off
 setlocal
+set "PYTHONIOENCODING=utf-8"
 title NovaMind - Restablecer Estado Cero (Zero-State)
 
 echo =======================================================
@@ -8,22 +9,27 @@ echo                     NovaMind
 echo =======================================================
 echo.
 
-if not exist ".venv\Scripts\python.exe" (
+if not exist "%~dp0.venv\Scripts\python.exe" (
     echo [ERROR] No se encontro el entorno virtual .venv.
-    echo Ejecuta primero setup.bat para instalar las dependencias.
+    echo Por favor ejecuta primero setup.bat para instalar las dependencias.
+    echo.
     pause
     exit /b 1
 )
 
-.venv\Scripts\python.exe scripts\reestablecer_local.py %*
+echo Ejecutando limpieza y restablecimiento seguro...
+echo.
+"%~dp0.venv\Scripts\python.exe" "%~dp0scripts\reestablecer_local.py" %*
 
 if errorlevel 1 (
     echo.
-    echo [ERROR] Ocurrio un fallo durante el restablecimiento.
+    echo [ERROR] Ocurrio un fallo durante el restablecimiento del entorno.
 ) else (
     echo.
     echo =======================================================
-    echo Para iniciar tu prueba limpia desde cero ejecuta:
+    echo   Entorno restablecido correctamente a Estado Cero!
+    echo =======================================================
+    echo Para iniciar una prueba limpia ejecuta:
     echo   iniciar_local.bat
     echo =======================================================
 )

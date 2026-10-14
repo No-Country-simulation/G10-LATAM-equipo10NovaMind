@@ -213,3 +213,65 @@ Esto probablemente explica también el 0 de 7 del resumen del ENISA del 13 de oc
 **También en este bloque.** `CLAUDE.md` en la raíz: mapa de archivos y contratos (punteros, no copias), comandos de verificación, trampas del entorno y reglas del proyecto. Claude Code lo carga en cada sesión.
 
 **Verificación.** Backend: 259 tests.
+
+---
+
+## 14 oct 2026 · Notas al pie, auditoría por fragmentos y cuota compartida
+
+**Estado:** sin commit. Probado contra el servidor local con el ENISA (101 páginas, 254 540 caracteres), en tres generaciones reales en modo paralelo.
+
+**1. La corrección de citas, confirmada en vivo.** Con el ENISA, flashcards, cuestionario y guion pasaron de 1/4, 0/4 y 0/3 citas localizadas a 4/4, 4/4 y 3/3.
+
+**2. Llamadas a nota al pie pegadas al texto.** Dos de las citas que seguían fallando eran correctas: el PDF dice `(EUVD)631` y `EU629`, y el modelo cita sin el número de la nota.
+- `fuentes.py` ahora descarta un grupo de hasta 4 dígitos pegado detrás de una letra, un `)` o unas comillas de cierre, si no le sigue otra letra o dígito. También descarta los superíndices `¹²³`.
+- La regla se aplica igual a la cita y al documento: `IPv6` sigue coincidiendo, y "4 GB" no coincide con "8 GB".
+- Con el resultado real guardado, pasa de 24/26 a 26/26 citas localizadas.
+- La simulación de 300 frases por PDF sigue en 0 fallos.
+
+**3. La auditoría solo veía el principio del documento.** El auditor (Groq) recibía `texto_fuente[:24000]`: en el ENISA, unas 10 de 101 páginas. Todo lo que salía de páginas posteriores le parecía "sin respaldo" y la puntuación de anclaje cayó a 0,55.
+- `fuentes.fragmentos_para_auditoria` divide el documento en bloques de ~1 200 caracteres y los puntúa por los términos que comparten con cada afirmación (con peso IDF). Reparte por turnos el mismo presupuesto de 24 000 caracteres, para que cada afirmación tenga primero su mejor bloque, y une sin separador los bloques contiguos.
+- Si el documento cabe entero en el presupuesto, se envía completo, como antes.
+- El aviso ahora dice exactamente qué se auditó: "contrastó los fragmentos más relacionados (22 775 de 254 540 caracteres)".
+- **Resultado:** anclaje de 0,55 a 0,99.
+- Problema encontrado al escribir los tests: dos bloques contiguos se unían con `[…]`, lo que partía las frases por la mitad. Corregido.
+
+**4. Riesgo de cuota compartida, confirmado.** Desde `a245424` las tres tareas usan `gemini-3.5-flash-lite`. Una segunda generación del ENISA dos minutos después de la primera recibió 429 en las tres tareas a la vez; las tres pasaron a `3.1-flash-lite` y la tarea B1 tardó 94,5 s. Los invitados no tienen caché, así que repetir el mismo documento vuelve a gastar cuota.
+
+**Citas que siguen sin localizarse (tercera generación: 25 de 30 localizadas)**
+
+| Caso | ¿Correcto? |
+|---|---|
+| Cita recortada con `...` ("48 thousand… a 22% increase") | Sí: no es literal |
+| Dos frases del documento fusionadas en una ("China-nexus… Operational Relay Boxes") | Sí: no es literal |
+| Nota pegada a un número: `2025295` (año 2025 + nota 295) | No: límite conocido. Separarla arriesgaría falsos positivos |
+| Cita que cruza un salto de página con la nota 548 en medio | No: límite conocido. Haría falta quitar las notas al pie de cada página al extraer el PDF |
+
+**Verificación:** backend, 262 tests.
+
+---
+
+## 14 oct 2026 · Caché para invitados y auditorías reutilizables
+
+**Estado:** sin commit.
+
+**Contexto.** Repetir el mismo documento como invitado volvía a gastar las tres llamadas a Gemini: los invitados no tenían registro de tareas. Con las tres tareas en `gemini-3.5-flash-lite`, eso provocaba 429 simultáneos (ver la entrada anterior). Se adoptó una caché en memoria para invitados, pensada para pruebas y demos. Un plan de ChatGPT proponía además colas, distinguir los 429 diarios de los por minuto y comparar modelos; eso queda pendiente.
+
+**Caché de invitados** (`main._REGISTRO_INVITADOS`)
+- Es un `RegistroMemoria` compartido por el proceso. Se pierde al reiniciar.
+- Tiene un tope de `MAX_FILAS_CACHE_INVITADOS` filas (200 por defecto, unos 20 documentos); 0 la desactiva. Descarta las más antiguas y no guarda historial de escrituras.
+- Es segura porque la clave de cada tarea incluye el hash del contenido del documento: solo acierta quien sube ese mismo documento. Los invitados ya comparten identidad, y nada de un invitado llega a Supabase.
+
+**Auditorías reutilizables** (`generacion_paralela._AUDITORIAS`)
+- Al repetir el ENISA al minuto, Groq respondió HTTP 413 (tokens por minuto agotados) en sus tres modelos y la auditoría quedó como no ejecutada.
+- Ahora se recuerdan las últimas 32 auditorías ejecutadas, con una clave que combina propietario, afirmaciones y texto auditado. Las fallidas no se recuerdan, así que se reintentan en la siguiente generación.
+
+**Aislamiento de tests:** `backend/tests/conftest.py` vacía las dos cachés antes de cada test.
+
+**Verificación en vivo** (servidor reiniciado, ENISA dos veces como invitado)
+
+| Generación | Tiempo | Llamadas | Resultado |
+|---|---|---|---|
+| Primera | 23,2 s | 3 a Gemini y 1 a Groq | 30 de 30 citas localizadas, anclaje 0,92 |
+| Segunda | 9,9 s (extracción del PDF) | Ninguna | Tareas y auditoría reutilizadas, mismo anclaje 0,92 |
+
+Backend: 265 tests.

@@ -216,12 +216,15 @@ def test_la_migracion_admite_todos_los_recursos_y_tareas():
     assert "unique (user_id, content_hash, resource)" in sql
 
 
-# --- main: el registro solo existe para usuarios autenticados ---------------------------
-def test_invitados_sin_registro_y_usuarios_con_documento_creado_al_inicio():
+# --- main: Supabase para usuarios; caché en memoria compartida para invitados ------------
+def test_invitados_usan_la_cache_en_memoria_y_usuarios_su_documento_creado_al_inicio():
     from app import main
 
     invitado = Principal("00000000-0000-0000-0000-000000000000", "guest", is_guest=True)
-    assert asyncio.run(main._registro_tareas(invitado, SOLICITUD)) is None
+    with patch("app.main.ensure_document") as ensure_invitado:
+        reg_invitado = asyncio.run(main._registro_tareas(invitado, SOLICITUD))
+    assert reg_invitado is main._REGISTRO_INVITADOS and isinstance(reg_invitado, RegistroMemoria)
+    ensure_invitado.assert_not_called()  # nada de un invitado llega a Supabase
 
     async def run():
         with patch("app.main.ensure_document", return_value=DOC) as ensure, \
@@ -235,3 +238,17 @@ def test_invitados_sin_registro_y_usuarios_con_documento_creado_al_inicio():
 
     with patch("app.main.ensure_document", side_effect=RuntimeError("supabase caído")):
         assert asyncio.run(main._registro_tareas(Principal(USER, "jwt"), SOLICITUD)) is None
+
+
+def test_cache_de_invitados_acotada_y_sin_historial():
+    reg = RegistroMemoria(max_filas=3)
+
+    def fila(huella, recurso):
+        return {"resource": recurso, "task": "A", "content_hash": huella, "status": "completado", "result": {"x": 1}}
+
+    asyncio.run(reg.guardar([fila("h1", "resumen"), fila("h1", "glosario"), fila("h2", "resumen")]))
+    asyncio.run(reg.guardar([fila("h1", "resumen")]))  # reescribir la deja como la más reciente
+    asyncio.run(reg.guardar([fila("h3", "resumen")]))  # supera el tope: sale la más antigua
+    assert set(reg.filas) == {("h2", "resumen"), ("h1", "resumen"), ("h3", "resumen")}
+    assert reg.escrituras == []
+    assert asyncio.run(reg.previos({"A": "h3"})) == {"resumen": {"x": 1}}
