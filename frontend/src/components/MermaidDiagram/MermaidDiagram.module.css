@@ -126,9 +126,12 @@
   overflow-x: auto;
 }
 
+/* Mermaid pone en línea max-width = ancho natural del diagrama. Forzar max-width: 100 % lo
+ * estiraba hasta el ancho de la tarjeta: un diagrama vertical de pocos nodos salía con letras
+ * gigantes (despliegue del 14/10). Se respeta su tamaño y solo se limita el alto. */
 .chartContainer svg {
-  max-width: 100% !important;
-  height: auto !important;
+  height: auto;
+  max-height: 70vh;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 }
 

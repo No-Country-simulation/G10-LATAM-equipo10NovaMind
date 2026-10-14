@@ -158,8 +158,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
+  /* Sin blur: en pausa la diapositiva tiene que leerse; el botón ya destaca por sí solo */
+  background: rgba(0, 0, 0, 0.18);
   border: none;
   cursor: pointer;
   z-index: 10;
