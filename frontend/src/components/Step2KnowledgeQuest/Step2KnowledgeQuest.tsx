@@ -46,6 +46,21 @@ interface Step2Props {
   generatingMessage?: string;
 }
 
+/**
+ * Lista de un recurso del paquete. Paquetes antiguos o del respaldo pueden traerla envuelta
+ * en un objeto (`{ pasos: [...] }`, `{ scenes: [...] }`…): se acepta cualquiera de esas claves.
+ */
+function listaDe<T>(valor: T[] | null | undefined, ...claves: string[]): T[] {
+  if (Array.isArray(valor)) return valor;
+  if (valor && typeof valor === 'object') {
+    for (const clave of claves) {
+      const lista = (valor as Record<string, unknown>)[clave];
+      if (Array.isArray(lista)) return lista as T[];
+    }
+  }
+  return [];
+}
+
 export const Step2KnowledgeQuest = ({
   quizState,
   onQuizChange,
@@ -344,11 +359,7 @@ export const Step2KnowledgeQuest = ({
             {activeStationIndex === 2 && (
               <Station3TutorialQuest
                 steps={
-                  Array.isArray(contentPackage.contenido_adaptado.tutorial)
-                    ? contentPackage.contenido_adaptado.tutorial
-                    : ((contentPackage.contenido_adaptado.tutorial as any)?.pasos ||
-                       (contentPackage.contenido_adaptado.tutorial as any)?.steps ||
-                       [])
+                  listaDe(contentPackage.contenido_adaptado.tutorial, 'pasos', 'steps')
                 }
                 isCompleted={!!completedStations[2]}
                 onCompleteStation={(xp) => onCompleteStation(2, xp)}
@@ -367,11 +378,7 @@ export const Step2KnowledgeQuest = ({
                 degradaciones={contentPackage.contenido_adaptado.video_job_spec?.degradaciones}
                 videoJobSpec={contentPackage.contenido_adaptado.video_job_spec}
                 scenes={
-                  Array.isArray(contentPackage.contenido_adaptado.director_cut)
-                    ? contentPackage.contenido_adaptado.director_cut
-                    : ((contentPackage.contenido_adaptado.director_cut as any)?.escenas ||
-                       (contentPackage.contenido_adaptado.director_cut as any)?.scenes ||
-                       [])
+                  listaDe(contentPackage.contenido_adaptado.director_cut, 'escenas', 'scenes')
                 }
                 isCompleted={!!completedStations[3]}
                 onCompleteStation={(xp) => onCompleteStation(3, xp)}
@@ -385,11 +392,7 @@ export const Step2KnowledgeQuest = ({
                 quizState={quizState}
                 onQuizChange={onQuizChange}
                 questions={
-                  Array.isArray(contentPackage.contenido_adaptado.quiz)
-                    ? contentPackage.contenido_adaptado.quiz
-                    : ((contentPackage.contenido_adaptado.quiz as any)?.preguntas ||
-                       (contentPackage.contenido_adaptado.quiz as any)?.questions ||
-                       [])
+                  listaDe(contentPackage.contenido_adaptado.quiz, 'preguntas', 'questions')
                 }
                 completedStationsCount={completedStationsCount}
                 isUnlocked={isFinalTrialUnlocked || isGenerating}

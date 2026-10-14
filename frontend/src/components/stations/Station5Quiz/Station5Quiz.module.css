@@ -524,3 +524,103 @@
 .nextQuestionBtn:hover {
   background-color: var(--color-violet-500);
 }
+
+/* Aviso de intento fallido: la pregunta sigue abierta */
+.wrongAttemptAlert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in oklch, var(--color-rose-400) 40%, transparent);
+  background: color-mix(in oklch, var(--color-rose-400) 10%, transparent);
+  color: var(--color-rose-300, var(--color-rose-400));
+  font-size: 0.8125rem;
+}
+
+/* Repaso guiado: preguntas falladas con su cita real */
+.repasoBox {
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklch, var(--color-violet-400) 30%, transparent);
+  background: color-mix(in oklch, var(--color-violet-400) 6%, transparent);
+}
+
+.repasoHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-violet-300, var(--color-violet-400));
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.repasoIntro {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.repasoList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.repasoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in oklch, var(--color-violet-400) 20%, transparent);
+}
+
+.repasoItem:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.repasoPregunta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.repasoNumero {
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-violet-400);
+}
+
+.repasoFallos {
+  font-size: 0.75rem;
+  color: var(--color-rose-400);
+}
+
+.repasoTexto {
+  margin: 0;
+  color: var(--color-text-primary, inherit);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.repasoDescartada {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}

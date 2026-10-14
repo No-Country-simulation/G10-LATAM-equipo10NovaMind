@@ -115,6 +115,7 @@ class Config:
     # Respaldo: 3.8-flash y 3.7-flash agotaron la cuota (429); 3.5-flash-lite respondió tras 503.
     gemini_transcription_model: str = "gemini-3.1-flash-lite"
     gemini_transcription_fallback_model: Optional[str] = "gemini-3.5-flash-lite"
+    gemini_concurrencia_por_modelo: int = 2
 
     # --- Voz del video narrado: ElevenLabs principal, Gemini TTS respaldo ---
     # Verificado el 2026-10-13: flash_v2_5 cuesta 0,5 créditos/carácter y habla español.
@@ -169,6 +170,7 @@ class Config:
             gemini_tts_model=os.getenv("GEMINI_TTS_MODEL") or "gemini-3.8-flash-lite-tts",
             gemini_transcription_model=os.getenv("GEMINI_TRANSCRIPTION_MODEL") or "gemini-3.1-flash-lite",
             gemini_transcription_fallback_model=os.getenv("GEMINI_TRANSCRIPTION_FALLBACK_MODEL", "gemini-3.5-flash-lite") or None,
+            gemini_concurrencia_por_modelo=_leer_int("GEMINI_CONCURRENCIA_POR_MODELO", 2, 1, 10),
             elevenlabs_api_key=os.getenv("ELEVENLABS_API_KEY") or None,
             elevenlabs_tts_model=os.getenv("ELEVENLABS_TTS_MODEL") or "eleven_flash_v2_5",
             elevenlabs_voice_id=os.getenv("ELEVENLABS_VOICE_ID") or "Xb7hH8MSUJpSbSDYk0k2",

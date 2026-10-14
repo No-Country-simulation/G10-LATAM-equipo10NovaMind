@@ -16,10 +16,12 @@ export interface QuizState {
   isEvaluated: boolean;
   userAnswers: Record<number, boolean>;
   selectedAnswers: Record<number, number>;
+  /** Alternativas falladas en cada pregunta, en orden: el quiz permite reintentar y los fallos se conservan para el repaso. */
+  failedOptions: Record<number, number[]>;
   isQuizCompleted: boolean;
 }
 export const EMPTY_QUIZ: QuizState = { currentQuestionIndex: 0, selectedOption: null,
-  isEvaluated: false, userAnswers: {}, selectedAnswers: {}, isQuizCompleted: false };
+  isEvaluated: false, userAnswers: {}, selectedAnswers: {}, failedOptions: {}, isQuizCompleted: false };
 export interface PackageRow { id: string; title: string; payload: AdaptedContentPackage }
 export async function owner() {
   const { data, error } = await requireSupabase().auth.getUser();

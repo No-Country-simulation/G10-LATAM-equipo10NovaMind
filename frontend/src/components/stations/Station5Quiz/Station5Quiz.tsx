@@ -15,6 +15,8 @@ import {
 import type { QuizQuestion } from "../../../types/types";
 import { triggerCelebrationConfetti } from "../../../utils/confetti";
 import { FuenteChip } from "../../RecursoEstado/RecursoEstado";
+import { puntosDeRepaso } from "../../../utils/repasoQuiz";
+import { RepasoGuiado } from "./RepasoGuiado";
 import styles from "./Station5Quiz.module.css";
 
 interface Station5Props {
@@ -61,14 +63,21 @@ export const Station5FinalTrial = ({
   const safeQuestions = questions;
 
   const totalQuestions = safeQuestions.length;
-  const minRequiredToPass = Math.max(1, Math.ceil(totalQuestions * 0.6));
-  const minPercentage = totalQuestions ? Math.round((minRequiredToPass / totalQuestions) * 100) : 0;
+  // El quiz es la única estación que exige el 100 %: las demás aprueban con el 60 %.
+  const minRequiredToPass = totalQuestions;
   const currentQ = safeQuestions[currentQuestionIndex] || safeQuestions[0];
-  // Explicación de la alternativa elegida, si el backend la generó (modo paralelo)
-  const explicacionElegida =
-    selectedOption !== null && selectedOption !== currentQ?.respuesta_correcta
-      ? currentQ?.explicaciones_opciones?.[selectedOption]
-      : undefined;
+  // Alternativas ya falladas en esta pregunta: se marcan y no se pueden volver a elegir.
+  const fallidas = quizState.failedOptions?.[currentQuestionIndex] ?? [];
+  // Tras acertar se explica por qué fallaban las descartadas, si el backend lo generó (modo paralelo).
+  // Antes no: la explicación de una incorrecta puede delatar la correcta.
+  const explicacionesFallidas = isEvaluated
+    ? fallidas
+        .map((idx) => ({ opcion: currentQ?.opciones[idx], texto: currentQ?.explicaciones_opciones?.[idx] }))
+        .filter((e) => e.opcion && e.texto)
+    : [];
+
+  // Repaso guiado: preguntas falladas con su cita y página reales, sin llamar a ningún modelo.
+  const puntosRepaso = puntosDeRepaso(safeQuestions, quizState.failedOptions);
 
   if (!currentQ) return null;
 
@@ -172,7 +181,7 @@ export const Station5FinalTrial = ({
             </span>
           </div>
 
-          <h3 className={styles.dangerTitle}>El error es parte del dominio</h3>
+          <h3 className={styles.dangerTitle}>El error es parte del aprendizaje</h3>
 
           <p
             style={{
@@ -181,9 +190,10 @@ export const Station5FinalTrial = ({
               lineHeight: 1.6,
             }}
           >
-            Consumiste tus 3 reservas de atención frente a conceptos no
-            consolidados. En la ciencia cognitiva, la curva del olvido se vence
-            mediante la repetición espaciada, no forzando respuestas al azar.
+            Cada intento es una oportunidad para fortalecer lo aprendido.
+            En lugar de adivinar, la clave para dominar conceptos complejos
+            está en dar un paso atrás y repasar a tu propio ritmo.
+            Reconstruyamos las bases para que vuelvas al desafío con total seguridad.
           </p>
 
           <div className={styles.dangerNotice}>
@@ -196,12 +206,14 @@ export const Station5FinalTrial = ({
               }}
             />
             <p>
-              Recuperaremos tus <strong>3 escudos al 100%</strong> y
-              reiniciaremos el recorrido desde la <strong>Estación 01</strong>{" "}
-              para que reconstruyas la intuición con una base sólida.
+              Restauraremos tus <strong>3 escudos al 100%</strong> y
+              recorreremos la ruta desde la <strong>Estación 01</strong> para
+              fijar cada concepto clave antes de volver a intentarlo.
             </p>
           </div>
         </div>
+
+        <RepasoGuiado puntos={puntosRepaso} revelarRespuestas={false} />
 
         <div>
           <button
@@ -210,7 +222,7 @@ export const Station5FinalTrial = ({
             className={styles.restartCircuitBtn}
           >
             <RotateCcw size={16} />
-            <span>Restaurar Escudos y Reiniciar Ruta Cognitiva</span>
+            <span>Restaurar Escudos y Reforzar Conceptos</span>
           </button>
         </div>
       </div>
@@ -219,16 +231,24 @@ export const Station5FinalTrial = ({
 
   // 3. Manejo de Selección y Evaluación
   const handleSelectOption = (index: number) => {
-    if (isEvaluated) return;
-    setSelectedOption(index);
-    setIsEvaluated(true);
+    if (isEvaluated || fallidas.includes(index)) return;
 
-    const isCorrect = index === currentQ.respuesta_correcta;
-    setUserAnswers((prev) => ({ ...prev, [currentQuestionIndex]: isCorrect }));
-
-    if (!isCorrect) {
-      onDeductShield();
+    if (index === currentQ.respuesta_correcta) {
+      setSelectedOption(index);
+      setIsEvaluated(true);
+      setUserAnswers((prev) => ({ ...prev, [currentQuestionIndex]: true }));
+      return;
     }
+
+    // Incorrecta: cuesta un escudo y se puede reintentar sin revelar la correcta.
+    onQuizChange((prev) => ({
+      ...prev,
+      failedOptions: {
+        ...prev.failedOptions,
+        [prev.currentQuestionIndex]: [...(prev.failedOptions?.[prev.currentQuestionIndex] ?? []), index],
+      },
+    }));
+    onDeductShield();
   };
 
   const handleNextQuestion = () => {
@@ -240,7 +260,7 @@ export const Station5FinalTrial = ({
       setIsQuizCompleted(true);
       const correctCount = Object.values(userAnswers).filter(Boolean).length;
 
-      if (correctCount >= minRequiredToPass) {
+      if (totalQuestions > 0 && correctCount === minRequiredToPass) {
         triggerCelebrationConfetti();
         onCompleteStation(100);
         onOpenMasterBadge();
@@ -253,6 +273,7 @@ export const Station5FinalTrial = ({
     setSelectedOption(null);
     setIsEvaluated(false);
     setUserAnswers({});
+    onQuizChange((prev) => ({ ...prev, failedOptions: {} }));
     setIsQuizCompleted(false);
   };
 
@@ -260,7 +281,7 @@ export const Station5FinalTrial = ({
   const userScorePercentage = Math.round(
     (correctAnswersCount / totalQuestions) * 100,
   );
-  const isSuccess = correctAnswersCount >= minRequiredToPass;
+  const isSuccess = totalQuestions > 0 && correctAnswersCount === minRequiredToPass;
 
   // 4. Pantalla: Resultado Final
   if (isQuizCompleted) {
@@ -306,10 +327,12 @@ export const Station5FinalTrial = ({
             }}
           >
             {isSuccess
-              ? `Has superado el umbral requerido (mínimo ${minRequiredToPass} de ${totalQuestions} - ${minPercentage}%) demostrando anclaje conceptual riguroso.`
-              : `Se requieren al menos ${minRequiredToPass} respuestas correctas (${minPercentage}%) para superar la estación y reclamar la Medalla Master.`}
+              ? `Respondiste correctamente las ${totalQuestions} preguntas, demostrando anclaje conceptual riguroso.`
+              : `Se requiere el 100 % de aciertos (${totalQuestions} de ${totalQuestions}) para superar la estación y reclamar la Medalla Master.`}
           </p>
         </div>
+
+        <RepasoGuiado puntos={puntosRepaso} revelarRespuestas={isSuccess} />
 
         <div className={styles.resultButtonsGroup}>
           <button
@@ -365,8 +388,7 @@ export const Station5FinalTrial = ({
               Estación 05 · The Final Trial (Quiz Capstone)
             </span>
             <span className={styles.examApprovalPill}>
-              Aprobación: ≥{minRequiredToPass}/{totalQuestions} ({minPercentage}
-              %)
+              Aprobación: {minRequiredToPass}/{totalQuestions} (100 %)
             </span>
           </div>
           <h3
@@ -421,20 +443,23 @@ export const Station5FinalTrial = ({
           <h4 className={styles.questionTitle}>{currentQ.pregunta}</h4>
         </div>
 
+        {!isEvaluated && fallidas.length > 0 && (
+          <div className={styles.wrongAttemptAlert} role="status">
+            <XCircle size={16} color="var(--color-rose-400)" />
+            <span>Respuesta incorrecta. Perdiste un escudo. Prueba otra alternativa.</span>
+          </div>
+        )}
+
         <div className={styles.optionsList}>
           {currentQ.opciones.map((op, idx) => {
             const isSelected = selectedOption === idx;
-            const isCorrectAnswer = idx === currentQ.respuesta_correcta;
+            const isFailed = fallidas.includes(idx);
 
             let optionClass = styles.optionButton;
-            if (isEvaluated) {
-              if (isCorrectAnswer) {
-                optionClass = `${styles.optionButton} ${styles.optionCorrect}`;
-              } else if (isSelected && !isCorrectAnswer) {
-                optionClass = `${styles.optionButton} ${styles.optionIncorrect}`;
-              } else {
-                optionClass = `${styles.optionButton} ${styles.optionMuted}`;
-              }
+            if (isFailed) {
+              optionClass = `${styles.optionButton} ${styles.optionIncorrect}`;
+            } else if (isEvaluated) {
+              optionClass = `${styles.optionButton} ${isSelected ? styles.optionCorrect : styles.optionMuted}`;
             }
 
             return (
@@ -442,22 +467,15 @@ export const Station5FinalTrial = ({
                 key={idx}
                 type="button"
                 onClick={() => handleSelectOption(idx)}
-                disabled={isEvaluated}
+                disabled={isEvaluated || isFailed}
                 className={optionClass}
               >
                 <span>{op}</span>
-                {isEvaluated && (
-                  <span>
-                    {isCorrectAnswer ? (
-                      <CheckCircle2
-                        size={20}
-                        color="var(--color-emerald-400)"
-                      />
-                    ) : isSelected ? (
-                      <XCircle size={20} color="var(--color-rose-400)" />
-                    ) : null}
-                  </span>
-                )}
+                {isFailed ? (
+                  <span><XCircle size={20} color="var(--color-rose-400)" /></span>
+                ) : isEvaluated && isSelected ? (
+                  <span><CheckCircle2 size={20} color="var(--color-emerald-400)" /></span>
+                ) : null}
               </button>
             );
           })}
@@ -470,16 +488,16 @@ export const Station5FinalTrial = ({
               <span>Fundamentación RAG</span>
             </div>
 
-            {explicacionElegida && (
-              <p className={styles.ragJustificationText}>
-                <strong>Tu respuesta:</strong> {explicacionElegida}
-              </p>
-            )}
-
             <p className={styles.ragJustificationText}>
-              {explicacionElegida && <strong>Respuesta correcta: </strong>}
+              {explicacionesFallidas.length > 0 && <strong>Respuesta correcta: </strong>}
               {currentQ.justificacion_rag}
             </p>
+
+            {explicacionesFallidas.map((e) => (
+              <p key={e.opcion} className={styles.ragJustificationText}>
+                <strong>Descartaste «{e.opcion}»:</strong> {e.texto}
+              </p>
+            ))}
 
             {currentQ.cita_fuente && (
               <div className={styles.ragCitation}>

@@ -28,7 +28,8 @@ import re
 import time
 import wave
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -42,6 +43,45 @@ _PATRON_CLAVE = re.compile(r"AIza[0-9A-Za-z_\-]{20,}")
 
 M = TypeVar("M", bound=BaseModel)
 
+# Modelos con cuota diaria agotada en memoria del proceso hasta la medianoche del Pacífico
+_MODELOS_AGOTADOS_HASTA: Dict[str, float] = {}
+
+
+def proxima_medianoche_pacifico() -> float:
+    """Calcula el timestamp UTC de la próxima medianoche en hora del Pacífico (00:00:00 PT)."""
+    try:
+        from zoneinfo import ZoneInfo
+        tz_pt = ZoneInfo("America/Los_Angeles")
+        ahora_pt = datetime.now(tz_pt)
+        medianoche_pt = (ahora_pt + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        return medianoche_pt.timestamp()
+    except Exception:
+        return time.time() + 86400.0
+
+
+def marcar_modelo_agotado(modelo: str, hasta_ts: Optional[float] = None) -> None:
+    """Marca un modelo como agotado en memoria del proceso hasta la medianoche del Pacífico."""
+    if hasta_ts is None:
+        hasta_ts = proxima_medianoche_pacifico()
+    _MODELOS_AGOTADOS_HASTA[modelo] = hasta_ts
+    logger.warning("[gemini] Modelo %s marcado como agotado hasta timestamp %.0f (medianoche Pacífico)", modelo, hasta_ts)
+
+
+def modelo_esta_agotado(modelo: str) -> bool:
+    """True si el modelo tiene su cuota diaria agotada en la memoria del proceso."""
+    hasta = _MODELOS_AGOTADOS_HASTA.get(modelo)
+    if hasta is None:
+        return False
+    if time.time() >= hasta:
+        _MODELOS_AGOTADOS_HASTA.pop(modelo, None)
+        return False
+    return True
+
+
+def limpiar_modelos_agotados() -> None:
+    """Limpia el estado en memoria de modelos agotados (útil para pruebas)."""
+    _MODELOS_AGOTADOS_HASTA.clear()
+
 
 class GeminiError(Exception):
     """
@@ -50,12 +90,23 @@ class GeminiError(Exception):
     modelo_no_encontrado | incompleto | sin_salida | json_invalido | esquema_invalido | audio_invalido
     """
 
-    def __init__(self, codigo: str, mensaje: str, *, reintentable: bool = False, http_status: Optional[int] = None):
+    def __init__(
+        self,
+        codigo: str,
+        mensaje: str,
+        *,
+        reintentable: bool = False,
+        http_status: Optional[int] = None,
+        tipo_cuota: Optional[str] = None,
+        retry_after_s: Optional[float] = None,
+    ):
         super().__init__(f"{codigo}: {mensaje}")
         self.codigo = codigo
         self.mensaje = sanear(mensaje)
         self.reintentable = reintentable
         self.http_status = http_status
+        self.tipo_cuota = tipo_cuota  # "cuota_diaria" | "cuota_minuto" | "desconocido" | None
+        self.retry_after_s = retry_after_s
 
 
 def sanear(texto: str, maximo: int = 300) -> str:
@@ -70,6 +121,7 @@ class Uso:
     latencia_s: float
     tokens_entrada: int = 0
     tokens_salida: int = 0
+    motivo_respaldo: Optional[str] = None
 
 
 @dataclass
@@ -103,12 +155,78 @@ def _segundos_de_espera(respuesta: Optional[httpx.Response], intento: int, esper
                 retraso = d.get("retryDelay") if isinstance(d, dict) else None
                 if isinstance(retraso, str) and retraso.endswith("s"):
                     return min(_MAX_ESPERA_S, max(0.0, float(retraso[:-1])))
+                elif isinstance(retraso, (int, float)):
+                    return min(_MAX_ESPERA_S, max(0.0, float(retraso)))
         except (ValueError, AttributeError):
             pass
     return min(_MAX_ESPERA_S, espera_base_s * (2 ** intento) + random.uniform(0, espera_base_s))
 
 
-def _error_http(respuesta: httpx.Response) -> GeminiError:
+def _clasificar_cuota_429(respuesta: httpx.Response) -> Tuple[str, Optional[float]]:
+    """
+    Clasifica un 429 según details de google.rpc.QuotaFailure y google.rpc.RetryInfo:
+    Retorna (tipo_cuota, retry_after_s).
+    tipo_cuota: "cuota_diaria" | "cuota_minuto" | "desconocido"
+    """
+    tipo_cuota = "desconocido"
+    retry_after_s: Optional[float] = None
+
+    try:
+        cuerpo = respuesta.json()
+    except Exception:
+        cuerpo = {}
+
+    err = cuerpo.get("error", {}) if isinstance(cuerpo, dict) else {}
+    detalles = err.get("details", []) if isinstance(err, dict) else []
+    if not isinstance(detalles, list):
+        detalles = []
+
+    for d in detalles:
+        if not isinstance(d, dict):
+            continue
+        # 1. RetryInfo
+        retraso = d.get("retryDelay")
+        if isinstance(retraso, str) and retraso.endswith("s"):
+            try:
+                retry_after_s = float(retraso[:-1])
+            except ValueError:
+                pass
+        elif isinstance(retraso, (int, float)):
+            retry_after_s = float(retraso)
+
+        # 2. QuotaFailure: si alguna violación es diaria, gana la diaria aunque también haya
+        # violaciones por minuto (reintentar un modelo sin cuota del día solo gasta tiempo).
+        violaciones = d.get("violations")
+        for v in violaciones if isinstance(violaciones, list) else []:
+            if not isinstance(v, dict):
+                continue
+            texto_violacion = f"{v.get('quotaId', '')} {v.get('description', '')}".lower()
+            if any(k in texto_violacion for k in ("perday", "per_day", "per day")):
+                tipo_cuota = "cuota_diaria"
+            elif tipo_cuota == "desconocido" and any(
+                k in texto_violacion for k in ("perminute", "per_minute", "per minute")
+            ):
+                tipo_cuota = "cuota_minuto"
+
+    if retry_after_s is None:
+        cabecera = respuesta.headers.get("retry-after")
+        if cabecera:
+            try:
+                retry_after_s = float(cabecera)
+            except ValueError:
+                pass
+
+    if tipo_cuota == "desconocido" and isinstance(err, dict):
+        msg = str(err.get("message", "")).lower()
+        if any(k in msg for k in ("perday", "per_day", "per day")):
+            tipo_cuota = "cuota_diaria"
+        elif any(k in msg for k in ("perminute", "per_minute", "per minute")):
+            tipo_cuota = "cuota_minuto"
+
+    return tipo_cuota, retry_after_s
+
+
+def _error_http(respuesta: httpx.Response, modelo: Optional[str] = None) -> GeminiError:
     try:
         mensaje = respuesta.json().get("error", {}).get("message", "")
     except ValueError:
@@ -116,7 +234,36 @@ def _error_http(respuesta: httpx.Response) -> GeminiError:
     estado = respuesta.status_code
     mensaje = mensaje or f"HTTP {estado}"
     if estado == 429:
-        return GeminiError("rate_limit", mensaje, reintentable=True, http_status=estado)
+        tipo_cuota, retry_after_s = _clasificar_cuota_429(respuesta)
+        if tipo_cuota == "cuota_diaria":
+            if modelo:
+                marcar_modelo_agotado(modelo)
+            return GeminiError(
+                "rate_limit",
+                mensaje,
+                reintentable=False,
+                http_status=estado,
+                tipo_cuota="cuota_diaria",
+                retry_after_s=retry_after_s,
+            )
+        elif tipo_cuota == "cuota_minuto":
+            return GeminiError(
+                "rate_limit",
+                mensaje,
+                reintentable=True,
+                http_status=estado,
+                tipo_cuota="cuota_minuto",
+                retry_after_s=retry_after_s,
+            )
+        else:
+            return GeminiError(
+                "rate_limit",
+                mensaje,
+                reintentable=True,
+                http_status=estado,
+                tipo_cuota="desconocido",
+                retry_after_s=retry_after_s,
+            )
     if estado >= 500:
         return GeminiError("servidor", mensaje, reintentable=estado in _ESTADOS_REINTENTABLES, http_status=estado)
     if estado in (401, 403):
@@ -208,8 +355,21 @@ class ClienteGemini:
         modelo = cuerpo["model"]
         cuerpo = {**cuerpo, "store": False}
         inicio = time.perf_counter()
+
+        if modelo_esta_agotado(modelo):
+            raise GeminiError(
+                "rate_limit",
+                f"El modelo {modelo} tiene su cuota diaria agotada hasta la medianoche del Pacífico.",
+                reintentable=False,
+                http_status=429,
+                tipo_cuota="cuota_diaria",
+            )
+
         ultimo: Optional[GeminiError] = None
-        for intento in range(reintentos + 1):
+        intentos = 0
+        reintentos_cuota_minuto = 0
+        while True:
+            intentos += 1
             respuesta: Optional[httpx.Response] = None
             try:
                 async with self._semaforo:
@@ -217,8 +377,8 @@ class ClienteGemini:
                         "/interactions", json=cuerpo, timeout=timeout_s or self._timeout_s
                     )
                 if respuesta.status_code != 200:
-                    raise _error_http(respuesta)
-                return procesar(respuesta.json(), intento + 1, inicio)
+                    raise _error_http(respuesta, modelo=modelo)
+                return procesar(respuesta.json(), intentos, inicio)
             except GeminiError as exc:
                 ultimo = exc
             except httpx.TimeoutException:
@@ -229,12 +389,34 @@ class ClienteGemini:
                 ultimo = GeminiError("sin_salida", "La respuesta no es JSON.", reintentable=True)
 
             logger.warning(
-                "[gemini] %s intento %d/%d falló: %s (http=%s)",
-                modelo, intento + 1, reintentos + 1, ultimo.codigo, ultimo.http_status,
+                "[gemini] %s intento %d falló: %s (http=%s, tipo_cuota=%s)",
+                modelo, intentos, ultimo.codigo, ultimo.http_status, getattr(ultimo, "tipo_cuota", None),
             )
-            if not ultimo.reintentable or intento == reintentos:
+
+            # Cuota diaria: nunca reintentar ese modelo
+            if getattr(ultimo, "tipo_cuota", None) == "cuota_diaria":
                 break
-            await self._dormir(_segundos_de_espera(respuesta, intento, self._espera_base_s))
+
+            # Cuota por minuto: reintentar 1 vez si retryDelay <= 10s y queda plazo; si no, pasar al respaldo
+            if getattr(ultimo, "tipo_cuota", None) == "cuota_minuto":
+                retraso_s = (
+                    ultimo.retry_after_s
+                    if ultimo.retry_after_s is not None
+                    else _segundos_de_espera(respuesta, intentos - 1, self._espera_base_s)
+                )
+                limite_s = timeout_s or self._timeout_s
+                plazo_restante = limite_s - (time.perf_counter() - inicio)
+                if reintentos_cuota_minuto == 0 and retraso_s <= 10.0 and plazo_restante > (retraso_s + 1.0):
+                    reintentos_cuota_minuto += 1
+                    await self._dormir(retraso_s)
+                    continue
+                else:
+                    break
+
+            # Otros errores reintentables o cuota desconocida: mantener comportamiento actual
+            if not ultimo.reintentable or (intentos - 1) >= reintentos:
+                break
+            await self._dormir(_segundos_de_espera(respuesta, intentos - 1, self._espera_base_s))
         assert ultimo is not None
         raise ultimo
 
