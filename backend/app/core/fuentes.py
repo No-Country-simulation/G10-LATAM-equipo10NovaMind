@@ -24,6 +24,7 @@ import math
 import re
 import unicodedata
 from array import array
+from bisect import bisect_left
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -104,21 +105,141 @@ def _indice_documento(documento: str) -> Tuple[str, array]:
     return _normalizar(documento)
 
 
-def tramo_de_cita(cita: str, documento: str) -> Optional[Tuple[int, int]]:
-    """(inicio, fin) del tramo de `documento` que ocupa la cita, o None si no aparece (o es demasiado corta)."""
+# Año seguido en la cita de una letra: en el documento puede llevar pegada una llamada a nota
+# ("in 2025295. The" = año 2025 + nota 295). _fin_de_nota no la ve porque va tras un dígito.
+_AÑO_EN_CITA = re.compile(r"(?<!\d)(?:19|20)\d\d(?=[a-z])")
+_MAX_DIGITOS_NOTA_TRAS_AÑO = 3
+
+
+def _tramo_con_nota_tras_año(cita_norm: str, documento: str) -> Optional[Tuple[int, int]]:
+    """
+    La cita, admitiendo en el documento 1 a 3 dígitos pegados tras un año de la cita, solo si
+    en el original van contiguos al año y les sigue algo que no es letra ni dígito. Así
+    "in 2025. The" coincide con "in 2025295. The", pero "4 GB" no coincide con "48 GB" ni
+    "en 2025 vulnerabilidades" con "en 2025 295 vulnerabilidades".
+    """
+    años = list(_AÑO_EN_CITA.finditer(cita_norm))
+    if not años:
+        return None
+    patron, previo = [], 0
+    for m in años:
+        patron += [re.escape(cita_norm[previo:m.end()]), rf"(\d{{1,{_MAX_DIGITOS_NOTA_TRAS_AÑO}}})?"]
+        previo = m.end()
+    patron.append(re.escape(cita_norm[previo:]))
+    texto, mapa = _indice_documento(documento)
+    for m in re.finditer("".join(patron), texto):
+        valida = True
+        for g in range(1, len(años) + 1):
+            if m.group(g) is None:
+                continue
+            a, b = m.span(g)
+            tras = mapa[b - 1] + 1
+            if any(mapa[j] != mapa[j - 1] + 1 for j in range(a, b)) or (
+                    tras < len(documento) and documento[tras].isalnum()):
+                valida = False
+                break
+        if valida:
+            return mapa[m.start()], mapa[m.end() - 1] + 1
+    return None
+
+
+# Salto de página: el texto extraído conserva la cabecera de cada página ("ENISA Threat Landscape
+# 2026 / TLP:CLEAR | September 2026 / 42") y las notas al pie al final de la anterior. Una frase
+# partida entre dos páginas no aparece seguida. Medido el 2026-10-14 en el ENISA.
+_LINEAS_CABECERA = 6
+_NUMERO_PAGINA = re.compile(r"\d{1,4}")
+# Tras el final del contenido de la página: la llamada a nota que la cita omite ("EU171."), solo
+# puntuación y espacios (nada que sea letra o dígito), y después nada o una línea de nota ("548 https://…")
+_COLA_DE_PAGINA = re.compile(r"(?:\d{1,4}|[⁰¹²³⁴⁵⁶⁷⁸⁹]+)?[^\w]*?(?:\n[ \t]*\d{1,4}[ \t]+\S|\Z)")
+
+
+def _linea_normalizada(linea: str) -> str:
+    return " ".join(linea.split()).lower()
+
+
+@lru_cache(maxsize=2)
+def _inicios_de_contenido(documento: str, rangos: Tuple[Tuple[int, int], ...]) -> Tuple[int, ...]:
+    """
+    Para cada página, el offset donde empieza su contenido: se saltan las líneas en blanco, el
+    número de página y las líneas que abren al menos la mitad de las páginas (cabecera repetida).
+    """
+    primeras: List[List[Tuple[str, int, int]]] = []
+    for inicio, fin in rangos:
+        lineas, pos = [], inicio
+        for linea in documento[inicio:fin].splitlines(keepends=True):
+            if len(lineas) >= _LINEAS_CABECERA:
+                break
+            lineas.append((_linea_normalizada(linea), pos, pos + len(linea)))
+            pos += len(linea)
+        primeras.append(lineas)
+    frecuencia: Dict[str, int] = {}
+    for lineas in primeras:
+        for texto in {t for t, _, _ in lineas if t}:
+            frecuencia[texto] = frecuencia.get(texto, 0) + 1
+    umbral = max(3, len(rangos) // 2)
+    repetidas = {t for t, n in frecuencia.items() if n >= umbral}
+    inicios = []
+    for (inicio, _), lineas in zip(rangos, primeras):
+        contenido = inicio
+        for texto, _, fin_linea in lineas:
+            if texto and texto not in repetidas and not _NUMERO_PAGINA.fullmatch(texto):
+                break
+            contenido = fin_linea
+        inicios.append(contenido)
+    return tuple(inicios)
+
+
+def _tramo_entre_paginas(cita_norm: str, documento: str,
+                         paginas: List[RangoPagina]) -> Optional[Tuple[int, int]]:
+    """
+    La cita partida en dos: el principio cierra el contenido de una página (después solo hay
+    puntuación o notas al pie) y el resto abre la siguiente, justo tras su cabecera. Lo que hay
+    en medio (notas, cabecera, número de página) no es texto que el lector lea en la frase.
+    """
+    if len(paginas) < 2:
+        return None
+    rangos = tuple((p.inicio, p.fin) for p in paginas)
+    texto, mapa = _indice_documento(documento)
+    inicios = _inicios_de_contenido(documento, rangos)
+    for n in range(1, len(rangos)):
+        siguiente = bisect_left(mapa, inicios[n])
+        if siguiente >= len(texto):
+            continue
+        anterior_ini, anterior_fin = bisect_left(mapa, rangos[n - 1][0]), bisect_left(mapa, rangos[n - 1][1])
+        for corte in range(1, len(cita_norm)):
+            if cita_norm[corte] != texto[siguiente] or not texto.startswith(cita_norm[corte:], siguiente):
+                continue
+            principio = cita_norm[:corte]
+            pos = texto.find(principio, anterior_ini, anterior_fin)
+            while pos >= 0:
+                fin_principio = mapa[pos + corte - 1] + 1
+                if _COLA_DE_PAGINA.match(documento, fin_principio, rangos[n - 1][1]):
+                    return mapa[pos], mapa[siguiente + len(cita_norm) - corte - 1] + 1
+                pos = texto.find(principio, pos + 1, anterior_fin)
+    return None
+
+
+def tramo_de_cita(cita: str, documento: str,
+                  paginas: Optional[List[RangoPagina]] = None) -> Optional[Tuple[int, int]]:
+    """
+    (inicio, fin) del tramo de `documento` que ocupa la cita, o None si no aparece (o es demasiado corta).
+    Si no aparece seguida, se admiten dos interrupciones que el lector no ve: una nota pegada a un
+    año y, con `paginas`, un salto de página con sus notas al pie y la cabecera de la siguiente.
+    """
     cita_norm, _ = _normalizar(cita)
     if len(cita_norm) < MIN_LARGO_CITA:
         return None
     texto, mapa = _indice_documento(documento)
     posicion = texto.find(cita_norm)
-    if posicion < 0:
-        return None
-    return mapa[posicion], mapa[posicion + len(cita_norm) - 1] + 1
+    if posicion >= 0:
+        return mapa[posicion], mapa[posicion + len(cita_norm) - 1] + 1
+    return _tramo_con_nota_tras_año(cita_norm, documento) or (
+        _tramo_entre_paginas(cita_norm, documento, paginas) if paginas else None)
 
 
-def ubicar_cita(cita: str, documento: str) -> Optional[int]:
+def ubicar_cita(cita: str, documento: str, paginas: Optional[List[RangoPagina]] = None) -> Optional[int]:
     """Offset en `documento` donde empieza la cita, o None si no aparece (o es demasiado corta)."""
-    tramo = tramo_de_cita(cita, documento)
+    tramo = tramo_de_cita(cita, documento, paginas)
     return tramo[0] if tramo else None
 
 
@@ -135,15 +256,16 @@ def contexto_de_cita(cita: str, documento: str, paginas: List[RangoPagina],
     modelo) y lo que sigue. No cruza el límite de su página y corta en palabras completas.
     None si la cita no se localiza: el visor solo muestra lo que de verdad está en el documento.
     """
-    tramo = tramo_de_cita(cita, documento)
+    tramo = tramo_de_cita(cita, documento, paginas)
     if tramo is None:
         return None
     inicio, fin = tramo
     limite_ini, limite_fin = 0, len(documento)
     for pagina in paginas:
         if pagina.inicio <= inicio < pagina.fin:
-            limite_ini, limite_fin = pagina.inicio, pagina.fin
-            break
+            limite_ini = pagina.inicio
+        if pagina.inicio < fin <= pagina.fin:
+            limite_fin = pagina.fin  # una cita que cruza de página llega hasta el final de la siguiente
     desde = max(limite_ini, inicio - margen)
     hasta = min(limite_fin, fin + margen)
     if desde > limite_ini and (espacio := _ESPACIOS.search(documento, desde, inicio)):
@@ -165,7 +287,7 @@ def contexto_de_cita(cita: str, documento: str, paginas: List[RangoPagina],
 
 def pagina_de_cita(cita: str, documento: str, paginas: List[RangoPagina]) -> Tuple[bool, Optional[int]]:
     """(verificada, página). La página solo se informa si la cita se localizó en el documento."""
-    offset = ubicar_cita(cita, documento)
+    offset = ubicar_cita(cita, documento, paginas)
     if offset is None:
         return False, None
     return True, pagina_de_offset(paginas, offset)
