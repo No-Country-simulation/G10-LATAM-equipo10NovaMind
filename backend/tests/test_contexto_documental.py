@@ -171,6 +171,68 @@ def test_las_llamadas_a_nota_al_pie_no_impiden_ubicar_la_cita():
     assert ubicar_cita("Usa IPv6 y 8 GB de swap", doc) is None
 
 
+def test_nota_pegada_a_un_año():
+    # Caso real del ENISA: "in 2025295." = año 2025 + nota 295
+    doc = "Tycoon 2FA was the most observed phishing kit globally in 2025295. The framework operated as AiTM."
+    assert ubicar_cita("the most observed phishing kit globally in 2025. The framework operated", doc) is not None
+    # El número de la cita debe seguir coincidiendo entero
+    assert ubicar_cita("the most observed phishing kit globally in 2024. The framework operated", doc) is None
+    assert ubicar_cita("Tycoon 2FA was the most observed", doc) is not None
+    # Solo dígitos pegados al año y seguidos de algo que no es letra ni dígito
+    doc2 = "Durante 2025 15 incidentes graves. En 2025123abc hubo otros."
+    assert ubicar_cita("Durante 2025 incidentes graves", doc2) is None   # separados por espacio: no es nota
+    assert ubicar_cita("En 2025abc hubo otros", doc2) is None            # le sigue una letra
+    assert ubicar_cita("Usa 4 GB de swap en la VM", "Usa 48 GB de swap en la VM") is None  # no es un año
+
+
+# Dos páginas como las extrae pypdf del ENISA: notas al pie al final y cabecera repetida al principio
+def _paginas_con_cabecera(*cuerpos: str):
+    cabecera = "ENISA  Threat Landscape 2026  \nTLP:CLEAR  | September  2026  \n \n{n} \n \n"
+    textos = [(cabecera.format(n=n) if n > 1 else "") + c for n, c in enumerate(cuerpos, start=1)]
+    paginas, inicio = [], 0
+    for n, t in enumerate(textos, start=1):
+        paginas.append(RangoPagina(numero=n, inicio=inicio, fin=inicio + len(t)))
+        inicio += len(t)
+    return "".join(textos), paginas
+
+
+def test_cita_que_cruza_un_salto_de_pagina_con_notas_y_cabecera():
+    doc, paginas = _paginas_con_cabecera(
+        "Intro. The choice of targets is a sign of deliberate and structural planning. \n \n"
+        "548 https://www.eeas.europa.eu/report.pdf   \n",
+        "It demonstrates a high level of adaptability, with campaigns tailored to regions. The observed distribution \n",
+        "indicates that fraud schemes mainly targeted sectors involved in financial transactions.",
+        "Otra página sin relación con lo anterior.",
+    )
+    cita = "a sign of deliberate and structural planning. It demonstrates a high level of adaptability"
+    assert pagina_de_cita(cita, doc, paginas) == (True, 1)
+    assert pagina_de_cita(cita, doc, []) == (False, None)  # sin páginas no se sabe dónde están los saltos
+    # Sin notas en medio, solo la cabecera
+    assert pagina_de_cita("The observed distribution indicates that fraud schemes mainly targeted", doc, paginas) == (True, 2)
+    # El visor muestra el tramo real, con lo que hay en medio
+    ctx = contexto_de_cita(cita, doc, paginas)
+    assert ctx["fragmento"].startswith("a sign of deliberate") and "548 https" in ctx["fragmento"]
+    assert ctx["fragmento"].endswith("adaptability")
+
+
+def test_salto_de_pagina_no_admite_saltarse_texto():
+    doc, paginas = _paginas_con_cabecera(
+        "The choice of targets is a sign of deliberate and structural planning. \n\n548 https://x.eu/r.pdf\n",
+        "It demonstrates a high level of adaptability, with campaigns tailored to regions.",
+        "Otra página: nada que ver con la planificación.",
+    )
+    # una palabra omitida al principio de la página siguiente
+    assert ubicar_cita("deliberate and structural planning. demonstrates a high level of adaptability", doc, paginas) is None
+    # una palabra cambiada en el corte
+    assert ubicar_cita("deliberate and structural planning. It shows a high level of adaptability", doc, paginas) is None
+    # el final de una página unido a otra que no es la siguiente
+    assert ubicar_cita("of targets is a sign of deliberate and structural planning. Otra página: nada que ver",
+                       doc, paginas) is None
+    # el principio no cierra su página: después hay texto que no es nota
+    doc2, paginas2 = _paginas_con_cabecera("Primera frase que sigue. Y aquí hay más texto.\n", "Segunda página empieza.")
+    assert ubicar_cita("Primera frase que sigue. Segunda página empieza", doc2, paginas2) is None
+
+
 def test_cita_corta_o_ausente_no_se_ubica():
     assert ubicar_cita("swap", DOCUMENTO) is None  # < 20 caracteres
     assert ubicar_cita("Kubernetes reinicia los pods cada hora", DOCUMENTO) is None
