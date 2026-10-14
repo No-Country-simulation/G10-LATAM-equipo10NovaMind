@@ -433,3 +433,26 @@ def test_paralelo_falla_y_conmuta_a_la_cadena(api):
     cuerpo = r.json()
     assert cuerpo["status"] == "exito_con_advertencias"
     assert "generación paralela no produjo recursos" in cuerpo["advertencias"][0]
+
+
+def test_repetir_con_todo_reutilizado_no_vuelve_a_auditar():
+    from app.servicios.registro_tareas import RegistroMemoria
+
+    registro, auditor, sim = RegistroMemoria(max_filas=100), Auditor(), Simulador()
+    primera, _ = _generar(sim, auditor=auditor, registro=registro)
+    peticiones = len(sim.peticiones)
+    segunda, eventos = _generar(sim, auditor=auditor, registro=registro)
+    assert len(sim.peticiones) == peticiones  # ninguna llamada nueva a Gemini
+    assert len(auditor.llamadas) == 1  # ni al auditor: mismo veredicto
+    assert segunda.evaluacion_calidad.anclaje_fuente_score == primera.evaluacion_calidad.anclaje_fuente_score
+    assert any(e["tipo"] == "tarea" and e["estado"] == "reutilizada" for e in eventos)
+
+
+def test_una_auditoria_fallida_no_se_recuerda():
+    from app.servicios.registro_tareas import RegistroMemoria
+
+    registro = RegistroMemoria(max_filas=100)
+    _generar(Simulador(), auditor=Auditor({"auditoria_ejecutada": False}), registro=registro)
+    auditor = Auditor()
+    _generar(Simulador(), auditor=auditor, registro=registro)
+    assert len(auditor.llamadas) == 1  # se reintenta en la siguiente generación

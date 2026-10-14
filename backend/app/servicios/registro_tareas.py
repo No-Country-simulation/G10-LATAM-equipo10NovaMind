@@ -4,7 +4,7 @@ Registro del estado por recurso de la generación (tabla public.generation_tasks
 - RegistroSupabase: PostgREST con el JWT del usuario, de modo que RLS (own_rows)
   también impone la propiedad. Escrituras en lote con upsert sobre
   (user_id, content_hash, resource).
-- RegistroMemoria: misma interfaz, sin red (pruebas).
+- RegistroMemoria: misma interfaz, sin red (pruebas y caché de invitados del proceso).
 
 El registro es de mejor esfuerzo: un fallo de Supabase se registra en el log y se
 cuenta en `fallos`, pero nunca interrumpe la generación.
@@ -115,10 +115,17 @@ class RegistroSupabase:
 
 
 class RegistroMemoria:
-    def __init__(self) -> None:
+    """
+    Sin red. Sin `max_filas` (pruebas) guarda además cada lote escrito en `escrituras`.
+    Con `max_filas` (caché de invitados del proceso) no guarda historial y descarta las
+    filas más antiguas: en la VM hay 1 GB de RAM.
+    """
+
+    def __init__(self, max_filas: Optional[int] = None) -> None:
         self.filas: Dict[Tuple[str, str], Dict[str, Any]] = {}
         self.escrituras: List[List[Dict[str, Any]]] = []
         self.fallos = 0
+        self._max_filas = max_filas
 
     async def aclose(self) -> None:
         return None
@@ -128,6 +135,12 @@ class RegistroMemoria:
 
     async def guardar(self, filas: List[Dict[str, Any]]) -> None:
         lote = [_completas(f) for f in filas]
-        self.escrituras.append(lote)
+        if self._max_filas is None:
+            self.escrituras.append(lote)
         for f in lote:
-            self.filas[(f["content_hash"], f["resource"])] = f
+            clave = (f["content_hash"], f["resource"])
+            self.filas.pop(clave, None)  # reinsertar la deja como la más reciente
+            self.filas[clave] = f
+        if self._max_filas is not None:
+            while len(self.filas) > self._max_filas:
+                self.filas.pop(next(iter(self.filas)))

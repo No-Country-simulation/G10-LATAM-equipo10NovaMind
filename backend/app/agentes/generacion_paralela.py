@@ -44,7 +44,7 @@ from app.agentes.cadena_colaborativa import (
     _recortar,
 )
 from app.core.config import Config
-from app.core.fuentes import pagina_de_cita
+from app.core.fuentes import fragmentos_para_auditoria, pagina_de_cita
 from app.core.schemas import (
     DIRECTIVAS_NICHO_SECTOR,
     DIRECTIVAS_PERFIL_DESTINATARIO,
@@ -647,6 +647,25 @@ async def _llamada_compartida(propietario: str, huella: str, fabrica: Callable[[
     return await asyncio.shield(futuro)
 
 
+# Auditorías ya ejecutadas, por propietario + afirmaciones + texto auditado. Si todos los
+# recursos se reutilizaron, el veredicto también: el 2026-10-14, repetir el ENISA al minuto
+# hizo que Groq respondiera 413 (tokens por minuto agotados) y la auditoría no se ejecutara.
+_MAX_AUDITORIAS_RECORDADAS = 32
+_AUDITORIAS: Dict[str, Dict[str, Any]] = {}
+
+
+def _clave_auditoria(propietario: str, muestra: List[str], contexto: str) -> str:
+    datos = json.dumps([propietario, muestra, contexto], ensure_ascii=False)
+    return hashlib.sha256(datos.encode("utf-8")).hexdigest()
+
+
+def _recordar_auditoria(clave: str, evaluacion: Dict[str, Any]) -> None:
+    _AUDITORIAS.pop(clave, None)
+    _AUDITORIAS[clave] = dict(evaluacion)
+    while len(_AUDITORIAS) > _MAX_AUDITORIAS_RECORDADAS:
+        _AUDITORIAS.pop(next(iter(_AUDITORIAS)))
+
+
 @dataclass
 class _Ejecucion:
     """Estado de una generación (una solicitud)."""
@@ -895,8 +914,20 @@ class GeneradorParalelo:
         if not muestra:
             evaluacion = _auditoria_no_ejecutada("no hay afirmaciones auditables")
         else:
+            documento = ej.solicitud.documento_contenido
             try:
-                evaluacion = await asyncio.to_thread(self._auditor, muestra, ej.solicitud.documento_contenido)
+                # Si el documento no cabe, el auditor ve los fragmentos relacionados con la muestra
+                contexto = fragmentos_para_auditoria(muestra, documento, _MAX_CONTEXTO_AUDITORIA)
+                clave = _clave_auditoria(self._propietario, muestra, contexto)
+                if clave in _AUDITORIAS:
+                    evaluacion = dict(_AUDITORIAS[clave])
+                    logger.info("[paralelo] Auditoría reutilizada: mismas afirmaciones y mismo texto.")
+                else:
+                    evaluacion = await asyncio.to_thread(self._auditor, muestra, contexto)
+                    evaluacion["auditoria_parcial"] = len(contexto) < len(documento)
+                    evaluacion["caracteres_auditados"] = len(contexto)
+                    if evaluacion.get("auditoria_ejecutada"):
+                        _recordar_auditoria(clave, evaluacion)
             except Exception as exc:
                 logger.warning("[paralelo] Falló el auditor (%s).", type(exc).__name__)
                 evaluacion = _auditoria_no_ejecutada(f"error del auditor ({type(exc).__name__})")
@@ -952,8 +983,10 @@ class GeneradorParalelo:
             )
         else:
             if evaluacion.get("auditoria_parcial"):
+                auditados = evaluacion.get("caracteres_auditados") or _MAX_CONTEXTO_AUDITORIA
                 advertencias.append(
-                    f"La auditoría solo contrastó los primeros {_MAX_CONTEXTO_AUDITORIA:,} caracteres del documento."
+                    f"La auditoría contrastó los fragmentos del documento más relacionados con el contenido "
+                    f"({auditados:,} de {len(solicitud.documento_contenido):,} caracteres)."
                 )
             if score is not None and score < _UMBRAL_ANCLAJE_CADENA:
                 advertencias.append(

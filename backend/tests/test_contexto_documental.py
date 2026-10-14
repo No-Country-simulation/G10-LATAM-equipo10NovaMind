@@ -12,7 +12,7 @@ from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
-from app.core.fuentes import pagina_de_cita, ubicar_cita
+from app.core.fuentes import fragmentos_para_auditoria, pagina_de_cita, ubicar_cita
 from app.core.ingestion import _limpiar_headers_repetidos, cargar_documento, detectar_secciones
 from app.core.schemas import RangoPagina, SolicitudAdaptacion
 
@@ -142,6 +142,19 @@ def test_cita_con_tipografia_normal_se_ubica_en_texto_extraido_de_pdf():
     assert ubicar_cita("Another development was notable: the adaptation of threat groups", doc) is None
 
 
+def test_las_llamadas_a_nota_al_pie_no_impiden_ubicar_la_cita():
+    # Caso real del ENISA: "(EUVD)631" y "EU629"; el modelo cita sin el número de nota
+    doc = ("practices in \nthe EU629 and ENISA maintains the European Vulnerability Database \n(EUVD)631 to "
+           "further support the community². Usa IPv6 y 4 GB de swap.")
+    assert ubicar_cita("ENISA maintains the European Vulnerability Database (EUVD) to further support "
+                       "the community", doc) is not None
+    assert ubicar_cita("practices in the EU and ENISA maintains", doc) is not None
+    assert ubicar_cita("practices in the EU629 and ENISA maintains", doc) is not None
+    # Los números separados por espacio siguen contando
+    assert ubicar_cita("Usa IPv6 y 4 GB de swap", doc) is not None
+    assert ubicar_cita("Usa IPv6 y 8 GB de swap", doc) is None
+
+
 def test_cita_corta_o_ausente_no_se_ubica():
     assert ubicar_cita("swap", DOCUMENTO) is None  # < 20 caracteres
     assert ubicar_cita("Kubernetes reinicia los pods cada hora", DOCUMENTO) is None
@@ -172,3 +185,18 @@ def test_cadena_asigna_pagina_real_e_ignora_la_del_llm():
     paquete = CadenaColaborativaMultiModelo()._normalizar_paquete_base({"director_cut": [escena]}, solicitud)
     fuentes = paquete["director_cut"][0]["fuentes"]
     assert [(f["verificada"], f["pagina"]) for f in fuentes] == [(True, 2), (False, None)]
+
+
+# --- Contexto de la auditoría ------------------------------------------------------
+def test_auditoria_ve_los_fragmentos_relacionados_y_no_solo_el_principio():
+    relleno = " ".join(f"Seccion {i} describe procedimientos administrativos generales del organismo." for i in range(900))
+    clave = "La European Vulnerability Database publica vulnerabilidades explotadas por ransomware."
+    documento = relleno + " " + clave + " " + relleno
+    assert len(documento) > 100_000 and documento.index(clave) > 24_000
+    contexto = fragmentos_para_auditoria(
+        ["Resumen: la European Vulnerability Database registra vulnerabilidades del ransomware."], documento, 24_000)
+    assert clave in contexto and len(contexto) <= 24_000
+
+
+def test_auditoria_de_un_documento_que_cabe_lo_recibe_entero():
+    assert fragmentos_para_auditoria(["x"], DOCUMENTO, 24_000) == DOCUMENTO

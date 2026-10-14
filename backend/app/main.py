@@ -39,7 +39,7 @@ from pydantic import ValidationError
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
 from app.agentes.generacion_paralela import NOMBRES_RECURSO, GeneradorParalelo
 from app.core.config import Config, ConfigError
-from app.servicios.registro_tareas import RegistroSupabase, RegistroTareas
+from app.servicios.registro_tareas import RegistroMemoria, RegistroSupabase, RegistroTareas
 from app.servicios.servicio_gemini import ClienteGemini, GeminiError
 from app.servicios.servicio_imagenes import BuscadorImagenes
 from app.servicios.servicio_narracion import Narrador
@@ -178,13 +178,23 @@ def get_generador_paralelo(principal: Principal, registro: Optional[RegistroTare
     )
 
 
+_MAX_FILAS_CACHE_INVITADOS = int(os.getenv("MAX_FILAS_CACHE_INVITADOS", "200"))
+# Invitados: caché en memoria del proceso (se pierde al reiniciar). Pensada para pruebas y
+# demos: repetir el mismo documento no vuelve a gastar cuota. Es segura porque la clave
+# incluye el hash del contenido (solo acierta quien sube ese mismo documento) y los
+# invitados ya comparten identidad. ~9 filas por documento: 200 ≈ 20 documentos.
+_REGISTRO_INVITADOS: Optional[RegistroMemoria] = (
+    RegistroMemoria(max_filas=_MAX_FILAS_CACHE_INVITADOS) if _MAX_FILAS_CACHE_INVITADOS > 0 else None
+)
+
+
 async def _registro_tareas(principal: Principal, solicitud: SolicitudAdaptacion) -> Optional[RegistroTareas]:
     """
     Registro en generation_tasks (RLS con el JWT del usuario). La fila de `documents`
-    se crea al empezar, no al final. Invitados: solo memoria, sin registro.
+    se crea al empezar, no al final. Invitados: caché en memoria del proceso, sin Supabase.
     """
     if principal.is_guest:
-        return None
+        return _REGISTRO_INVITADOS
     try:
         document_id = await asyncio.to_thread(ensure_document, principal, solicitud)
         url, clave = supabase_settings()
