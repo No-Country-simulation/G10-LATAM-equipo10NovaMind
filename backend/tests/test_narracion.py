@@ -358,6 +358,28 @@ def test_palabra_clave_ambigua_no_consulta_los_bancos():
     assert all(f and f.proveedor == "openverse" for f in fotos) and consultas == ["api.openverse.org"] * 2
 
 
+def test_openverse_tiene_plazo_propio_y_el_peor_caso_cabe_en_la_narracion():
+    from app.servicios.servicio_imagenes import TIMEOUT_OPENVERSE_S
+
+    plazos: Dict[str, float] = {}
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        plazos[request.url.host] = request.extensions["timeout"]["read"]
+        return httpx.Response(200, json={"results": [], "query": {"pages": {}}})
+
+    async def buscar():
+        b = BuscadorImagenes(transport=httpx.MockTransport(responder))
+        try:
+            return await b.buscar("server room", "Escena")
+        finally:
+            await b.aclose()
+
+    assert asyncio.run(buscar()) is None  # ninguno tiene foto: pregunta a los dos
+    assert plazos == {"api.openverse.org": TIMEOUT_OPENVERSE_S, "commons.wikimedia.org": 8.0}
+    # Openverse sin caché tarda ~18 s; las fotos van en paralelo con la voz y no pueden pasarse de su plazo
+    assert 18 < TIMEOUT_OPENVERSE_S and TIMEOUT_OPENVERSE_S + 8.0 < servicio_narracion.PLAZO_VOZ_S
+
+
 # --------------------------------------------------------------------- guion de 2 o 3 escenas
 def _solicitud(palabras: int, secciones: int) -> SolicitudAdaptacion:
     return SolicitudAdaptacion(

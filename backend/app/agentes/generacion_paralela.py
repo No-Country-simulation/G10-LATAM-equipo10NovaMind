@@ -180,12 +180,12 @@ class EscenaGenerada(_Salida):
     visual: VisualGenerado
     palabra_clave_imagen: str = Field(
         ..., min_length=2, max_length=60,
-        description="1 a 3 palabras EN INGLÉS que nombren un objeto o lugar FÍSICO que se pueda fotografiar "
-                    "y que ilustre la escena. Nunca un concepto abstracto ni una metáfora, porque el banco de "
-                    "fotos busca el sentido literal: 'cloud computing' devuelve nubes del cielo. Traduce la "
-                    "idea a su equipo o escena real: 'data center', 'server room', 'fiber optic cables', "
-                    "'network switch', 'laptop code'. Sin marcas, productos, personas ni texto. No repitas "
-                    "la misma palabra clave en dos escenas.",
+        description="1 a 3 palabras EN INGLÉS que nombren el objeto o lugar FÍSICO del que habla ESTA escena, "
+                    "para buscar una foto. Nunca un concepto abstracto ni una metáfora, porque el banco de fotos "
+                    "busca el sentido literal: 'cloud computing' devuelve nubes del cielo. Ejemplos de otros "
+                    "temas (no los copies): una escena sobre la fotosíntesis, 'green leaf'; sobre la inflación, "
+                    "'supermarket shelf'. Sin marcas, productos, personas ni texto. No repitas la misma "
+                    "palabra clave en dos escenas.",
     )
     citas: List[str] = Field(..., min_length=1, max_length=3, description=_CITA)
 
