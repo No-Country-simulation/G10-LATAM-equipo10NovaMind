@@ -1,6 +1,7 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import {
   UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock, ScanText, PenLine, AlertTriangle, Loader2,
+  Dices, SlidersHorizontal,
 } from 'lucide-react';
 import type {
   RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset, OrigenContenido,
@@ -14,6 +15,37 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const ARCHIVOS_ACEPTADOS = '.pdf,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp';
 const esImagen = (f: File) => f.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(f.name);
 const esPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+// Opciones de adaptación: las usan los selectores (modo Personalizado) y el sorteo (Sorpréndeme)
+const PERFILES: ReadonlyArray<[RecipientProfile, string]> = [
+  ['Principiante', 'Principiante / Transición'],
+  ['Desarrollador Junior', 'Desarrollador Junior / Semi Senior'],
+  ['Líder Técnico / Arquitecto', 'Líder Técnico / Arquitecto'],
+  ['Gestor / Ejecutivo (No Técnico)', 'Gestor / Ejecutivo (No Técnico)'],
+];
+const NICHOS: ReadonlyArray<[IndustryNiche, string]> = [
+  ['Tecnología e Informática', 'Tecnología e Informática'],
+  ['Medicina y Salud', 'Medicina y Salud'],
+  ['Ingeniería y Construcción', 'Ingeniería y Construcción'],
+  ['Finanzas y Contabilidad', 'Finanzas y Contabilidad'],
+  ['Administración y Negocios', 'Administración y Negocios'],
+  ['Marketing y Ventas', 'Marketing y Ventas'],
+  ['Leyes y Legal', 'Leyes y Legal'],
+  ['Educación y Academia', 'Educación y Academia'],
+  ['Ciencias e Investigación', 'Ciencias e Investigación'],
+  ['Industria y Operaciones', 'Industria y Operaciones'],
+  ['General', 'General (Multisectorial)'],
+];
+const NIVELES: ReadonlyArray<[DetailLevel, string]> = [
+  ['Didáctico', 'Didáctico (Metáforas y Analogías)'],
+  ['Técnico Profundo', 'Técnico Profundo (Sintaxis y Flags)'],
+];
+const etiqueta = <T,>(opciones: ReadonlyArray<[T, string]>, valor: T) =>
+  opciones.find(([v]) => v === valor)?.[1] ?? String(valor);
+const alAzar = <T,>(opciones: ReadonlyArray<[T, string]>): T =>
+  opciones[Math.floor(Math.random() * opciones.length)][0];
+
+// `accept` solo filtra el diálogo de archivos: lo que se arrastra hay que comprobarlo a mano
+const esAceptado = (f: File) => ARCHIVOS_ACEPTADOS.split(',').some((ext) => f.name.toLowerCase().endsWith(ext));
 
 /** bloquea=false: solo falta la vista previa; el archivo ya se puede enviar */
 type Extraccion = { estado: 'inactiva' } | { estado: 'cargando' | 'error'; mensaje: string; bloquea?: boolean };
@@ -54,6 +86,29 @@ export const Step1Ingestion = ({
   const [extraccion, setExtraccion] = useState<Extraccion>({ estado: 'inactiva' });
   const [avisosFuente, setAvisosFuente] = useState<string[]>([]);
   const turnoSubida = useRef(0); // descarta respuestas de una subida anterior
+  const [arrastrando, setArrastrando] = useState<boolean>(false);
+  // Sin documento todavía, la zona de carga se destaca como el punto de partida
+  const sinDocumento = !fileName && !docContent && !isLoadingPreset;
+  const documentoElegido = REAL_DOCUMENTS_CATALOG.find((d) => d.id === selectedDocId);
+  const [modo, setModo] = useState<'personalizado' | 'sorpresa'>('personalizado');
+
+  // Sorteo visible: lo que se muestra es exactamente lo que se envía. Nunca repite la combinación actual.
+  const sortear = () => {
+    let p = profile, n = niche, d = detail;
+    for (let i = 0; i < 10 && p === profile && n === niche && d === detail; i++) {
+      p = alAzar(PERFILES);
+      n = alAzar(NICHOS);
+      d = alAzar(NIVELES);
+    }
+    setProfile(p);
+    setNiche(n);
+    setDetail(d);
+  };
+
+  const elegirModo = (nuevo: 'personalizado' | 'sorpresa') => {
+    if (nuevo === 'sorpresa' && modo !== 'sorpresa') sortear();
+    setModo(nuevo);
+  };
   const esTranscripcion = origen === 'transcripcion_ia';
   const extrayendo = extraccion.estado === 'cargando' && extraccion.bloquea !== false;
 
@@ -70,8 +125,10 @@ export const Step1Ingestion = ({
     setSelectedDocId(doc.id);
     setIsLoadingPreset(true);
     setDocTitle(doc.titulo);
-    setNiche(doc.nicho);
-    setProfile(doc.perfil);
+    if (modo === 'personalizado') {  // en Sorpréndeme se respeta el sorteo que el usuario ya ve
+      setNiche(doc.nicho);
+      setProfile(doc.perfil);
+    }
     setFormat(doc.formato_sugerido);
     setFileName(doc.nombre_archivo);
     setRawFile(null);
@@ -118,11 +175,30 @@ export const Step1Ingestion = ({
     handleSelectRealDocument(REAL_DOCUMENTS_CATALOG[0]);
   };
 
-  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // permite volver a elegir el mismo archivo
-    if (!file) return;
+    if (file) void procesarArchivo(file);
+  };
 
+  const handleDragOver = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault(); // sin esto, el navegador abre el archivo en la pestaña en vez de soltarlo aquí
+    if (!extrayendo) setArrastrando(true);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setArrastrando(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || extrayendo) return;
+    if (!esAceptado(file)) {
+      setExtraccion({ estado: 'error', mensaje: `«${file.name}» no es un formato admitido: usa ${ARCHIVOS_ACEPTADOS}.` });
+      return;
+    }
+    void procesarArchivo(file);
+  };
+
+  const procesarArchivo = async (file: File) => {
     reiniciarFuente();
     const turno = turnoSubida.current;
     setSelectedDocId(null);
@@ -253,42 +329,38 @@ export const Step1Ingestion = ({
           </span>
         </div>
 
-        <div className={styles.scenariosGrid}>
-          {REAL_DOCUMENTS_CATALOG.map((doc) => {
-            const isSelected = selectedDocId === doc.id;
+        <select
+          value={selectedDocId ?? ''}
+          onChange={(e) => {
+            const doc = REAL_DOCUMENTS_CATALOG.find((d) => d.id === e.target.value);
+            if (doc) handleSelectRealDocument(doc);
+          }}
+          disabled={isLoadingPreset}
+          className={styles.selectInput}
+          aria-label="Documento de la biblioteca"
+        >
+          <option value="" disabled>Elige un documento de prueba…</option>
+          {REAL_DOCUMENTS_CATALOG.map((doc) => (
+            <option key={doc.id} value={doc.id}>
+              {doc.titulo} · {doc.tipo === 'pdf' ? 'PDF' : 'MD'} {doc.tamano_formato.split(' ').slice(0, 2).join(' ')}
+            </option>
+          ))}
+        </select>
 
-            return (
-              <button
-                key={doc.id}
-                type="button"
-                onClick={() => handleSelectRealDocument(doc)}
-                className={`${styles.scenarioCard} ${isSelected ? styles.scenarioCardSelected : ''}`}
-              >
-                <div className={styles.scenarioTopRow}>
-                  <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
-                    <span className={styles.nicheBadge}>
-                      {doc.nicho}
-                    </span>
-                    <span className={styles.formatTypeBadge}>
-                      {doc.tipo === 'pdf' ? '📕 PDF' : '📄 MD'} · {doc.tamano_formato.split(' ')[0]} {doc.tamano_formato.split(' ')[1]}
-                    </span>
-                  </div>
-                  {isSelected && (
-                    <CheckCircle2 size={16} color="var(--color-violet-400)" />
-                  )}
-                </div>
-
-                <div className={styles.scenarioTitle}>
-                  {doc.titulo}
-                </div>
-
-                <div className={styles.scenarioSnippet}>
-                  {doc.descripcion}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {documentoElegido && (
+          <div className={`${styles.scenarioCard} ${styles.scenarioCardSelected}`}>
+            <div className={styles.scenarioTopRow}>
+              <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                <span className={styles.nicheBadge}>{documentoElegido.nicho}</span>
+                <span className={styles.formatTypeBadge}>
+                  {documentoElegido.tipo === 'pdf' ? '📕 PDF' : '📄 MD'} · {documentoElegido.tamano_formato.split(' ').slice(0, 2).join(' ')}
+                </span>
+              </div>
+              <CheckCircle2 size={16} color="var(--color-violet-400)" />
+            </div>
+            <div className={styles.scenarioSnippet}>{documentoElegido.descripcion}</div>
+          </div>
+        )}
       </div>
 
       {/* Formulario Principal */}
@@ -296,7 +368,51 @@ export const Step1Ingestion = ({
         <div className={styles.formCard}>
           {/* File Dropzone & Document Title */}
           <div className={styles.inputGrid}>
-            <div className={styles.fieldGroup}>
+            <div className={`${styles.fieldGroup} ${styles.fieldGroupAncho}`}>
+              <label className={styles.fieldLabel}>
+                Carga de Archivo (PDF, MD, TXT o imagen)
+              </label>
+              <label
+                className={[
+                  styles.fileDropzone,
+                  sinDocumento ? styles.fileDropzoneInvitacion : '',
+                  arrastrando ? styles.fileDropzoneActiva : '',
+                ].join(' ')}
+                onDragOver={handleDragOver}
+                onDragLeave={() => setArrastrando(false)}
+                onDrop={handleDrop}
+              >
+                {sinDocumento && <span className={styles.pasoBadge}>Paso 1 · Empieza aquí</span>}
+                <UploadCloud
+                  size={sinDocumento ? 34 : 18}
+                  color="var(--color-violet-400)"
+                  className={sinDocumento && !arrastrando ? styles.iconoFlotante : undefined}
+                />
+                <span className={styles.fileText}>
+                  {arrastrando
+                    ? 'Suelta el archivo aquí'
+                    : fileName
+                      ? `Archivo: ${fileName}`
+                      : sinDocumento
+                        ? 'Arrastra tu documento aquí o haz clic para elegirlo'
+                        : 'Arrastra o haz clic para cambiar de documento'}
+                </span>
+                {sinDocumento && (
+                  <span className={styles.fileHint}>
+                    PDF, MD, TXT o imagen (.png, .jpg, .webp) · hasta 15 MB · o elige uno de la biblioteca de arriba
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept={ARCHIVOS_ACEPTADOS}
+                  onChange={handleFileUpload}
+                  disabled={extrayendo}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+
+            <div className={`${styles.fieldGroup} ${styles.fieldGroupAncho}`}>
               <label className={styles.fieldLabel}>
                 Título del Documento Técnico
               </label>
@@ -308,25 +424,6 @@ export const Step1Ingestion = ({
                 className={styles.textInput}
                 required
               />
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>
-                Carga de Archivo (PDF, MD, TXT o imagen)
-              </label>
-              <label className={styles.fileDropzone}>
-                <UploadCloud size={18} color="var(--color-violet-400)" />
-                <span className={styles.fileText}>
-                  {fileName ? `Archivo: ${fileName}` : 'Subir .pdf, .md, .txt o imagen (.png, .jpg, .webp)'}
-                </span>
-                <input
-                  type="file"
-                  accept={ARCHIVOS_ACEPTADOS}
-                  onChange={handleFileUpload}
-                  disabled={extrayendo}
-                  style={{ display: 'none' }}
-                />
-              </label>
             </div>
           </div>
 
@@ -394,61 +491,79 @@ export const Step1Ingestion = ({
             )}
           </div>
 
-          {/* 4 Parámetros Pedagógicos */}
-          <div className={styles.paramsGrid}>
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>
-                Perfil del Destinatario
-              </label>
-              <select
-                value={profile}
-                onChange={(e) => setProfile(e.target.value as RecipientProfile)}
-                className={styles.selectInput}
-              >
-                <option value="Principiante">Principiante / Transición</option>
-                <option value="Desarrollador Junior">Desarrollador Junior / Semi Senior</option>
-                <option value="Líder Técnico / Arquitecto">Líder Técnico / Arquitecto</option>
-                <option value="Gestor / Ejecutivo (No Técnico)">Gestor / Ejecutivo (No Técnico)</option>
-              </select>
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>
-                Nicho / Sector
-              </label>
-              <select
-                value={niche}
-                onChange={(e) => setNiche(e.target.value as IndustryNiche)}
-                className={styles.selectInput}
-              >
-                <option value="Tecnología e Informática">Tecnología e Informática</option>
-                <option value="Medicina y Salud">Medicina y Salud</option>
-                <option value="Ingeniería y Construcción">Ingeniería y Construcción</option>
-                <option value="Finanzas y Contabilidad">Finanzas y Contabilidad</option>
-                <option value="Administración y Negocios">Administración y Negocios</option>
-                <option value="Marketing y Ventas">Marketing y Ventas</option>
-                <option value="Leyes y Legal">Leyes y Legal</option>
-                <option value="Educación y Academia">Educación y Academia</option>
-                <option value="Ciencias e Investigación">Ciencias e Investigación</option>
-                <option value="Industria y Operaciones">Industria y Operaciones</option>
-                <option value="General">General (Multisectorial)</option>
-              </select>
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>
-                Nivel de Detalle
-              </label>
-              <select
-                value={detail}
-                onChange={(e) => setDetail(e.target.value as DetailLevel)}
-                className={styles.selectInput}
-              >
-                <option value="Didáctico">Didáctico (Metáforas y Analogías)</option>
-                <option value="Técnico Profundo">Técnico Profundo (Sintaxis y Flags)</option>
-              </select>
-            </div>
+          {/* Parámetros pedagógicos: dos formas de empezar */}
+          <div className={styles.modoSelector} role="radiogroup" aria-label="Cómo quieres adaptar el documento">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={modo === 'sorpresa'}
+              onClick={() => elegirModo('sorpresa')}
+              className={`${styles.modoOpcion} ${modo === 'sorpresa' ? styles.modoOpcionActiva : ''}`}
+            >
+              <Sparkles size={18} color="#fde047" />
+              <span className={styles.modoTitulo}>Sorpréndeme</span>
+              <span className={styles.modoDesc}>Sorteamos perfil, sector y nivel por ti</span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={modo === 'personalizado'}
+              onClick={() => elegirModo('personalizado')}
+              className={`${styles.modoOpcion} ${modo === 'personalizado' ? styles.modoOpcionActiva : ''}`}
+            >
+              <SlidersHorizontal size={18} color="var(--color-violet-400)" />
+              <span className={styles.modoTitulo}>Personalizado</span>
+              <span className={styles.modoDesc}>Tú eliges cada parámetro</span>
+            </button>
           </div>
+
+          {modo === 'sorpresa' ? (
+            <div className={styles.sorteo} aria-live="polite">
+              <span className={styles.sorteoTitulo}>Te tocó:</span>
+              <span className={styles.sorteoChip}><strong>Perfil:</strong> {etiqueta(PERFILES, profile)}</span>
+              <span className={styles.sorteoChip}><strong>Sector:</strong> {etiqueta(NICHOS, niche)}</span>
+              <span className={styles.sorteoChip}><strong>Nivel:</strong> {etiqueta(NIVELES, detail)}</span>
+              <button type="button" onClick={sortear} className={styles.sorteoBoton}>
+                <Dices size={14} />
+                Otra combinación
+              </button>
+            </div>
+          ) : (
+            <div className={styles.paramsGrid}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Perfil del Destinatario</label>
+                <select
+                  value={profile}
+                  onChange={(e) => setProfile(e.target.value as RecipientProfile)}
+                  className={styles.selectInput}
+                >
+                  {PERFILES.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                </select>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Nicho / Sector</label>
+                <select
+                  value={niche}
+                  onChange={(e) => setNiche(e.target.value as IndustryNiche)}
+                  className={styles.selectInput}
+                >
+                  {NICHOS.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                </select>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>Nivel de Detalle</label>
+                <select
+                  value={detail}
+                  onChange={(e) => setDetail(e.target.value as DetailLevel)}
+                  className={styles.selectInput}
+                >
+                  {NIVELES.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
 
           {/* Estado de Animación del Pipeline o Botón de Acción */}
       {isProcessing ? (

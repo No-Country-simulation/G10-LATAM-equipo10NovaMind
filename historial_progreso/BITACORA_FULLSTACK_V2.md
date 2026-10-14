@@ -592,3 +592,86 @@ Se ejecutó `deploy/comparar_modelos.py` (Tarea A, 4 llamadas reales) sobre `gui
 **Verificación.**
 - **Backend:** 288 tests, 5 nuevos (sin ajuste, ajuste correcto y 3 casos en que se queda el original).
 - **Front:** `npm test`, `tsc` y `npm run build` limpios, y `eslint` sin problemas en los archivos tocados.
+
+---
+
+## 14 oct 2026 · Estación 1: arrastrar y soltar archivos
+
+**Problema reportado por el usuario.** No podía cargar archivos del PC.
+
+**Diagnóstico** (Chrome real controlado por CDP):
+- **El clic sí funcionaba:** el .md dio 7 598 caracteres de vista previa y el PDF, 74 325 vía `/documentos/extraer`. Ningún elemento tapaba la zona y la consola no tenía errores.
+- **Lo que fallaba era arrastrar:** la zona tiene borde discontinuo y se llama `fileDropzone`, pero no tenía manejadores de arrastre. Al soltar un archivo, el navegador lo abría en la pestaña y se perdía la aplicación.
+
+**Qué se hizo** (`Step1Ingestion.tsx`):
+- La lógica de carga pasa a `procesarArchivo(file)`, que comparten el clic y el arrastre.
+- `onDragOver` llama a `preventDefault` (sin eso el navegador abre el archivo) y marca la zona como activa: borde sólido y el texto "Suelta el archivo aquí".
+- `onDrop` comprueba la extensión a mano, porque `accept` solo filtra el diálogo de archivos. Si el formato no se admite, se muestra el error y no se carga nada.
+- El texto de la zona ahora dice "Arrastra o haz clic".
+
+**Verificación.**
+- **En Chrome con CDP (`Input.dispatchDragEvent` y archivos reales):** soltar el .md y el PDF los carga y la URL no cambia. Soltar un .py muestra el error de formato. La consola sigue sin errores.
+- **Front:** `tsc`, `eslint` del archivo, los 26 tests y el build, todo limpio.
+
+---
+
+## 14 oct 2026 · Estación 1: la zona de carga guía al usuario
+
+**Pedido del usuario.** Que la zona de carga tenga una animación o algo que indique por dónde empezar.
+
+**Qué se hizo** (`Step1Ingestion.tsx` y `.module.css`):
+- **Sin documento** (`sinDocumento`: sin archivo, sin texto y sin carga en curso):
+  - la zona pasa al primer lugar del formulario y ocupa todo el ancho;
+  - lleva la etiqueta "Paso 1 · Empieza aquí", un ícono más grande, el texto "Arrastra tu documento aquí o haz clic para elegirlo" y una pista con los formatos, el límite de 15 MB y la opción de la biblioteca;
+  - tiene dos animaciones suaves: un halo violeta que late (`invitacion`, 2,4 s) y el ícono que flota (`flotar`, 1,8 s).
+- **Con documento** (por archivo, demo o biblioteca): vuelve a la versión compacta, sin animación.
+- **Con `prefers-reduced-motion: reduce`:** no hay animación. La guía visual se mantiene: etiqueta, borde y fondo violeta.
+
+**Verificación en Chrome con CDP, a 1280 y 400 px:**
+- Las capturas de los dos estados se ven bien y no hay desbordamiento horizontal.
+- Con la preferencia normal corren las dos animaciones; con movimiento reducido emulado, ninguna.
+- **Ojo:** Chrome sin interfaz emula movimiento reducido por defecto. En Windows también lo activa la opción "Efectos de animación" desactivada.
+- **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
+
+---
+
+## 14 oct 2026 · Estación 1: la biblioteca de documentos pasa a menú desplegable
+
+**Pedido del usuario.** Las 5 tarjetas de la biblioteca ocupaban mucho espacio. Quería un menú desplegable.
+
+**Qué se hizo** (`Step1Ingestion.tsx` y `.module.css`):
+- **Menú nativo** (`<select>`, accesible con teclado y con el selector del sistema en el móvil). Empieza en "Elige un documento de prueba…", y cada opción muestra el título, el tipo y el tamaño.
+- **Ficha:** al elegir un documento, debajo aparecen su nicho, tipo, tamaño y descripción completa.
+- **Al subir un archivo propio,** el menú vuelve a "Elige…" y la ficha desaparece, porque `selectedDocId` pasa a `null`.
+- **CSS:** se quitaron la rejilla, el título de tarjeta y el `hover` de tarjeta clicable, que ya no se usaban.
+
+**Verificación en Chrome con CDP, a 1280 y 400 px:**
+- Las 5 opciones están.
+- Al elegir Kafka se cargan 11 052 caracteres de vista previa y aparece la ficha.
+- Al subir un .md propio, el menú se limpia.
+- No hay desbordamiento horizontal y la consola no tiene errores.
+- **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
+
+---
+
+## 14 oct 2026 · Estación 1: dos formas de empezar, Sorpréndeme o Personalizado
+
+**Pedido del usuario.** Que la configuración (perfil, nicho y nivel) ofrezca dos formas de empezar: Sorpréndeme y Personalizado.
+
+**Qué se hizo** (`Step1Ingestion.tsx` y `.module.css`):
+- **Selector de modo** (`role=radiogroup`) con dos tarjetas. Empieza en Personalizado, así que el comportamiento por defecto no cambia.
+- **Sorpréndeme:**
+  - sortea perfil, sector y nivel y **muestra la combinación** antes de generar ("Te tocó: …", región `aria-live`), así que lo que se ve es exactamente lo que se envía;
+  - "Otra combinación" vuelve a sortear y nunca repite la actual.
+- **Personalizado:** los tres selectores de siempre. Las opciones pasan a las constantes `PERFILES`, `NICHOS` y `NIVELES`, que comparten los selectores y el sorteo.
+- **Estado común:** los dos modos usan el mismo estado, así que el envío no cambia, y al pasar a Personalizado los selectores muestran lo sorteado.
+- **Biblioteca:** al elegir un documento, su nicho y perfil del catálogo solo se aplican en Personalizado. En Sorpréndeme se respeta el sorteo que el usuario ya ve.
+- **Valores:** el front envía "Técnico Profundo" y el backend lo traduce a "Profundo" por alias (`_MAPA_NIVEL`). Son compatibles.
+
+**Verificación en Chrome con CDP, a 1280 y 400 px:**
+- El cambio de modo funciona y el sorteo se ve en los chips.
+- "Otra combinación" cambió la combinación 5 de 5 veces.
+- El sorteo sigue intacto tras elegir Kafka de la biblioteca.
+- Personalizado conserva lo sorteado.
+- No hay desbordamiento horizontal y la consola no tiene errores.
+- **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
