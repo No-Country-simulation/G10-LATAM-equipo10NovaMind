@@ -67,6 +67,8 @@ class ErrorVoz(Exception):
 class Sintetizador(Protocol):
     proveedor: str
     nombre: str  # para mostrar al usuario
+    # Cada escena se cobra: el narrador pide primero la más larga sola para no pagar escenas que descartaría
+    cobra_por_escena: bool
 
     @property
     def identidad(self) -> str:
@@ -83,6 +85,7 @@ class Sintetizador(Protocol):
 # --------------------------------------------------------------------- Gemini
 class VozGemini:
     proveedor = "gemini"
+    cobra_por_escena = False  # cuota gratuita: todas las escenas a la vez, sin esperar
 
     def __init__(self, cliente: ClienteGemini, modelo: str, voz: str = "Kore", *, timeout_s: float = 90.0):
         self._cliente, self._modelo, self._voz, self._timeout_s = cliente, modelo, voz, timeout_s
@@ -144,6 +147,7 @@ def duracion_mp3_cbr(datos: bytes, kbps: int = KBPS_MP3) -> float:
 
 class VozElevenLabs:
     proveedor = "elevenlabs"
+    cobra_por_escena = True
 
     def __init__(
         self,

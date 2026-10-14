@@ -214,8 +214,19 @@ class Narrador:
 
     # ------------------------------------------------------------------ voz
     async def _sintetizar(self, spec: VideoJobSpec, voz: Sintetizador, limite: float) -> List[VozGenerada]:
+        # Si cada escena se cobra (ElevenLabs), la más larga va sola y primero: si los créditos no
+        # alcanzan, falla ella y no se cobra nada. En paralelo, las escenas que sí cabían se cobraban
+        # y se descartaban, porque el respaldo narra todas para no mezclar voces (prueba real del
+        # 2026-10-14: 1 de 3). Con cuota gratuita (Gemini) van todas a la vez: ~9 s menos.
+        textos = [e.guion_locutor for e in spec.escenas]
         async with asyncio.timeout_at(limite):
-            audios = list(await asyncio.gather(*(voz.sintetizar(e.guion_locutor) for e in spec.escenas)))
+            if getattr(voz, "cobra_por_escena", False):
+                primera = max(range(len(textos)), key=lambda k: len(textos[k]))
+                audio_primera = await voz.sintetizar(textos[primera])
+                audios = list(await asyncio.gather(*(voz.sintetizar(t) for k, t in enumerate(textos) if k != primera)))
+                audios.insert(primera, audio_primera)
+            else:
+                audios = list(await asyncio.gather(*(voz.sintetizar(t) for t in textos)))
         # Si no cabe, se repiten con ritmo ágil las escenas más largas primero, hasta que quepa.
         # Una a una (cada repetición se paga). Si llega el plazo, se decide con la voz ya pagada.
         for i in sorted(range(len(audios)), key=lambda k: audios[k].duracion_s, reverse=True):

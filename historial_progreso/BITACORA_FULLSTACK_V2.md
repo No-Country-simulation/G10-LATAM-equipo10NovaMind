@@ -1044,3 +1044,13 @@ Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos caso
 - La API rechazó con 401 y el rechazo se clasificó como `sin_creditos`. La regla nueva funciona con el texto real.
 - **Coste oculto:** las 3 escenas se piden a la vez. Dos recibieron 401 y **una salió bien (200), así que se cobró y se descartó**, porque Gemini narra todas las escenas para no mezclar voces. Con la clave casi agotada, eso supone perder una escena en créditos. Si se quisiera evitar, habría que pedir la primera escena sola antes de lanzar el resto, a costa de unos segundos más.
 - El guion guardado era anterior a los cambios de las palabras clave. «cloud server» y «error warning code» se filtraron como ambiguas y la escena 3 («storage disk») obtuvo foto de Openverse.
+
+**Arreglo del coste oculto** (`servicio_narracion._sintetizar`). La escena más larga se pide sola y primero, y el resto después, en paralelo. Si los créditos no alcanzan, falla esa primera y no se cobra ninguna.
+- Solo se perdería algo si el saldo alcanza justo para la más larga pero no para las demás.
+- Se conserva el orden de las escenas.
+- Tests nuevos: sin créditos para la más larga, solo sale 1 petición; y el orden se mantiene.
+- **Repetición real:** 1 sola petición a ElevenLabs (401), 0 créditos perdidos. Gemini narró las 3 escenas (49,1 s).
+- **Coste del arreglo:** la respuesta pasó de 10,8 a 20,0 s. La primera escena ya no iba en paralelo, tampoco con Gemini.
+- **Ajuste:** solo se hace con los proveedores que cobran cada escena (`cobra_por_escena`: ElevenLabs sí, Gemini no). Con la voz de Gemini, que usa cuota gratuita, las escenas vuelven a ir a la vez. Un test lo comprueba.
+
+**Verificación.** Backend: 314 tests.

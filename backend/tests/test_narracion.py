@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import time
 from typing import Dict, List, Optional
 from unittest.mock import patch
 
@@ -592,6 +593,36 @@ def test_creditos_agotados_a_mitad_de_narracion_pasa_a_gemini_entera():
     assert r.status == "exito" and r.proveedor == "gemini" and len(gemini.llamadas) == 2
     assert all(e.audio.proveedor == "gemini" for e in r.video_job_spec.escenas)
     assert any("créditos de voz" in a for a in r.advertencias)
+
+
+def test_sin_creditos_para_la_escena_mas_larga_no_se_cobra_ninguna():
+    # Caso real del 14/10: el saldo de la clave alcanzaba para una escena corta, no para las demás.
+    # Se pide primero la más larga: falla ella y las otras ni se piden.
+    sim = ElevenSimulado(estado_tts=401, cuerpo_error={"detail": {"status": "quota_exceeded", "message": "quota"}})
+    spec = _spec(3)
+    spec.escenas[1].guion_locutor += " con una frase más para que sea la más larga"
+    r = _narrar(Narrador([_eleven(sim), VozGemini(VozSimulada(), "tts-modelo")]), spec)
+    assert r.status == "exito" and r.proveedor == "gemini"
+    assert [c["text"] for c in sim.cuerpos] == [spec.escenas[1].guion_locutor]
+
+
+def test_el_orden_de_las_escenas_se_conserva_aunque_la_mas_larga_vaya_primero():
+    sim = ElevenSimulado(seg_por_caracter=0.03)  # 3 escenas caben en 60 s
+    spec = _spec(3)
+    spec.escenas[2].guion_locutor += " y una cola más larga"
+    r = _narrar(Narrador([_eleven(sim)]), spec)
+    assert r.status == "exito" and sim.cuerpos[0]["text"] == spec.escenas[2].guion_locutor
+    medidas = [e.audio.duracion_real_s for e in r.video_job_spec.escenas]
+    assert medidas[2] == max(medidas)  # la escena 3 conserva su audio, el más largo
+
+
+def test_con_gemini_las_escenas_van_a_la_vez():
+    # Cuota gratuita: no hay créditos que proteger, así que no se espera a la primera escena
+    gemini = VozSimulada(natural=15.0, espera=0.3)
+    inicio = time.perf_counter()
+    r = _narrar(Narrador([VozGemini(gemini, "tts-modelo")]), _spec(3))
+    assert r.status == "exito" and len(gemini.llamadas) == 3
+    assert time.perf_counter() - inicio < 0.6  # en serie serían 0,9 s
 
 
 def test_creditos_agotados_al_repetir_con_ritmo_agil_pasa_a_gemini():
