@@ -57,7 +57,7 @@ Registro cronológico de lo que se hizo en esta rama, por qué se hizo, qué fal
 
 ## 13 oct 2026 · Imágenes y PDF escaneados como fuente
 
-**Estado:** sin commit.
+**Commit:** `9980081`
 
 **Contexto.** Otro análisis afirmaba que `origin/feature/newmind-edtech-oci` aceptaba JPG y PNG. Al revisar su código resultó falso:
 - su selector de archivos no admite imágenes;
@@ -108,7 +108,7 @@ Registro cronológico de lo que se hizo en esta rama, por qué se hizo, qué fal
 
 ## 13 oct 2026 · Biblioteca de ejemplos, código muerto y filtro de Wikimedia
 
-**Estado:** sin commit, junto con la transcripción.
+**Commit:** `9980081`
 
 **Vista previa real de los PDF de ejemplo**
 - Al elegir un PDF de la biblioteca, la Estación 1 mostraba un texto de relleno ("ARCHIVO PDF OFICIAL CARGADO…").
@@ -149,3 +149,16 @@ Con el filtro nuevo, "server rack" y "data center" dan fotos pertinentes, y "eve
 **Verificación**
 - Backend: 258 tests. Frontend: 17 tests, `tsc` y build.
 - Los errores de lint de `App.tsx`, `api.ts` y `Step2KnowledgeQuest.tsx` son los mismos que ya había en `HEAD`.
+
+---
+
+## 14 oct 2026 · Interfaz antigua eliminada
+
+**Commit:** el siguiente a `9980081`
+
+- Se borraron `MetricsView` y `ViewerView` con sus cinco visores (flashcards, cuestionario, guion, resumen y tutorial), 14 archivos en total, y `src/types/api.ts`, que solo usaban ellos.
+- Era una interfaz anterior a la Ruta Cognitiva: nada la importaba. Se comprobó que el árbol estaba aislado (sus imports solo apuntaban a sí mismo, a `react`, a `lucide-react` y a `types/api`) antes de borrarlo.
+- El lint completo bajó de 15 a 13 errores. Los 13 restantes son antiguos y están en `App.tsx` (4), `Step2KnowledgeQuest.tsx` (6, `any`), `MermaidDiagram.tsx` (2) y `api.ts` (2).
+- **Commit anterior (`9980081`):** solo entró lo propio de esta rama. `historial_progreso/CAMBIOS.md`, `HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md`, `para_claude.md` y la sección "Análisis Forense de Integración Multirama" de esta bitácora los escribió otro agente y quedaron fuera, a la espera de revisión.
+
+**Verificación:** `tsc` sin errores, 17 tests de frontend y build de producción.
