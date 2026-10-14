@@ -1031,3 +1031,16 @@ Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos caso
 - **Citas:** del 88 % (Leyes) al 100 %. Se revisaron las 5 citas rechazadas de Leyes y General#2, y todas son rechazos correctos: 2 con «...», 1 que une un título con un texto de otra parte, 1 demasiado corta y 1 con errata del modelo («duas»). No hay fallos del verificador.
 
 **Verificación.** Backend: 311 tests (el test de palabras ambiguas incluye «error screen» y «server warning»).
+
+
+## 14 oct 2026 · Prueba real: ElevenLabs sin créditos
+
+**Cómo se hizo.** Con la clave de ElevenLabs cerca de su tope de 1 000 créditos, el usuario autorizó reiniciar el backend del puerto 8000. Se ejecutó `node tests/e2e_narracion.manual.ts --spec <guion guardado>`, que no gasta cuota de Gemini para generar el paquete.
+
+**Resultado: OK.** `status=exito`, `proveedor=gemini`, 3 escenas y 50,0 s de audio. La respuesta tardó 10,8 s. El aviso decía «ElevenLabs (Alice) no estuvo disponible (Se agotaron los créditos de voz del mes…)».
+
+**Lo que confirma el log:**
+- `/v1/user/subscription` respondió 200 y la comprobación previa no bloqueó. Era lo previsto: el tope es de la clave y no aparece en el saldo de la cuenta.
+- La API rechazó con 401 y el rechazo se clasificó como `sin_creditos`. La regla nueva funciona con el texto real.
+- **Coste oculto:** las 3 escenas se piden a la vez. Dos recibieron 401 y **una salió bien (200), así que se cobró y se descartó**, porque Gemini narra todas las escenas para no mezclar voces. Con la clave casi agotada, eso supone perder una escena en créditos. Si se quisiera evitar, habría que pedir la primera escena sola antes de lanzar el resto, a costa de unos segundos más.
+- El guion guardado era anterior a los cambios de las palabras clave. «cloud server» y «error warning code» se filtraron como ambiguas y la escena 3 («storage disk») obtuvo foto de Openverse.
