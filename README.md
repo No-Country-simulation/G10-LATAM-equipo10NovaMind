@@ -192,7 +192,7 @@ graph LR
     ROOT --> B_DIR["📁 backend/<br/><i>(Ramas: backend + feature/agents-langgraph)</i>"]:::dir
     B_DIR --> B_APP["📁 app/ (main.py, orquestador.py, agentes, core, storage)"]:::dir
     B_DIR --> B_DOCS["📁 docs/ (9 docs de arquitectura, API y auditoría)"]:::dir
-    B_DIR --> B_TESTS["📁 tests/ (Suite de 70 pruebas unitarias e integrales)"]:::dir
+    B_DIR --> B_TESTS["📁 tests/ (pruebas unitarias e integrales, sin cuota)"]:::dir
     B_DIR --> B_DATA["📁 data/ (chroma/, outputs/, documents/)"]:::dir
     B_DIR --> B_REQ["📄 requirements.txt"]:::file
     B_DIR --> B_INI["📄 pytest.ini"]:::file
@@ -259,7 +259,7 @@ G10-LATAM-equipo10NovaMind/
 │   │   ├── PROJECT_AUDIT.md           # Informe de auditoría estática y matriz de prioridades
 │   │   ├── SECURITY.md                # Evaluación de controles y seguridad preventiva
 │   │   └── TESTING.md                 # Estrategia de testing y pruebas unitarias/integrales
-│   ├── tests/                         # Suite de pruebas deterministas (70 tests pasando - 100%)
+│   ├── tests/                         # Suite de pruebas deterministas (ver docs/TESTING.md)
 │   │   ├── test_api.py                # Validación de endpoints REST y SSE con TestClient (7 tests)
 │   │   ├── test_critico_multiproveedor.py # Pruebas unitarias de Gemini, Groq, fallback y sanitización (4 tests)
 │   │   ├── test_orquestador.py        # Pruebas unitarias de agentes, contratos y feedback (56 tests)
@@ -593,14 +593,16 @@ Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben t
 
 ## 🧪 9. Suite de Pruebas Automatizadas
 
-El backend cuenta con una suite rigurosa y determinista de **70 pruebas automatizadas** que validan la API REST, la lógica del orquestador LangGraph, los agentes multi-proveedor, la normalización de alias, el batching de embeddings, la persistencia resiliente y la robustez ante fallos:
+Las pruebas son deterministas: Gemini, Groq, ElevenLabs y los bancos de imágenes se simulan, así que no gastan cuota. Al 14/10/2026 son **300 en el backend y 26 en el frontend**; la cifra al día es la que dan los comandos:
 
 ```bash
-# Ejecutar desde la raíz con el entorno virtual activo:
-pytest backend/tests -v
+cd backend && ../.venv/Scripts/python -m pytest -q
+cd frontend && npm test && npx tsc --noEmit -p .
 ```
 
-### Distribución de la Cobertura:
+El detalle por área está en [backend/docs/TESTING.md](backend/docs/TESTING.md).
+
+### Distribución original de la fase 9 (70 tests):
 * **`tests/test_api.py` (7 tests):** Validación con `TestClient` de `/health`, `/api/v1/config/opciones`, `/api/v1/adaptar` (multipart y texto), el nuevo endpoint SSE `/api/v1/adaptar/stream`, `/api/v1/paquetes` y manejo de 404 en descarga de paquetes.
 * **`tests/test_critico_multiproveedor.py` (4 tests):** Pruebas unitarias aisladas de las llamadas REST a Google Gemini, Groq, conmutación automática por fallback ante timeouts o caídas de red, y sanitización de respuestas en bloque markdown JSON.
 * **`tests/test_integracion_offline.py` (3 tests):** Validación del ciclo E2E completo con embeddings y LLMs simulados, verificación de reutilización del índice vectorial y adaptación con feedback correctivo.
@@ -611,7 +613,7 @@ pytest backend/tests -v
   - Límite de lote de embeddings en llamadas a Cohere (máx. 96 textos).
   - Manejo resiliente de caídas transitorias de API con reintentos exponenciales.
 
-**Estado actual de la suite:** 🟢 **70 pasadas, 0 fallidas (100% de éxito en 13.57s).**
+**Estado de la suite al 14/10/2026:** 🟢 **300 pasadas en backend y 26 en frontend, 0 fallidas.**
 
 ---
 

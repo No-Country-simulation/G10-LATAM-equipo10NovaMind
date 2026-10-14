@@ -2,20 +2,31 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.7.0] - 2026-10-14
+
+### Procedencia honesta: visor de fuente, nicho acotado y Estación 3 sin datos inventados
+- **Visor de fuente** (`dbe98dc`, `a24e226`): el chip «Fuente · pág. N» de las estaciones 1 a 3 y el botón «Ver en el documento» de las citas del guion (Estación 4) abren el pasaje literal del documento con la cita resaltada. El pasaje lo calcula el backend (`fuentes.contexto_de_cita`), no cruza de página y viaja dentro del paquete; las citas no verificadas no tienen visor.
+- **Privacidad del correo** (`dbe98dc`): la dirección del destinatario se enmascara en los logs (`al***@ejemplo.com`) y el log de error SMTP solo registra el tipo de excepción. El recibo dice «archivado en OCI» solo si la subida devolvió la ruta real. Los tests ya no suben PDF al bucket real.
+- **El nicho solo en analogías** (`abd1a54`, `f9ce53b`): con un sector distinto de General, el prompt limita el sector a analogías, ejemplos y pistas, sin atribuir al documento propósitos del sector, y el guion lo menciona como mucho en una escena. Motivo: en la prueba de nichos, el guion de Leyes narraba «para cumplir con el cumplimiento normativo… optimizamos la memoria».
+- **Verificador de citas y bloques de código** (`abd1a54`, `f9ce53b`): la marca de bloque de código con su etiqueta (```` ```bash ````) se descarta igual en la cita y en el documento. Recupera citas literales que unían una frase con su comando (7 de 18 rechazadas en la 1.ª corrida de nichos) sin aceptar ninguna que antes se rechazara.
+- **Estación 3 sin métricas inventadas** (`0bae210`, `a2a77b4`): sin evaluación del backend ya no muestra un 98 % «Zero-Hallucination Verified»; muestra «N/D» o «Sin auditar». La pastilla de OCI sigue a `status_upload` («Guardado en OCI», «Guardado en el servidor, no en OCI», «No se pudo guardar», «No guardado en OCI»). El paquete de demostración se marca como ejemplo sin auditar. Se eliminó `utils/ociStorage.ts`, que no se usaba y habría subido paquetes con una URL pre-autenticada pública (`VITE_OCI_PAR_URL`).
+- **Documentación:** `DATABASE.md` reescrito con las migraciones reales de Supabase; concurrencia real en `SECURITY.md` y `DEPLOYMENT.md`.
+- **Pruebas:** `cd backend && ../.venv/Scripts/python -m pytest -q` (300 al cerrar esta versión) y `cd frontend && npm test` (26).
+
 ## [2.6.0] - 2026-10-14
 
 ### 🎙️ Protección de Cuota de Narración, UX React 19, Especialización de Nichos y Medallas Honestas (Fase 22)
 - **Protección Preventiva de Cuota de Voz:** Validación estricta en frontend y backend (`exceso_guion_narracion`) que bloquea peticiones de locución con guiones mayores a 173 palabras o 1.730 caracteres (`error_codigo="guion_largo"`), evitando malgastar créditos de ElevenLabs en audios que superarían el tope audiovisual de 60 s.
 - **Ajuste y Recorte Inteligente de Guion por IA (`_ajustar_guion`):** Poda semántica asistida por LLM para condensar guiones sobre-extendidos al rango óptimo de 110–125 palabras sin desvirtuar el mensaje pedagógico.
 - **Plazos y Timeouts Robustos en Síntesis de Voz:** Presupuesto de síntesis `PLAZO_VOZ_S = 80s`, timeout de ElevenLabs acotado a 25s y degradación suave a síntesis de voz del navegador (`SpeechSynthesis`) sin alertas bloqueantes ni interrupción de la experiencia.
-- **Medalla de Proveniencia Honesta en Estación 4:** Indicador persistente del modelo empleado, estado de auditoría y advertencias de cuota, garantizando cero contenido inventado.
+- **Texto honesto de la medalla (`BadgeModal`):** con sesión iniciada dice «Logro guardado en tu cuenta»; como invitado, que el logro es de esta sesión y se pierde al recargar.
 - **Experiencia de Ingesta Renovada (Paso 1):**
   - Zona nativa de *Drag & Drop* interactiva con animaciones CSS y estados visuales (hover/dragover) para PDF, Markdown, TXT e imágenes.
   - Selector compacto de biblioteca en `<select>` para optimizar el espacio vertical.
   - Modo "Sorpréndeme" activo por defecto para descubrimiento aleatorio de escenarios en un clic.
   - Visualización del prompt de rol ("Eres un tutor experto...") en la tarjeta de resumen del paquete.
-- **Sincronización Canónica de Nichos Sectoriales:** Unificación del catálogo en 6 sectores oficiales (`Tecnología y Software`, `Finanzas y Contabilidad`, `Salud y Medicina`, `Leyes y Sector Legal`, `Educación y Docencia`, `General`). Migración del escenario Kafka de "Fintech" a "Finanzas y Contabilidad".
-- **Validación Empírica de Nichos (`pruebas_nichos/`):** Benchmark empírico de 5 ejecuciones reales con Gemini demostrando incremento léxico sectorial de 9.3x a 14.2x sobre ruido general (Medicina: +4.93/1k palabras; Leyes: +5.16/1k palabras; Finanzas: +12.20/1k palabras) manteniendo anclaje RAG entre 84.6% y 88.0%.
+- **Nichos alineados con el backend:** el front usa los 11 sectores de `DIRECTIVAS_NICHO_SECTOR` (`Tecnología e Informática`, `Medicina y Salud`, `Ingeniería y Construcción`, `Finanzas y Contabilidad`, `Administración y Negocios`, `Marketing y Ventas`, `Leyes y Legal`, `Educación y Academia`, `Ciencias e Investigación`, `Industria y Operaciones` y `General`). El escenario Kafka pasó de "Fintech", que no existía en el backend, a "Finanzas y Contabilidad".
+- **Prueba de nichos (`pruebas_nichos/`, fuera del repo), 1.ª corrida:** 5 generaciones reales (General ×2, Medicina, Leyes y Finanzas) sobre la guía de swap. Cada nicho sube el léxico de su sector muy por encima de General (Medicina +4,9, Leyes +5,2 y Finanzas +12,2 términos por mil palabras). Es una corrida por nicho: indica que el nicho funciona, no es una medida estadística. La auditoría encontró que el sector se colaba en afirmaciones sobre el documento; se corrigió en 2.7.0.
 - **Utilidad "Copiar Prompt Visual" y Limpieza de Bundle:** Extracción al portapapeles del prompt para generadores de imagen externos (Midjourney / Imagen 3) y eliminación de dependencias huérfanas (`gsap`, `lenis`).
 - **Aislamiento de Caché de Invitados:** Particionado en memoria de tareas de usuarios no autenticados para prevenir cruce de datos en servidores multi-usuario.
 - **Suite de Pruebas Ampliada:** Cobertura de backend incrementada a **288 pruebas automatizadas al 100% de éxito + 26 pruebas de frontend** y verificación de tipos estricta (`tsc`).
