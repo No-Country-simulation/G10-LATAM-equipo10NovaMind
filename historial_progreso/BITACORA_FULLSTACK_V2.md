@@ -770,3 +770,24 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
 - **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
 
 **Incidencia.** A las 11:23 y 11:28, otro agente (Gemini) modificó `backend/docs/API.md` y `backend/docs/CHANGELOG.md` en la carpeta principal, en contra de las directivas de worktree. No se tocaron ni se incluyen en este bloque.
+
+
+## 14 oct 2026 · Auditoría de la prueba de nichos y dos correcciones
+
+**Qué se auditó.** La fase 1 de la prueba de nichos que ejecutó Gemini (`pruebas_nichos/resultados_20261014_1105/`, fuera del repo): 5 corridas reales (General ×2, Medicina, Leyes y Finanzas) sobre `guia_optimizacion_swap_oci.md`, sin Groq ni ElevenLabs. Se revisaron los JSON crudos, no solo el informe.
+
+**Conclusiones.**
+- Los nichos funcionan: el léxico de cada sector sube muy por encima del de las corridas General (Finanzas 12,6 por mil, Leyes 5,2, Medicina 6,1). El supuesto «ruido médico» de General era entero la palabra *diagnóstico* (de memoria), mal clasificada en el léxico.
+- El informe exageraba dos conclusiones: el Jaccard se apoya en un solo par General-vs-General (es un indicio, no una prueba estadística), y la fidelidad de los nichos (85–88 %) cae dentro de la variación de General (82–92 %): lo correcto es decir «no se ve degradación». Además, sus «muestras» entre «» eran paráfrasis y no texto literal.
+- Las citas rechazadas no dependen del nicho. De las 18 únicas, **7 eran literales**: el modelo unía la frase con el comando que la sigue y la etiqueta `bash`/`text` de la valla del bloque de código rompía la coincidencia. El resto se rechazó con razón: una palabra cambiada («al 1.8 GB»), un añadido inventado («evitando ralentizar el CPU»), una palabra en ruso («каждого»), elisiones con «…» y cifras escritas en letras.
+- **Hallazgo principal:** el sector se colaba en afirmaciones sobre el documento, sobre todo en el guion narrado (Leyes: «para cumplir con el cumplimiento normativo y evitar riesgos legales… optimizamos la memoria»; Medicina: «excelente para clínicas y hospitales»). Eso va contra la regla 1, aunque la directiva de cada nicho ya pedía no inventar.
+
+**Cambios.**
+- `generacion_paralela.py`: `_LIMITE_SECTOR` (solo con un nicho distinto de General). El sector queda limitado a analogías, ejemplos y pistas, presentado como aplicación para el lector, sin atribuir al documento propósitos ni beneficios del sector. Además: la introducción describe el documento tal como es; el guion «narra solo hechos del documento»; las citas conservan cifras, unidades y comandos (sin «cuatro gigabytes» por «4 GB») y no se les añade nada. La huella incluye las instrucciones, así que la caché anterior no se reutiliza.
+- `fuentes.py`: `_normalizar` descarta las líneas que abren o cierran un bloque de código (```` ```bash ````, `~~~`) junto con su etiqueta. Un ```` ``` ```` a mitad de línea no cuenta como valla.
+- `prueba_nichos.py` (fuera del repo): fuera *diagnost* y *medic* a secas (que también contaba «medición»).
+
+**Verificación.**
+- Al volver a verificar las citas reales de las 5 corridas con el verificador nuevo, se recuperan **7 citas y no hay ninguna regresión**. Todas las que siguen rechazadas son de verdad no literales.
+- Hay 2 tests nuevos: la valla de código, con casos negativos («bash» en la cita, comando cambiado, ```` ``` ```` en línea), y el límite del sector (presente en Leyes, ausente en General). Backend: 298 tests pasan.
+- **Pendiente:** el efecto del prompt sobre el modelo solo se ve repitiendo las 5 corridas (unas 15 llamadas a Gemini), a mano y fuera del repo.

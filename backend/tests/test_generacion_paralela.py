@@ -756,6 +756,18 @@ def test_las_instrucciones_de_audiencia_llevan_la_directiva_del_nivel():
     assert DIRECTIVAS_NIVEL_DETALLE["Didáctico"] not in _instrucciones_audiencia(profundo)
 
 
+def test_el_sector_se_limita_a_analogias_y_no_cambia_lo_que_dice_el_documento():
+    # Prueba de nichos del 14/10: el guion de Leyes narraba «para cumplir la normativa optimizamos…»
+    from app.agentes.generacion_paralela import _LIMITE_SECTOR, _TAREA_A, _TAREA_B2, _instrucciones_audiencia
+
+    leyes = SOLICITUD.model_copy(update={"nicho_sector": "Leyes y Legal"})
+    general = SOLICITUD.model_copy(update={"nicho_sector": "General"})
+    assert _LIMITE_SECTOR in _instrucciones_audiencia(leyes)
+    assert _LIMITE_SECTOR not in _instrucciones_audiencia(general)
+    assert "Narra solo hechos del documento" in _TAREA_B2
+    assert "sin presentarlo como escrito para su sector" in _TAREA_A
+
+
 def test_cambiar_una_directiva_de_audiencia_invalida_la_huella(monkeypatch):
     from app.agentes import generacion_paralela as gp
 

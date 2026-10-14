@@ -12,7 +12,7 @@ from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
-from app.core.fuentes import contexto_de_cita, fragmentos_para_auditoria, pagina_de_cita, ubicar_cita
+from app.core.fuentes import contexto_de_cita, fragmentos_para_auditoria, pagina_de_cita, tramo_de_cita, ubicar_cita
 from app.core.ingestion import _limpiar_headers_repetidos, cargar_documento, detectar_secciones
 from app.core.schemas import RangoPagina, SolicitudAdaptacion
 
@@ -126,6 +126,19 @@ def test_cita_sin_marcas_markdown_se_ubica_y_la_parafrasis_no():
     assert ubicar_cita("Al crear un archivo (Swap) de 4 GB, la memoria se incrementa de 1 GB a 5 GB efectivos", doc) == 7
     assert ubicar_cita("la memoria se incrementa de 1 GB al menos a 5 GB efectivos", doc) is None
     assert ubicar_cita("5 GB efectivos; ver mm.", doc) is not None
+
+
+def test_cita_que_une_frase_y_comando_ignora_la_valla_del_bloque_de_codigo():
+    # Caso real (prueba de nichos): el modelo cita la frase y el comando sin la marca "```bash"
+    doc = "Se formatea el archivo como swap para el kernel:\n```bash\nsudo mkswap /swapfile\n```\nY luego se activa."
+    tramo = tramo_de_cita("Se formatea el archivo como swap para el kernel: sudo mkswap /swapfile", doc)
+    assert tramo is not None and doc[tramo[0]:tramo[1]].endswith("/swapfile")
+    assert ubicar_cita("sudo mkswap /swapfile Y luego se activa", doc) is not None
+    # La etiqueta del lenguaje no es texto del documento, y cambiar el comando sigue sin coincidir
+    assert ubicar_cita("para el kernel: bash sudo mkswap /swapfile", doc) is None
+    assert ubicar_cita("Se formatea el archivo como swap para el kernel: sudo mkfs /swapfile", doc) is None
+    # Un "```" a mitad de línea no es una valla y no se descarta lo que lo sigue
+    assert ubicar_cita("usa ```bash dentro de una frase normal", "Texto: usa ```bash dentro de una frase normal.") is not None
 
 
 def test_cita_con_tipografia_normal_se_ubica_en_texto_extraido_de_pdf():
