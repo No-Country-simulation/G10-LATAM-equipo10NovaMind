@@ -437,6 +437,28 @@ def procesar_objetivos(datos: SalidaEvaluacion, _solicitud: SolicitudAdaptacion)
     return RecursoListo("objetivos", {"objetivos_aprendizaje": objetivos}, [], _aviso_descartes(dup, "objetivos repetidos"))
 
 
+# Un guion que pasa de PALABRAS_GUION_MAX obliga a repetir la voz con ritmo ágil (se paga dos
+# veces) o ni siquiera cabe en 60 s. Antes de publicarlo, una llamada breve lo acorta: recibe solo
+# los textos del guion (no el documento), así que es barata y no puede añadir contenido nuevo.
+class SalidaAjusteGuion(_Salida):
+    guiones: List[str] = Field(..., min_length=1, max_length=3, description="Un texto por escena, en el mismo orden")
+
+
+_AJUSTE_GUION = """Eres el editor de locución de NovaMind. Recibes los textos que un narrador lee en voz alta en un video de 60 segundos como máximo, uno por escena. Acórtalos para que juntos sumen entre {minimo} y {maximo} palabras (unas {por_escena} por escena).
+- Devuelve exactamente un texto por escena, en el mismo orden.
+- Solo acorta: conserva el sentido y los datos técnicos más importantes. No añadas información ni cambies cifras, nombres o comandos.
+- Es texto para leer en voz alta: sin viñetas, sin markdown, sin URLs."""
+TIMEOUT_AJUSTE_GUION_S = 20.0
+
+
+def guiones_ajustados(originales: List[str], propuestos: List[str]) -> Optional[List[str]]:
+    """Los textos acortados si cumplen el contrato (mismas escenas, ninguna vacía, total ≤ máximo); si no, None."""
+    if len(propuestos) != len(originales) or not all(contar_palabras(t) for t in propuestos):
+        return None
+    total = sum(contar_palabras(t) for t in propuestos)
+    return propuestos if total <= PALABRAS_GUION_MAX else None
+
+
 def procesar_guion(datos: SalidaProduccion, solicitud: SolicitudAdaptacion) -> RecursoListo:
     # Mismo normalizador que la cadena colaborativa: procedencia, páginas y tramos idénticos.
     crudas = [
@@ -861,13 +883,19 @@ class GeneradorParalelo:
         ej.publicar({"tipo": "tarea", "tarea": tarea.id, "estado": "completada", "modelo": uso.modelo,
                      "intentos": uso.intentos, "latencia_s": uso.latencia_s,
                      "tokens_entrada": uso.tokens_entrada, "tokens_salida": uso.tokens_salida})
+        datos = respuesta.datos  # compartido con otras peticiones idénticas: no se modifica
+        avisos_ajuste: Dict[str, List[str]] = {}
+        if "guion" in pendientes and isinstance(datos, SalidaProduccion):
+            datos, aviso = await self._ajustar_guion(datos, uso.modelo)
+            if aviso:
+                avisos_ajuste["guion"] = [aviso]
         for recurso, procesar in tarea.procesadores:
             if recurso not in pendientes:
                 continue
             base = dict(recurso=recurso, tarea=tarea.id, modelo=uso.modelo, intentos=uso.intentos,
                         latencia_s=uso.latencia_s)
             try:
-                listo = procesar(respuesta.datos, ej.solicitud)
+                listo = procesar(datos, ej.solicitud)
             except Exception as exc:
                 motivo = str(exc) if isinstance(exc, RecursoInvalido) else type(exc).__name__
                 logger.warning("[paralelo] Recurso %s descartado: %s", recurso, motivo)
@@ -893,7 +921,7 @@ class GeneradorParalelo:
                 **base, estado="completado", verificacion="pendiente",
                 citas_totales=len(listo.fuentes),
                 citas_verificadas=sum(1 for f in listo.fuentes if f["verificada"]),
-                avisos=listo.avisos + avisos_modelo,
+                avisos=listo.avisos + avisos_modelo + avisos_ajuste.get(recurso, []),
             )
             ej.contenido.update(listo.campos)
             ej.afirmaciones[recurso] = listo.afirmaciones
@@ -904,6 +932,33 @@ class GeneradorParalelo:
             ej.publicar({"tipo": "recurso", "recurso": recurso, "campos": listo.campos,
                          "estado": estado.model_dump()})
         await self._guardar([ej.filas[r] for r in pendientes if r in ej.filas])
+
+    async def _ajustar_guion(self, datos: SalidaProduccion, modelo: str) -> Tuple[SalidaProduccion, Optional[str]]:
+        """Acorta un guion que pasa de PALABRAS_GUION_MAX con una llamada breve; si no lo logra, queda el original."""
+        originales = [e.guion_locutor for e in datos.guion]
+        antes = sum(contar_palabras(t) for t in originales)
+        if antes <= PALABRAS_GUION_MAX:
+            return datos, None
+        objetivo = (PALABRAS_GUION_MIN + PALABRAS_GUION_MAX) // 2
+        instrucciones = _AJUSTE_GUION.format(minimo=PALABRAS_GUION_MIN, maximo=PALABRAS_GUION_MAX,
+                                             por_escena=round(objetivo / len(originales)))
+        entrada = "\n\n".join(f"ESCENA {i}:\n{t}" for i, t in enumerate(originales, start=1))
+        try:
+            r = await self._cliente.generar_json(
+                modelo=modelo, instrucciones=instrucciones, entrada=entrada, esquema_salida=SalidaAjusteGuion,
+                thinking_level="minimal", timeout_s=TIMEOUT_AJUSTE_GUION_S, max_reintentos=0,
+            )
+            nuevos = guiones_ajustados(originales, r.datos.guiones)
+        except GeminiError as exc:
+            logger.warning("[paralelo] No se pudo acortar el guion (%s).", exc.codigo)
+            nuevos = None
+        if nuevos is None:
+            return datos, f"el guion no se pudo acortar automáticamente ({antes} palabras)"
+        despues = sum(contar_palabras(t) for t in nuevos)
+        logger.info("[paralelo] Guion acortado de %d a %d palabras con %s.", antes, despues, modelo)
+        escenas = [e.model_copy(update={"guion_locutor": t}) for e, t in zip(datos.guion, nuevos)]
+        return (datos.model_copy(update={"guion": escenas}),
+                f"guion acortado por IA de {antes} a {despues} palabras ({modelo}) para caber en 60 s")
 
     async def _llamar(self, tarea: Tarea, ej: _Ejecucion):
         """Modelo principal sin reintentos si hay respaldo; ante saturación o cuota, el respaldo."""

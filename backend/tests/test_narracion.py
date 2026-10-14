@@ -22,9 +22,11 @@ from app.core.schemas import (
     SolicitudAdaptacion,
     SolicitudNarracion,
     VideoJobSpec,
+    exceso_guion_narracion,
     velocidad_reproduccion,
 )
 from app.main import app
+from app.servicios import servicio_narracion
 from app.servicios.registro_tareas import RegistroMemoria
 from app.servicios.servicio_gemini import AudioGenerado, GeminiError, Uso
 from app.servicios.servicio_imagenes import elegir_openverse, elegir_wikimedia
@@ -53,12 +55,15 @@ def _spec(n: int = 3) -> VideoJobSpec:
 class VozSimulada:
     """Duración por estilo: natural y ágil. Registra cada llamada."""
 
-    def __init__(self, natural: float = 15.0, agil: float = 13.0, error: Optional[GeminiError] = None):
+    def __init__(self, natural: float = 15.0, agil: float = 13.0, error: Optional[GeminiError] = None,
+                 espera: float = 0.0, espera_agil: float = 0.0):
         self.natural, self.agil, self.error = natural, agil, error
+        self.espera, self.espera_agil = espera, espera_agil  # segundos reales que tarda en responder
         self.llamadas: List[str] = []
 
     async def sintetizar_voz(self, *, modelo, texto, voz, estilo, timeout_s):
         self.llamadas.append(estilo)
+        await asyncio.sleep(self.espera_agil if estilo == ESTILO_AGIL else self.espera)
         if self.error:
             raise self.error
         segundos = self.agil if estilo == ESTILO_AGIL else self.natural
@@ -67,12 +72,13 @@ class VozSimulada:
 
 
 class BancoSimulado:
-    def __init__(self, con_foto: bool = True):
-        self.con_foto = con_foto
+    def __init__(self, con_foto: bool = True, espera: float = 0.0):
+        self.con_foto, self.espera = con_foto, espera
         self.busquedas: List[str] = []
 
     async def buscar(self, palabra_clave, alt):
         self.busquedas.append(palabra_clave)
+        await asyncio.sleep(self.espera)
         if not self.con_foto:
             return None
         return ImagenEscena(tipo="foto", url="https://api.openverse.org/v1/images/x/thumb/", alt=alt,
@@ -156,6 +162,60 @@ def test_velocidad_de_reproduccion_tolera_hasta_un_5_por_ciento():
     assert velocidad_reproduccion(60.1, 60) == 1.002  # siempre hacia arriba: nunca suena > 60 s
     assert velocidad_reproduccion(63.0, 60) == 1.05
     assert velocidad_reproduccion(63.1, 60) is None
+
+
+def _spec_con_guiones(*guiones: str) -> VideoJobSpec:
+    escenas = [_escena(i).model_copy(update={"guion_locutor": g}) for i, g in enumerate(guiones, 1)]
+    return VideoJobSpec(video_job_id="vjob-doc-0123456789abcdef", document_id="doc-0123456789abcdef",
+                        escenas=escenas)
+
+
+def test_tope_del_guion_a_60_s_con_la_voz_mas_rapida():
+    # 60 s × 1,05 × 165 palabras/min = 173 palabras
+    assert exceso_guion_narracion(["hola " * 173], 60) is None
+    assert "174 palabras" in exceso_guion_narracion(["hola " * 174], 60)
+    # Los créditos se cobran por carácter: una "palabra" gigante tampoco pasa
+    assert exceso_guion_narracion(["x" * 1800], 60) is not None
+
+
+def test_guion_que_no_puede_caber_se_rechaza_sin_llamar_a_la_voz(tmp_path):
+    voz, banco, registro = VozSimulada(), BancoSimulado(), RegistroMemoria()
+    narrador = Narrador([VozGemini(voz, "tts-modelo")], buscador=banco, almacen=AlmacenLocal(tmp_path),
+                        prefijo=prefijo_narraciones(USUARIO), registro=registro)
+    largo = " ".join(f"p{i}" for i in range(60))
+    r = _narrar(narrador, _spec_con_guiones(largo, largo, largo))  # 180 palabras
+    assert r.status == "error" and r.error_codigo == "guion_largo"
+    assert "180 palabras" in r.advertencias[0] and "no se gastó" in r.advertencias[0]
+    assert voz.llamadas == [] and banco.busquedas == [] and not registro.filas
+    assert not any(tmp_path.rglob("*"))
+
+
+def test_plazo_agotado_no_prueba_el_respaldo_y_lo_explica(monkeypatch):
+    monkeypatch.setattr(servicio_narracion, "PLAZO_VOZ_S", 0.2)
+    lenta, respaldo, registro = VozSimulada(espera=5.0), VozSimulada(), RegistroMemoria()
+    narrador = Narrador([VozGemini(lenta, "m1"), VozGemini(respaldo, "m2")], registro=registro)
+    r = asyncio.run(narrador.narrar(SolicitudNarracion(video_job_spec=_spec(), buscar_fotos=False)))
+    assert r.status == "error" and r.error_codigo == "plazo"
+    assert "no estuvo lista" in r.advertencias[0]
+    assert respaldo.llamadas == []  # sin tiempo para otro proveedor: acabaría en el 524
+
+
+def test_plazo_durante_el_ritmo_agil_decide_con_la_voz_ya_pagada(monkeypatch):
+    monkeypatch.setattr(servicio_narracion, "PLAZO_VOZ_S", 0.3)
+    voz = VozSimulada(natural=20.5, espera_agil=5.0)  # 61,5 s: el ritmo ágil no llega a tiempo
+    r = _narrar(Narrador([VozGemini(voz, "tts-modelo")]))
+    assert r.status == "exito" and r.duracion_total_real_s == 61.5
+    assert r.video_job_spec.velocidad_reproduccion == 1.025
+    assert voz.llamadas.count(ESTILO_AGIL) == 1
+
+
+def test_fotos_tardias_se_omiten_y_la_narracion_sigue(monkeypatch):
+    monkeypatch.setattr(servicio_narracion, "PLAZO_VOZ_S", 0.1)
+    monkeypatch.setattr(servicio_narracion, "MARGEN_FOTOS_S", 0.1)
+    r = _narrar(Narrador([VozGemini(VozSimulada(), "tts-modelo")], buscador=BancoSimulado(espera=5.0)))
+    assert r.status == "exito"
+    assert all(e.imagen.tipo == "diapositiva" for e in r.video_job_spec.escenas)
+    assert any("no llegaron a tiempo" in a for a in r.advertencias)
 
 
 def test_cuota_agotada_devuelve_error_explicado_sin_guardar(tmp_path):

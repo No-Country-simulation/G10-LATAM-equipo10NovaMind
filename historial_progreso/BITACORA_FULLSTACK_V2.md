@@ -456,3 +456,139 @@ Esta rama (22 commits, el último del 29/09, de CariBosio) no comparte historia 
 - Su prompt inventa metadatos de OCI (etag, URL y tamaño fijos).
 
 **Verificación:** 278 tests del backend (3 nuevos: cada nivel tiene directiva, las instrucciones la incluyen y cambiarla invalida la huella) y 26 del frontend (3 nuevos). `tsc` sin errores, `eslint .` con 0 problemas y build correcto.
+
+---
+
+## 14 oct 2026 · Preparación del despliegue en la VM
+
+Se revisó qué necesita la VM para la versión actual. No se tocó la VM.
+
+**`.env.example`**
+- Faltaban `GEMINI_CONCURRENCIA_POR_MODELO` y `MAX_FILAS_CACHE_INVITADOS`, las dos de hoy, y las de correo (`SMTP_*`; sin ellas, el correo funciona en modo simulación).
+- Se añadieron como comentarios de línea completa: en la VM, los comentarios en la misma línea que un valor ya corrompieron las credenciales de OCI.
+
+**Problemas que harían fallar el despliegue** (documentados en `deploy/README_DESPLIEGUE_OCI.md`, sección 3b, que no se versiona)
+- **nginx:** no define `client_max_body_size`, así que acepta 1 MB por defecto. Toda subida de más de 1 MB devolvería 413, y el backend admite 15 MB.
+- **`.env` de producción:** el documentado era el de la arquitectura anterior (Cohere y LangGraph). Le faltan `GEMINI_API_KEY`, `GROQ_API_KEY`, `SUPABASE_*`, `ELEVENLABS_*` y `APP_ENV`.
+- **Modo invitado:** con `APP_ENV=prod` queda desactivado salvo que se añada `PERMITIR_MODO_INVITADO=true`.
+- **Build del front:** le faltaban `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`.
+
+**Lo que no hacía falta cambiar:** el SSE ya funciona detrás de nginx y Cloudflare, porque el backend envía `X-Accel-Buffering: no` y heartbeats cada 15 s.
+
+**`deploy/audiovisual.md`:** es el encargo original de diseño, de 1 108 líneas. Se conserva y se le añadió una nota inicial con el estado real: sin MP4 ni FFmpeg, diapositivas narradas en el navegador y qué partes del encargo no aplican.
+
+---
+
+## 14 oct 2026 · Decisión del modelo del resumen
+
+Se ejecutó `deploy/comparar_modelos.py` (Tarea A, 4 llamadas reales) sobre `guia_optimizacion_swap_oci.md` y `apache_kafka_introduction.md`.
+
+| Modelo | Respondió | Latencia | Citas localizadas |
+|---|---|---|---|
+| `gemini-3.5-flash-lite` | 2 de 2 | 4,6 a 6,1 s | 16 de 17 (94 %) |
+| `gemini-3.8-flash` | 1 de 2 (dos 503, "high demand") | 73,4 s | 9 de 12 (75 %) |
+
+**Decisión:** el resumen sigue en `3.5-flash-lite`. Pasarlo a `3.8-flash` para repartir la cuota sería peor en disponibilidad, en latencia (73 s se acercan al corte de 100 s de Cloudflare) y en fidelidad. El riesgo de compartir cuota lo cubren el respaldo `3.1-flash-lite` escalonado, la detección de cuota diaria y las cachés.
+
+**Límite de la prueba:** solo 2 documentos `.md` pequeños. Encaja con lo medido antes en el ENISA (30 de 30 citas con `3.5-flash-lite`).
+
+---
+
+## 14 oct 2026 · E2E de la narración y revisión de la prueba en el navegador
+
+**E2E de la narración** (`node tests/e2e_narracion.manual.ts`, desde `frontend/`, backend local en modo invitado, documento `guia_optimizacion_swap_oci.md`).
+- Antes de ejecutarlo se comprobaron sus tipos con `tsc --strict` (sin el `tsconfig` del proyecto, que no incluye `tests/`): 0 errores.
+- **Generación:** 16 s; 3 llamadas reales a `gemini-3.5-flash-lite` (6,1 s, 7,2 s y 12,9 s), sin caché ni respaldo.
+- **Narración:** `status=exito`, proveedor ElevenLabs, almacenamiento en línea. **Tardó 5,7 s**, lejos de los 100 s de Cloudflare.
+- **Duración:** 3 escenas de 37, 37 y 35 palabras, con 15,2 s, 16,3 s y 14,3 s. En total, **45,9 s de un máximo de 60 s**, y la suma por escena cuadra con el total.
+- **Fotos:** las 3 escenas tienen foto de Openverse con autor y licencia CC. Las palabras clave fueron genéricas ("cloud server", "storage disk", "error warning code"), lo que confirma el pendiente de pedir palabras clave más concretas en el guion.
+- **Coste:** unas 109 palabras narradas con ElevenLabs y 3 llamadas a Gemini.
+
+**Revisión de la prueba en el navegador hecha con Gemini.** La mayor parte de lo marcado como "chequeado" se comprobó leyendo el código, no usando la aplicación. Sus capturas solo cubren el paquete de demostración en modo invitado:
+- **Comprobado en el navegador:** el quiz respondido sin fallos (`Aprobación: 3/3 (100 %)`), las flashcards, Mermaid y la Estación 4 cargada.
+- **Sin probar en el navegador:**
+  - fallar una opción, perder un escudo y que aparezca "Descartaste «…»";
+  - agotar los escudos y ver el repaso guiado;
+  - "Restaurar escudos";
+  - la persistencia de la opción fallada tras recargar con cuenta;
+  - iniciar y cerrar sesión;
+  - pegar el prompt visual;
+  - escuchar la voz latina;
+  - la caché de invitados repetida.
+- **Pendiente del paquete de demostración:** su guion tiene 69 palabras (30 s), por debajo de la meta de 110 a 125 que la propia pantalla muestra.
+
+---
+
+## 14 oct 2026 · Narración: tope previo del guion y plazo total
+
+**Por qué.** `/api/v1/narracion/generar` responde de una vez, sin SSE, y tenía dos huecos:
+
+1. **Gastaba créditos sin mirar antes el guion.** `SolicitudNarracion` solo validaba de 1 a 3 escenas, y `guion_locutor` no tiene longitud máxima. Un guion de 500 palabras enviado por un cliente (el JSON se puede exportar y editar, también como invitado) pasaba la consulta de presupuesto. Después se sintetizaba entero, se repetía en ritmo ágil y terminaba en `excede_duracion`: créditos perdidos con un resultado imposible desde el principio.
+2. **No tenía plazo total.** Las repeticiones en ritmo ágil van una detrás de otra, cada una con hasta 60 s de espera en ElevenLabs, y luego venía el respaldo de Gemini (90 s). El peor caso superaba de lejos los 100 s de Cloudflare: un 524 sin explicación.
+
+**Qué se hizo.**
+- **`schemas.py` · `exceso_guion_narracion`:** un guion no se narra si supera `max_duration × 1,05 × 165 palabras/min` (173 palabras para 60 s). Es el ritmo más rápido que alcanza cualquier voz: ElevenLabs ágil ronda las 155 y Gemini las 160. Tampoco se narra si supera 10 caracteres por cada palabra admitida (1 730), porque ElevenLabs cobra por carácter. Responde `status="error"`, `error_codigo="guion_largo"` y un mensaje que dice que no se gastó cuota. No llama a la voz, ni a los bancos de fotos, ni al registro. El front ya muestra `advertencias[0]`, así que no hubo que tocarlo.
+- **`servicio_narracion.py` · `PLAZO_VOZ_S = 80`:** cubre la consulta de presupuesto, la voz de todos los proveedores y el ritmo ágil. Deja unos 15 s para el registro y el guardado.
+  - Si el plazo llega en la primera síntesis, se responde `error_codigo="plazo"` con un mensaje explícito y **no se prueba el respaldo**, porque solo llevaría al 524.
+  - Si llega durante el ritmo ágil, se decide con la voz ya pagada: puede salir bien, a velocidad ≤ 1,05×, o en `excede_duracion`.
+  - Las fotos tienen un margen de 2 s más. Si no llegan, la narración sigue con las diapositivas solas y un aviso.
+- **`servicio_voz.py`:** la espera de ElevenLabs baja de 60 a 25 s, porque una escena tarda ~1 s. Así, si ElevenLabs se cuelga, a Gemini le quedan más de 50 s.
+
+**Verificación.**
+- **Tests nuevos (5):**
+  - el tope a 173 palabras y el de caracteres;
+  - un guion de 180 palabras sin ninguna llamada ni archivo;
+  - el plazo agotado, sin respaldo;
+  - el plazo durante el ritmo ágil, que acaba bien a 1,025×;
+  - las fotos tardías omitidas.
+- **Suite del backend:** 283 tests pasan.
+- **Servidor real:** un guion de 210 palabras se rechazó en 3,9 s con `guion_largo`, sin ninguna petición a ElevenLabs ni a Openverse.
+
+**Problemas.**
+- Mientras se trabajaba, Gemini, en otra sesión, devolvió `schemas.py` a HEAD. Eso borró la función nueva y dejó roto el import del narrador. Se volvió a aplicar y se verificó.
+- **Lección:** no dejar que dos agentes editen el repositorio a la vez.
+- Además, la entrada "Fase 22" que Gemini añadió a `historial_progreso/CAMBIOS.md` tiene caracteres de escape mal convertidos: `\b` y `\f` desaparecen ("ackend", "rontend") y `\n` parte "npm test". Es la trampa de los heredocs descrita en `CLAUDE.md`.
+
+**Pendiente:** si el guion generado supera 125 palabras, reintentar con `flash-lite` antes de entregarlo (punto 3 de la crítica). Y alargar el guion de la demostración, que tiene 69 palabras.
+
+---
+
+## 14 oct 2026 · Guion acortado antes de publicar, demo a la meta y medalla honesta
+
+**Guion largo (`generacion_paralela.py`).**
+- **Antes:** un guion que pasaba de 125 palabras solo generaba un aviso. Entre 143 y 163 palabras obliga a repetir la voz en ritmo ágil (se paga dos veces), y por encima de eso no cabe en 60 s.
+- **Ahora:** si el guion de B2 supera `PALABRAS_GUION_MAX`, `_ajustar_guion` hace una llamada breve al mismo modelo que acaba de responder: 20 s de plazo, sin reintentos y con `thinking_level` mínimo.
+  - **Entrada:** solo los textos del guion, no el documento. Así es barata y no tiene material para añadir contenido.
+  - **Instrucción:** solo acortar, sin cambiar cifras, nombres ni comandos.
+  - **Validación con `guiones_ajustados`:** mismas escenas, ninguna vacía y un total ≤ 125.
+  - **Si cumple:** se publica el texto acortado con el aviso "guion acortado por IA de X a Y palabras (modelo)".
+  - **Si no cumple o falla:** queda el original, con el aviso "no se pudo acortar" y el de fuera de rango. El tope previo de la narración sigue protegiendo los créditos.
+- **Detalles:** la respuesta del modelo se comparte entre peticiones idénticas, así que se copia y nunca se modifica. Un guion corto sigue solo con su aviso, porque quedarse corto no cuesta créditos. `VERSION_PROCESADO` no se subió: subirla obligaría a regenerar todas las cachés.
+
+**Guion de la demo (`frontend/src/data/mockScenarios.ts`).** Pasa de 69 a 122 palabras (42, 39 y 41): 53,1 s al ritmo del contrato, dentro de la meta de 110 a 125 que muestra la pantalla. Solo usa datos que la demo ya tenía: fallocate, chmod 600, mkswap, swapon, free -h, 1,5 GB, 12 s y coste cero. Se actualizaron los tramos y los conteos.
+
+**Medalla (`BadgeModal.tsx`).** El aviso decía "listo para sincronización con el almacenamiento de OCI", lo que era falso dos veces: como invitado no se guarda nada, y con cuenta el progreso va a Supabase (`user_state`), no a OCI. Ahora el modal recibe `sesionIniciada`:
+- **con cuenta:** "Logro guardado en tu cuenta";
+- **como invitado:** "Logro de esta sesión", con la explicación de que se pierde al recargar.
+
+**Directivas para varios agentes.**
+- Nueva sección en `CLAUDE.md`.
+- Nuevos `AGENTS.md` y `GEMINI.md` en las dos carpetas, excluidos en `.git/info/exclude`: no se versionan.
+- Gemini trabaja en el worktree `../NovaMind-gemini` (rama `gemini/pruebas`, puertos 8001 y 5174), con `.env`, `frontend/.env.local` (apuntando al 8001) y `npm ci` ya preparados.
+
+**Revisión de la prueba de Gemini en el navegador** (con CDP sobre Chrome real):
+- **Probado:**
+  - fallo con escudo y opción bloqueada;
+  - "Repasa esto";
+  - pantalla con 0 escudos;
+  - prompt visual;
+  - voz `Google español de Estados Unidos (es-US)`;
+  - flashcards a 400 px;
+  - caché de invitados (15,3 s y luego 3,0 s);
+  - consola sin errores.
+- **Sin evidencia en las capturas:** "Restaurar escudos" (la captura muestra el modal de la medalla) y "Descartaste «…»" (la captura se corta antes).
+- **Pendiente:** la sesión con cuenta.
+
+**Verificación.**
+- **Backend:** 288 tests, 5 nuevos (sin ajuste, ajuste correcto y 3 casos en que se queda el original).
+- **Front:** `npm test`, `tsc` y `npm run build` limpios, y `eslint` sin problemas en los archivos tocados.

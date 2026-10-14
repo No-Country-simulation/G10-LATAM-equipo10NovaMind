@@ -10,6 +10,8 @@ interface BadgeModalProps {
   allBadges: Achievement[];
   xp: number;
   streakDays: number;
+  /** Con sesión, los logros se guardan en la cuenta (Supabase); como invitado, solo viven en memoria. */
+  sesionIniciada: boolean;
   onContinueQuest?: () => void;
   onRestartToStation1?: () => void;
   onReviewStations?: () => void;
@@ -22,6 +24,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
   allBadges = [],
   xp,
   streakDays,
+  sesionIniciada,
   onContinueQuest,
   onRestartToStation1,
 }) => {
@@ -120,10 +123,12 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
             <div className={styles.ociNotice}>
               <div className={styles.ociNoticeTitle}>
                 <Shield size={14} />
-                <span>Logro Registrado en Sesión</span>
+                <span>{sesionIniciada ? 'Logro guardado en tu cuenta' : 'Logro de esta sesión'}</span>
               </div>
               <p className={styles.ociNoticeText}>
-                Artefacto consolidado en el perfil pedagógico y listo para sincronización con el almacenamiento de OCI.
+                {sesionIniciada
+                  ? 'Se sincroniza con tu progreso y lo verás al volver a iniciar sesión.'
+                  : 'Estás como invitado: el logro se pierde al recargar la página. Inicia sesión para guardarlo.'}
               </p>
             </div>
 

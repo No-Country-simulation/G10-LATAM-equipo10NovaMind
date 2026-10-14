@@ -13,6 +13,11 @@ Al pulsar "Generar narración":
    se pagó. Si se pasa por más: "excede_duracion" y no se guarda nada.
 5. Usuarios: audio + JSON en el almacén privado (OCI o disco). Invitados: el audio viaja en
    la respuesta y nada se guarda.
+
+Antes de gastar: un guion que no puede caber ni con la voz más rápida se rechaza sin llamar
+a ningún proveedor. El endpoint responde de una vez (sin SSE), así que voz y fotos tienen un
+plazo total (PLAZO_VOZ_S) que deja margen bajo el corte de 100 s de Cloudflare. Si el plazo
+llega durante el ritmo ágil, se evalúa con la voz ya pagada; las fotos tardías se omiten.
 """
 
 from __future__ import annotations
@@ -31,6 +36,7 @@ from app.core.schemas import (
     RespuestaNarracion,
     SolicitudNarracion,
     VideoJobSpec,
+    exceso_guion_narracion,
     redondear_decima,
     velocidad_reproduccion,
 )
@@ -44,10 +50,17 @@ logger = logging.getLogger("novamind.servicio_narracion")
 # Sube este número si cambia la medición o el formato guardado: invalida lo reutilizable.
 VERSION_NARRACION = 2
 
+# Voz + fotos. Deja ~15 s bajo el corte de Cloudflare (100 s) para el registro y el guardado.
+PLAZO_VOZ_S = 80.0
+# Si la voz llega justo al plazo, las fotos aún tienen este margen antes de omitirse.
+MARGEN_FOTOS_S = 2.0
+
 _MENSAJES_ERROR = {
     "rate_limit": "La cuota gratuita de voz está agotada por ahora. Prueba de nuevo en unos minutos.",
     "sin_creditos": "Se agotaron los créditos de voz del mes. Prueba de nuevo más tarde.",
     "timeout": "El servicio de voz no respondió a tiempo. Prueba de nuevo.",
+    "plazo": f"La voz no estuvo lista en {PLAZO_VOZ_S:.0f} s y se canceló para no superar el límite del "
+             "servidor. Prueba de nuevo en unos minutos.",
     "sin_clave": "El servidor no tiene configurado ningún servicio de voz.",
     "almacenamiento": "La voz se generó, pero no se pudo guardar. Prueba de nuevo.",
 }
@@ -90,6 +103,12 @@ class Narrador:
     # ------------------------------------------------------------------ API
     async def narrar(self, solicitud: SolicitudNarracion) -> RespuestaNarracion:
         spec = solicitud.video_job_spec.model_copy(deep=True)
+        exceso = exceso_guion_narracion([e.guion_locutor for e in spec.escenas], spec.max_duration)
+        if exceso:
+            return RespuestaNarracion(
+                status="error", video_job_spec=spec, error_codigo="guion_largo",
+                almacenamiento=self._tipo_almacen(), advertencias=[exceso],
+            )
         huella = huella_narracion(spec, [v.identidad for v in self._voces])
         carpeta = f"{self._prefijo}/{huella}" if self._prefijo else None
 
@@ -102,22 +121,29 @@ class Narrador:
             )
 
         inicio = _ahora()
+        limite = asyncio.get_running_loop().time() + PLAZO_VOZ_S
         fotos = asyncio.create_task(self._fotos(spec) if solicitud.buscar_fotos else self._sin_fotos())
         avisos: List[str] = []
         audios: Optional[List[VozGenerada]] = None
         ultimo: Optional[ErrorVoz] = None
         for voz in self._voces:
-            aviso = await voz.sin_presupuesto([e.guion_locutor for e in spec.escenas])
-            if aviso:
-                avisos.append(aviso)
-                continue
             try:
-                audios = await self._sintetizar(spec, voz)
+                async with asyncio.timeout_at(limite):
+                    aviso = await voz.sin_presupuesto([e.guion_locutor for e in spec.escenas])
+                if aviso:
+                    avisos.append(aviso)
+                    continue
+                audios = await self._sintetizar(spec, voz, limite)
                 break
             except ErrorVoz as exc:
                 ultimo = exc
                 logger.warning("[narracion] %s falló (%s); se prueba el siguiente proveedor.", voz.nombre, exc.codigo)
                 avisos.append(f"{voz.nombre} no estuvo disponible ({_MENSAJES_ERROR.get(exc.codigo, exc.codigo)}).")
+            except TimeoutError:
+                # Sin tiempo para otro proveedor: probarlo solo acabaría en el 524 de Cloudflare
+                ultimo = ErrorVoz("plazo", f"{voz.nombre} no terminó en {PLAZO_VOZ_S:.0f} s.")
+                logger.warning("[narracion] %s agotó el plazo de %.0f s.", voz.nombre, PLAZO_VOZ_S)
+                break
 
         if audios is None:
             fotos.cancel()
@@ -128,7 +154,12 @@ class Narrador:
                 status="error", video_job_spec=spec, error_codigo=codigo, almacenamiento=self._tipo_almacen(),
                 advertencias=[_MENSAJES_ERROR.get(codigo, "No se pudo generar la voz. Prueba de nuevo."), *avisos],
             )
-        imagenes, avisos_fotos = await fotos
+        try:
+            async with asyncio.timeout_at(limite + MARGEN_FOTOS_S):
+                imagenes, avisos_fotos = await fotos
+        except TimeoutError:
+            imagenes = [None] * len(spec.escenas)
+            avisos_fotos = ["Las fotos no llegaron a tiempo: se muestran las diapositivas solas."]
         avisos.extend(avisos_fotos)
         proveedor = audios[0].proveedor
 
@@ -181,13 +212,20 @@ class Narrador:
         )
 
     # ------------------------------------------------------------------ voz
-    async def _sintetizar(self, spec: VideoJobSpec, voz: Sintetizador) -> List[VozGenerada]:
-        audios = list(await asyncio.gather(*(voz.sintetizar(e.guion_locutor) for e in spec.escenas)))
+    async def _sintetizar(self, spec: VideoJobSpec, voz: Sintetizador, limite: float) -> List[VozGenerada]:
+        async with asyncio.timeout_at(limite):
+            audios = list(await asyncio.gather(*(voz.sintetizar(e.guion_locutor) for e in spec.escenas)))
         # Si no cabe, se repiten con ritmo ágil las escenas más largas primero, hasta que quepa.
+        # Una a una (cada repetición se paga). Si llega el plazo, se decide con la voz ya pagada.
         for i in sorted(range(len(audios)), key=lambda k: audios[k].duracion_s, reverse=True):
             if sum(a.duracion_s for a in audios) <= spec.max_duration:
                 break
-            agil = await voz.sintetizar(spec.escenas[i].guion_locutor, rapido=True)
+            try:
+                async with asyncio.timeout_at(limite):
+                    agil = await voz.sintetizar(spec.escenas[i].guion_locutor, rapido=True)
+            except TimeoutError:
+                logger.warning("[narracion] Plazo agotado durante el ritmo ágil; se evalúa la voz ya generada.")
+                break
             if agil.duracion_s < audios[i].duracion_s:
                 audios[i] = agil
         return audios

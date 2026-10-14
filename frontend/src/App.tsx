@@ -578,6 +578,7 @@ export default function App() {
         allBadges={achievements}
         xp={xp}
         streakDays={streakDays}
+        sesionIniciada={user !== null}
         onContinueQuest={handleContinueAfterBadge}
         onReviewStations={() => {
           // Te lleva al paso 2 y a la primera estación para repasar
