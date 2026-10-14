@@ -238,7 +238,10 @@ def _error_elevenlabs(r: httpx.Response) -> ErrorVoz:
         pass
     estado = str(detalle.get("status") or detalle.get("code") or "")
     mensaje = str(detalle.get("message") or f"HTTP {r.status_code}")
-    if estado in ("quota_exceeded", "insufficient_credits") or "quota" in mensaje.lower():
+    # El tope de créditos puede ser de la cuenta o de la clave (p. ej. 1 000 por clave). El de la
+    # clave no aparece en /v1/user/subscription, así que solo se sabe por este rechazo.
+    if estado in ("quota_exceeded", "insufficient_credits") or any(
+            p in f"{estado} {mensaje}".lower() for p in ("quota", "credit")):
         return ErrorVoz("sin_creditos", "Se agotaron los créditos de ElevenLabs.")
     if r.status_code in (401, 403):
         return ErrorVoz("no_autorizado", mensaje)

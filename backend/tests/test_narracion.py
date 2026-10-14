@@ -350,7 +350,8 @@ def test_palabra_clave_ambigua_no_consulta_los_bancos():
             await b.aclose()
 
     # el sentido literal engaña: nubes del cielo, ríos, el escritor Kafka
-    ambiguas = ["cloud computing", "Event Streaming", "message broker", "apache kafka", "data pipelines"]
+    ambiguas = ["cloud computing", "Event Streaming", "message broker", "apache kafka", "data pipelines",
+                "error screen", "server warning"]
     assert asyncio.run(buscar(ambiguas)) == [None] * len(ambiguas)
     assert consultas == []
     # una palabra concreta sí se busca ("cloudy" o "upstream" no son la palabra ambigua)
@@ -493,9 +494,11 @@ def test_duracion_mp3_a_32_kbps():
 class ElevenSimulado:
     """Transporte que imita /with-timestamps y /user/subscription."""
 
-    def __init__(self, restantes: int = 9000, estado_tts: int = 200, cuerpo_error=None, seg_por_caracter=0.06):
+    def __init__(self, restantes: int = 9000, estado_tts: int = 200, cuerpo_error=None, seg_por_caracter=0.06,
+                 falla_tras: Optional[int] = None):
         self.restantes, self.estado_tts, self.cuerpo_error = restantes, estado_tts, cuerpo_error
         self.seg = seg_por_caracter
+        self.falla_tras = falla_tras  # las primeras N síntesis salen bien; después, estado_tts
         self.cuerpos: List[dict] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
@@ -504,7 +507,7 @@ class ElevenSimulado:
             return httpx.Response(200, json={"character_limit": 10000, "character_count": 10000 - self.restantes})
         cuerpo = json.loads(request.content)
         self.cuerpos.append(cuerpo)
-        if self.estado_tts != 200:
+        if self.estado_tts != 200 and (self.falla_tras is None or len(self.cuerpos) > self.falla_tras):
             return httpx.Response(self.estado_tts, json=self.cuerpo_error or {})
         caracteres, fines = _alineacion(cuerpo["text"], self.seg)
         mp3 = b"\xff\xfb" * 1000  # 2000 bytes = 0,5 s a 32 kbps (menor que la alineación)
@@ -565,6 +568,46 @@ def test_error_de_elevenlabs_se_clasifica():
     with pytest.raises(ErrorVoz) as exc:
         asyncio.run(_eleven(sim).sintetizar("hola"))
     assert exc.value.codigo == "no_autorizado"
+
+
+@pytest.mark.parametrize("detalle", [
+    {"status": "quota_exceeded", "message": "This request exceeds your API key quota of 1000."},
+    {"status": "credit_limit_exceeded", "message": "limit reached"},
+    {"status": "", "message": "You have 37 credits remaining, while 120 credits are required."},
+])
+def test_tope_de_creditos_de_la_clave_se_clasifica_como_sin_creditos(detalle):
+    # El tope de la clave no se ve en /v1/user/subscription: solo llega como rechazo
+    sim = ElevenSimulado(estado_tts=401, cuerpo_error={"detail": detalle})
+    with pytest.raises(ErrorVoz) as exc:
+        asyncio.run(_eleven(sim).sintetizar("hola"))
+    assert exc.value.codigo == "sin_creditos"
+
+
+def test_creditos_agotados_a_mitad_de_narracion_pasa_a_gemini_entera():
+    # La escena 1 sale; la 2 ya no tiene créditos. No se mezclan voces: Gemini narra todas.
+    sim = ElevenSimulado(estado_tts=401, falla_tras=1,
+                         cuerpo_error={"detail": {"status": "quota_exceeded", "message": "quota"}})
+    gemini = VozSimulada()
+    r = _narrar(Narrador([_eleven(sim), VozGemini(gemini, "tts-modelo")]), _spec(2))
+    assert r.status == "exito" and r.proveedor == "gemini" and len(gemini.llamadas) == 2
+    assert all(e.audio.proveedor == "gemini" for e in r.video_job_spec.escenas)
+    assert any("créditos de voz" in a for a in r.advertencias)
+
+
+def test_creditos_agotados_al_repetir_con_ritmo_agil_pasa_a_gemini():
+    # Las 2 escenas salen pero no caben; la repetición ágil ya no tiene créditos
+    sim = ElevenSimulado(seg_por_caracter=0.12, estado_tts=401, falla_tras=2,
+                         cuerpo_error={"detail": {"status": "quota_exceeded", "message": "quota"}})
+    r = _narrar(Narrador([_eleven(sim), VozGemini(VozSimulada(), "tts-modelo")]), _spec(2))
+    assert r.status == "exito" and r.proveedor == "gemini"
+    assert len(sim.cuerpos) == 3  # 2 escenas + 1 repetición rechazada: no se insiste
+
+
+def test_clave_no_autorizada_se_explica_con_palabras():
+    sim = ElevenSimulado(estado_tts=401, cuerpo_error={"detail": {"status": "invalid_api_key", "message": "bad"}})
+    r = _narrar(Narrador([_eleven(sim), VozGemini(VozSimulada(), "tts-modelo")]))
+    assert r.proveedor == "gemini"
+    assert any("no es válida" in a for a in r.advertencias) and not any("(no_autorizado)" in a for a in r.advertencias)
 
 
 def test_usuario_guarda_mp3_y_lo_descarga(api, tmp_path):
