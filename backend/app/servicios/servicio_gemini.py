@@ -189,13 +189,15 @@ class ClienteGemini:
         await self.aclose()
 
     # ------------------------------------------------------------------ núcleo
-    async def _interactuar(self, cuerpo: Dict[str, Any], *, timeout_s: Optional[float], procesar):
+    async def _interactuar(self, cuerpo: Dict[str, Any], *, timeout_s: Optional[float], procesar,
+                           max_reintentos: Optional[int] = None):
         """POST con reintentos. `procesar(json, intentos, inicio)` puede lanzar GeminiError reintentable."""
+        reintentos = self._max_reintentos if max_reintentos is None else max_reintentos
         modelo = cuerpo["model"]
         cuerpo = {**cuerpo, "store": False}
         inicio = time.perf_counter()
         ultimo: Optional[GeminiError] = None
-        for intento in range(self._max_reintentos + 1):
+        for intento in range(reintentos + 1):
             respuesta: Optional[httpx.Response] = None
             try:
                 async with self._semaforo:
@@ -216,9 +218,9 @@ class ClienteGemini:
 
             logger.warning(
                 "[gemini] %s intento %d/%d falló: %s (http=%s)",
-                modelo, intento + 1, self._max_reintentos + 1, ultimo.codigo, ultimo.http_status,
+                modelo, intento + 1, reintentos + 1, ultimo.codigo, ultimo.http_status,
             )
-            if not ultimo.reintentable or intento == self._max_reintentos:
+            if not ultimo.reintentable or intento == reintentos:
                 break
             await self._dormir(_segundos_de_espera(respuesta, intento, self._espera_base_s))
         assert ultimo is not None
@@ -235,8 +237,12 @@ class ClienteGemini:
         timeout_s: Optional[float] = None,
         thinking_level: Optional[str] = None,
         max_output_tokens: Optional[int] = None,
+        max_reintentos: Optional[int] = None,
     ) -> RespuestaJson[M]:
-        """Genera JSON con esquema estructurado y lo valida con `esquema_salida` (Pydantic)."""
+        """
+        Genera JSON con esquema estructurado y lo valida con `esquema_salida` (Pydantic).
+        `max_reintentos` sustituye al del cliente (0 si hay un modelo de respaldo esperando).
+        """
         config: Dict[str, Any] = {}
         if thinking_level:
             config["thinking_level"] = thinking_level
@@ -274,7 +280,8 @@ class ClienteGemini:
                         modelo, uso.latencia_s, uso.tokens_entrada, uso.tokens_salida, intentos)
             return RespuestaJson(datos=datos, uso=uso)
 
-        return await self._interactuar(cuerpo, timeout_s=timeout_s, procesar=procesar)
+        return await self._interactuar(cuerpo, timeout_s=timeout_s, procesar=procesar,
+                                       max_reintentos=max_reintentos)
 
     # ------------------------------------------------------------------ voz
     async def sintetizar_voz(

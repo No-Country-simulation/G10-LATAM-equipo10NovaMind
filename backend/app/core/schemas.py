@@ -762,6 +762,19 @@ class EscenaDirectorCut(BaseModel):
         return self
 
 
+# Si la voz medida pasa del máximo tras el ritmo ágil, el navegador la reproduce hasta un 5 % más
+# rápido en vez de descartarla (ya se pagó): lo que se escucha sigue cabiendo en max_duration.
+VELOCIDAD_MAX_REPRODUCCION = 1.05
+
+
+def velocidad_reproduccion(total_s: float, maximo_s: float) -> Optional[float]:
+    """Velocidad (≥ 1, en milésimas hacia arriba) para que total_s suene en maximo_s; None si ni así cabe."""
+    if total_s <= maximo_s:
+        return 1.0
+    velocidad = math.ceil(round(total_s / maximo_s * 1000, 6)) / 1000
+    return velocidad if velocidad <= VELOCIDAD_MAX_REPRODUCCION else None
+
+
 class VideoJobSpec(BaseModel):
     """
     Contrato diferido de generación audiovisual (contract_ready).
@@ -794,8 +807,11 @@ class VideoJobSpec(BaseModel):
     degradaciones: List[str] = Field(default_factory=list)
     manifiesto_url_oci: Optional[str] = None
     video_url_oci: Optional[str] = None
-    # Suma de las duraciones medidas de los WAV; None mientras no se pida la narración
-    duracion_total_real: Optional[float] = Field(default=None, ge=0, le=60.0)
+    # Suma de las duraciones medidas de los audios; None mientras no se pida la narración.
+    # Puede pasar de 60 s solo si velocidad_reproduccion la hace sonar en max_duration.
+    duracion_total_real: Optional[float] = Field(default=None, ge=0, le=60.0 * VELOCIDAD_MAX_REPRODUCCION)
+    # playbackRate del navegador: 1.0 salvo que la voz medida pase un poco del máximo
+    velocidad_reproduccion: float = Field(default=1.0, ge=1.0, le=VELOCIDAD_MAX_REPRODUCCION)
 
     @model_validator(mode="after")
     def _calcular_totales(self) -> "VideoJobSpec":
@@ -833,8 +849,10 @@ class SolicitudNarracion(BaseModel):
 class RespuestaNarracion(BaseModel):
     """
     status:
-      - "exito": hay audio para todas las escenas y la suma medida cabe en max_duration.
-      - "excede_duracion": la voz real supera el máximo incluso con ritmo ágil; no se guarda nada.
+      - "exito": hay audio para todas las escenas y la suma medida cabe en max_duration, o la
+        supera en menos de un 5 % y video_job_spec.velocidad_reproduccion la hace caber.
+      - "excede_duracion": la voz real supera el máximo incluso con ritmo ágil y esa velocidad;
+        no se guarda nada.
       - "error": Gemini no entregó el audio (cuota, red...); `error_codigo` dice por qué.
     """
 

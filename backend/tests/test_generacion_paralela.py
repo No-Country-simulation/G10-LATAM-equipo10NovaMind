@@ -49,6 +49,8 @@ CONFIG = replace(
     Config.desde_entorno(cargar_dotenv=False),
     gemini_summary_model="modelo-resumen",
     gemini_resources_model="modelo-recursos",
+    gemini_summary_fallback_model="respaldo-resumen",
+    gemini_resources_fallback_model="respaldo-recursos",
 )
 
 
@@ -264,6 +266,44 @@ def test_los_modelos_salen_de_la_configuracion():
     modelos = {t: cuerpo["model"] for t, cuerpo in sim.peticiones}
     assert modelos == {"A": "modelo-resumen", "B1": "otro-modelo-lite", "B2": "otro-modelo-lite"}
     assert all(cuerpo["store"] is False for _, cuerpo in sim.peticiones)
+
+
+def _saturado():
+    return httpx.Response(503, json={"error": {"message": "high demand"}})
+
+
+def test_modelo_saturado_pasa_al_respaldo_sin_reintentar():
+    sim = Simulador()
+    original = sim.__call__
+
+    async def por_modelo(request):
+        if json.loads(request.content)["model"] == "modelo-resumen":
+            sim.peticiones.append(("A", json.loads(request.content)))
+            return _saturado()
+        return await original(request)
+
+    respuesta, eventos = _generar(por_modelo)
+    assert [c["model"] for t, c in sim.peticiones if t == "A"] == ["modelo-resumen", "respaldo-resumen"]
+    estado = respuesta.contenido_adaptado.estado_recursos["resumen"]
+    assert estado.estado == "completado" and estado.modelo == "respaldo-resumen"
+    aviso = next(e for e in eventos if e["tipo"] == "tarea" and e["estado"] == "respaldo")
+    assert aviso == {"tipo": "tarea", "tarea": "A", "estado": "respaldo", "modelo": "respaldo-resumen",
+                     "modelo_principal": "modelo-resumen", "error_codigo": "servidor"}
+
+
+def test_error_de_la_peticion_no_gasta_el_respaldo():
+    sim = Simulador(respuestas={"A": lambda: httpx.Response(400, json={"error": {"message": "x"}})})
+    respuesta, _ = _generar(sim)
+    assert [c["model"] for t, c in sim.peticiones if t == "A"] == ["modelo-resumen"]
+    assert respuesta.contenido_adaptado.estado_recursos["resumen"].error_codigo == "peticion_invalida"
+
+
+def test_sin_respaldo_configurado_falla_como_antes():
+    sim = Simulador(respuestas={"B1": _saturado})
+    config = replace(CONFIG, gemini_resources_fallback_model=None)
+    respuesta, _ = _generar(sim, config=config)
+    assert [c["model"] for t, c in sim.peticiones if t == "B1"] == ["modelo-recursos"]
+    assert respuesta.contenido_adaptado.estado_recursos["flashcards"].error_codigo == "servidor"
 
 
 # --- Comprobaciones deterministas ----------------------------------------------------

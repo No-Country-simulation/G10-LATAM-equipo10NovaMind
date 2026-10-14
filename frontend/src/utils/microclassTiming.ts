@@ -29,6 +29,24 @@ export const splitWords = (text: string | null | undefined): string[] =>
 
 export const countWords = (text: string | null | undefined): number => splitWords(text).length;
 
+/**
+ * Índice (en el orden de splitWords) de la palabra que contiene `charIndex`, o de la
+ * siguiente si cae en un separador. Traduce los eventos `boundary` de la voz del navegador.
+ */
+export const wordIndexAtChar = (text: string, charIndex: number): number => {
+  const separators = new RegExp(WORD_SEPARATORS.source, 'g');
+  let index = 0;
+  let wordStart = 0;
+  for (let m = separators.exec(text); m !== null; m = separators.exec(text)) {
+    if (m.index > wordStart) {
+      if (charIndex < m.index) return index;
+      index += 1;
+    }
+    wordStart = m.index + m[0].length;
+  }
+  return index;
+};
+
 /** Redondeo half-up a 0.1 (idéntico a math.floor(x * 10 + 0.5) / 10 en Python). */
 export const roundTenth = (value: number): number => Math.floor(value * 10 + 0.5) / 10;
 
@@ -56,6 +74,12 @@ export interface MicroclassTiming {
   totalWords: number;
   totalSeconds: number;
 }
+
+/**
+ * Segundos que se escuchan de un audio que dura `seconds` reproducido a `rate`
+ * (VideoJobSpec.velocidad_reproduccion: 1 salvo que la voz medida pase un poco de 60 s).
+ */
+export const playbackSeconds = (seconds: number, rate: number = 1): number => roundTenth(seconds / rate);
 
 /** Tiempos de toda la microclase al wpm dado: lo mismo que calcula VideoJobSpec en el backend. */
 export const microclassTiming = (scripts: ReadonlyArray<string | null | undefined>, wpm: number): MicroclassTiming => {

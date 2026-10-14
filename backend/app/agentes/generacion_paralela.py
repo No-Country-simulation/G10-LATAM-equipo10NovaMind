@@ -538,6 +538,9 @@ class Tarea:
     thinking_level: Optional[str]
     # Instrucciones que dependen del documento (p. ej. cuántas escenas); entran en la huella
     extra: Optional[Callable[[SolicitudAdaptacion], str]] = None
+    # Modelo de Gemini que se prueba si el principal no responde. No entra en la huella:
+    # el resultado es el mismo contrato y la fila registra qué modelo lo produjo.
+    respaldo: Optional[str] = None
 
     def instrucciones_para(self, solicitud: SolicitudAdaptacion) -> str:
         return f"{self.instrucciones}\n\n{self.extra(solicitud)}" if self.extra else self.instrucciones
@@ -547,19 +550,25 @@ class Tarea:
         return [r for r, _ in self.procesadores]
 
 
+def _respaldo(principal: str, respaldo: Optional[str]) -> Optional[str]:
+    return respaldo if respaldo and respaldo != principal else None
+
+
 def tareas_para(config: Config) -> List[Tarea]:
     """Los modelos salen de la configuración: cambiarlos no toca esta lógica."""
+    respaldo_a = _respaldo(config.gemini_summary_model, config.gemini_summary_fallback_model)
+    respaldo_b = _respaldo(config.gemini_resources_model, config.gemini_resources_fallback_model)
     return [
         Tarea("A", config.gemini_summary_model, _TAREA_A, SalidaResumen,
-              (("resumen", procesar_resumen),), timeout_s=150.0, thinking_level="low"),
+              (("resumen", procesar_resumen),), timeout_s=150.0, thinking_level="low", respaldo=respaldo_a),
         Tarea("B1", config.gemini_resources_model, _TAREA_B1, SalidaEvaluacion,
               (("flashcards", procesar_flashcards), ("cuestionario", procesar_cuestionario),
                ("glosario", procesar_glosario), ("objetivos", procesar_objetivos)),
-              timeout_s=90.0, thinking_level="minimal"),
+              timeout_s=90.0, thinking_level="minimal", respaldo=respaldo_b),
         Tarea("B2", config.gemini_resources_model, _TAREA_B2, SalidaProduccion,
               (("guion", procesar_guion), ("diapositivas", procesar_diapositivas),
                ("tutorial", procesar_tutorial), ("diagrama", procesar_diagrama)),
-              timeout_s=90.0, thinking_level="minimal", extra=_instrucciones_produccion),
+              timeout_s=90.0, thinking_level="minimal", extra=_instrucciones_produccion, respaldo=respaldo_b),
     ]
 
 
@@ -570,6 +579,17 @@ _MENSAJES_ERROR = {
     "esquema_invalido": "la respuesta del modelo no cumplía el formato",
     "sin_elementos_validos": "ningún elemento superó las comprobaciones",
 }
+
+# Errores del modelo principal que justifican probar el de respaldo: saturación, cuota,
+# red o una salida defectuosa (todos reintentables) y un modelo retirado.
+def _pasa_al_respaldo(exc: GeminiError) -> bool:
+    return exc.reintentable or exc.codigo == "modelo_no_encontrado"
+
+
+# Con respaldo, el principal tiene una fracción del tiempo para que el respaldo aún quepa
+# en el presupuesto de la generación.
+_FRACCION_TIMEOUT_PRINCIPAL = 0.6
+
 
 # Sube este número si cambian las comprobaciones deterministas: invalida lo reutilizable.
 VERSION_PROCESADO = 2
@@ -782,14 +802,7 @@ class GeneradorParalelo:
                      "recursos": pendientes})
         await self._guardar([_fila(tarea, r, huella, inicio) for r in pendientes])
         try:
-            respuesta = await _llamada_compartida(self._propietario, huella, lambda: self._cliente.generar_json(
-                modelo=tarea.modelo,
-                instrucciones=f"{tarea.instrucciones_para(ej.solicitud)}\n\n{_instrucciones_audiencia(ej.solicitud)}\n\n{_REGLAS_FIDELIDAD}",
-                entrada=ej.entrada,
-                esquema_salida=tarea.esquema,
-                timeout_s=tarea.timeout_s,
-                thinking_level=tarea.thinking_level,
-            ))
+            respuesta = await _llamada_compartida(self._propietario, huella, lambda: self._llamar(tarea, ej))
         except GeminiError as exc:
             await self._fallar(tarea, exc.codigo, pendientes, ej)
             return
@@ -833,6 +846,31 @@ class GeneradorParalelo:
             ej.publicar({"tipo": "recurso", "recurso": recurso, "campos": listo.campos,
                          "estado": estado.model_dump()})
         await self._guardar([ej.filas[r] for r in pendientes if r in ej.filas])
+
+    async def _llamar(self, tarea: Tarea, ej: _Ejecucion):
+        """Modelo principal sin reintentos si hay respaldo; ante saturación o cuota, el respaldo."""
+        instrucciones = (f"{tarea.instrucciones_para(ej.solicitud)}\n\n"
+                         f"{_instrucciones_audiencia(ej.solicitud)}\n\n{_REGLAS_FIDELIDAD}")
+
+        def llamada(modelo: str, **extra):
+            return self._cliente.generar_json(
+                modelo=modelo, instrucciones=instrucciones, entrada=ej.entrada, esquema_salida=tarea.esquema,
+                thinking_level=tarea.thinking_level, **extra,
+            )
+
+        if tarea.respaldo is None:
+            return await llamada(tarea.modelo, timeout_s=tarea.timeout_s)
+        try:
+            return await llamada(tarea.modelo, timeout_s=tarea.timeout_s * _FRACCION_TIMEOUT_PRINCIPAL,
+                                 max_reintentos=0)
+        except GeminiError as exc:
+            if not _pasa_al_respaldo(exc):
+                raise
+            logger.warning("[paralelo] Tarea %s: %s falló (%s); se usa %s.",
+                           tarea.id, tarea.modelo, exc.codigo, tarea.respaldo)
+            ej.publicar({"tipo": "tarea", "tarea": tarea.id, "estado": "respaldo", "modelo": tarea.respaldo,
+                         "modelo_principal": tarea.modelo, "error_codigo": exc.codigo})
+        return await llamada(tarea.respaldo, timeout_s=tarea.timeout_s)
 
     async def _fallar(self, tarea: Tarea, codigo: str, recursos: List[str], ej: _Ejecucion) -> None:
         ej.publicar({"tipo": "tarea", "tarea": tarea.id, "estado": "fallida", "modelo": tarea.modelo,

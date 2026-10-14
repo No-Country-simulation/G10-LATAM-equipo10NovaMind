@@ -103,6 +103,12 @@ class Config:
     # Verificados contra GET /v1beta/models el 2026-10-12. Cambiar de modelo = cambiar el .env.
     gemini_summary_model: str = "gemini-3.8-flash"
     gemini_resources_model: str = "gemini-3.5-flash-lite"
+    # Respaldo si el principal no responde (429, 5xx, timeout). Medido con el ENISA (76k tokens)
+    # el 2026-10-13: los principales dieron 503 "high demand"; 3.1-flash-lite entregó el JSON de
+    # las tres tareas en 8-10 s. gemini-2.5-flash NO sirve: en /interactions ignora el esquema
+    # y responde en markdown. Vacío en el .env = sin respaldo.
+    gemini_summary_fallback_model: Optional[str] = "gemini-3.1-flash-lite"
+    gemini_resources_fallback_model: Optional[str] = "gemini-3.1-flash-lite"
     gemini_tts_model: str = "gemini-3.8-flash-lite-tts"
 
     # --- Voz del video narrado: ElevenLabs principal, Gemini TTS respaldo ---
@@ -153,6 +159,8 @@ class Config:
             entorno=os.getenv("APP_ENV", "dev").lower(),
             gemini_summary_model=os.getenv("GEMINI_SUMMARY_MODEL") or "gemini-3.8-flash",
             gemini_resources_model=os.getenv("GEMINI_RESOURCES_MODEL") or "gemini-3.5-flash-lite",
+            gemini_summary_fallback_model=os.getenv("GEMINI_SUMMARY_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
+            gemini_resources_fallback_model=os.getenv("GEMINI_RESOURCES_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
             gemini_tts_model=os.getenv("GEMINI_TTS_MODEL") or "gemini-3.8-flash-lite-tts",
             elevenlabs_api_key=os.getenv("ELEVENLABS_API_KEY") or None,
             elevenlabs_tts_model=os.getenv("ELEVENLABS_TTS_MODEL") or "eleven_flash_v2_5",

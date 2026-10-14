@@ -22,6 +22,7 @@ from app.core.schemas import (
     SolicitudAdaptacion,
     SolicitudNarracion,
     VideoJobSpec,
+    velocidad_reproduccion,
 )
 from app.main import app
 from app.servicios.registro_tareas import RegistroMemoria
@@ -130,6 +131,31 @@ def test_si_ni_con_ritmo_agil_cabe_no_se_guarda_nada(tmp_path):
     assert "60" in r.advertencias[0]
     assert all(e.audio is None for e in r.video_job_spec.escenas)
     assert not any(tmp_path.rglob("*"))
+
+
+def test_si_se_pasa_por_poco_se_acepta_y_se_reproduce_mas_rapido(tmp_path):
+    voz = VozSimulada(natural=25.0, agil=20.5)  # 61.5 s tras el ritmo ágil: la voz ya se pagó
+    narrador = Narrador([VozGemini(voz, "tts-modelo")], almacen=AlmacenLocal(tmp_path), prefijo=prefijo_narraciones(USUARIO))
+    r = _narrar(narrador)
+    assert r.status == "exito" and r.duracion_total_real_s == 61.5
+    assert r.video_job_spec.velocidad_reproduccion == 1.025
+    assert any("1.025×" in aviso for aviso in r.advertencias)
+    # Lo reutilizado conserva la velocidad
+    r2 = _narrar(narrador)
+    assert r2.reutilizado and r2.video_job_spec.velocidad_reproduccion == 1.025
+
+
+def test_si_cabe_se_reproduce_a_velocidad_normal():
+    r = _narrar(Narrador([VozGemini(VozSimulada(), "tts-modelo")]))
+    assert r.video_job_spec.velocidad_reproduccion == 1.0
+    assert not any("×" in aviso for aviso in r.advertencias)
+
+
+def test_velocidad_de_reproduccion_tolera_hasta_un_5_por_ciento():
+    assert velocidad_reproduccion(60.0, 60) == 1.0
+    assert velocidad_reproduccion(60.1, 60) == 1.002  # siempre hacia arriba: nunca suena > 60 s
+    assert velocidad_reproduccion(63.0, 60) == 1.05
+    assert velocidad_reproduccion(63.1, 60) is None
 
 
 def test_cuota_agotada_devuelve_error_explicado_sin_guardar(tmp_path):

@@ -157,8 +157,10 @@ export interface VideoJobSpec {
   degradaciones?: string[];
   manifiesto_url_oci?: string | null;
   video_url_oci?: string | null;
-  /** Suma de las duraciones medidas de los WAV; null mientras no se pida la narración */
+  /** Suma de las duraciones medidas de los audios; null mientras no se pida la narración */
   duracion_total_real?: number | null;
+  /** playbackRate del audio: 1 salvo que la voz medida pase un poco del máximo (hasta 1.05) */
+  velocidad_reproduccion?: number;
 }
 
 /**

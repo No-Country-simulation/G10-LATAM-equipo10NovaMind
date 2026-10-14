@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { countWords, microclassTiming, roundTenth, sceneSeconds } from '../src/utils/microclassTiming.ts';
+import { countWords, microclassTiming, playbackSeconds, roundTenth, sceneSeconds } from '../src/utils/microclassTiming.ts';
 
 interface GoldenCase {
   nombre: string;
@@ -49,4 +49,11 @@ test('el piso de 5 s se aplica después de escalar por wpm', () => {
 test('conteo de palabras ignora espacios raros', () => {
   assert.equal(countWords('  Uno dos\ttres\ncuatro  '), 4);
   assert.equal(countWords(undefined), 0);
+});
+
+test('a la velocidad que pide el backend, una voz de hasta 63 s suena en 60 s o menos', () => {
+  assert.equal(playbackSeconds(45), 45);
+  assert.equal(playbackSeconds(61.5, 1.025), 60);
+  assert.equal(playbackSeconds(60.1, 1.002), 60);
+  assert.equal(playbackSeconds(63, 1.05), 60);
 });

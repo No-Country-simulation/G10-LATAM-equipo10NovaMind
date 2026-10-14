@@ -27,6 +27,7 @@ import {
   Check,
   Timer,
   Mic,
+  Volume2,
   LoaderCircle,
   TriangleAlert as AlertTriangle,
 } from 'lucide-react';
@@ -39,9 +40,12 @@ import {
   TARGET_WORDS_MAX,
   TARGET_WORDS_MIN,
   microclassTiming,
+  playbackSeconds,
   sceneSeconds,
   splitWords,
+  wordIndexAtChar,
 } from '../../../utils/microclassTiming';
+import { cargarVocesNavegador, elegirVozNavegador } from '../../../utils/vozNavegador';
 import { SlideNarrada } from './SlideNarrada';
 import styles from './Station4DirectorCut.module.css';
 
@@ -54,12 +58,25 @@ const WPM_PRESETS = [
   { value: 160, label: 'Ágil' },
 ] as const;
 
-/** La voz se genera solo si se pide: gasta cuota de Gemini. */
+/**
+ * La voz se genera solo si se pide: gasta cuota. 'navegador' es el último recurso cuando
+ * ElevenLabs y Gemini fallan: la Web Speech API, sin grabación ni duración garantizada.
+ */
 type EstadoNarracion =
   | { fase: 'inactiva' }
   | { fase: 'generando' }
   | { fase: 'lista'; respuesta: RespuestaNarracion; urls: Record<number, string> }
-  | { fase: 'error'; mensaje: string };
+  | { fase: 'error'; mensaje: string }
+  | { fase: 'navegador'; voz: string; lang: string };
+
+/** Lo que la voz del navegador informa mientras lee una escena. */
+interface HablaNavegador {
+  terminada: boolean;
+  /** Palabra que suena según los eventos `boundary`; null si el navegador no los emite. */
+  palabra: number | null;
+}
+
+const hayVozNavegador = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
 const liberarUrls = (urls: Record<number, string>) => Object.values(urls).forEach((u) => URL.revokeObjectURL(u));
 
@@ -181,6 +198,7 @@ const DirectorStudio = ({
   const [narracion, setNarracion] = useState<EstadoNarracion>({ fase: 'inactiva' });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hablaRef = useRef<HablaNavegador | null>(null);
   const urlsRef = useRef<Record<number, string>>({});
   const vivoRef = useRef(true);
   useEffect(() => {
@@ -214,18 +232,25 @@ const DirectorStudio = ({
   const viewScene = narrada ?? currentScene;
   const audioUrl = narracion.fase === 'lista' && narrada?.audio ? narracion.urls[narrada.escena] : undefined;
   const audioMode = Boolean(audioUrl);
+  const browserMode = narracion.fase === 'navegador';
   const tiemposPalabras =
     audioMode && narrada?.audio?.tiempos_palabras?.length === scriptWords.length
       ? narrada.audio.tiempos_palabras
       : null;
-  const sceneDurationSec = audioMode && narrada?.audio ? narrada.audio.duracion_real_s : sceneSeconds(wordCount, wpm);
+  // Si la voz medida pasa un poco de 60 s, el backend pide reproducirla algo más rápido
+  const velocidad = narracion.fase === 'lista' ? (narracion.respuesta.video_job_spec.velocidad_reproduccion ?? 1) : 1;
+  // Lo que dura el audio en sí (reloj del <audio>) y lo que se escucha a esa velocidad
+  const audioDurationSec = audioMode && narrada?.audio ? narrada.audio.duracion_real_s : null;
+  const sceneDurationSec =
+    audioDurationSec !== null ? playbackSeconds(audioDurationSec, velocidad) : sceneSeconds(wordCount, wpm);
 
   const microclass = useMemo(
     () => microclassTiming(safeScenes.map((sc) => sc.guion_locutor), wpm),
     [safeScenes, wpm],
   );
-  const realTotalSec =
+  const measuredTotalSec =
     narracion.fase === 'lista' ? (narracion.respuesta.duracion_total_real_s ?? null) : null;
+  const realTotalSec = measuredTotalSec === null ? null : playbackSeconds(measuredTotalSec, velocidad);
   const isOverTime = (realTotalSec ?? microclass.totalSeconds) > MAX_MICROCLASS_SECONDS;
   const isWordBudgetOk =
     microclass.totalWords >= TARGET_WORDS_MIN && microclass.totalWords <= TARGET_WORDS_MAX;
@@ -245,6 +270,9 @@ const DirectorStudio = ({
 
   const resetPlayback = () => {
     progressRef.current = 0;
+    // Lo que informó la voz del navegador es de la escena anterior: un "terminada" viejo
+    // haría saltar la siguiente antes de que el efecto la empiece a leer
+    hablaRef.current = null;
     if (audioRef.current) audioRef.current.currentTime = 0;
     setActiveWord(-1);
     setIsFinished(false);
@@ -294,26 +322,45 @@ const DirectorStudio = ({
   };
 
   // Motor del teleprompter: un paso por frame. Con narración, el reloj es el audio;
-  // sin ella, el delta real de tiempo al ritmo elegido.
+  // con la voz del navegador, sus eventos; sin voz, el delta real de tiempo al ritmo elegido.
   const onFrame = useEffectEvent((dtSeconds: number) => {
     if (progressRef.current >= 1) return; // ya resuelto; espera el commit del cambio de escena
 
+    const habla = browserMode ? hablaRef.current : null;
     const audio = audioMode ? audioRef.current : null;
-    const audioSec = audio && Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : sceneDurationSec;
-    const next = audio
-      ? audio.ended
-        ? 1
-        : Math.min(1, audio.currentTime / audioSec)
-      : Math.min(1, progressRef.current + dtSeconds / sceneDurationSec);
+    let next: number;
+    let word: number;
+    if (habla) {
+      // La voz del navegador no informa su duración: la escena acaba cuando ella acaba.
+      // Hasta entonces el progreso sigue a la palabra que suena (eventos `boundary`), o al
+      // ritmo elegido si el navegador no los emite, sin llegar nunca a 1.
+      if (habla.terminada) {
+        next = 1;
+        word = scriptWords.length;
+      } else if (habla.palabra !== null) {
+        word = habla.palabra;
+        next = Math.min(0.99, word > 0 ? wordBoundaries[word - 1] : 0);
+      } else {
+        next = Math.min(0.99, progressRef.current + dtSeconds / sceneDurationSec);
+        word = wordIndexAt(wordBoundaries, next);
+      }
+    } else if (audio) {
+      const audioSec =
+        Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : (audioDurationSec ?? sceneDurationSec);
+      next = audio.ended ? 1 : Math.min(1, audio.currentTime / audioSec);
+      // Con tiempos reales (ElevenLabs) la palabra activa es la que suena; si no, se estima
+      if (tiemposPalabras) {
+        const idx = tiemposPalabras.findIndex((fin) => audio.currentTime < fin);
+        word = idx === -1 ? tiemposPalabras.length : idx;
+      } else {
+        word = wordIndexAt(wordBoundaries, next);
+      }
+    } else {
+      next = Math.min(1, progressRef.current + dtSeconds / sceneDurationSec);
+      word = wordIndexAt(wordBoundaries, next);
+    }
     progressRef.current = next;
     paintTeleprompter(domRefs, next, sceneDurationSec);
-    // Con tiempos reales (ElevenLabs) la palabra activa es la que suena; si no, se estima
-    const word = tiemposPalabras && audio
-      ? (() => {
-          const idx = tiemposPalabras.findIndex((fin) => audio.currentTime < fin);
-          return idx === -1 ? tiemposPalabras.length : idx;
-        })()
-      : wordIndexAt(wordBoundaries, next);
     setActiveWord(word); // React descarta el set si el índice no cambió
 
     if (next >= 1) {
@@ -339,6 +386,45 @@ const DirectorStudio = ({
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [isPlaying]);
+
+  // Cambiar `src` restablece playbackRate a defaultPlaybackRate: se fijan ambos
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.defaultPlaybackRate = velocidad;
+    audio.playbackRate = velocidad;
+  }, [audioUrl, velocidad]);
+
+  // Voz del navegador: cada escena es un enunciado nuevo. Pausar lo cancela (pause/resume
+  // falla en Chrome) y reanudar relee la escena desde el principio.
+  const guionActual = currentScene.guion_locutor ?? '';
+  const vozNavegador = narracion.fase === 'navegador' ? narracion : null;
+  useEffect(() => {
+    if (!vozNavegador || !isPlaying) return;
+    const synth = window.speechSynthesis;
+    const habla: HablaNavegador = { terminada: false, palabra: null };
+    hablaRef.current = habla;
+    progressRef.current = 0;
+    const enunciado = new SpeechSynthesisUtterance(guionActual);
+    const voz = synth.getVoices().find((v) => v.name === vozNavegador.voz);
+    if (voz) enunciado.voice = voz;
+    enunciado.lang = voz?.lang ?? vozNavegador.lang;
+    enunciado.onboundary = (e) => {
+      if (e.name !== 'sentence') habla.palabra = wordIndexAtChar(guionActual, e.charIndex);
+    };
+    enunciado.onend = () => {
+      habla.terminada = true;
+    };
+    enunciado.onerror = () => {
+      habla.terminada = true;
+    };
+    synth.cancel();
+    synth.speak(enunciado);
+    return () => {
+      enunciado.onboundary = enunciado.onend = enunciado.onerror = null;
+      synth.cancel();
+    };
+  }, [vozNavegador, isPlaying, guionActual]);
 
   // El audio sigue al estado de reproducción; al cambiar de escena cambia su `src` y,
   // si se estaba reproduciendo (auto-avance), arranca la voz de la nueva escena.
@@ -375,6 +461,18 @@ const DirectorStudio = ({
     wpm: Math.round(wpm),
     degradaciones,
   });
+
+  const handleUsarVozNavegador = async () => {
+    setIsPlaying(false);
+    const voz = elegirVozNavegador(await cargarVocesNavegador());
+    if (!vivoRef.current) return;
+    if (!voz) {
+      setNarracion({ fase: 'error', mensaje: 'Este navegador no tiene ninguna voz en español instalada.' });
+      return;
+    }
+    resetPlayback();
+    setNarracion({ fase: 'navegador', voz: voz.name, lang: voz.lang });
+  };
 
   const handleGenerarNarracion = async () => {
     setIsPlaying(false);
@@ -554,7 +652,8 @@ const DirectorStudio = ({
         <span aria-hidden="true">·</span>
         {realTotalSec !== null ? (
           <span>
-            Voz real: <strong>{formatSeconds(realTotalSec)}</strong> / {MAX_MICROCLASS_SECONDS}s (medido del audio)
+            Voz real: <strong>{formatSeconds(realTotalSec)}</strong> / {MAX_MICROCLASS_SECONDS}s (medido del audio
+            {velocidad > 1 ? `, a ${velocidad}×` : ''})
           </span>
         ) : (
           <span>
@@ -866,7 +965,12 @@ const DirectorStudio = ({
             {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" />}
 
             {hasRealScenes && (
-              <NarrationControls estado={narracion} totalScenes={totalScenes} onGenerar={handleGenerarNarracion} />
+              <NarrationControls
+                estado={narracion}
+                totalScenes={totalScenes}
+                onGenerar={handleGenerarNarracion}
+                onVozNavegador={hayVozNavegador ? handleUsarVozNavegador : undefined}
+              />
             )}
 
             <div className={styles.storyboardVisualContent}>
@@ -925,10 +1029,12 @@ interface NarrationControlsProps {
   estado: EstadoNarracion;
   totalScenes: number;
   onGenerar: () => void;
+  /** Último recurso si fallan ElevenLabs y Gemini; undefined si el navegador no tiene voz */
+  onVozNavegador?: () => void;
 }
 
 /** Botón bajo demanda + estado honesto de la narración (qué se midió, qué falló y por qué). */
-const NarrationControls = ({ estado, totalScenes, onGenerar }: NarrationControlsProps) => {
+const NarrationControls = ({ estado, totalScenes, onGenerar, onVozNavegador }: NarrationControlsProps) => {
   const lista = estado.fase === 'lista' ? estado.respuesta : null;
   const resumen =
     estado.fase === 'generando'
@@ -937,9 +1043,15 @@ const NarrationControls = ({ estado, totalScenes, onGenerar }: NarrationControls
         ? `Voz ${lista.video_job_spec.escenas[0]?.audio?.voz ?? ''} (${
             lista.proveedor === 'elevenlabs' ? 'ElevenLabs' : 'Gemini, respaldo'
           }) · ${formatSeconds(lista.duracion_total_real_s ?? 0)} medidos${
+            (lista.video_job_spec.velocidad_reproduccion ?? 1) > 1
+              ? ` · se reproduce a ${lista.video_job_spec.velocidad_reproduccion}×`
+              : ''
+          }${
             lista.reutilizado ? ' · recuperada sin gastar cuota' : ''
           }`
-        : 'Sin voz: el teleprompter avanza al ritmo elegido. La voz se genera solo si la pides.';
+        : estado.fase === 'navegador'
+          ? `Voz del navegador (${estado.voz}, ${estado.lang}) · sin grabación; la duración puede variar`
+          : 'Sin voz: el teleprompter avanza al ritmo elegido. La voz se genera solo si la pides.';
 
   return (
     <div className={styles.narrationPanel}>
@@ -963,7 +1075,7 @@ const NarrationControls = ({ estado, totalScenes, onGenerar }: NarrationControls
             <span>
               {estado.fase === 'generando'
                 ? 'Generando…'
-                : estado.fase === 'error'
+                : estado.fase === 'error' || estado.fase === 'navegador'
                   ? 'Reintentar narración'
                   : 'Generar narración'}
             </span>
@@ -975,6 +1087,12 @@ const NarrationControls = ({ estado, totalScenes, onGenerar }: NarrationControls
         <p className={styles.narrationError} role="alert">
           <AlertTriangle size={14} aria-hidden="true" />
           <span>{estado.mensaje}</span>
+          {onVozNavegador && (
+            <button type="button" onClick={onVozNavegador} className={styles.narrationBtn}>
+              <Volume2 size={14} aria-hidden="true" />
+              <span>Usar voz del navegador</span>
+            </button>
+          )}
         </p>
       )}
 

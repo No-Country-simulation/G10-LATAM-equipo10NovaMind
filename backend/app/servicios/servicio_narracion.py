@@ -8,8 +8,9 @@ Al pulsar "Generar narración":
 3. Voz por escena con el primer proveedor que pueda: ElevenLabs (principal) → Gemini TTS
    (respaldo). Toda la narración usa un solo proveedor, para que las escenas no cambien de voz.
 4. La duración se MIDE del audio. Si la suma supera max_duration, se repiten las escenas
-   más largas con ritmo ágil (una vez cada una). Si aun así no cabe: "excede_duracion"
-   y no se guarda nada.
+   más largas con ritmo ágil (una vez cada una). Si aun así se pasa por menos de un 5 %, se
+   acepta y el navegador la reproduce un poco más rápido (velocidad_reproduccion): la voz ya
+   se pagó. Si se pasa por más: "excede_duracion" y no se guarda nada.
 5. Usuarios: audio + JSON en el almacén privado (OCI o disco). Invitados: el audio viaja en
    la respuesta y nada se guarda.
 """
@@ -31,6 +32,7 @@ from app.core.schemas import (
     SolicitudNarracion,
     VideoJobSpec,
     redondear_decima,
+    velocidad_reproduccion,
 )
 from app.servicios.registro_tareas import RegistroTareas
 from app.servicios.servicio_imagenes import BuscadorImagenes
@@ -132,7 +134,8 @@ class Narrador:
 
         medidas = [a.duracion_s for a in audios]
         total = redondear_decima(sum(medidas))
-        if total > spec.max_duration:
+        velocidad = velocidad_reproduccion(total, spec.max_duration)
+        if velocidad is None:
             await self._registrar(huella, inicio, "fallido", codigo="excede_duracion", modelo=audios[0].modelo,
                                   mensaje=f"La voz dura {total:.1f} s; el máximo es {spec.max_duration} s.")
             return RespuestaNarracion(
@@ -141,6 +144,9 @@ class Narrador:
                 advertencias=[f"La narración real dura {total:.1f} s y supera el máximo de {spec.max_duration} s "
                               "incluso con ritmo ágil. Acorta el guion y vuelve a intentarlo."],
             )
+        if velocidad > 1.0:
+            avisos.append(f"La voz mide {total:.1f} s: se reproduce a {velocidad:g}× para durar "
+                          f"{spec.max_duration} s.")
 
         for escena, imagen in zip(spec.escenas, imagenes):
             if imagen is not None:
@@ -151,6 +157,7 @@ class Narrador:
                 mime_type=audio.mime_type, tiempos_palabras=audio.tiempos_palabras,
             )
         spec.duracion_total_real = total
+        spec.velocidad_reproduccion = velocidad
         spec.estado = "completed"
 
         en_linea: Dict[int, str] = {}
@@ -245,7 +252,8 @@ class Narrador:
         await self._registro.guardar([{
             "resource": "narracion", "task": "tts", "content_hash": huella, "status": estado,
             "model": modelo, "attempts": 1, "started_at": inicio, "finished_at": _ahora(),
-            "result": {"duracion_total_real": spec.duracion_total_real, "escenas": len(spec.escenas),
+            "result": {"duracion_total_real": spec.duracion_total_real,
+                       "velocidad_reproduccion": spec.velocidad_reproduccion, "escenas": len(spec.escenas),
                        "proveedor": spec.escenas[0].audio.proveedor} if spec else None,
             "result_storage_path": spec.manifiesto_url_oci if spec else None,
             "error_code": codigo, "error_message": mensaje,
