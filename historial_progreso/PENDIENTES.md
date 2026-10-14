@@ -9,7 +9,7 @@ Corte: **14 de octubre de 2026, tarde**. Las preguntas de la sección 1 son las 
 - **En curso fuera del repo:**
   - **El encargado de Supabase** revisa la página de migraciones (artefacto «Migraciones Supabase de NovaMind»: https://claude.ai/code/artifact/178338d3-0d5b-4af9-9321-795137a8c70a), con los 2 SQL de `supabase/migrations/`.
   - **Lista de despliegue en las VM:** https://claude.ai/code/artifact/fc2a9cf5-f4a0-40c8-b6b0-453de2a8c0d4. Ya está al día (versión 2: `VITE_OCI_PAR_URL` ya no existe).
-- **Siguiente trabajo propuesto, sin cuota:** palabras clave de las fotos de la narración (sección 3, punto 6) o versionar `backend/docs/modulos/` (punto 10).
+- **Siguiente trabajo propuesto, sin cuota:** versionar `backend/docs/modulos/` (sección 3, punto 10) o decidir el plazo de Openverse (punto 6). Las palabras clave de las fotos quedaron hechas el 14/10, sin commit.
 - **Servidores locales:** el backend de Claude (puerto 8000) y el front (5173) pueden seguir abiertos desde la sesión anterior; si el puerto está ocupado, preguntar antes de reiniciarlos.
 
 ## Estado de las ramas
@@ -94,8 +94,15 @@ En orden de prioridad:
    - También en las citas de la Estación 4 (hecho el 14/10).
    - Los paquetes guardados antes del cambio no traen contexto, así que su chip sigue siendo texto.
 4. **Nichos: 3.ª corrida de `prueba_nichos.py`** (unas 15 llamadas a Gemini, fuera del repo). Debe confirmar que el sector aparece en una sola escena del guion y dar el guion de Medicina, que en la 2.ª corrida falló por un 503 de Google. Resultados en `../pruebas_nichos/`.
+   - **Preparada el 14/10 por la tarde:** el script trae la sección 7 (guion escena a escena y palabras clave de las fotos), y `LEEME.md`, las instrucciones de la 3.ª corrida.
+   - Requisito: antes, el commit del cambio de las palabras clave.
+   - Reconstruida con los datos de la 2.ª corrida, la sección 7 da Leyes con el sector en 2 escenas y Finanzas en 3: ninguno cumple aún la regla.
 5. **Repaso guiado con modelo (opcional):** un plan de repaso breve redactado solo a partir de las citas de las preguntas falladas. La versión sin modelo ya está hecha.
-6. **Palabras clave de las fotos:** Wikimedia sigue fallando en el significado ("cloud computing" da un rayo entre nubes). Haría falta pedir en el guion palabras clave más concretas.
+6. ~~**Palabras clave de las fotos.**~~ **Hecho el 14/10.**
+   - El prompt pide un objeto o lugar físico.
+   - Una palabra ambigua ("cloud", "kafka"…) deja la escena sin foto.
+   - Falta comprobarlo con una generación real (gasta cuota de la tarea B2).
+   - **Nuevo:** Openverse tarda unos 18 s en una búsqueda nueva y el plazo es de 8 s, así que casi siempre decide Wikimedia. Decidir si se sube el plazo dentro de los 80 s de la narración.
 7. **Límites conocidos de la verificación de citas:** una nota al pie pegada a un número (`2025295`) y citas que cruzan un salto de página con notas en medio.
 8. **Velocidad de la voz:** si se agranda el guion, revisar `PALABRAS_GUION_MIN` y `PALABRAS_GUION_MAX` (ElevenLabs habla a unas 145 palabras por minuto y Gemini a unas 160).
 9. **Exportar el video como WebM (opcional):** con `MediaRecorder` en el navegador, nunca con FFmpeg en la VM.
