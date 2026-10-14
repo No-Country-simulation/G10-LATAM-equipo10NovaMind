@@ -681,3 +681,34 @@ def test_limite_del_respaldo_es_del_proceso_no_de_cada_generacion():
     asyncio.run(run())
     assert maximo["principal-x"] == 6  # 3 tareas x 2 generaciones, sin límite
     assert maximo["respaldo-x"] <= 2   # 6 tareas en el respaldo, como mucho 2 a la vez
+
+
+# ---------------------------------------------------------------------------
+# Directivas de nivel de detalle
+# ---------------------------------------------------------------------------
+def test_cada_nivel_de_detalle_tiene_directiva():
+    from typing import get_args
+
+    from app.core.schemas import DIRECTIVAS_NIVEL_DETALLE, NivelDetalle
+
+    assert set(DIRECTIVAS_NIVEL_DETALLE) == set(get_args(NivelDetalle))
+    # El nivel profundo no puede empujar al modelo a inventar comandos o cifras
+    assert "no lo inventes" in DIRECTIVAS_NIVEL_DETALLE["Profundo"]
+
+
+def test_las_instrucciones_de_audiencia_llevan_la_directiva_del_nivel():
+    from app.agentes.generacion_paralela import _instrucciones_audiencia
+    from app.core.schemas import DIRECTIVAS_NIVEL_DETALLE
+
+    profundo = SOLICITUD.model_copy(update={"nivel_detalle": "Profundo"})
+    assert DIRECTIVAS_NIVEL_DETALLE["Profundo"] in _instrucciones_audiencia(profundo)
+    assert DIRECTIVAS_NIVEL_DETALLE["Didáctico"] not in _instrucciones_audiencia(profundo)
+
+
+def test_cambiar_una_directiva_de_audiencia_invalida_la_huella(monkeypatch):
+    from app.agentes import generacion_paralela as gp
+
+    tarea = gp.tareas_para(CONFIG)[0]
+    antes = gp.huella_tarea(SOLICITUD, tarea)
+    monkeypatch.setitem(gp.DIRECTIVAS_NIVEL_DETALLE, SOLICITUD.nivel_detalle, "Otra directiva.")
+    assert gp.huella_tarea(SOLICITUD, tarea) != antes

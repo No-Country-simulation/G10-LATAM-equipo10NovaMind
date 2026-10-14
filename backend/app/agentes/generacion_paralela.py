@@ -49,6 +49,7 @@ from app.core.config import Config
 from app.core.fuentes import fragmentos_para_auditoria, pagina_de_cita
 from app.core.schemas import (
     DIRECTIVAS_NICHO_SECTOR,
+    DIRECTIVAS_NIVEL_DETALLE,
     DIRECTIVAS_PERFIL_DESTINATARIO,
     MAX_TEXTO_FUENTE,
     AlmacenamientoOCI,
@@ -223,7 +224,7 @@ def _instrucciones_audiencia(solicitud: SolicitudAdaptacion) -> str:
     return (
         f"AUDIENCIA: {solicitud.perfil_destinatario}. {perfil}\n"
         f"SECTOR: {solicitud.nicho_sector}. {nicho}\n"
-        f"NIVEL DE DETALLE: {solicitud.nivel_detalle}."
+        f"NIVEL DE DETALLE: {solicitud.nivel_detalle}. {DIRECTIVAS_NIVEL_DETALLE.get(solicitud.nivel_detalle, '')}"
     )
 
 
@@ -615,7 +616,8 @@ def huella_tarea(solicitud: SolicitudAdaptacion, tarea: Tarea) -> str:
         "tema": solicitud.tema_consulta or "",
         "tarea": tarea.id,
         "modelo": tarea.modelo,
-        "instrucciones": tarea.instrucciones_para(solicitud) + _REGLAS_FIDELIDAD,
+        # Con las directivas de audiencia: si cambian, lo generado con las anteriores no se reutiliza.
+        "instrucciones": tarea.instrucciones_para(solicitud) + _instrucciones_audiencia(solicitud) + _REGLAS_FIDELIDAD,
         "esquema": esquema_json(tarea.esquema),
         "procesado": VERSION_PROCESADO,
     }

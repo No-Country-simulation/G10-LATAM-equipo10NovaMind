@@ -285,21 +285,27 @@ G10-LATAM-equipo10NovaMind/
 │           └── oci_client.py          # Cliente oficial con SDK de Oracle Cloud Object Storage
 │
 ├── frontend/                          # MICROSERVICIO FRONTEND (React + Vite + TypeScript)
-│   ├── package.json                   # Dependencias de UI (React 19, GSAP, Lenis, Lucide)
+│   ├── package.json                   # Dependencias de UI (React 19, Lucide, Supabase, Mermaid)
 │   ├── vite.config.ts                 # Configuración del empaquetador Vite
 │   ├── index.html                     # Entrypoint HTML de la aplicación web
+│   ├── tests/                         # Tests con node --test (tiempos, SSE incremental, voces, repaso)
 │   └── src/                           # Código fuente TypeScript / TSX
-│       ├── App.tsx                    # Componente raíz con orquestación de vistas y estado
+│       ├── App.tsx                    # Raíz: sesión, progreso persistido y orquestación de los 3 pasos
 │       ├── main.tsx                   # Punto de montaje del DOM en React 19
-│       ├── components/                # Componentes modulares de interfaz
-│       │   ├── Header/                # Encabezado con estado y título del documento
-│       │   ├── Stepper/               # Indicador de progreso pedagógico de 3 pasos
-│       │   ├── IngestView/            # Formulario de subida de archivos y selección de perfiles
-│       │   ├── ViewerView/            # Visualizadores interactivos (Flashcards 3D, Quiz, Tutorial)
-│       │   └── MetricsView/           # Dashboard de anclaje RAG, métricas y estado OCI
-│       ├── services/api.ts            # Cliente HTTP para endpoints FastAPI (/adaptar, /opciones)
-│       ├── styles/                    # Design tokens y estilos globales CSS
-│       └── types/api.ts               # Contratos e interfaces TypeScript de la API
+│       ├── components/
+│       │   ├── Header/ · PlayerHUD/   # Cabecera con pasos, XP, escudos y medallas
+│       │   ├── AuthModal/ · BadgeModal/   # Inicio de sesión y vitrina de medallas
+│       │   ├── Step1Ingestion/        # Paso 1: subida (PDF, MD, TXT, imágenes), ejemplos y perfil
+│       │   ├── Step2KnowledgeQuest/   # Paso 2: ruta cognitiva de 5 estaciones y avisos del paquete
+│       │   ├── Step3OCICloud/         # Paso 3: persistencia en OCI y métricas de anclaje
+│       │   ├── stations/              # Resumen, Flashcards, Tutorial, Video narrado (Director's Cut) y Quiz
+│       │   ├── RecursoEstado/         # Estado por recurso: verificación, citas y página real
+│       │   ├── RecursosApoyo/ · MermaidDiagram/   # Material de apoyo y diagramas
+│       ├── services/                  # api.ts (HTTP + SSE), supabase.ts, persistence.ts
+│       ├── utils/                     # Tiempos de locución, paquete incremental, voces, repaso del quiz
+│       ├── data/mockScenarios.ts      # Biblioteca de documentos de ejemplo
+│       ├── styles/                    # Design tokens OKLCH y estilos globales
+│       └── types/types.ts             # Contratos TypeScript (espejo de backend/app/core/schemas.py)
 │
 ├── deploy/                            # CONFIGURACIONES Y DESPLIEGUE EN NUBE (OCI)
 │   ├── README_DESPLIEGUE_OCI.md       # Guía de arquitectura y provisión en Oracle Cloud
