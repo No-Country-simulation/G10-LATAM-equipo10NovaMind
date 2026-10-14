@@ -196,6 +196,7 @@ const DirectorStudio = ({
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   const [showRagDetails, setShowRagDetails] = useState(true);
   const [narracion, setNarracion] = useState<EstadoNarracion>({ fase: 'inactiva' });
+  const [isTheater, setIsTheater] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hablaRef = useRef<HablaNavegador | null>(null);
@@ -961,7 +962,14 @@ const DirectorStudio = ({
               <Video size={16} className={styles.iconCyan} aria-hidden="true" />
             </div>
 
-            <SlideNarrada scene={viewScene} span={currentSpan} />
+            <SlideNarrada
+              scene={viewScene}
+              span={currentSpan}
+              isPlaying={isPlaying}
+              onTogglePlay={togglePlay}
+              isTheater={isTheater}
+              onToggleTheater={() => setIsTheater((prev) => !prev)}
+            />
             {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" />}
 
             {hasRealScenes && (

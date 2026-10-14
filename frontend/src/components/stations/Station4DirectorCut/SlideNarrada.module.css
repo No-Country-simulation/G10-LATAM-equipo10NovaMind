@@ -146,3 +146,189 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* -------------------------------------------------------------------------
+ * Botón Flotante de Play en Diapositiva & Modo Cine / Teatro
+ * ------------------------------------------------------------------------- */
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  transition: opacity 0.25s ease, background-color 0.25s ease;
+}
+
+.playOverlay.playing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Al pasar el cursor sobre la slide reproduciéndose, se revela sutilmente el control */
+.slide:hover .playOverlay.playing {
+  opacity: 0.9;
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.playButtonCircle {
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 9999px;
+  background: oklch(0.18 0.04 310 / 85%);
+  backdrop-filter: blur(14px);
+  border: 2px solid var(--s4-accent, #e879f9);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px var(--s4-accent-glow, rgba(232, 121, 249, 0.45));
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.playOverlay:hover .playButtonCircle {
+  transform: scale(1.12);
+  box-shadow: 0 0 45px var(--s4-accent-glow, rgba(232, 121, 249, 0.75));
+}
+
+.playIconTriangle {
+  margin-left: 3px;
+  fill: currentColor;
+}
+
+.playButtonLabel {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(13, 17, 26, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Botón flotante para expandir / Modo Cine en esquina superior derecha */
+.theaterToggleBtn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 15;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: rgba(13, 17, 26, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theaterToggleBtn:hover {
+  color: #fff;
+  border-color: var(--s4-accent);
+  background: rgba(232, 121, 249, 0.2);
+  transform: scale(1.04);
+}
+
+/* Modal Inmersivo: Modo Cine / Teatro */
+.theaterBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(5, 7, 13, 0.95);
+  backdrop-filter: blur(28px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: fadeInTheater 0.2s ease-out;
+}
+
+@keyframes fadeInTheater {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.theaterContainer {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.theaterHeaderBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.theaterBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--s4-accent);
+  font-weight: 700;
+  font-family: var(--font-heading);
+}
+
+.theaterCloseBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theaterCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--color-rose-500);
+  color: var(--color-rose-400);
+}
+
+.theaterSlideBox {
+  width: 100%;
+  margin: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--s4-accent-glow);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.theaterSlideBox .credito {
+  padding: 0.4rem 0.75rem;
+  background: rgba(0, 0, 0, 0.75);
+}
+

@@ -1,51 +1,54 @@
 """
 Localización de citas dentro del documento fuente.
 
-Una cita es verificable si aparece literalmente en el documento, ignorando
-diferencias de espacios, mayúsculas y marcas de formato Markdown en línea
-(** * ` _ ~ #): los modelos citan el texto visible, sin la marca. Las marcas se
-ignoran en la cita y en el documento por igual, así que una paráfrasis sigue sin
-coincidir. Además de decir *si* aparece, se devuelve
-*dónde* (offset en el texto original), para derivar la página real de origen en
-lugar de confiar en la que declare el LLM.
+Una cita es verificable si sus letras y dígitos aparecen en el documento en el mismo
+orden y sin nada en medio. Se ignoran espacios, puntuación, guiones, marcas Markdown,
+mayúsculas, tildes y variantes tipográficas (ligaduras, comillas curvas, guiones largos),
+siempre igual en la cita y en el documento: las palabras y su orden deben coincidir, así
+que una paráfrasis sigue sin coincidir.
+
+Por qué tan poco estricto con la forma: el texto que extrae pypdf no es el que ve el
+lector. Medido el 2026-10-14, reproduciendo frases reales con tipografía normal (como
+citan los modelos), la comparación anterior (solo espacios, mayúsculas y Markdown) no
+localizaba el 66 % de las frases del paper de Snowflake (ligaduras "ﬁ"/"ﬂ" y 244 palabras
+cortadas con guion a final de línea) ni el ~5 % de las del ENISA (comillas "’" y espacios
+que pypdf mete dentro de palabras: "nota ble").
+
+Además de decir *si* aparece, se devuelve *dónde* (offset en el texto original), para
+derivar la página real de origen en lugar de confiar en la que declare el LLM.
 """
 
 from __future__ import annotations
 
+import unicodedata
 from array import array
 from functools import lru_cache
 from typing import List, Optional, Tuple
 
 from app.core.schemas import RangoPagina, pagina_de_offset
 
-MIN_LARGO_CITA = 20
-_MARCAS_MARKDOWN = frozenset("*`_~#")
+# Letras y dígitos: ~ 3 palabras. Más corto, cualquier fragmento coincide por azar.
+MIN_LARGO_CITA = 16
 
 
 def _normalizar(texto: str) -> Tuple[str, array]:
     """
-    Colapsa espacios, quita marcas Markdown en línea y pasa a minúsculas carácter a
-    carácter, guardando para cada carácter normalizado su offset en el texto original.
+    Solo letras y dígitos, en minúsculas y sin tildes (NFKD: "ﬁ" → "fi", "é" → "e"),
+    guardando para cada carácter normalizado su offset en el texto original.
     """
     salida: List[str] = []
     mapa = array("l")
-    en_espacio = True  # descarta espacios iniciales
     for i, c in enumerate(texto):
-        if c in _MARCAS_MARKDOWN:
-            continue
-        if c.isspace():
-            if not en_espacio:
-                salida.append(" ")
+        if c.isascii():
+            if c.isalnum():
+                salida.append(c.lower())
                 mapa.append(i)
-                en_espacio = True
             continue
-        for minuscula in c.lower():  # per-char: la cita y el documento se normalizan igual
-            salida.append(minuscula)
-            mapa.append(i)
-        en_espacio = False
-    if salida and salida[-1] == " ":
-        salida.pop()
-        mapa.pop()
+        for d in unicodedata.normalize("NFKD", c):
+            for m in d.casefold():
+                if m.isalnum():  # descarta marcas combinantes (tildes), puntuación y espacios
+                    salida.append(m)
+                    mapa.append(i)
     return "".join(salida), mapa
 
 

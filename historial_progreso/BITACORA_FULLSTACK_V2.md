@@ -106,6 +106,27 @@ Registro cronológico de lo que se hizo en esta rama, por qué se hizo, qué fal
 
 ---
 
+## 13 oct 2026 · Análisis Forense de Integración Multirama
+
+**Referencia:** [deploy/auditoria/para_claude.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/deploy/auditoria/para_claude.md) y [para_claude.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/para_claude.md)
+
+1. **Topografía de dos raíces:** Se auditó la divergencia de raíces entre Linaje A (`d42b454`) y Linaje B (`bb0c866`). `origin/main` solo contiene 3 commits con el README inicial, mientras que Linaje B contiene la suite de producción.
+2. **Absorción de `backend` e `integracion`:** Se confirmó que `feature/fullstack-nuevamente-v2` contiene el 100% de `backend` (+42 commits por delante) y de `integracion` (+25 commits por delante). No existen commits faltantes (`0`), permitiendo un avance por *Fast-Forward* sin colisiones ni conflictos de fusión.
+3. **Estrategia de convergencia:**
+   - Fast-Forward de `integracion` y `backend`.
+   - Cherry-pick / Port selectivo de UI desde `origin/feature/newmind-edtech-oci` (`BadgeModal` showcase y `Step1Ingestion` drag-and-drop).
+   - Promoción limpia de Linaje B como la rama `main` de producción en GitHub.
+
+---
+
+**Firmado por:**  
+🤖 **Modelo de IA: Gemini 3.8 & Antigravity Agent**  
+*Arquitectura de Soluciones Cloud OCI, DevOps & Integración Full-Stack*  
+*Fecha: 13 de Octubre de 2026*
+
+
+---
+
 ## 13 oct 2026 · Biblioteca de ejemplos, código muerto y filtro de Wikimedia
 
 **Commit:** `9980081`
@@ -162,3 +183,33 @@ Con el filtro nuevo, "server rack" y "data center" dan fotos pertinentes, y "eve
 - **Commit anterior (`9980081`):** solo entró lo propio de esta rama. `historial_progreso/CAMBIOS.md`, `HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md`, `para_claude.md` y la sección "Análisis Forense de Integración Multirama" de esta bitácora los escribió otro agente y quedaron fuera, a la espera de revisión.
 
 **Verificación:** `tsc` sin errores, 17 tests de frontend y build de producción.
+
+---
+
+## 14 oct 2026 · Citas que no se localizaban por la tipografía del PDF
+
+**Estado:** sin commit.
+
+**Síntoma (sistema en vivo).** Seis de siete avisos del paquete eran de citas no encontradas: flashcards 3 de 4, cuestionario 4 de 4, glosario 2 de 4, guion 3 de 3, diapositivas 3 de 5. Con el PDF escaneado del 13 de octubre se habían localizado 21 de 21.
+
+**Causa.** La comparación solo ignoraba espacios, mayúsculas y marcas de Markdown, pero el texto que extrae `pypdf` no coincide con el que reproduce un modelo. Se midió reproduciendo 300 frases reales de cada PDF con tipografía normal:
+
+| PDF | No localizadas antes | Motivo principal |
+|---|---|---|
+| Snowflake | 199 de 300 (66 %) | Ligaduras `ﬁ`/`ﬂ`/`ﬀ` y 244 palabras cortadas con guion a final de línea |
+| ENISA | 16 de 300 (~5 %) | Comillas `’`, guiones `–`/`—` y espacios que `pypdf` mete dentro de palabras ("nota ble") |
+| El caballero de la armadura oxidada | 1 de 300 | Guiones de diálogo |
+
+Esto probablemente explica también el 0 de 7 del resumen del ENISA del 13 de octubre, que se atribuyó a la fidelidad del modelo de respaldo.
+
+**Solución** (`backend/app/core/fuentes.py`). Ahora se comparan solo letras y dígitos, en minúsculas y sin tildes (NFKD), con la misma regla para la cita y para el documento. Se ignoran espacios, puntuación, guiones, ligaduras y comillas. Las palabras y su orden deben coincidir, así que una paráfrasis sigue sin pasar (hay tests para palabras cambiadas, quitadas y reordenadas). El mínimo de una cita pasa de 20 caracteres a 16 letras o dígitos, que equivale aproximadamente al mismo largo.
+
+**Resultado.** 0 de 300 frases no localizadas en los tres PDF. La normalización del ENISA (254 540 caracteres) tarda 103 ms y queda en caché.
+
+**Pendiente.**
+- No se sabe qué documento se usó en la prueba en vivo. Falta confirmar que esos avisos desaparecen al regenerar.
+- "No se pudo generar «Resumen»: servidor" no se explica por esto: falló también el modelo de respaldo, o el entorno en vivo no lo tiene activo. Faltan los registros.
+
+**También en este bloque.** `CLAUDE.md` en la raíz: mapa de archivos y contratos (punteros, no copias), comandos de verificación, trampas del entorno y reglas del proyecto. Claude Code lo carga en cada sesión.
+
+**Verificación.** Backend: 259 tests.

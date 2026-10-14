@@ -101,7 +101,7 @@ class Config:
 
     # --- Generación paralela con Gemini (modo "paralelo") ---
     # Verificados contra GET /v1beta/models el 2026-10-12. Cambiar de modelo = cambiar el .env.
-    gemini_summary_model: str = "gemini-3.8-flash"
+    gemini_summary_model: str = "gemini-3.5-flash-lite"
     gemini_resources_model: str = "gemini-3.5-flash-lite"
     # Respaldo si el principal no responde (429, 5xx, timeout). Medido con el ENISA (76k tokens)
     # el 2026-10-13: los principales dieron 503 "high demand"; 3.1-flash-lite entregó el JSON de
@@ -162,7 +162,7 @@ class Config:
             presupuesto_tiempo_segundos=_leer_float("PRESUPUESTO_TIEMPO_SEGUNDOS", 180.0, 10.0, 300.0),
             timeout_llamada_llm=_leer_float("TIMEOUT_LLAMADA_LLM", 45.0, 5.0, 120.0),
             entorno=os.getenv("APP_ENV", "dev").lower(),
-            gemini_summary_model=os.getenv("GEMINI_SUMMARY_MODEL") or "gemini-3.8-flash",
+            gemini_summary_model=os.getenv("GEMINI_SUMMARY_MODEL") or "gemini-3.5-flash-lite",
             gemini_resources_model=os.getenv("GEMINI_RESOURCES_MODEL") or "gemini-3.5-flash-lite",
             gemini_summary_fallback_model=os.getenv("GEMINI_SUMMARY_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
             gemini_resources_fallback_model=os.getenv("GEMINI_RESOURCES_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
