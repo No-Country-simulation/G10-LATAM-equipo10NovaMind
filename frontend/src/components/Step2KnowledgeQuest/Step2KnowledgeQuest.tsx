@@ -19,7 +19,7 @@ import { Station3TutorialQuest } from '../stations/Station3TutorialQuest/Station
 import { Station4DirectorCut } from '../stations/Station4DirectorCut/Station4DirectorCut';
 import { Station5FinalTrial } from '../stations/Station5Quiz/Station5Quiz';
 import { EstadoRecursoBar, ListaRecursos, RecursoNoDisponible } from '../RecursoEstado/RecursoEstado';
-import { RecursosApoyo } from '../RecursosApoyo/RecursosApoyo';
+import { RecursosApoyo, ResumenEjecutivo } from '../RecursosApoyo/RecursosApoyo';
 import { RECURSO_POR_ESTACION, estacionDisponible, estadoDe } from '../../utils/paqueteIncremental';
 import styles from './Step2KnowledgeQuest.module.css';
 
@@ -343,6 +343,7 @@ export const Step2KnowledgeQuest = ({
                 onOpenNinjaBadge={onOpenNinjaBadge}
                 diagramaMermaid={contenido.diagrama_mermaid ?? undefined}
                 onNextStation={() => handleSelectStation(1)}
+                resumen={<ResumenEjecutivo paquete={contentPackage} />}
               />
             )}
 

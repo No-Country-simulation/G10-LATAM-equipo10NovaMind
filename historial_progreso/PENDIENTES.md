@@ -1,23 +1,33 @@
 # Pendientes y próximos pasos
 
-Corte: **14 de octubre de 2026, tarde**. Las preguntas de la sección 1 son las que el agente debe hacer al retomar el trabajo. El detalle técnico está en `deploy/auditoria/PROXIMOS_PASOS.md` (no versionado) y la historia, en `BITACORA_FULLSTACK_V2.md` (las últimas entradas cuentan la jornada del 14/10).
+Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las que el agente debe hacer al retomar el trabajo. El detalle técnico está en `deploy/auditoria/PROXIMOS_PASOS.md` (no versionado) y la historia, en `BITACORA_FULLSTACK_V2.md` (las últimas entradas cuentan la jornada del 14/10, incluido el despliegue).
 
 ## Al retomar (leer primero)
 
-- **Quién hace qué:** Claude trabaja en esta carpeta y deja los cambios verificados **sin commit**, con el mensaje propuesto. **Los commits y el push los hace Gemini** o el usuario. Gemini trabaja en `../NovaMind-gemini` (rama `gemini/pruebas`) y a veces lanza scripts en `../pruebas_nichos/` sin abrir puertos: revisar `git status` y `git log -1` antes de editar.
-- **Último commit en el remoto:** `7a6cd6f` (documentación, CHANGELOG 2.7.0). Solo falta subir este archivo con `docs: pendientes listos para retomar`. Si ya está en `git log`, ignorar esta línea.
+- **Quién hace qué:** Claude trabaja en esta carpeta y deja los cambios verificados **sin commit**, con el mensaje propuesto. **Los commits y el push los hace Gemini** o el usuario. Gemini trabaja en `../NovaMind-gemini` (rama `gemini/pruebas`) y a veces lanza scripts en `../pruebas_nichos/`: revisar `git status` y `git log -1` antes de editar.
+  - El 14/10 Gemini escribió dos veces en esta carpeta: los módulos y una sobrescritura de la bitácora y de PENDIENTES. Si un archivo cambia en disco sin explicación, comparar con `git diff` antes de seguir.
+- **Producción desplegada el 14/10** en https://novamind.techgk.cl, desde cero, con el commit `41d8d5c`, y frontend actualizado con `3de44c4`. Cómo se hace: `deploy/RUNBOOK_OCI_2026-10-14.md`, no versionado.
+  - **VM 1:** `~/nuevamente` es un clon git de `feature/fullstack-nuevamente-v2`, con venv de **Python 3.12** (el 3.10 del sistema no sirve). Para actualizar el backend: `git pull` y `sudo systemctl restart nuevamente-backend`.
+  - **VM 2:** el frontend se compila **en el PC** y se sube `dist/` con WinSCP. Los últimos builds se dejan en `deploy/frontend-dist-oci/`.
+  - El usuario ejecuta los comandos en las VM. Claude no tiene acceso.
+- **Esperando al usuario:**
+  1. **Revisión en local** (5173 y 8000, levantados por Claude): el resumen de la Estación 1, el diagrama y la diapositiva en pausa.
+  2. **Commit de Gemini** de lo que está sin commit: `servicio_gemini.py` y su test, `RecursosApoyo`, `Station1ResumenNinja`, `Step2KnowledgeQuest`, `resumenEnPuntos.ts` con su test y `historial_progreso/`. Mensaje propuesto: `feat(estacion1,voz): resumen en una frase y puntos junto a la sintesis; la voz de Gemini espera la cuota por minuto`.
+  3. **Desplegarlo:** en la VM 1, `git pull` y reiniciar el servicio; en la VM 2, subir `deploy/frontend-dist-oci/` (`index-fLDdjBGQ.js`).
+  4. Saber **qué voz le sonó robótica** (Alice de ElevenLabs o Kore de Gemini), para proponer otra.
+  5. El texto de las 2 citas «no encontradas» del resumen de Snowflake (secciones 3 y 5). Hay que saber si es paráfrasis del modelo o un fallo del verificador.
 - **En curso fuera del repo:**
   - **El encargado de Supabase** revisa la página de migraciones (artefacto «Migraciones Supabase de NovaMind»: https://claude.ai/code/artifact/178338d3-0d5b-4af9-9321-795137a8c70a), con los 2 SQL de `supabase/migrations/`.
-  - **Lista de despliegue en las VM:** https://claude.ai/code/artifact/fc2a9cf5-f4a0-40c8-b6b0-453de2a8c0d4. Ya está al día (versión 2: `VITE_OCI_PAR_URL` ya no existe).
-- **Siguiente trabajo propuesto, sin cuota:** exportar el video como WebM (sección 3, punto 9, opcional). Gastan cuota: una 4.ª corrida de nichos (punto 4) y el repaso guiado con modelo (punto 5). Las palabras clave de las fotos quedaron hechas el 14/10, sin commit.
-- **Servidores locales:** el backend de Claude (puerto 8000) y el front (5173) pueden seguir abiertos desde la sesión anterior; si el puerto está ocupado, preguntar antes de reiniciarlos.
+  - **Lista de despliegue en las VM:** https://claude.ai/code/artifact/fc2a9cf5-f4a0-40c8-b6b0-453de2a8c0d4. **Desactualizada:** el despliegue real siguió el runbook, que añade Python 3.12, el build en el PC y el `.env` subido por WinSCP.
+- **ElevenLabs:** la clave de producción tiene un tope de 500 créditos, que da para **una sola narración**, y ya se gastó. Ahora narra Gemini.
+- **Servidores locales:** el backend de Claude (8000) y el front (5173) pueden seguir abiertos; si el puerto está ocupado, preguntar antes de reiniciarlos.
 
 ## Estado de las ramas
 
 | Rama | Commit | Situación |
 |---|---|---|
-| `feature/fullstack-nuevamente-v2` (local y `origin`) | `7a6cd6f` | Rama de trabajo, sincronizada con el remoto |
-| `gemini/pruebas` (worktree `../NovaMind-gemini`) | `7a6cd6f` o posterior | Rama de Gemini, que hace los commits |
+| `feature/fullstack-nuevamente-v2` (local y `origin`) | `3de44c4` | Rama de trabajo y la que se despliega en la VM 1 |
+| `gemini/pruebas` (worktree `../NovaMind-gemini`) | `3de44c4` o posterior | Rama de Gemini, que hace los commits |
 | `backend` e `integracion` (local y remoto) | `394d19c` | Muy por detrás: falta un fast-forward a la rama de trabajo (lo decide el usuario) |
 | `origin/frontEnd` | — | Absorbida el 14/10. Se deja sin tocar |
 | `origin/feature/newmind-edtech-oci` | — | Absorbido o descartado con motivo todo lo aprovechable |
@@ -55,7 +65,7 @@ Corte: **14 de octubre de 2026, tarde**. Las preguntas de la sección 1 son las 
    - El detalle está en la bitácora.
    - Para repetirlo: `node tests/e2e_narracion.manual.ts`, desde `frontend/`, o `--spec <guion.json>` para reutilizar un guion.
 4. **¿Se unifican las ramas?** El push de la rama de trabajo ya se hace con cada commit de Gemini. Falta un `merge --ff-only` de `backend` e `integracion` a la rama de trabajo, seguido de push. Son acciones sobre el remoto compartido: las hace el usuario o las autoriza explícitamente.
-5. **¿Se despliega en la VM?** La guía está en `deploy/README_DESPLIEGUE_OCI.md`, sección 3b.
+5. ~~**¿Se despliega en la VM?**~~ **Desplegado el 14/10** (ver «Al retomar» y la bitácora). Quedan por probar en el navegador de producción la caché de invitados y la RAM de la VM 1 durante una generación. Lo que sigue es el historial de la preparación. La guía está en `deploy/README_DESPLIEGUE_OCI.md`, sección 3b.
    - **Revisado el 14/10 con el commit `41d8d5c`:** la guía sigue al día (las variables existen en el código y en `.env.example`).
    - El front pasa 26 tests, `tsc` y el build; el backend, 314 tests.
    - **Aviso:** el modo «clásico» (LangGraph), último respaldo, no puede funcionar, porque `langchain_text_splitters` no está en `requirements.txt` ni instalado. El modo por defecto («paralelo») y la cadena no lo usan.
@@ -76,7 +86,8 @@ Corte: **14 de octubre de 2026, tarde**. Las preguntas de la sección 1 son las 
 - **Seguridad de `feature/newmind-edtech-oci`:** su `geminiService.ts` usa `VITE_GEMINI_API_KEY`, que queda en el JavaScript público. **Si esa rama se desplegó alguna vez con una clave real, hay que rotarla.**
 - **Promover a `main`:** `origin/main` solo tiene el README inicial.
 - **ElevenLabs:**
-  - subir el tope de créditos de la clave de 1 000 a 10 000, porque 1 000 alcanzan para unas 2 narraciones;
+  - subir el tope de créditos de la clave. Con `eleven_flash_v2_5`, una narración gasta unos 375 créditos. El usuario habló de subirlo unos 500 (14/10); el plan gratuito da 10 000 al mes;
+  - una voz nativa en español sonaría más natural que Alice, que es inglesa, al mismo coste. `eleven_multilingual_v2` es aún más natural, pero gasta el doble;
   - escuchar la voz Alice y decidir si se queda;
   - restringir la clave a la IP de la VM.
 - **Pago por uso de Gemini:** solo si en la demo falta cuota. El modelo del resumen ya está decidido: se queda `3.5-flash-lite`.

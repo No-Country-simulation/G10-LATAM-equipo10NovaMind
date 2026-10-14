@@ -58,6 +58,15 @@
 
 .parrafo { margin: 0 0 0.75rem; }
 
+.frase { margin: 0 0 0.625rem; font-size: 0.9375rem; }
+
+.detalle { margin-top: 0.875rem; }
+.detalle > summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
 .subtitulo {
   margin: 1rem 0 0.375rem;
   font-size: 0.75rem;
