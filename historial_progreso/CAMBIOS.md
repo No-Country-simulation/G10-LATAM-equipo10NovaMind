@@ -411,21 +411,20 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
 ## Fase 22: Directivas de Detalle, Copiar Prompt Visual, Limpieza UI y Pruebas E2E
 
 1. **Directivas Semánticas de Nivel de Detalle en Backend:**
-   - Incorporación de DIRECTIVAS_NIVEL_DETALLE en ackend/app/core/schemas.py para los niveles *Didáctico*, *Intermedio* y *Profundo*.
+   - Incorporación de DIRECTIVAS_NIVEL_DETALLE en `backend/app/core/schemas.py` para los niveles *Didáctico*, *Intermedio* y *Profundo*.
    - Inclusión estricta de la regla de no alucinación: si el documento no da un comando o parámetro, el modelo no debe inventarlo.
-   - Inclusión de las directivas en huella_tarea para invalidar cachés automáticamente cuando cambia una directiva de audiencia.
+   - Inclusión de las directivas en `huella_tarea` para invalidar cachés automáticamente cuando cambia una directiva de audiencia.
 2. **Botón 'Copiar prompt visual' en Estación 4 (Director's Cut):**
-   - Utilidad rontend/src/utils/promptVisual.ts que construye el prompt para generadores de imágenes externos (Midjourney/DALL-E) en formato 16:9 con tema, escena y restricción de 'sin texto escrito en la imagen'.
+   - Utilidad `frontend/src/utils/promptVisual.ts` que construye el prompt para generadores de imágenes externos (Midjourney/DALL-E) en formato 16:9 con tema, escena y restricción de 'sin texto escrito en la imagen'.
    - El usuario genera sus imágenes externamente sin consumir cuota de la plataforma ni exponer API keys.
 3. **Absorción de la Rama frontEnd y Depuración de Componentes Huérfanos:**
    - Eliminación de componentes no utilizados (Button, SelectField, Stepper) y dependencias innecesarias (gsap, @studio-freight/lenis).
-   - Actualización de rontend/README.md con la tabla de equivalencias de comandos Node <-> Python.
+   - Actualización de `frontend/README.md` con la tabla de equivalencias de comandos Node <-> Python.
 4. **Pruebas End-to-End en Navegador Real (CDP Headless):**
    - Automatización completa sobre Google Chrome conectando FastAPI (:8000) y Vite (:5173).
    - Validación visual de las 5 estaciones pedagógicas, rotación 3D de flashcards, renderizado de diagramas Mermaid SVG, sistema de escudos cognitivos y persistencia en OCI Object Storage Always Free.
 5. **Línea Base de Calidad:**
-   - Backend: **278 pruebas aprobadas al 100%** (pytest backend/tests -q).
-   - Frontend: **26 pruebas unitarias aprobadas al 100%** (
-pm test).
+   - Backend: **278 pruebas aprobadas al 100%** (`pytest backend/tests -q`).
+   - Frontend: **26 pruebas unitarias aprobadas al 100%** (`npm test`).
    - Compilador TypeScript: **0 errores**.
    - ESLint: **0 advertencias / 0 errores**.

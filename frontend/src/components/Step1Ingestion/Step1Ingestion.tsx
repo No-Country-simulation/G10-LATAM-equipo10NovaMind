@@ -39,23 +39,33 @@ const NIVELES: ReadonlyArray<[DetailLevel, string]> = [
   ['Didáctico', 'Didáctico (Metáforas y Analogías)'],
   ['Técnico Profundo', 'Técnico Profundo (Sintaxis y Flags)'],
 ];
-// Resumen breve de lo que se generará. Cada frase resume la directiva real del backend
-// (DIRECTIVAS_PERFIL_DESTINATARIO, DIRECTIVAS_NICHO_SECTOR y DIRECTIVAS_NIVEL_DETALLE en schemas.py).
-const DESC_PERFIL: Record<RecipientProfile, string> = {
-  'Principiante': 'en lenguaje sencillo, definiendo cada término técnico y con ejemplos cotidianos',
-  'Desarrollador Junior': 'con lenguaje técnico, explicando cómo funciona cada componente, sus buenas prácticas y errores frecuentes',
-  'Líder Técnico / Arquitecto': 'con foco en arquitectura, decisiones, riesgos y compromisos técnicos',
-  'Gestor / Ejecutivo (No Técnico)': 'en lenguaje de negocio: impacto, beneficios, riesgos y decisiones, sin detalle técnico innecesario',
+// Resumen, en forma de prompt de rol, de las instrucciones que de verdad recibe Gemini: el backend
+// le describe al estudiante (DIRECTIVAS_PERFIL_DESTINATARIO, DIRECTIVAS_NICHO_SECTOR y
+// DIRECTIVAS_NIVEL_DETALLE en schemas.py). Si cambia una directiva, hay que actualizar su frase aquí.
+const PROMPT_PERFIL: Record<RecipientProfile, [string, string]> = {
+  'Principiante': ['un principiante',
+    'Explícale desde cero con lenguaje sencillo, define cada término técnico y apóyate en situaciones cotidianas.'],
+  'Desarrollador Junior': ['un desarrollador junior',
+    'Usa lenguaje técnico y explica cómo funciona cada componente, con sus buenas prácticas y errores frecuentes.'],
+  'Líder Técnico / Arquitecto': ['un líder técnico o arquitecto',
+    'Céntrate en la arquitectura, las decisiones, los riesgos y los compromisos técnicos.'],
+  'Gestor / Ejecutivo (No Técnico)': ['un gestor o ejecutivo no técnico',
+    'Háblale en lenguaje de negocio: impacto, beneficios, riesgos y decisiones, sin detalle técnico innecesario.'],
 };
-const DESC_NIVEL: Record<DetailLevel, string> = {
-  'Didáctico': 'Nivel didáctico: analogías y un paso cada vez.',
-  'Técnico Profundo': 'Nivel profundo: arquitectura, configuración y comandos tal como aparecen en el documento.',
+const PROMPT_NIVEL: Record<DetailLevel, [string, string]> = {
+  'Didáctico': ['entender las ideas clave', 'Usa analogías y avanza un paso cada vez.'],
+  'Técnico Profundo': ['profundizar en los detalles',
+    'Entra en la arquitectura y la configuración, y reproduce los comandos tal como aparecen en el documento.'],
 };
-const descripcionPaquete = (perfil: RecipientProfile, nicho: IndustryNiche, nivel: DetailLevel) =>
-  'Se generarán 5 estaciones (resumen, flashcards, tutorial con diagrama, video narrado de hasta 60 s y quiz) '
-  + `${DESC_PERFIL[perfil]}`
-  + (nicho === 'General' ? '' : `, con ejemplos del sector ${nicho} cuando ayuden a entender`)
-  + `. ${DESC_NIVEL[nivel]} Todo se basa en tu documento y cada cita se comprueba contra el texto.`;
+const promptPaquete = (perfil: RecipientProfile, nicho: IndustryNiche, nivel: DetailLevel) => {
+  const [quien, enfoque] = PROMPT_PERFIL[perfil];
+  const [meta, profundidad] = PROMPT_NIVEL[nivel];
+  const sector = nicho === 'General' ? '' : ` del sector ${nicho}`;
+  return `Eres un tutor experto. Tu estudiante es ${quien}${sector} y quiere ${meta}. ${enfoque} `
+    + (nicho === 'General' ? '' : 'Usa ejemplos de su sector solo cuando ayuden a entender. ')
+    + `${profundidad} Con este documento, genera 5 estaciones: resumen, flashcards, tutorial con diagrama, `
+    + 'video narrado de hasta 60 s y quiz. Usa solo lo que dice el documento y respalda cada afirmación con una cita.';
+};
 const etiqueta = <T,>(opciones: ReadonlyArray<[T, string]>, valor: T) =>
   opciones.find(([v]) => v === valor)?.[1] ?? String(valor);
 const alAzar = <T,>(opciones: ReadonlyArray<[T, string]>): T =>
@@ -583,9 +593,15 @@ export const Step1Ingestion = ({
             </div>
           )}
 
-          <p className={styles.descripcionPaquete} aria-live="polite">
-            {descripcionPaquete(profile, niche, detail)}
-          </p>
+          <div className={styles.promptPaquete}>
+            <span className={styles.promptEtiqueta}>
+              <Sparkles size={12} />
+              Lo que NovaMind le pedirá a la IA <em>(resumen de las instrucciones reales)</em>
+            </span>
+            <p className={styles.promptTexto} aria-live="polite">
+              {promptPaquete(profile, niche, detail)}
+            </p>
+          </div>
 
           {/* Estado de Animación del Pipeline o Botón de Acción */}
       {isProcessing ? (

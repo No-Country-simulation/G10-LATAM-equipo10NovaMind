@@ -675,3 +675,36 @@ Se ejecutó `deploy/comparar_modelos.py` (Tarea A, 4 llamadas reales) sobre `gui
 - Personalizado conserva lo sorteado.
 - No hay desbordamiento horizontal y la consola no tiene errores.
 - **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
+
+---
+
+## 14 oct 2026 · Estación 1: arranque en Sorpréndeme, prompt visible y nichos coherentes
+
+**Pedidos del usuario.**
+- Empezar en Sorpréndeme, con una descripción breve debajo de lo que se generará.
+- Después, que esa descripción se lea como el prompt que el programa le manda a la IA.
+
+**Qué se hizo** (`Step1Ingestion.tsx` y `.module.css`):
+- **Arranque:** el modo inicial es Sorpréndeme, y perfil, nicho y nivel arrancan ya sorteados (inicialización perezosa de `useState`).
+- **Prompt visible** (`promptPaquete`): bajo los parámetros, en los dos modos, una caja "Lo que NovaMind le pedirá a la IA (resumen de las instrucciones reales)" con un prompt de rol: "Eres un tutor experto. Tu estudiante es … del sector … y quiere …", el enfoque del perfil, los ejemplos del sector, la profundidad, las 5 estaciones y la regla de citar solo el documento.
+- **Fidelidad:** cada frase resume la directiva real de `schemas.py`. El texto dice que el estudiante es del sector, no que la IA sea especialista en él, porque eso es lo que de verdad se le envía a Gemini. Se etiqueta como resumen porque las directivas reales son más largas.
+- **Terminología:** no es un metaprompt (un prompt que escribe otros prompts), sino un prompt de rol armado desde una plantilla. Mostrarlo es transparencia del prompt.
+
+**¿Funcionan los nichos?** Se verificó el recorrido completo:
+- el front envía `nicho_sector`;
+- el backend lo valida (`_MAPA_NICHO`);
+- `_instrucciones_audiencia` lo mete en el prompt de las tareas A, B1 y B2;
+- y entra en `huella_tarea`.
+
+Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General", y los 4 perfiles del front tienen directiva. Que el contenido generado refleje de verdad el nicho no se probó con Gemini, porque gasta cuota.
+
+**Problema encontrado y corregido.**
+- **Qué pasaba:** el catálogo marcaba Kafka con "Fintech", que no es una de las 11 opciones. El backend lo traducía bien por alias, pero en Personalizado el selector mostraba otra opción distinta de la enviada, y la descripción habría dicho "Fintech".
+- **Corrección:** Kafka pasa a "Finanzas y Contabilidad", y se quitaron del tipo `IndustryNiche` los valores antiguos "Fintech", "Salud" y "E-commerce", para que `tsc` avise si vuelven.
+
+**Verificación en Chrome con CDP, a 1280 y 400 px:**
+- arranca en Sorpréndeme;
+- el prompt cambia con cada combinación y en Personalizado al cambiar un selector;
+- con los 5 documentos de la biblioteca, el nicho enviado coincide con la opción visible;
+- no hay desbordamiento horizontal y la consola no tiene errores.
+- **Front:** `tsc`, `eslint`, los 26 tests y el build, todo limpio.
