@@ -25,7 +25,9 @@ const ESTADO_OCI: Record<string, { texto: string; activo: boolean }> = {
   pendiente: { texto: 'Guardando…', activo: false },
   error: { texto: 'No se pudo guardar', activo: false },
   omitido: { texto: 'No guardado en OCI', activo: false },
+  local: { texto: 'Guardado en el servidor, no en OCI', activo: false },
 };
+const BUCKET_LOCAL = 'local-mock-storage';
 
 export const Step3OCICloud = ({
   contentPackage,
@@ -55,8 +57,13 @@ export const Step3OCICloud = ({
   const isAudited = evaluacion?.auditoria_ejecutada !== false && typeof groundingScore === 'number';
   const groundingLabel = isAudited ? `${Math.round(groundingScore * 100)}%` : 'N/D';
 
-  const estadoOCI = ESTADO_OCI[almacenamiento?.status_upload ?? 'omitido'] ?? ESTADO_OCI.omitido;
-  const enOCI = almacenamiento?.status_upload === 'completado';
+  // Sin credenciales de OCI el backend guarda en su disco y responde «completado» con este bucket
+  // (storage/local_storage.py): está guardado, pero no en OCI.
+  const enDiscoLocal = almacenamiento?.status_upload === 'completado' && almacenamiento.bucket === BUCKET_LOCAL;
+  const enOCI = almacenamiento?.status_upload === 'completado' && !enDiscoLocal;
+  const estadoOCI = enDiscoLocal
+    ? ESTADO_OCI.local
+    : ESTADO_OCI[almacenamiento?.status_upload ?? 'omitido'] ?? ESTADO_OCI.omitido;
 
   return (
     <div className={styles.container}>
@@ -186,9 +193,11 @@ export const Step3OCICloud = ({
 
             {!enOCI && (
               <p className={styles.ociNota}>
-                {almacenamiento?.status_upload === 'error'
-                  ? 'El servidor intentó guardar el paquete en OCI y falló. El contenido sigue disponible aquí y puedes descargarlo.'
-                  : 'Este paquete no se guardó en OCI (el servidor no tiene credenciales configuradas o es un paquete de ejemplo). Puedes descargarlo igualmente.'}
+                {enDiscoLocal
+                  ? 'El servidor no tiene credenciales de OCI y guardó una copia en su propio disco. Puedes descargar el paquete aquí.'
+                  : almacenamiento?.status_upload === 'error'
+                    ? 'El servidor intentó guardar el paquete en OCI y falló. El contenido sigue disponible aquí y puedes descargarlo.'
+                    : 'Este paquete no se guardó en OCI (el servidor no tiene credenciales configuradas o es un paquete de ejemplo). Puedes descargarlo igualmente.'}
               </p>
             )}
 
