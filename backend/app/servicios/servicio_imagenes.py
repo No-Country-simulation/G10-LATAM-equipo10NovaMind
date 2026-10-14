@@ -12,7 +12,8 @@ y un cartel con texto), por eso aquí solo entra con filtros estrictos:
   CC BY, CC BY-SA, CC0 o dominio público. Nunca NC ni ND.
 
 Solo se guarda la URL y la atribución; la imagen nunca pasa por el servidor.
-Una búsqueda fallida devuelve None: la escena queda como diapositiva sin foto.
+Una búsqueda fallida devuelve None: la escena queda como diapositiva sin foto. Lo mismo
+con una palabra clave ambigua ("cloud", "streaming", "kafka"...): ni se consulta.
 """
 
 from __future__ import annotations
@@ -50,6 +51,15 @@ _TEMAS_EXCLUIDOS = re.compile(
     r"\b(epstein|raids?|crimes?|criminal|evidence|police|polic[ií]a|court|trials?|protests?|riots?|"
     r"wars?|military|weapons?|victims?|accidents?|disasters?|funerals?|nudity|nude|events?|festivals?|"
     r"birthday|conferences?|summits?|parades?|ceremon(y|ies)|elections?|campaigns?|advertis\w*)\b",
+    re.IGNORECASE,
+)
+# Palabras clave cuyo sentido literal no es el informático: los bancos buscan por el
+# literal. Prueba real del 2026-10-14: "cloud computing" daba un rayo entre nubes y
+# "event streaming" / "message broker" nada pertinente. El prompt pide objetos físicos;
+# si aun así llega una de estas, la escena queda sin foto antes que con una engañosa.
+_PALABRAS_AMBIGUAS = re.compile(
+    r"\b(clouds?|streams?|streaming|brokers?|pipelines?|bugs?|virus(es)?|worms?|python|java|kafka|"
+    r"spark|docker|firewalls?|cookies?|spiders?|crawlers?|oracle|amazon|apple)\b",
     re.IGNORECASE,
 )
 _LICENCIAS_OPENVERSE = {"by": "CC BY", "by-sa": "CC BY-SA", "cc0": "CC0", "pdm": "Dominio público"}
@@ -137,6 +147,9 @@ class BuscadorImagenes:
     async def buscar(self, palabra_clave: str, alt: str) -> Optional[ImagenEscena]:
         consulta = palabra_clave.strip()[:60]
         if not consulta:
+            return None
+        if _PALABRAS_AMBIGUAS.search(consulta):
+            logger.info("[imagenes] '%s' es ambigua para un banco de fotos: la escena queda sin foto.", consulta)
             return None
         for buscar in (self._openverse, self._wikimedia):
             try:

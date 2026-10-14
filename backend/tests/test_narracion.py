@@ -12,6 +12,7 @@ import json
 from typing import Dict, List, Optional
 from unittest.mock import patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -29,7 +30,7 @@ from app.main import app
 from app.servicios import servicio_narracion
 from app.servicios.registro_tareas import RegistroMemoria
 from app.servicios.servicio_gemini import AudioGenerado, GeminiError, Uso
-from app.servicios.servicio_imagenes import elegir_openverse, elegir_wikimedia
+from app.servicios.servicio_imagenes import BuscadorImagenes, elegir_openverse, elegir_wikimedia
 from app.servicios.servicio_narracion import Narrador, huella_narracion
 from app.servicios.servicio_voz import ESTILO_AGIL, VozGemini
 from app.storage.almacen_narracion import AlmacenLocal, prefijo_narraciones
@@ -332,6 +333,29 @@ def test_wikimedia_solo_acepta_fotos_apaisadas_libres_y_sin_titulo_sospechoso():
     assert elegir_wikimedia(rechazadas, "x") is None
     foto = elegir_wikimedia(rechazadas + [_wm(indice=9)], "Escena 3")
     assert foto.autor == "Abigor" and foto.licencia == "CC BY-SA 3.0" and foto.proveedor == "wikimedia"
+
+
+def test_palabra_clave_ambigua_no_consulta_los_bancos():
+    consultas: List[str] = []
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        consultas.append(request.url.host)
+        return httpx.Response(200, json={"results": [_OV]})
+
+    async def buscar(palabras: List[str]):
+        b = BuscadorImagenes(transport=httpx.MockTransport(responder))
+        try:
+            return [await b.buscar(p, "Escena") for p in palabras]
+        finally:
+            await b.aclose()
+
+    # el sentido literal engaña: nubes del cielo, ríos, el escritor Kafka
+    ambiguas = ["cloud computing", "Event Streaming", "message broker", "apache kafka", "data pipelines"]
+    assert asyncio.run(buscar(ambiguas)) == [None] * len(ambiguas)
+    assert consultas == []
+    # una palabra concreta sí se busca ("cloudy" o "upstream" no son la palabra ambigua)
+    fotos = asyncio.run(buscar(["server room", "cloudy upstream"]))
+    assert all(f and f.proveedor == "openverse" for f in fotos) and consultas == ["api.openverse.org"] * 2
 
 
 # --------------------------------------------------------------------- guion de 2 o 3 escenas

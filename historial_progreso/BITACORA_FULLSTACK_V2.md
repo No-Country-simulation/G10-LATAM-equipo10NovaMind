@@ -902,3 +902,33 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
 - `modulos/01`, `02`, `05` y `06`: verificador real, `contexto_de_cita`, el modelo de la tarea A (`gemini-3.5-flash-lite`), las 6 tablas, la caché de invitados, el correo, `VisorFuente` y la Estación 3. **Esta carpeta está en `.gitignore`:** sus cambios quedan solo en local.
 
 **Verificación.** Cada dato se contrastó con el código: `DIRECTIVAS_NICHO_SECTOR` (11 claves), `config.py`, `main.py` (semáforos), `registro_tareas.py`, `private_storage.py` y las migraciones. Los finales de línea son los de git (`core.autocrlf=true`).
+
+
+## 14 oct 2026 · Palabras clave concretas para las fotos de la narración
+
+**Problema.** Gemini escribía en `palabra_clave_imagen` conceptos abstractos ("cloud computing", "event streaming", "message broker"), y los bancos buscan por el sentido literal. Prueba real de hoy, sin cuota:
+
+| Búsqueda | Wikimedia |
+|---|---|
+| "cloud computing" | Un rayo entre nubes |
+| "event streaming", "message broker" | Nada pertinente |
+| "data center", "server room", "fiber optic cables", "network switch", "laptop code" | Una foto pertinente |
+
+**Hallazgo aparte (sin cambiar).** Openverse tarda unos 18 s en una búsqueda que no tiene en caché, y 0,5 s si la tiene. Con el plazo de 8 s de `BuscadorImagenes`, las 8 búsquedas de la prueba dieron timeout. En la práctica, casi siempre decide Wikimedia, aunque Openverse vaya primero.
+
+**Cambios.**
+- `generacion_paralela.py`: la descripción de `palabra_clave_imagen` pide un objeto o lugar **físico** que se pueda fotografiar, nunca una metáfora. Explica el motivo con el ejemplo de las nubes, da cinco ejemplos que funcionan y pide no repetir la palabra clave entre escenas. El esquema entra en la huella de la tarea B2, así que los guiones guardados en caché se regeneran la próxima vez (las tareas A y B1 no se tocan).
+- `servicio_imagenes.py`: red de seguridad `_PALABRAS_AMBIGUAS` (cloud, streaming, broker, pipeline, kafka, python, java, docker, firewall…). Si la palabra clave contiene una de ellas, no se consultan los bancos y la escena queda como diapositiva sin foto, con el aviso de siempre. Se buscan palabras enteras: "cloudy" o "upstream" sí se buscan.
+
+**Pendiente.** Comprobar con una generación real que Gemini obedece. Eso gasta cuota de la tarea B2. Se comprobará en la 3.ª corrida de nichos.
+
+**3.ª corrida de nichos preparada (fuera del repo).**
+- `prueba_nichos.py` tiene una sección 7 nueva: el guion escena a escena, con el sector de cada escena y su palabra clave.
+- Una escena cuenta como «con sector» si tiene léxico del sector o una fórmula de analogía («en tu trabajo», «equivale a»…). Los léxicos de la sección 1 no se tocan, para que siga siendo comparable con las corridas anteriores.
+- Validación sin cuota con los JSON de las corridas 1.ª y 2.ª:
+  - Solo con el léxico, Finanzas de la 2.ª corrida contaba 1 escena con el sector. Leyendo el guion son 3 («déficit de liquidez», «línea de crédito»). Con la medida nueva salen 3.
+  - Ningún nicho cumple todavía la regla de una escena.
+  - En la 1.ª corrida aparecía dos veces la palabra clave «cloud server architecture», que la red nueva descarta.
+- `LEEME.md` describe la 3.ª corrida.
+
+**Verificación.** Backend: 301 tests (uno nuevo, `test_palabra_clave_ambigua_no_consulta_los_bancos`, con un transporte simulado que comprueba que no sale ninguna petición). Se conserva el CRLF de los dos archivos de `app/`.
