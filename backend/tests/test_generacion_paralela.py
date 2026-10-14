@@ -764,7 +764,7 @@ def test_el_sector_se_limita_a_analogias_y_no_cambia_lo_que_dice_el_documento():
     general = SOLICITUD.model_copy(update={"nicho_sector": "General"})
     assert _LIMITE_SECTOR in _instrucciones_audiencia(leyes)
     assert _LIMITE_SECTOR not in _instrucciones_audiencia(general)
-    assert "Narra solo hechos del documento" in _TAREA_B2
+    assert "Narra solo hechos del documento" in _TAREA_B2 and "UNA escena" in _TAREA_B2
     assert "sin presentarlo como escrito para su sector" in _TAREA_A
 
 

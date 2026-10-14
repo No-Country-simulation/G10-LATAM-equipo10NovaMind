@@ -55,19 +55,21 @@ def _fin_de_nota(texto: str, i: int) -> int:
     return fin
 
 
-# Línea que abre o cierra un bloque de código Markdown, con su etiqueta de lenguaje ("```bash").
-# Al citar una frase y el comando que la sigue, los modelos omiten la marca; la etiqueta no es
-# texto del documento que vea el lector. Medido el 2026-10-14 en la prueba de nichos: 7 de 18
-# citas rechazadas eran literales y solo fallaban por "bash" o "text" en medio.
-_VALLA_CODIGO = re.compile(r"^[ \t]{0,3}(?:`{3,}|~{3,})[^\n]*", re.MULTILINE)
+# Marca de bloque de código Markdown con su etiqueta de lenguaje ("```bash"). Al citar una frase y
+# el comando que la sigue, unas veces el modelo omite la marca y otras la copia en la misma línea;
+# la etiqueta no es texto del documento que vea el lector. Se descarta en cualquier posición, igual
+# en la cita y en el documento: si solo se quitara al inicio de línea, la cita que la copia en
+# línea dejaría de coincidir. Medido el 2026-10-14 en la prueba de nichos: 7 de 18 citas
+# rechazadas eran literales y solo fallaban por "bash" o "text" en medio.
+_VALLA_CODIGO = re.compile(r"(?:`{3,}|~{3,})[A-Za-z0-9_+#.-]*")
 
 
 def _normalizar(texto: str) -> Tuple[str, array]:
     """
     Solo letras y dígitos, en minúsculas y sin tildes (NFKD: "ﬁ" → "fi", "é" → "e"),
     guardando para cada carácter normalizado su offset en el texto original. Las llamadas
-    a nota al pie (dígitos pegados tras una letra o ")", superíndices) y las líneas que
-    abren o cierran bloques de código se descartan.
+    a nota al pie (dígitos pegados tras una letra o ")", superíndices) y las marcas de
+    bloque de código con su etiqueta se descartan.
     """
     salida: List[str] = []
     mapa = array("l")

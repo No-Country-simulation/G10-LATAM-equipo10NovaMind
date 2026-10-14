@@ -134,11 +134,14 @@ def test_cita_que_une_frase_y_comando_ignora_la_valla_del_bloque_de_codigo():
     tramo = tramo_de_cita("Se formatea el archivo como swap para el kernel: sudo mkswap /swapfile", doc)
     assert tramo is not None and doc[tramo[0]:tramo[1]].endswith("/swapfile")
     assert ubicar_cita("sudo mkswap /swapfile Y luego se activa", doc) is not None
+    # 2.ª corrida: el modelo también copia la marca en la misma línea; debe coincidir igual
+    assert ubicar_cita("para el kernel: ```bash sudo mkswap /swapfile ```", doc) is not None
     # La etiqueta del lenguaje no es texto del documento, y cambiar el comando sigue sin coincidir
     assert ubicar_cita("para el kernel: bash sudo mkswap /swapfile", doc) is None
     assert ubicar_cita("Se formatea el archivo como swap para el kernel: sudo mkfs /swapfile", doc) is None
-    # Un "```" a mitad de línea no es una valla y no se descarta lo que lo sigue
-    assert ubicar_cita("usa ```bash dentro de una frase normal", "Texto: usa ```bash dentro de una frase normal.") is not None
+    # Las palabras que siguen a la marca tras un espacio sí cuentan
+    assert ubicar_cita("usa ``` bash dentro de una frase normal", "Texto: usa ``` bash dentro de una frase normal.") is not None
+    assert ubicar_cita("usa dentro de una frase normal", "Texto: usa ``` bash dentro de una frase normal.") is None
 
 
 def test_cita_con_tipografia_normal_se_ubica_en_texto_extraido_de_pdf():

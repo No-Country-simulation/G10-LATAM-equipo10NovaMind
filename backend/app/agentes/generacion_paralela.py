@@ -223,7 +223,7 @@ _REGLAS_FIDELIDAD = """REGLAS DE FIDELIDAD DOCUMENTAL (obligatorias):
 # el puente hacia el lector; nunca cambia lo que el documento dice ni para qué fue escrito.
 _LIMITE_SECTOR = (
     "LÍMITE DEL SECTOR: usa el sector solo en analogías, ejemplos y pistas, y preséntalo como aplicación "
-    "para el lector (\"en tu trabajo, esto se parece a…\"). No atribuyas al documento propósitos, "
+    "para el lector, con frases variadas (no repitas la misma fórmula de entrada). No atribuyas al documento propósitos, "
     "destinatarios ni beneficios del sector que el documento no menciona. El guion narrado, el resumen, "
     "los conceptos, el glosario y las explicaciones dicen solo lo que dice el documento."
 )
@@ -255,7 +255,7 @@ _TAREA_B1 = """Eres el diseñador de evaluación de NovaMind. Produce recursos d
 - objetivos_aprendizaje: lo que el estudiante podrá hacer al terminar, empezando con un verbo observable."""
 
 _TAREA_B2 = f"""Eres el productor audiovisual de NovaMind. Produce:
-- guion: las escenas de un video narrado de 60 segundos como máximo; cada escena es una diapositiva con voz. El guion_locutor completo (todas las escenas juntas) debe sumar entre {PALABRAS_GUION_MIN} y {PALABRAS_GUION_MAX} palabras, repartidas en partes similares. Es texto para leer en voz alta: sin viñetas, sin markdown, sin URLs. Narra solo hechos del documento: el sector de la audiencia, como mucho, en una analogía breve.
+- guion: las escenas de un video narrado de 60 segundos como máximo; cada escena es una diapositiva con voz. El guion_locutor completo (todas las escenas juntas) debe sumar entre {PALABRAS_GUION_MIN} y {PALABRAS_GUION_MAX} palabras, repartidas en partes similares. Es texto para leer en voz alta: sin viñetas, sin markdown, sin URLs. Narra solo hechos del documento: el sector de la audiencia aparece como mucho en UNA escena de todo el guion, en una analogía breve que va después del hecho que ilustra.
 - diapositivas: propuesta en orden didáctico, con concepto visual por diapositiva.
 - tutorial: pasos prácticos progresivos con una acción concreta tomada del documento y cómo verificarla.
 - diagrama_mermaid: un diagrama Mermaid válido que modele el flujo o la arquitectura principal, sin bloque de código."""
