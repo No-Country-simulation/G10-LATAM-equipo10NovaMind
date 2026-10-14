@@ -414,24 +414,6 @@ export const Step1Ingestion = ({
 
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>
-                Formato Pedagógico
-              </label>
-              <select
-                value={format}
-                onChange={(e) => setFormat(e.target.value as OutputFormat)}
-                className={styles.selectInput}
-              >
-                <option value="Paquete Educativo Completo (5 Estaciones)">Paquete Completo (5 Estaciones)</option>
-                <option value="Flashcards">Flashcards de Memorización</option>
-                <option value="Tutorial">Guía Práctica Paso a Paso</option>
-                <option value="Quiz Interactivo">Quiz Interactivo con Justificaciones</option>
-                <option value="Resumen Ejecutivo (TL;DR)">Resumen Ejecutivo (TL;DR)</option>
-                <option value="Guion de Clase / Video">Guion de Clase / Video</option>
-              </select>
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>
                 Nicho / Sector
               </label>
               <select

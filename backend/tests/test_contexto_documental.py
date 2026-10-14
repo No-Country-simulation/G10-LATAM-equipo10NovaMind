@@ -128,6 +128,20 @@ def test_cita_sin_marcas_markdown_se_ubica_y_la_parafrasis_no():
     assert ubicar_cita("5 GB efectivos; ver mm.", doc) is not None
 
 
+def test_cita_con_tipografia_normal_se_ubica_en_texto_extraido_de_pdf():
+    # Artefactos reales de pypdf (Snowflake y ENISA): ligaduras, palabras cortadas con
+    # guion a final de línea, espacios dentro de palabras, comillas curvas y tildes.
+    doc = ("Intro.\nThe Snowﬂake Elastic Data Ware-\nhouse is a multi-tenant, transac-\ntional service. "
+           "Another nota ble development was the adaptation of threat groups’ operations. "
+           "La memoria se incrementa a 5 GB efectivos.")
+    assert ubicar_cita("The Snowflake Elastic Data Warehouse is a multi-tenant, transactional service", doc) == 7
+    assert ubicar_cita("Another notable development was the adaptation of threat groups' operations", doc) is not None
+    assert ubicar_cita("la memoria se increménta a 5 GB efectivos", doc) is not None
+    # Cambiar, quitar o reordenar palabras sigue sin pasar
+    assert ubicar_cita("The Snowflake Elastic Data Warehouse is a single-tenant transactional service", doc) is None
+    assert ubicar_cita("Another development was notable: the adaptation of threat groups", doc) is None
+
+
 def test_cita_corta_o_ausente_no_se_ubica():
     assert ubicar_cita("swap", DOCUMENTO) is None  # < 20 caracteres
     assert ubicar_cita("Kubernetes reinicia los pods cada hora", DOCUMENTO) is None

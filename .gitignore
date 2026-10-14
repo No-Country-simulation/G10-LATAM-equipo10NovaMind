@@ -8,7 +8,10 @@ dist-ssr/
 # Variables de entorno / secretos
 .env
 .env.*
+*.env
+*.env.*
 !.env.example
+!frontend/.env.example
 
 # Claves privadas, certificados y credenciales criptograficas
 *.pem
@@ -17,6 +20,20 @@ dist-ssr/
 *.cert
 *.pfx
 *.p12
+*.pkcs12
+*id_rsa*
+*id_ed25519*
+*credentials*.json
+*service_account*.json
+*service-account*.json
+client_secret*.json
+.oci/
+
+# Bases de datos locales y volcados
+*.sqlite
+*.sqlite3
+*.db
+!Thumbs.db
 
 # Archivos de registro y volcados
 *.log
@@ -81,5 +98,8 @@ TROUBLESHOOTING.md
 
 # Borradores de diseño y notas privadas
 audiovisual.md
+CLAUDE.md
+*claude*.md
+
 
 

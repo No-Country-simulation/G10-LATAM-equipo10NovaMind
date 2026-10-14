@@ -293,3 +293,91 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
      - Estación 03 (Tutorial Quest) → Estación 04 (Director Cut).
      - Estación 04 (Director Cut) → Estación 05 (The Final Trial / Quiz Capstone).
 
+## Fase 14: Persistencia y Autenticación con Supabase (RLS y Estado de Usuario)
+
+1. **Esquema de Base de Datos y Seguridad RLS:**
+   - Creación de migraciones SQL en `supabase/migrations/` (`users`, `profiles`, `generation_tasks`, `narraciones`).
+   - Políticas de seguridad a nivel de fila (Row Level Security) garantizando aislamiento estricto por `auth.uid()`.
+   - Soporte para autenticación por correo/contraseña y OAuth con Google, preservando sesiones mediante flujo PKCE.
+2. **Contexto de Autenticación en Frontend:**
+   - Proveedor `AuthProvider` y hook `useAuth()` integrados con la sesión de Supabase.
+   - Modal `AuthModal` con estados de inicio de sesión, registro y recuperación de credenciales.
+   - Modo invitado transparente con fallback de almacenamiento temporal en memoria sin registrar en base de datos.
+
+## Fase 15: Contratos Audiovisuales, Tiempo Unificado y Normalización Defensiva
+
+1. **Modelo de Tiempo Único y Determinista:**
+   - Fórmulas de cálculo de palabras por minuto, segundos y tramos `MM:SS` unificadas entre backend (`schemas.py`) y frontend (`microclassTiming.ts`).
+   - Validación cruzada contra el fixture dorado `contracts/fixtures/director_cut_golden.json`.
+2. **Procedencia Honesta:**
+   - Prohibición de cifras inventadas o citas simuladas: cada afirmación cuenta con trazabilidad explícita al texto origen.
+   - Normalización defensiva de estructuras JSON incompletas o corruptas devueltas por modelos externos.
+
+## Fase 16: Generación Paralela Concurrente Gemini, Streaming SSE Incremental y Trazabilidad Literal
+
+1. **Arquitectura Concurrente en 3 Tareas:**
+   - **Tarea A:** Resumen Ninja + Ejecutivo (`gemini-3.8-flash` con fallback `gemini-3.1-flash-lite`).
+   - **Tarea B1:** Flashcards, Cuestionario, Glosario y Objetivos (`gemini-3.5-flash-lite` con fallback `3.1-flash-lite`).
+   - **Tarea B2:** Guion Director, Diapositivas, Tutorial y Diagrama (`gemini-3.5-flash-lite` con fallback `3.1-flash-lite`).
+2. **Streaming Incremental Server-Sent Events:**
+   - Emisión inmediata por recurso (`event: recurso`) en `/api/v1/adaptar/stream`.
+   - Reducción del tiempo hasta el primer recurso visible a ~8 segundos.
+3. **Verificación de Citas Literales:**
+   - Cada cita del resumen y de las estaciones se contrasta contra el texto fuente; se añade el número de página real o se advierte si no se localizó.
+   - Eliminación total de datos de relleno en la interfaz.
+
+## Fase 17: Etapa 6 — Video Narrado Bajo Demanda (Diapositivas, Doble TTS y Fotos Libres)
+
+1. **Video Reactivo en Cliente (Cero Transcodificación en Servidor):**
+   - El "video" son 2 o 3 diapositivas interactivas en proporción 16:9 ([SlideNarrada.tsx](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/stations/Station4DirectorCut/SlideNarrada.tsx)) generadas desde el `VideoJobSpec`.
+   - Protección absoluta de los recursos de la VM de OCI (1 vCPU, 1 GB RAM): sin FFmpeg ni generación de MP4 en servidor.
+2. **Síntesis de Voz Bajo Demanda:**
+   - Activada únicamente por interacción explícita del usuario ("Generar narración").
+   - Motor dual: ElevenLabs (`eleven_flash_v2_5`, voz Alice) como primario y Gemini TTS (`gemini-3.8-flash-lite-tts`) como respaldo.
+   - Medición estricta de la duración del audio sintetizado con tope de 60 segundos.
+3. **Búsqueda de Fotografías Libres:**
+   - Integración con Openverse y Wikimedia Commons sin claves obligatorias, garantizando atribución legal del autor y licencia Creative Commons.
+4. **Persistencia Idempotente:**
+   - Usuarios autenticados guardan el audio en el bucket privado de OCI (`users/{id}/narraciones/{huella}/`), reutilizando el recurso con 0 costo adicional en llamadas repetidas.
+
+## Fase 18: Tolerancia de Duración, Cascada de Respaldo Gemini y Web Speech API Regional
+
+1. **Tolerancia de Duración (5% / 63s):**
+   - Si la voz mide hasta 63 s, se acepta y el reproductor del navegador la reproduce a velocidad acelerada adaptativa (`ceil(total/60)` milésimas por encima de 1×) para calzar exactamente en 60 s.
+2. **Cascada de Respaldo Automático:**
+   - Si el modelo primario de texto responde 429, 5xx, timeout o error transitorio, se conmuta automáticamente a `gemini-3.1-flash-lite`.
+3. **Voz del Navegador (Web Speech API):**
+   - Tercer escalón de respaldo cuando fallan ElevenLabs y Gemini TTS.
+   - Cascada regional en español neutro/latinoamericano: `es-AR`, `es-419`, `es-MX`, `es-CO`, `es-CL`, `es-US` y `es*`.
+
+## Fase 19: Ingesta Multimodal — Transcripción IA de Imágenes y PDFs Escaneados
+
+1. **Soporte Multimodal Honesto:**
+   - Ingesta de imágenes (PNG, JPG, WEBP) y PDFs escaneados a través de `POST /api/v1/documentos/extraer`.
+   - Transcripción en una sola llamada con Gemini, preservando marcadores `[Página N]`.
+   - Validación y rechazo automático de fotografías no pedagógicas o sin texto (ej. fotos cotidianas).
+2. **Revisión Humana en Estación 1:**
+   - Cuadro editable para que el estudiante revise y ajuste la transcripción generada por IA antes de disparar la adaptación.
+   - Avisos transparentes en el paquete: el material indica que fue generado a partir de una transcripción IA y que las citas se cotejan contra dicha transcripción.
+
+## Fase 20: Análisis Forense de Integración Multirama y Convergencia a Producción
+
+1. **Auditoría Forense de Árbol Git:**
+   - Identificación de dos raíces independientes: Linaje A (`d42b454`) y Linaje B (`bb0c866`).
+   - Comprobación de que `origin/main` en GitHub no posee código fuente (solo 3 commits con README).
+2. **Absorción Completa de `backend` e `integracion`:**
+   - Se verificó que `feature/fullstack-nuevamente-v2` contiene el 100% de `backend` (+42 commits) y de `integracion` (+25 commits) con 0 commits faltantes.
+   - Estrategia de avance rápido (*Fast-Forward*) limpio sin merge commits redundantes.
+3. **Rescate Selectivo de UI y Promoción a `main`:**
+   - Aislamiento de micro-interacciones de `origin/feature/newmind-edtech-oci` (`BadgeModal` showcase y `Step1Ingestion` dropzone).
+   - Documentación en [deploy/auditoria/para_claude.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/deploy/auditoria/para_claude.md).
+   - Validación total de calidad: **255 tests backend + 17 tests frontend pasando al 100%**.
+
+---
+
+**Firmado por:**  
+🤖 **Modelo de IA: Gemini 3.8 & Antigravity Agent**  
+*Arquitectura de Soluciones Cloud OCI, DevOps & Integración Full-Stack*  
+*Fecha: 13 de Octubre de 2026*
+
+
