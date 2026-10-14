@@ -46,6 +46,7 @@ import {
   wordIndexAtChar,
 } from '../../../utils/microclassTiming';
 import { cargarVocesNavegador, elegirVozNavegador } from '../../../utils/vozNavegador';
+import { promptVisualEscena } from '../../../utils/promptVisual';
 import { SlideNarrada } from './SlideNarrada';
 import styles from './Station4DirectorCut.module.css';
 
@@ -194,6 +195,7 @@ const DirectorStudio = ({
   const [wpm, setWpm] = useState<number>(BASE_WPM);
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [promptCopyState, setPromptCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   const [showRagDetails, setShowRagDetails] = useState(true);
   const [narracion, setNarracion] = useState<EstadoNarracion>({ fase: 'inactiva' });
   const [isTheater, setIsTheater] = useState(false);
@@ -214,6 +216,7 @@ const DirectorStudio = ({
   const progressRef = useRef(0);
   const completionFiredRef = useRef(false);
   const copyTimeoutRef = useRef<number | undefined>(undefined);
+  const promptTimeoutRef = useRef<number | undefined>(undefined);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const fillRef = useRef<HTMLDivElement | null>(null);
   const barRef = useRef<HTMLDivElement | null>(null);
@@ -267,7 +270,10 @@ const DirectorStudio = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSceneIndex, sceneDurationSec]);
 
-  useEffect(() => () => window.clearTimeout(copyTimeoutRef.current), []);
+  useEffect(() => () => {
+    window.clearTimeout(copyTimeoutRef.current);
+    window.clearTimeout(promptTimeoutRef.current);
+  }, []);
 
   const resetPlayback = () => {
     progressRef.current = 0;
@@ -577,6 +583,20 @@ const DirectorStudio = ({
     }
     window.clearTimeout(copyTimeoutRef.current);
     copyTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), 2000);
+  };
+
+  // Prompt para un generador de imágenes externo: lo genera el usuario con su herramienta,
+  // NovaMind no gasta cuota ni presenta la imagen como propia.
+  const promptVisual = promptVisualEscena(currentScene);
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(promptVisual);
+      setPromptCopyState('copied');
+    } catch {
+      setPromptCopyState('error');
+    }
+    window.clearTimeout(promptTimeoutRef.current);
+    promptTimeoutRef.current = window.setTimeout(() => setPromptCopyState('idle'), 2000);
   };
 
   const sceneLabel = (idx: number) => `Escena ${String(idx + 1).padStart(2, '0')}`;
@@ -982,7 +1002,30 @@ const DirectorStudio = ({
             )}
 
             <div className={styles.storyboardVisualContent}>
-              <div className={styles.storyboardVisualLabel}>Guion Visual / Puesta en Escena:</div>
+              <div className={styles.storyboardVisualHeader}>
+                <div className={styles.storyboardVisualLabel}>Guion Visual / Puesta en Escena:</div>
+                {promptVisual && (
+                  <button
+                    type="button"
+                    onClick={handleCopyPrompt}
+                    className={styles.copyScriptBtn}
+                    title="Copia una descripción de la escena para pegarla en el generador de imágenes que prefieras"
+                  >
+                    {promptCopyState === 'copied' ? (
+                      <Check size={13} className={styles.iconViewed} aria-hidden="true" />
+                    ) : (
+                      <Copy size={13} aria-hidden="true" />
+                    )}
+                    <span aria-live="polite">
+                      {promptCopyState === 'copied'
+                        ? '¡Copiado!'
+                        : promptCopyState === 'error'
+                          ? 'No se pudo copiar'
+                          : 'Copiar prompt visual'}
+                    </span>
+                  </button>
+                )}
+              </div>
               {currentScene.storyboard_visual}
             </div>
           </div>

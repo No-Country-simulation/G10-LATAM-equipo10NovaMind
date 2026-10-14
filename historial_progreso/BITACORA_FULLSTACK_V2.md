@@ -408,3 +408,51 @@ Claude revisó el bloque anterior antes del commit y corrigió dos problemas.
 - Se corrigió la descripción del semáforo en `backend/docs/ARCHITECTURE.md` y `CHANGELOG.md`.
 
 **Verificación:** 275 tests del backend.
+
+---
+
+## 14 oct 2026 · Absorción de la rama `frontEnd`
+
+Esta rama (22 commits, el último del 29/09, de CariBosio) no comparte historia con la nuestra. Es la primera UI: `IngestView`, `ViewerView` con 5 visores, `MetricsView` y un prototipo en Streamlit. Se revisó archivo por archivo.
+
+**Ya estaba absorbido o superado**
+- Las vistas: las sustituyeron `Step1Ingestion`, las 5 estaciones y `RecursoEstado`, y se borraron en `dfa6f42`.
+- `docs/docs.txt`, `eslint.config.js` y `vite.config.ts` son idénticos a los nuestros.
+- Los ajustes responsive eran para un `Header` que ya no existe.
+
+**Se rescató**
+- La tabla de equivalencias Python ↔ Node para el equipo de backend (`137de17`), en `frontend/README.md`. Se actualizó a cómo se arranca hoy (`npm ci`, `.env.local`, tests, `tsc`, lint) y se añadió la advertencia de que nada secreto va en `VITE_*`.
+
+**Restos que la rama había dejado en la nuestra, eliminados**
+- **Componentes sin uso:** `Button`, `SelectField` y `Stepper` no los importaba nadie.
+- **Dependencias sin uso:** `gsap` y `@studio-freight/lenis` estaban en `package.json`, pero ningún archivo las usaba (`npm uninstall`).
+- **README raíz:** su árbol de `frontend/` describía la estructura antigua; se reescribió con la actual.
+- **Enlace roto:** `frontend/README.md` enlazaba `iniciar_local.bat` con una ruta absoluta de un disco local; ahora es relativa.
+
+**Queda en manos del equipo:** archivar la rama remota (por ejemplo, con una etiqueta `archivo/frontEnd`) y borrarla. No se tocó nada en el remoto.
+
+**Verificación:** `tsc` sin errores, 23 tests del frontend, `eslint .` con 0 problemas y build correcto.
+
+---
+
+## 14 oct 2026 · `newmind-edtech-oci`: nivel de detalle y prompt visual
+
+**Directivas de nivel de detalle** (idea del prompt de `cc5d028`)
+- El backend ya tenía directivas por perfil y por sector, pero el nivel de detalle solo se pasaba como nombre. Se añadió `DIRECTIVAS_NIVEL_DETALLE` en `schemas.py` para Didáctico, Intermedio y Profundo. La usan el modo paralelo (`_instrucciones_audiencia`) y la cadena colaborativa de respaldo.
+- **Cambio respecto al original:** allí se pedían "comandos con flags reales". Aquí todo comando, parámetro o cifra tiene que salir del documento: "si el documento no da un comando o un valor, no lo inventes".
+- **Fallo de caché corregido de paso:** `huella_tarea` no incluía las directivas de audiencia. Al cambiar una directiva, la caché habría seguido devolviendo resultados generados con la anterior, aunque el docstring prometía lo contrario. Ahora las incluye; ya no hace falta subir `VERSION_PROCESADO` cuando cambia un prompt de audiencia.
+
+**Botón "Copiar prompt visual" en la Estación 4** (idea del storyboard de `df18965`)
+- `utils/promptVisual.ts` arma el texto con lo que el backend ya generó para la escena: `visual.prompt_grafico` o `storyboard_visual`, el título y los puntos clave. Añade el formato 16:9 de la diapositiva y pide que la imagen no lleve texto.
+- El usuario lo pega en el generador de imágenes que prefiera: NovaMind no gasta cuota ni presenta la imagen como propia.
+- Si la escena no trae nada visual, el botón no aparece.
+
+**Descartado de `df18965`:**
+- **"Enriquecer con IA" y "Ampliar guion":** llaman a Gemini desde el navegador.
+- **El visor de cámara:** es pura decoración y el modo cine ya cumple esa función.
+
+**Avisos para el equipo sobre esa rama**
+- `geminiService.ts` lee `VITE_GEMINI_API_KEY`, así que la clave queda incrustada en el JavaScript público. Si se desplegó con una clave real, hay que rotarla.
+- Su prompt inventa metadatos de OCI (etag, URL y tamaño fijos).
+
+**Verificación:** 278 tests del backend (3 nuevos: cada nivel tiene directiva, las instrucciones la incluyen y cambiarla invalida la huella) y 26 del frontend (3 nuevos). `tsc` sin errores, `eslint .` con 0 problemas y build correcto.

@@ -49,6 +49,7 @@ load_dotenv()
 
 from app.core.schemas import (
     DIRECTIVAS_NICHO_SECTOR,
+    DIRECTIVAS_NIVEL_DETALLE,
     DIRECTIVAS_PERFIL_DESTINATARIO,
     AlmacenamientoOCI,
     ContenidoAdaptado,
@@ -618,6 +619,8 @@ PARÁMETROS:
 - Directiva Sectorial del Destinatario:
   {directiva_nicho}
 - Nivel de Detalle: "{solicitud.nivel_detalle}"
+- Directiva de Profundidad:
+  {DIRECTIVAS_NIVEL_DETALLE.get(solicitud.nivel_detalle, "")}
 - Formato Solicitado: "{solicitud.formato_salida}"
 
 DOCUMENTACIÓN TÉCNICA FUENTE:
@@ -830,6 +833,8 @@ NICHO / SECTOR: "{solicitud.nicho_sector}"
 DIRECTIVA DE ENFOQUE DEL SECTOR:
 {directiva_nicho}
 NIVEL: "{solicitud.nivel_detalle}"
+DIRECTIVA DE PROFUNDIDAD:
+{DIRECTIVAS_NIVEL_DETALLE.get(solicitud.nivel_detalle, "")}
 
 TEXTO ACTUAL DE INTRODUCCIÓN:
 "{intro_actual}"

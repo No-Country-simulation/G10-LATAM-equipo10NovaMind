@@ -145,7 +145,25 @@ npm.cmd run build
 npm.cmd run preview
 ```
 
-> 💡 **Nota de Ejecución Unificada:** Para arrancar todo el sistema (Backend FastAPI + Frontend Vite) en un solo paso en Windows, ejecuta [`iniciar_local.bat`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/iniciar_local.bat) desde la raíz del repositorio.
+> 💡 **Nota de Ejecución Unificada:** Para arrancar todo el sistema (Backend FastAPI + Frontend Vite) en un solo paso en Windows, ejecuta [`iniciar_local.bat`](../iniciar_local.bat) desde la raíz del repositorio.
+
+### Equivalencias rápidas: Python ↔ Node (para el equipo de backend)
+
+Idea original de la rama `frontEnd` (guía de arranque para el equipo de backend), actualizada al proyecto actual.
+
+| Concepto | Backend (Python) | Frontend (Node.js) |
+| :--- | :--- | :--- |
+| Entorno de ejecución | Python 3.12.7, en `.venv/` de la raíz | Node.js 22+ (LTS) |
+| Gestor de paquetes | `pip` | `npm` |
+| Lista de dependencias | `requirements.txt` | `package.json` (versiones exactas en `package-lock.json`) |
+| Instalar dependencias | `pip install -r requirements.txt` | `npm ci` (respeta el lock; `npm install` lo puede modificar) |
+| Servidor local | `python -m uvicorn app.main:app --app-dir backend --port 8000` | `npm run dev` |
+| Tests | `python -m pytest -q` (en `backend/`) | `npm test` |
+| Comprobación de tipos | — | `npx tsc --noEmit -p .` |
+| Lint | — | `npx eslint .` |
+| Variables de entorno | `.env` en la raíz (claves secretas) | `.env.local` en `frontend/`, copiado de `.env.example` |
+
+> ⚠️ Todo lo que empieza por `VITE_` se incrusta en el JavaScript que descarga el navegador: ahí solo van valores públicos (URL del backend, URL y clave *publishable* de Supabase). Las claves de Gemini, ElevenLabs u OCI viven únicamente en el `.env` del backend.
 
 ---
 

@@ -263,6 +263,27 @@ DIRECTIVAS_NICHO_SECTOR: Dict[str, str] = {
 
 NivelDetalle = Literal["Didáctico", "Intermedio", "Profundo"]
 
+# Cómo cambia la profundidad del contenido según el nivel elegido. Idea tomada del prompt de
+# origin/feature/newmind-edtech-oci (cc5d028), con una diferencia: allí se pedían "comandos con
+# flags reales"; aquí cualquier comando, parámetro o cifra tiene que salir del documento.
+DIRECTIVAS_NIVEL_DETALLE: Dict[str, str] = {
+    "Didáctico": (
+        "Prioriza la comprensión: modelos mentales intuitivos, analogías y un paso cada vez. "
+        "Define cada término técnico la primera vez que aparece y evita los detalles de configuración "
+        "que no sean imprescindibles para entender la idea."
+    ),
+    "Intermedio": (
+        "Equilibra concepto y práctica: explica el porqué de cada idea y muestra cómo se aplica. "
+        "Incluye los comandos, parámetros y configuraciones principales que aparezcan en el documento, "
+        "sin detenerse en casos límite."
+    ),
+    "Profundo": (
+        "Usa terminología precisa y entra en detalle técnico: arquitectura, configuración, decisiones de diseño, "
+        "compromisos y casos límite. Reproduce con exactitud los comandos, parámetros, valores y cifras "
+        "del documento. Si el documento no da un comando o un valor, no lo inventes: indica que no lo especifica."
+    ),
+}
+
 
 def _normalizar(texto: str) -> str:
     """Minúsculas, sin tildes y con espacios colapsados (para comparar alias)."""
