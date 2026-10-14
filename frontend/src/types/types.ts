@@ -56,6 +56,8 @@ export interface FuenteRAG {
   origen?: 'llm' | 'extracto_automatico';
   /** true solo si el modelo la citó y aparece literalmente en el documento */
   verificada?: boolean;
+  /** Solo en citas verificadas: pasaje real del documento para el visor de fuente */
+  contexto?: ContextoCita | null;
 }
 
 export interface EspecificacionVisual {
@@ -310,20 +312,22 @@ export interface AdaptedContentPackage {
     /** null cuando la auditoría no se ejecutó */
     anclaje_fuente_score: number | null;
     auditoria_ejecutada?: boolean;
-    claridad_pedagogica: 'Alta' | 'Media' | 'Sobresaliente';
+    claridad_pedagogica: 'Alta' | 'Media' | 'Baja';
     observaciones: string;
-    mitigacion_alucinaciones: string;
-    chunks_procesados: number;
-    similitud_coseno_promedio: number;
+    /** Solo los rellena el modo RAG antiguo; el modo paralelo no los envía */
+    mitigacion_alucinaciones?: string;
+    chunks_procesados?: number;
+    similitud_coseno_promedio?: number;
   };
+  /** Lo que informa el backend (schemas.AlmacenamientoOCI); el resto solo existe si OCI lo devolvió */
   almacenamiento_oci: {
-    bucket: string;
-    objeto_id: string;
-    status_upload: 'completado' | 'pendiente' | 'error';
-    region: string;
-    etag: string;
-    tamano_bytes: number;
-    url_always_free: string;
+    bucket?: string | null;
+    objeto_id?: string | null;
+    status_upload: 'completado' | 'pendiente' | 'error' | 'omitido';
+    region?: string;
+    etag?: string;
+    tamano_bytes?: number;
+    url_always_free?: string;
   };
 }
 
