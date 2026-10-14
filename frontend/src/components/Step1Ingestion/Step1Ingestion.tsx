@@ -39,6 +39,23 @@ const NIVELES: ReadonlyArray<[DetailLevel, string]> = [
   ['Didáctico', 'Didáctico (Metáforas y Analogías)'],
   ['Técnico Profundo', 'Técnico Profundo (Sintaxis y Flags)'],
 ];
+// Resumen breve de lo que se generará. Cada frase resume la directiva real del backend
+// (DIRECTIVAS_PERFIL_DESTINATARIO, DIRECTIVAS_NICHO_SECTOR y DIRECTIVAS_NIVEL_DETALLE en schemas.py).
+const DESC_PERFIL: Record<RecipientProfile, string> = {
+  'Principiante': 'en lenguaje sencillo, definiendo cada término técnico y con ejemplos cotidianos',
+  'Desarrollador Junior': 'con lenguaje técnico, explicando cómo funciona cada componente, sus buenas prácticas y errores frecuentes',
+  'Líder Técnico / Arquitecto': 'con foco en arquitectura, decisiones, riesgos y compromisos técnicos',
+  'Gestor / Ejecutivo (No Técnico)': 'en lenguaje de negocio: impacto, beneficios, riesgos y decisiones, sin detalle técnico innecesario',
+};
+const DESC_NIVEL: Record<DetailLevel, string> = {
+  'Didáctico': 'Nivel didáctico: analogías y un paso cada vez.',
+  'Técnico Profundo': 'Nivel profundo: arquitectura, configuración y comandos tal como aparecen en el documento.',
+};
+const descripcionPaquete = (perfil: RecipientProfile, nicho: IndustryNiche, nivel: DetailLevel) =>
+  'Se generarán 5 estaciones (resumen, flashcards, tutorial con diagrama, video narrado de hasta 60 s y quiz) '
+  + `${DESC_PERFIL[perfil]}`
+  + (nicho === 'General' ? '' : `, con ejemplos del sector ${nicho} cuando ayuden a entender`)
+  + `. ${DESC_NIVEL[nivel]} Todo se basa en tu documento y cada cita se comprueba contra el texto.`;
 const etiqueta = <T,>(opciones: ReadonlyArray<[T, string]>, valor: T) =>
   opciones.find(([v]) => v === valor)?.[1] ?? String(valor);
 const alAzar = <T,>(opciones: ReadonlyArray<[T, string]>): T =>
@@ -75,10 +92,11 @@ export const Step1Ingestion = ({
   const [isLoadingPreset, setIsLoadingPreset] = useState<boolean>(false);
   const [docTitle, setDocTitle] = useState<string>('');
   const [docContent, setDocContent] = useState<string>('');
-  const [profile, setProfile] = useState<RecipientProfile>('Principiante');
+  // Se empieza en Sorpréndeme: la primera combinación ya viene sorteada
+  const [profile, setProfile] = useState<RecipientProfile>(() => alAzar(PERFILES));
   const [format, setFormat] = useState<OutputFormat>('Paquete Educativo Completo (5 Estaciones)');
-  const [niche, setNiche] = useState<IndustryNiche>('General');
-  const [detail, setDetail] = useState<DetailLevel>('Didáctico');
+  const [niche, setNiche] = useState<IndustryNiche>(() => alAzar(NICHOS));
+  const [detail, setDetail] = useState<DetailLevel>(() => alAzar(NIVELES));
   const [fileName, setFileName] = useState<string | null>(null);
   const [rawFile, setRawFile] = useState<File | null>(null);
   // transcripcion_ia: el texto lo transcribió Gemini de una imagen o un PDF escaneado y es editable
@@ -90,7 +108,7 @@ export const Step1Ingestion = ({
   // Sin documento todavía, la zona de carga se destaca como el punto de partida
   const sinDocumento = !fileName && !docContent && !isLoadingPreset;
   const documentoElegido = REAL_DOCUMENTS_CATALOG.find((d) => d.id === selectedDocId);
-  const [modo, setModo] = useState<'personalizado' | 'sorpresa'>('personalizado');
+  const [modo, setModo] = useState<'personalizado' | 'sorpresa'>('sorpresa');
 
   // Sorteo visible: lo que se muestra es exactamente lo que se envía. Nunca repite la combinación actual.
   const sortear = () => {
@@ -564,6 +582,10 @@ export const Step1Ingestion = ({
               </div>
             </div>
           )}
+
+          <p className={styles.descripcionPaquete} aria-live="polite">
+            {descripcionPaquete(profile, niche, detail)}
+          </p>
 
           {/* Estado de Animación del Pipeline o Botón de Acción */}
       {isProcessing ? (
