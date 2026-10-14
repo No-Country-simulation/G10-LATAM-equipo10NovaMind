@@ -6,13 +6,12 @@ Corte: **14 de octubre de 2026**. Las preguntas de la sección 1 son las que el 
 
 | Rama | Commit | Situación |
 |---|---|---|
-| `feature/fullstack-nuevamente-v2` (local) | `18c55da` | Rama de trabajo |
-| `origin/feature/fullstack-nuevamente-v2` | `161ffd5` | 1 commit por detrás: falta hacer push de `18c55da` |
-| `backend` e `integracion` (local y remoto) | `394d19c` | 2 commits por detrás: falta un fast-forward a `18c55da` |
+| `feature/fullstack-nuevamente-v2` (local) | `abd1a54` | Rama de trabajo (Claude, carpeta principal) |
+| `origin/feature/fullstack-nuevamente-v2` | `6078fdd` | 1 commit por detrás: falta hacer push de `abd1a54` |
+| `gemini/pruebas` (worktree `../NovaMind-gemini`) | `abd1a54` | Rama de Gemini, al día. Desde el 14/10 Gemini hace los commits |
+| `backend` e `integracion` (local y remoto) | `394d19c` | Muy por detrás: falta un fast-forward a la rama de trabajo |
 | `origin/frontEnd` | — | Absorbida el 14/10. Se deja sin tocar |
 | `origin/feature/newmind-edtech-oci` | — | Absorbido o descartado con motivo todo lo aprovechable |
-
-Sin commit todavía: `.env.example`, `BITACORA_FULLSTACK_V2.md`, `frontend/tests/e2e_narracion.manual.ts` y este archivo.
 
 ## 1. Preguntas para el usuario
 
@@ -46,7 +45,7 @@ Sin commit todavía: `.env.example`, `BITACORA_FULLSTACK_V2.md`, `frontend/tests
    - `tsc` limpio.
    - El detalle está en la bitácora.
    - Para repetirlo: `node tests/e2e_narracion.manual.ts`, desde `frontend/`, o `--spec <guion.json>` para reutilizar un guion.
-4. **¿Se hace push y se unifican las ramas?** Los comandos son `git push`, y un `merge --ff-only` de `backend` e `integracion` a `18c55da` seguido de push. Son acciones sobre el remoto compartido: las hace el usuario o las autoriza explícitamente.
+4. **¿Se hace push y se unifican las ramas?** Los comandos son `git push`, y un `merge --ff-only` de `backend` e `integracion` a la rama de trabajo seguido de push. Son acciones sobre el remoto compartido: las hace el usuario o las autoriza explícitamente.
 5. **¿Se despliega en la VM?** La guía está en `deploy/README_DESPLIEGUE_OCI.md`, sección 3b. Bloqueantes:
    - `client_max_body_size 16m` en nginx; sin esto, toda subida de más de 1 MB da 413;
    - `GEMINI_API_KEY`, `GROQ_API_KEY`, `SUPABASE_*` y `ELEVENLABS_*` en el `.env` de la VM;
@@ -85,11 +84,12 @@ En orden de prioridad:
    - El chip «Fuente · pág. N» abre el pasaje literal del documento con la cita resaltada.
    - Falta en las citas de la Estación 4, que usan otro tipo (`FuenteRAG`).
    - Los paquetes guardados antes del cambio no traen contexto, así que su chip sigue siendo texto.
-4. **Repaso guiado con modelo (opcional):** un plan de repaso breve redactado solo a partir de las citas de las preguntas falladas. La versión sin modelo ya está hecha.
-5. **Palabras clave de las fotos:** Wikimedia sigue fallando en el significado ("cloud computing" da un rayo entre nubes). Haría falta pedir en el guion palabras clave más concretas.
-6. **Límites conocidos de la verificación de citas:** una nota al pie pegada a un número (`2025295`) y citas que cruzan un salto de página con notas en medio.
-7. **Velocidad de la voz:** si se agranda el guion, revisar `PALABRAS_GUION_MIN` y `PALABRAS_GUION_MAX` (ElevenLabs habla a unas 145 palabras por minuto y Gemini a unas 160).
-8. **Exportar el video como WebM (opcional):** con `MediaRecorder` en el navegador, nunca con FFmpeg en la VM.
+4. **Nichos: 3.ª corrida de `prueba_nichos.py`** (unas 15 llamadas a Gemini, fuera del repo). Debe confirmar que el sector aparece en una sola escena del guion y dar el guion de Medicina, que en la 2.ª corrida falló por un 503 de Google. Resultados en `../pruebas_nichos/`.
+5. **Repaso guiado con modelo (opcional):** un plan de repaso breve redactado solo a partir de las citas de las preguntas falladas. La versión sin modelo ya está hecha.
+6. **Palabras clave de las fotos:** Wikimedia sigue fallando en el significado ("cloud computing" da un rayo entre nubes). Haría falta pedir en el guion palabras clave más concretas.
+7. **Límites conocidos de la verificación de citas:** una nota al pie pegada a un número (`2025295`) y citas que cruzan un salto de página con notas en medio.
+8. **Velocidad de la voz:** si se agranda el guion, revisar `PALABRAS_GUION_MIN` y `PALABRAS_GUION_MAX` (ElevenLabs habla a unas 145 palabras por minuto y Gemini a unas 160).
+9. **Exportar el video como WebM (opcional):** con `MediaRecorder` en el navegador, nunca con FFmpeg en la VM.
 
 ## 4. Hecho el 14/10 (resumen)
 

@@ -791,3 +791,26 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
 - Al volver a verificar las citas reales de las 5 corridas con el verificador nuevo, se recuperan **7 citas y no hay ninguna regresión**. Todas las que siguen rechazadas son de verdad no literales.
 - Hay 2 tests nuevos: la valla de código, con casos negativos («bash» en la cita, comando cambiado, ```` ``` ```` en línea), y el límite del sector (presente en Leyes, ausente en General). Backend: 298 tests pasan.
 - **Pendiente:** el efecto del prompt sobre el modelo solo se ve repitiendo las 5 corridas (unas 15 llamadas a Gemini), a mano y fuera del repo.
+
+
+## 14 oct 2026 · Auditoría de la 2.ª prueba de nichos: regresión del verificador y guion
+
+**Contexto.** Gemini volvió a ejecutar las 5 corridas con el prompt nuevo (`pruebas_nichos/resultados_20261014_1202/`). El commit `abd1a54` lo hizo Gemini desde la carpeta principal: el contenido es el cambio de Claude, pero va contra las directivas de worktrees.
+
+**Lo que se confirma.**
+- La introducción ya describe el documento tal como es y presenta el sector como aplicación («Para tu labor en el ámbito legal, esto equivale a…»). Los guiones de Leyes y Finanzas narran hechos reales del documento (1 GB, 50 GB, 4 GB de swap, OOM Killer) sin atribuirle propósitos legales ni financieros.
+- La señal de sector sigue por encima del ruido en los tres nichos (Medicina 5,1, Leyes 5,2 y Finanzas +4,0 por mil). La caída de Finanzas (de 12,2 a 4,0) es el efecto buscado: el sector ya no satura el texto.
+
+**Lo que el informe de Gemini atribuía mal.**
+- El «salto en fidelidad» mezcla un cambio de medida con un cambio del modelo. Con el **mismo** verificador, las citas únicas pasan de 91,3 % (1.ª corrida) a 94,4 % (2.ª): una mejora modesta, de una sola corrida.
+- E3 (Medicina) no sirve para juzgar el guion: Google devolvió timeout y 503 en la tarea B2 con los dos modelos, y el guion, las diapositivas, el tutorial y el diagrama salieron como fallidos. El sistema lo mostró sin relleno, pero tardó 119,9 s; en la aplicación eso va por SSE con heartbeats.
+
+**Regresión encontrada y corregida (causada por el cambio anterior).** En la 2.ª corrida el modelo copió citas *con* la marca en la línea («usuario `root`: ```bash sudo chmod 600…»). `_VALLA_CODIGO` solo quitaba la marca al inicio de línea, es decir, del documento y no de la cita, así que esas citas dejaron de coincidir (el verificador viejo las aceptaba). Ahora la marca con su etiqueta se descarta en cualquier posición, igual en la cita y en el documento.
+
+**Guion: el ejemplo del prompt se copiaba literal.** «En tu trabajo, esto se parece a…» aparecía 10 veces en el paquete de Finanzas, y el sector estaba en las 3 escenas del guion. Se quitó la frase de ejemplo de `_LIMITE_SECTOR` (ahora pide fórmulas variadas) y el guion admite el sector como mucho en UNA escena, después del hecho que ilustra.
+
+**Verificación.**
+- Comparación entre el verificador viejo y el nuevo sobre las citas únicas de las dos corridas: **0 regresiones**. 1.ª corrida: 77/92 → 84/92; 2.ª: 81/89 → 84/89.
+- Las 5 rechazadas restantes no son literales: «El objetivo:» por «**Objetivo:**», «de usuario» añadido, «al 1.8 GB» y `free -h`, demasiado corta.
+- Test de la valla ampliado (marca copiada en línea, casos negativos) y test del guion ajustado. Backend: 298 tests pasan.
+- **Pendiente:** el efecto de la regla «una escena» solo se ve con una 3.ª corrida, idealmente cuando Google no devuelva 503.
