@@ -814,3 +814,53 @@ Los 11 nichos tienen su propia directiva y llegan al prompt sin caer en "General
 - Las 5 rechazadas restantes no son literales: «El objetivo:» por «**Objetivo:**», «de usuario» añadido, «al 1.8 GB» y `free -h`, demasiado corta.
 - Test de la valla ampliado (marca copiada en línea, casos negativos) y test del guion ajustado. Backend: 298 tests pasan.
 - **Pendiente:** el efecto de la regla «una escena» solo se ve con una 3.ª corrida, idealmente cuando Google no devuelva 503.
+
+
+## 14 oct 2026 · Estación 3 sin métricas ni estado de OCI inventados
+
+**Por qué.** Al preparar la lista de despliegue se revisó `Step3OCICloud.tsx` y aparecieron varios rellenos que van contra la regla 1:
+- **Paquete sin `evaluacion_calidad`:** mostraba un anclaje del **98 %** con «Zero-Hallucination Verified», claridad «Sobresaliente», 8 chunks y similitud 0,94.
+- **Paquete sin `almacenamiento_oci`:** «Sincronizado», con el ETag `etag-verified-md5` y una URL genérica.
+- **«Sincronizado» y «AES-256 Oracle Managed»** se mostraban siempre, aunque el backend informara `omitido` o `error`. El backend solo envía `bucket`, `objeto_id` y `status_upload`, así que la región, el ETag y la URL salían vacíos o inventados.
+- **El paquete de demostración** (`mockScenarios.ts`) traía un anclaje de 1,0, un ETag y una URL de OCI ficticios, y el modelo «NovaMind Multi-Agente RAG + LangGraph», aunque nunca pasó por el auditor ni por OCI.
+- **El texto del medidor** hablaba de «similitud semántica contra los chunks», cuando el modo paralelo usa un auditor que contrasta afirmaciones.
+
+**Cambios.**
+- **`Step3OCICloud.tsx`:**
+  - sin datos se muestra «N/D» o «Sin auditar»; la pastilla dice «Auditada» y no «Zero-Hallucination Verified»;
+  - el texto del medidor describe el método real;
+  - la pastilla de OCI depende de `status_upload`: «Guardado en OCI», «Guardando…», «No se pudo guardar» o «No guardado en OCI», esta última con una nota que dice por qué;
+  - el bucket, el objeto, la región y el ETag solo aparecen si OCI los devolvió.
+- **`types.ts`:**
+  - `status_upload` incluye `omitido`, que el backend ya enviaba;
+  - `claridad_pedagogica` usa los valores del backend (`Alta`, `Media` y `Baja`);
+  - los campos del modo RAG antiguo pasan a ser opcionales.
+- **Paquete de demostración:** `auditoria_ejecutada: false`, sin puntuación, `status_upload: 'omitido'`, y su modelo dice «Ejemplo incluido en la app».
+
+**Pendiente (decisión del usuario).** `frontend/src/utils/ociStorage.ts` no se importa en ningún sitio. Si `VITE_OCI_PAR_URL` estuviera definida, subiría el paquete desde el navegador con una URL pre-autenticada de escritura que queda pública, y sin ella devuelve un éxito simulado con un `mock-etag`. Conviene borrarlo; no se borró porque no se pidió.
+
+**Verificación.** `tsc` limpio, 26 tests, `eslint` sin problemas en los archivos tocados y build correcto. No se revisó en el navegador.
+
+
+## 14 oct 2026 · Visor de fuente también en la Estación 4
+
+**Qué.** Las citas del guion de la Estación 4 (tipo `FuenteRAG`) no tenían visor: solo el texto de la cita y la página. Ahora cada cita verificada lleva un botón «Ver en el documento» que abre el mismo visor que el resto de estaciones, con el pasaje literal de su página y la cita resaltada.
+
+**Backend.**
+- `schemas.py`: nuevo `ContextoCita` y `FuenteRAG.contexto` (opcional).
+- `cadena_colaborativa._normalizar_director_cut` lo rellena con `contexto_de_cita` solo si la cita es verificada. El modo paralelo usa ese mismo normalizador, así que lo cubren los dos modos. Los extractos automáticos y las citas no localizadas no llevan contexto.
+- No cambia el contrato de tiempos: el fixture dorado no incluye fuentes y la narración no guarda citas.
+
+**Front.**
+- `FuenteChip` admite `etiquetaVisor` para cambiar el texto donde la página ya se muestra al lado.
+- La lista de citas de la Estación 4 lo usa dentro de un contenedor alineado a la izquierda, porque la tarjeta es una columna flex y estiraba el botón.
+
+**Verificación.**
+- Hay 2 tests nuevos: la cita verificada del guion lleva el pasaje de su página y viaja en `director_cut`; la no verificada no lleva contexto. Backend: 300 tests; front: 26 tests, con `tsc`, `eslint` y el build limpios.
+- **En Chrome real**, con el paquete del backend real y el modelo simulado, sin cuota:
+  - el título del visor es «Documento original · pág. 1» y el resaltado es correcto;
+  - el chip mide 140 px dentro de una tarjeta de 562;
+  - Esc cierra el visor y el foco vuelve al chip;
+  - la consola no muestra errores.
+
+  En la primera pasada el foco no volvía, pero era el script de prueba: había cerrado la lista de citas, que viene abierta por defecto. El atajo de teclado de la Estación 4 ya ignora las teclas que se pulsan dentro de un diálogo.

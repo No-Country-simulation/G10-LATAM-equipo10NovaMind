@@ -32,7 +32,11 @@ export function ChipVerificacion({ estado }: { estado: EstadoRecurso }) {
  * Página y verificación de una cita, derivadas por el backend de dónde aparece en el documento.
  * Si la cita trae su contexto, el chip abre el visor con el pasaje real del documento.
  */
-export function FuenteChip({ fuente }: { fuente?: FuenteCita | null }) {
+export function FuenteChip({ fuente, etiquetaVisor }: {
+  fuente?: FuenteCita | null;
+  /** Texto del chip cuando abre el visor (p. ej. donde la página ya se muestra al lado) */
+  etiquetaVisor?: string;
+}) {
   const [abierto, setAbierto] = useState(false);
   const chipRef = useRef<HTMLButtonElement>(null);
   const cerrar = useCallback(() => {
@@ -65,7 +69,7 @@ export function FuenteChip({ fuente }: { fuente?: FuenteCita | null }) {
         aria-haspopup="dialog"
         title="Ver la cita en el documento"
       >
-        <FileSearch size={11} aria-hidden="true" /> {etiqueta}
+        <FileSearch size={11} aria-hidden="true" /> {etiquetaVisor ?? etiqueta}
       </button>
       {abierto && <VisorFuente fuente={fuente} onCerrar={cerrar} />}
     </>

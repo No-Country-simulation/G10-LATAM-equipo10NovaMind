@@ -682,6 +682,16 @@ def formatear_tramo(inicio_s: float, fin_s: float) -> str:
     return f"{m1:02d}:{s1:02d} - {m2:02d}:{s2:02d}"
 
 
+class ContextoCita(BaseModel):
+    """Texto literal del documento alrededor de una cita verificada (fuentes.contexto_de_cita), para el visor."""
+
+    antes: str
+    fragmento: str
+    despues: str
+    recortado_inicio: bool
+    recortado_fin: bool
+
+
 class FuenteRAG(BaseModel):
     """
     Cita que respalda el guion.
@@ -698,6 +708,8 @@ class FuenteRAG(BaseModel):
     texto_fuente: str = Field(..., min_length=1, max_length=MAX_TEXTO_FUENTE)
     origen: Literal["llm", "extracto_automatico"] = "llm"
     verificada: bool = False
+    # Solo en citas verificadas: el pasaje real del documento que muestra el visor de fuente
+    contexto: Optional[ContextoCita] = None
 
 
 class EspecificacionVisual(BaseModel):

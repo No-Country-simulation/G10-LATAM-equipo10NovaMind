@@ -82,7 +82,7 @@ En orden de prioridad:
    - **Decisión pendiente del equipo:** borrar del bucket los 2 objetos de prueba (`documentos-originales/doc-arquitectura.pdf` y `doc-t.pdf`).
 3. ~~**Visor de fuente.**~~ **Hecho el 14/10.**
    - El chip «Fuente · pág. N» abre el pasaje literal del documento con la cita resaltada.
-   - Falta en las citas de la Estación 4, que usan otro tipo (`FuenteRAG`).
+   - También en las citas de la Estación 4 (hecho el 14/10).
    - Los paquetes guardados antes del cambio no traen contexto, así que su chip sigue siendo texto.
 4. **Nichos: 3.ª corrida de `prueba_nichos.py`** (unas 15 llamadas a Gemini, fuera del repo). Debe confirmar que el sector aparece en una sola escena del guion y dar el guion de Medicina, que en la 2.ª corrida falló por un 503 de Google. Resultados en `../pruebas_nichos/`.
 5. **Repaso guiado con modelo (opcional):** un plan de repaso breve redactado solo a partir de las citas de las preguntas falladas. La versión sin modelo ya está hecha.

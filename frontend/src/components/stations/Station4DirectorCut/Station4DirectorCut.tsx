@@ -48,6 +48,7 @@ import {
 import { cargarVocesNavegador, elegirVozNavegador } from '../../../utils/vozNavegador';
 import { promptVisualEscena } from '../../../utils/promptVisual';
 import { SlideNarrada } from './SlideNarrada';
+import { FuenteChip } from '../../RecursoEstado/RecursoEstado';
 import styles from './Station4DirectorCut.module.css';
 
 const MAX_FRAME_DELTA_SECONDS = 0.25; // evita saltos al volver de una pestaña en segundo plano
@@ -966,6 +967,14 @@ const DirectorStudio = ({
                         <span className={`${styles.ragStatus} ${status.className}`}>{status.label}</span>
                       </span>
                       <blockquote className={styles.ragText}>"{f.texto_fuente}"</blockquote>
+                      {f.verificada && f.contexto && (
+                        <span className={styles.ragVisor}>
+                          <FuenteChip
+                            etiquetaVisor="Ver en el documento"
+                            fuente={{ texto: f.texto_fuente, pagina: f.pagina ?? null, verificada: true, contexto: f.contexto }}
+                          />
+                        </span>
+                      )}
                     </li>
                   );
                 })}

@@ -68,7 +68,7 @@ from app.core.schemas import (
     SolicitudAdaptacion,
     VideoJobSpec,
 )
-from app.core.fuentes import pagina_de_cita
+from app.core.fuentes import contexto_de_cita, pagina_de_cita
 from app.storage.oci_client import OCIObjectStorageClient, _slugify
 
 logger = logging.getLogger("novamind.cadena_colaborativa")
@@ -315,12 +315,15 @@ class CadenaColaborativaMultiModelo:
             # La página se deriva de dónde aparece la cita en el documento; la que declare
             # el LLM se ignora (una página no localizada es peor que ninguna).
             localizada, pagina = pagina_de_cita(texto, documento, solicitud.paginas)
+            verificada = localizada and not es_extracto
             fuentes.append({
                 "chunk_id": (_texto_no_vacio(f.get("chunk_id")) or f"llm-{indice}-{j}")[:64],
                 "pagina": pagina,
                 "texto_fuente": texto,
                 "origen": "extracto_automatico" if es_extracto else "llm",
-                "verificada": localizada and not es_extracto,
+                "verificada": verificada,
+                # El visor de fuente de la Estación 4 muestra el pasaje real que rodea la cita
+                "contexto": contexto_de_cita(texto, documento, solicitud.paginas) if verificada else None,
             })
 
         if not fuentes:
