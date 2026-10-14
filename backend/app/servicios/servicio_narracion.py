@@ -62,6 +62,7 @@ _MENSAJES_ERROR = {
     "plazo": f"La voz no estuvo lista en {PLAZO_VOZ_S:.0f} s y se canceló para no superar el límite del "
              "servidor. Prueba de nuevo en unos minutos.",
     "sin_clave": "El servidor no tiene configurado ningún servicio de voz.",
+    "no_autorizado": "la clave del servicio de voz no es válida o no tiene permiso",
     "almacenamiento": "La voz se generó, pero no se pudo guardar. Prueba de nuevo.",
 }
 

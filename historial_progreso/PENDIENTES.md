@@ -93,7 +93,12 @@ En orden de prioridad:
    - El chip «Fuente · pág. N» abre el pasaje literal del documento con la cita resaltada.
    - También en las citas de la Estación 4 (hecho el 14/10).
    - Los paquetes guardados antes del cambio no traen contexto, así que su chip sigue siendo texto.
-4. **Nichos: 3.ª corrida hecha y auditada el 14/10** (`resultados_20261014_1402`; detalle en la bitácora).
+4. ~~**Nichos.**~~ **Cerrado el 14/10 con la 4.ª corrida** (`resultados_20261014_1441`).
+   - Se cumple la regla de una escena.
+   - Las palabras clave ya no copian los ejemplos del prompt.
+   - El guion de Leyes ya no atribuye un uso legal al documento.
+   - «error screen» y «server warning» se filtran.
+   - Historial de la 3.ª corrida (`resultados_20261014_1402`):
    - Se cumple la regla de una escena en los 3 nichos.
    - Medicina ya tiene guion.
    - Las citas verificadas están en torno al 96 %.

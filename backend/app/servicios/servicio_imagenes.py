@@ -63,7 +63,10 @@ _TEMAS_EXCLUIDOS = re.compile(
 # si aun así llega una de estas, la escena queda sin foto antes que con una engañosa.
 _PALABRAS_AMBIGUAS = re.compile(
     r"\b(clouds?|streams?|streaming|brokers?|pipelines?|bugs?|virus(es)?|worms?|python|java|kafka|"
-    r"spark|docker|firewalls?|cookies?|spiders?|crawlers?|oracle|amazon|apple)\b",
+    r"spark|docker|firewalls?|cookies?|spiders?|crawlers?|oracle|amazon|apple|"
+    # 4.ª prueba de nichos: "error screen" y "server warning" para la escena del OOM Killer.
+    # Darían una pantalla con texto, y la diapositiva no lleva texto en la foto.
+    r"errors?|warnings?|alerts?)\b",
     re.IGNORECASE,
 )
 _LICENCIAS_OPENVERSE = {"by": "CC BY", "by-sa": "CC BY-SA", "cc0": "CC0", "pdm": "Dominio público"}

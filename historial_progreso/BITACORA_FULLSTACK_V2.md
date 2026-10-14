@@ -1002,3 +1002,32 @@ Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos caso
 **Incidente.** A las 14:26:04 se reescribieron a la vez esta bitácora y `PENDIENTES.md` con una versión anterior. Se perdieron la entrada del verificador y los cambios de los puntos 7 y 10 de PENDIENTES. No había nada ajeno que conservar, así que se repusieron añadiendo. El código no se vio afectado.
 
 **Verificación.** Backend: 305 tests.
+
+
+## 14 oct 2026 · ElevenLabs sin créditos: preparación de la prueba
+
+**Contexto.** La clave de ElevenLabs está cerca de su tope de 1 000 créditos: es la ocasión de probar el fallo de verdad.
+
+**Revisión del flujo.** Lo que ya funcionaba y tenía test:
+- Si la cuenta no tiene créditos suficientes, la comprobación previa pasa a Gemini sin gastar nada.
+- Si la API rechaza con `quota_exceeded`, pasa a Gemini y lo avisa.
+
+**Huecos encontrados y corregidos:**
+1. **El tope por clave no se ve antes de llamar.** `/v1/user/subscription` da el saldo de la cuenta (10 000), no el de la clave (1 000), así que la comprobación previa no lo detecta y solo llega el rechazo. Ese rechazo se clasificaba como `sin_creditos` solo si decía «quota». Ahora también si habla de créditos («credit»), en el estado o en el mensaje. **No se ha visto el texto real que devuelve la API en este caso:** la prueba manual lo confirmará.
+2. **El aviso `no_autorizado` mostraba el código en crudo.** Ahora tiene un texto legible.
+3. **Créditos agotados a mitad de narración:** no tenía test. Se añadieron dos, uno para una escena que falla y otro para la repetición con ritmo ágil. En los dos, Gemini narra **todas** las escenas (nunca se mezclan voces) y lo avisa. La escena que ElevenLabs ya cobró se pierde: es el coste de no mezclar voces.
+
+**Verificación.** Backend: 311 tests (6 nuevos en `test_narracion.py`).
+
+
+## 14 oct 2026 · Auditoría de la 4.ª prueba de nichos
+
+**Contexto.** Corrida de Gemini con el commit `1a4e493` (`pruebas_nichos/resultados_20261014_1441/`). Las 5 ejecuciones salieron limpias. El informe de Gemini coincide con los datos en bruto.
+
+**Resultados:**
+- **Palabras clave:** ninguna de las 15 copia los ejemplos del prompt, ni los antiguos ni los nuevos. 12 de 15 son objetos de la escena. Las otras 3 («error screen» dos veces y «server warning») no son fotografiables. **Corrección:** `_PALABRAS_AMBIGUAS` incluye ahora error, warning y alert, así que la escena se queda sin foto en vez de mostrar una pantalla con texto.
+- **Regla de una escena:** se cumple en Medicina y Leyes. Finanzas sale con 2 de 3 en la tabla, pero la escena 3 dice «sin costos adicionales», que es un hecho del documento (capa gratuita), no una analogía. Es un falso positivo de la medida, así que la regla se cumple.
+- **Leyes:** el guion ya no atribuye al documento un uso legal. Las pistas de las flashcards sí usan el sector («en tus contratos de procesamiento»), lo que `_LIMITE_SECTOR` permite en las pistas.
+- **Citas:** del 88 % (Leyes) al 100 %. Se revisaron las 5 citas rechazadas de Leyes y General#2, y todas son rechazos correctos: 2 con «...», 1 que une un título con un texto de otra parte, 1 demasiado corta y 1 con errata del modelo («duas»). No hay fallos del verificador.
+
+**Verificación.** Backend: 311 tests (el test de palabras ambiguas incluye «error screen» y «server warning»).
