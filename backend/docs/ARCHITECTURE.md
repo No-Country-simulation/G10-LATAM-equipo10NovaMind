@@ -28,22 +28,26 @@ flowchart LR
 ### 1. Capa de Presentación (Frontend React 19)
 - **`frontend/src/App.tsx`**: Orquestador del flujo de gamificación, HUD superior (XP, racha, escudos), modals de medallas (`BadgeModal`) y comunicación con la API.
 - **`frontend/src/components/PlayerHUD/`**: Barra superior de estado gamificado en tiempo real (XP acumulado, racha diaria y 3 escudos cognitivos).
-- **`frontend/src/components/Step1Ingestion/`**: Ingesta multi-formato con drag-and-drop (.pdf, .md, .txt, texto libre) y botón de 1-click **`⚡ Cargar Guía OCI Swap (Modo Demo)`** con preconfiguración pedagógica óptima.
+- **`frontend/src/components/Step1Ingestion/`**: Ingesta multi-formato con zona nativa e interactiva de *Drag & Drop* (animada con estados visuales para .pdf, .md, .txt e imágenes/OCR), selector compacto de biblioteca en `<select>`, modo **«Sorpréndeme»** activo por defecto para selección aleatoria instantánea, y visualización en tiempo real del prompt de rol de la IA ("Eres un tutor experto...").
 - **`frontend/src/components/Step2KnowledgeQuest/`**: Orquestador del circuito pedagógico gamificado de 5 estaciones:
-  - **Estación 1: Resumen Ninja (`Station1ResumenNinja`)**: Síntesis TL;DR con analogía central y métricas clave.
-  - **Estación 2: Flashcard Quest (`Station2FlashcardQuest`)**: Tarjetas interactivas 3D con giros y pistas.
-  - **Estación 3: Tutorial Quest (`Station3TutorialQuest`)**: Laboratorio CLI interactivo con sandbox de terminal Linux.
-  - **Estación 4: Director Cut (`Station4DirectorCut`)**: Storyboard audiovisual y teleprompter estructurado por escenas con minutaje y consejos pedagógicos.
-  - **Estación 5: The Final Trial (`Station5Quiz`)**: Cuestionario interactivo con retroalimentación RAG, citas textuales y penalización de escudos.
+  - **Estación 1: Resumen Ninja (`Station1ResumenNinja`)**: Síntesis TL;DR con analogía central, métricas clave y diagrama interactivo Mermaid.js.
+  - **Estación 2: Flashcard Quest (`Station2FlashcardQuest`)**: Tarjetas interactivas 3D con giros, pistas y glosario de términos.
+  - **Estación 3: Tutorial Quest (`Station3TutorialQuest`)**: Laboratorio CLI interactivo con comandos estructurados y sandbox de terminal.
+  - **Estación 4: Director Cut (`Station4DirectorCut`)**: Storyboard audiovisual y teleprompter estructurado por escenas (≤60s), botón **«Copiar Prompt Visual»** para generadores externos, reproductor adaptativo 16:9 y **medalla de proveniencia honesta** (cero datos inventados).
+  - **Estación 5: The Final Trial (`Station5Quiz`)**: Cuestionario interactivo con retroalimentación RAG, citas textuales con derivación de página real, penalización de escudos y repaso interactivo de errores.
 - **`frontend/src/components/Step3OCICloud/`**: Panel de auditoría de calidad RAG, Score de Anclaje a fuentes, metadatos de persistencia OCI Always Free y exportación de paquete en JSON.
 - **`frontend/src/services/api.ts`**: Cliente HTTP nativo con Fetch API y `FormData` desacoplado, soporte de streaming SSE y fallback resiliente al banco de datos offline (`mockScenarios.ts`).
 
 ### 2. Capa de Servicios y API REST (Backend FastAPI)
 - **`backend/app/main.py`**: Configuración de `FastAPI`, `CORSMiddleware`, endpoints canónicos (`/health`, `/api/v1/config/opciones`, `/api/v1/adaptar`, `/api/v1/adaptar/stream`, `/api/v1/paquetes`) y singleton del orquestador. Interoperabilidad transparente de parámetros (`documento_contenido` / `texto_directo`).
 - **Desacople Asíncrono (`asyncio.to_thread`):** Ejecución de la inferencia fuera del hilo principal para garantizar que `/health` responda en < 10 ms (comprobado en prueba de estrés: 9.27 ms durante inferencia RAG pesada).
-- **Semáforo de Concurrencia (`asyncio.Semaphore(1)`):** Encolamiento ordenado de peticiones concurrentes para proteger la memoria RAM (172 MB estables) en la instancia Always Free (1 GB) de OCI.
-- **Canal Streaming SSE (`/api/v1/adaptar/stream`):** Emisión progresiva de eventos y heartbeats (`: ping`) cada 15s para neutralizar el timeout 524 de Cloudflare (100s).
-- **`backend/app/ingestion.py`**: Extractor multi-formato para PDFs (limpieza de cabeceras y paginación vía `pypdf`), Markdown y TXT.
+- **Semáforos de Concurrencia Escalares:** Semáforo global `asyncio.Semaphore(5)` para peticiones paralelas en FastAPI y semáforos por modelo `GEMINI_CONCURRENCIA_POR_MODELO=2` (1–10) para proteger llamadas concurrentes al modelo de respaldo.
+- **Canal Streaming SSE Incremental (`/api/v1/adaptar/stream`):** Emisión progresiva de eventos (`recurso`, `tarea`, `auditoria`, `error`) y heartbeats (`: ping`) cada 15s para neutralizar el timeout 524 de Cloudflare (100s). Permite al frontend abrir la interfaz al recibir el primer recurso (~7-8s).
+- **Servicio de Narración y Control de Cuota (`backend/app/servicios/servicio_narracion.py`):**
+  - Protección preventiva `exceso_guion_narracion`: rechaza guiones >173 palabras o >1730 caracteres con HTTP 422 (`guion_largo`).
+  - Poda y ajuste semántico por IA (`_ajustar_guion`): condensa guiones excedentes al rango ideal de 110–125 palabras.
+  - Plazo de voz `PLAZO_VOZ_S = 80s`, timeout de ElevenLabs a 25s y degradación suave a síntesis del navegador.
+- **`backend/app/ingestion.py`**: Extractor multi-formato para PDFs (limpieza de cabeceras y paginación vía `pypdf`), Markdown, TXT e imágenes/PDFs escaneados vía transcripción multimodal Gemini.
 - **`backend/app/core/schemas.py`**: Contratos de datos estrictos en Pydantic v2 para los 5 formatos pedagógicos y el formato unificado `"Paquete Educativo Completo (5 Estaciones)"` con auto-reparación sintáctica de Quizzes.
 - **`backend/app/core/config.py`**: Configuración centralizada multi-proveedor (`COHERE_*`, `GEMINI_*`, `GROQ_*`, `OCI_*`, `PROVEEDOR_CRITICO`).
 

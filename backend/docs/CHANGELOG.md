@@ -2,6 +2,24 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.6.0] - 2026-10-14
+
+### 🎙️ Protección de Cuota de Narración, UX React 19, Especialización de Nichos y Medallas Honestas (Fase 22)
+- **Protección Preventiva de Cuota de Voz:** Validación estricta en frontend y backend (`exceso_guion_narracion`) que bloquea peticiones de locución con guiones mayores a 173 palabras o 1.730 caracteres (`error_codigo="guion_largo"`), evitando malgastar créditos de ElevenLabs en audios que superarían el tope audiovisual de 60 s.
+- **Ajuste y Recorte Inteligente de Guion por IA (`_ajustar_guion`):** Poda semántica asistida por LLM para condensar guiones sobre-extendidos al rango óptimo de 110–125 palabras sin desvirtuar el mensaje pedagógico.
+- **Plazos y Timeouts Robustos en Síntesis de Voz:** Presupuesto de síntesis `PLAZO_VOZ_S = 80s`, timeout de ElevenLabs acotado a 25s y degradación suave a síntesis de voz del navegador (`SpeechSynthesis`) sin alertas bloqueantes ni interrupción de la experiencia.
+- **Medalla de Proveniencia Honesta en Estación 4:** Indicador persistente del modelo empleado, estado de auditoría y advertencias de cuota, garantizando cero contenido inventado.
+- **Experiencia de Ingesta Renovada (Paso 1):**
+  - Zona nativa de *Drag & Drop* interactiva con animaciones CSS y estados visuales (hover/dragover) para PDF, Markdown, TXT e imágenes.
+  - Selector compacto de biblioteca en `<select>` para optimizar el espacio vertical.
+  - Modo "Sorpréndeme" activo por defecto para descubrimiento aleatorio de escenarios en un clic.
+  - Visualización del prompt de rol ("Eres un tutor experto...") en la tarjeta de resumen del paquete.
+- **Sincronización Canónica de Nichos Sectoriales:** Unificación del catálogo en 6 sectores oficiales (`Tecnología y Software`, `Finanzas y Contabilidad`, `Salud y Medicina`, `Leyes y Sector Legal`, `Educación y Docencia`, `General`). Migración del escenario Kafka de "Fintech" a "Finanzas y Contabilidad".
+- **Validación Empírica de Nichos (`pruebas_nichos/`):** Benchmark empírico de 5 ejecuciones reales con Gemini demostrando incremento léxico sectorial de 9.3x a 14.2x sobre ruido general (Medicina: +4.93/1k palabras; Leyes: +5.16/1k palabras; Finanzas: +12.20/1k palabras) manteniendo anclaje RAG entre 84.6% y 88.0%.
+- **Utilidad "Copiar Prompt Visual" y Limpieza de Bundle:** Extracción al portapapeles del prompt para generadores de imagen externos (Midjourney / Imagen 3) y eliminación de dependencias huérfanas (`gsap`, `lenis`).
+- **Aislamiento de Caché de Invitados:** Particionado en memoria de tareas de usuarios no autenticados para prevenir cruce de datos en servidores multi-usuario.
+- **Suite de Pruebas Ampliada:** Cobertura de backend incrementada a **288 pruebas automatizadas al 100% de éxito + 26 pruebas de frontend** y verificación de tipos estricta (`tsc`).
+
 ## [2.5.0] - 2026-10-14
 
 ### 🛡️ Resiliencia ante 429 de Gemini, Semáforos por Modelo y Benchmarking (Fase 21)
