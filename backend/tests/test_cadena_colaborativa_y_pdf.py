@@ -9,6 +9,7 @@ Pruebas unitarias para:
 """
 
 import io
+import smtplib
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,8 +26,10 @@ from app.servicios.servicio_correo import ServicioCorreo
 @pytest.fixture(autouse=True)
 def authenticated_test_context():
     app.dependency_overrides[require_user] = lambda: Principal('11111111-1111-4111-8111-111111111111', 'test-only')
+    # Sin esto, ServicioCorreo() crea un cliente OCI real con las credenciales del .env y sube PDFs al bucket
     with patch('app.main.persist_result', side_effect=lambda principal, solicitud, respuesta: respuesta), \
-         patch('app.main._ejecutar_tareas_segundo_plano'):
+         patch('app.main._ejecutar_tareas_segundo_plano'), \
+         patch('app.servicios.servicio_correo.OCIObjectStorageClient', side_effect=ValueError("sin OCI en tests")):
         yield
     app.dependency_overrides.pop(require_user, None)
 
@@ -126,6 +129,65 @@ def test_servicio_correo_modo_simulacion():
     assert resultado["status"] == "simulado"
     assert resultado["destinatario"] == "alumno@ejemplo.com"
     assert resultado["bytes_pdf"] > 500
+    # Sin cliente OCI no se presume ningún respaldo
+    assert resultado["objeto_oci"] is None and "no se archivó" in resultado["mensaje"]
+
+
+def test_el_recibo_usa_la_ruta_real_de_la_subida():
+    servicio = ServicioCorreo()
+    servicio.smtp_host = servicio.smtp_user = None
+    servicio.cliente_oci = MagicMock()
+    servicio.cliente_oci.subir_documento_original.return_value = "documentos-originales/doc-t.pdf"
+    r = servicio.enviar_dossier_pedagogico_silencioso(
+        destinatario="", titulo_documento="T", perfil="Principiante", nicho="General",
+        contenido_adaptado={"introduccion_contextualizada": "Intro"},
+    )
+    assert r["objeto_oci"] == "documentos-originales/doc-t.pdf" and "archivado" in r["mensaje"]
+
+
+def test_el_correo_del_destinatario_nunca_aparece_completo_en_los_logs(caplog):
+    from app.servicios.servicio_correo import enmascarar_correo
+
+    assert enmascarar_correo("alumno@ejemplo.com") == "al***@ejemplo.com"
+    assert enmascarar_correo("") == "(sin destinatario)" and enmascarar_correo(None) == "(sin destinatario)"
+    assert enmascarar_correo("sin-arroba") == "***"
+
+    servicio = ServicioCorreo()
+    servicio.smtp_host = None
+    servicio.smtp_user = None
+    with caplog.at_level("INFO", logger="novamind.servicio_correo"):
+        servicio.enviar_dossier_pedagogico_silencioso(
+            destinatario="alumno@ejemplo.com", titulo_documento="Arquitectura Cloud",
+            perfil="Principiante", nicho="General", contenido_adaptado={"introduccion_contextualizada": "Intro"},
+        )
+    assert "alumno@ejemplo.com" not in caplog.text
+    assert "al***@ejemplo.com" in caplog.text
+
+
+def test_error_smtp_no_filtra_la_direccion_en_el_log(caplog):
+    servicio = ServicioCorreo()
+    servicio.smtp_host, servicio.smtp_user, servicio.smtp_from = "smtp.ejemplo.com", "envios@ejemplo.com", None
+
+    class SmtpQueRechaza:
+        def __init__(self, *a, **k):
+            raise smtplib.SMTPRecipientsRefused({"alumno@ejemplo.com": (550, b"rechazado")})
+
+    with patch("app.servicios.servicio_correo.smtplib.SMTP", SmtpQueRechaza), \
+         caplog.at_level("INFO", logger="novamind.servicio_correo"):
+        r = servicio.enviar_dossier_pedagogico_silencioso(
+            destinatario="alumno@ejemplo.com", titulo_documento="T", perfil="Principiante", nicho="General",
+            contenido_adaptado={"introduccion_contextualizada": "Intro"},
+        )
+    assert r["status"] == "error_smtp"
+    assert "alumno@ejemplo.com" not in caplog.text and "SMTPRecipientsRefused" in caplog.text
+
+
+def test_el_remitente_existe_tambien_en_la_clase_base(monkeypatch):
+    monkeypatch.setenv("SMTP_USER", "envios@ejemplo.com")
+    monkeypatch.delenv("SMTP_FROM", raising=False)
+    assert ServicioCorreo().smtp_from == "envios@ejemplo.com"
+    monkeypatch.setenv("SMTP_FROM", "NovaMind <no-responder@ejemplo.com>")
+    assert ServicioCorreo().smtp_from == "NovaMind <no-responder@ejemplo.com>"
 
 
 def _crear_respuesta_mock() -> RespuestaAdaptacion:

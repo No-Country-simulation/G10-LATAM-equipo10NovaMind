@@ -76,12 +76,20 @@ En orden de prioridad:
    - Un guion de más de 125 palabras se acorta con una llamada breve antes de publicarlo.
    - La demo pasó a 122 palabras.
    - Falta probarlo con un documento real que genere un guion largo: gasta cuota de Gemini.
-2. **Privacidad:** `servicio_correo.py` escribe en el log la dirección del destinatario, en modo simulación. Habría que enmascararla.
-3. **Repaso guiado con modelo (opcional):** un plan de repaso breve redactado solo a partir de las citas de las preguntas falladas. La versión sin modelo ya está hecha.
-4. **Palabras clave de las fotos:** Wikimedia sigue fallando en el significado ("cloud computing" da un rayo entre nubes). Haría falta pedir en el guion palabras clave más concretas.
-5. **Límites conocidos de la verificación de citas:** una nota al pie pegada a un número (`2025295`) y citas que cruzan un salto de página con notas en medio.
-6. **Velocidad de la voz:** si se agranda el guion, revisar `PALABRAS_GUION_MIN` y `PALABRAS_GUION_MAX` (ElevenLabs habla a unas 145 palabras por minuto y Gemini a unas 160).
-7. **Exportar el video como WebM (opcional):** con `MediaRecorder` en el navegador, nunca con FFmpeg en la VM.
+2. ~~**Privacidad.**~~ **Hecho el 14/10.**
+   - La dirección se enmascara en los logs.
+   - Los tests ya no suben PDF a OCI.
+   - El recibo usa la ruta real.
+   - **Decisión pendiente del equipo:** borrar del bucket los 2 objetos de prueba (`documentos-originales/doc-arquitectura.pdf` y `doc-t.pdf`).
+3. ~~**Visor de fuente.**~~ **Hecho el 14/10.**
+   - El chip «Fuente · pág. N» abre el pasaje literal del documento con la cita resaltada.
+   - Falta en las citas de la Estación 4, que usan otro tipo (`FuenteRAG`).
+   - Los paquetes guardados antes del cambio no traen contexto, así que su chip sigue siendo texto.
+4. **Repaso guiado con modelo (opcional):** un plan de repaso breve redactado solo a partir de las citas de las preguntas falladas. La versión sin modelo ya está hecha.
+5. **Palabras clave de las fotos:** Wikimedia sigue fallando en el significado ("cloud computing" da un rayo entre nubes). Haría falta pedir en el guion palabras clave más concretas.
+6. **Límites conocidos de la verificación de citas:** una nota al pie pegada a un número (`2025295`) y citas que cruzan un salto de página con notas en medio.
+7. **Velocidad de la voz:** si se agranda el guion, revisar `PALABRAS_GUION_MIN` y `PALABRAS_GUION_MAX` (ElevenLabs habla a unas 145 palabras por minuto y Gemini a unas 160).
+8. **Exportar el video como WebM (opcional):** con `MediaRecorder` en el navegador, nunca con FFmpeg en la VM.
 
 ## 4. Hecho el 14/10 (resumen)
 

@@ -189,6 +189,21 @@
   gap: 0.75rem;
 }
 
+/* La fuente se dibuja dentro de la tarjeta, pero es hermana del botón (no se anidan botones) */
+.conceptRow {
+  position: relative;
+}
+
+.conceptItem.conceptItemConFuente {
+  padding-bottom: 2.25rem;
+}
+
+.conceptFuente {
+  position: absolute;
+  left: 3.375rem;
+  bottom: 0.75rem;
+}
+
 .conceptItem {
   width: 100%;
   text-align: left;

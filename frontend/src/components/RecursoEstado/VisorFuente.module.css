@@ -1,0 +1,88 @@
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 60; /* por encima de la vitrina de trofeos (50) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(3, 6, 12, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.panel {
+  width: 100%;
+  max-width: 40rem;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-violet-border);
+  background: #0b0f19;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+  color: var(--color-text-primary);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-emerald-300);
+}
+
+.titulo {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.cerrar {
+  display: inline-flex;
+  padding: 0.35rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.cerrar:hover {
+  color: var(--color-text-primary);
+  border-color: var(--border-default);
+}
+
+.texto {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border-left: 3px solid var(--color-emerald-400);
+  border-radius: var(--radius-md);
+  background: var(--color-card-subtle);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.resaltado {
+  padding: 0.05rem 0.15rem;
+  border-radius: 3px;
+  background: rgba(250, 204, 21, 0.28);
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.elipsis {
+  color: var(--color-text-muted);
+}
+
+.nota {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}

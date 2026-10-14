@@ -21,10 +21,11 @@ derivar la página real de origen en lugar de confiar en la que declare el LLM.
 from __future__ import annotations
 
 import math
+import re
 import unicodedata
 from array import array
 from functools import lru_cache
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.schemas import RangoPagina, pagina_de_offset
 
@@ -89,14 +90,63 @@ def _indice_documento(documento: str) -> Tuple[str, array]:
     return _normalizar(documento)
 
 
-def ubicar_cita(cita: str, documento: str) -> Optional[int]:
-    """Offset en `documento` donde empieza la cita, o None si no aparece (o es demasiado corta)."""
+def tramo_de_cita(cita: str, documento: str) -> Optional[Tuple[int, int]]:
+    """(inicio, fin) del tramo de `documento` que ocupa la cita, o None si no aparece (o es demasiado corta)."""
     cita_norm, _ = _normalizar(cita)
     if len(cita_norm) < MIN_LARGO_CITA:
         return None
     texto, mapa = _indice_documento(documento)
     posicion = texto.find(cita_norm)
-    return mapa[posicion] if posicion >= 0 else None
+    if posicion < 0:
+        return None
+    return mapa[posicion], mapa[posicion + len(cita_norm) - 1] + 1
+
+
+def ubicar_cita(cita: str, documento: str) -> Optional[int]:
+    """Offset en `documento` donde empieza la cita, o None si no aparece (o es demasiado corta)."""
+    tramo = tramo_de_cita(cita, documento)
+    return tramo[0] if tramo else None
+
+
+# Caracteres del documento que se muestran a cada lado de la cita en el visor de fuente
+MARGEN_CONTEXTO = 280
+_ESPACIOS = re.compile(r"\s")
+
+
+def contexto_de_cita(cita: str, documento: str, paginas: List[RangoPagina],
+                     margen: int = MARGEN_CONTEXTO) -> Optional[Dict[str, Any]]:
+    """
+    Texto literal del documento alrededor de la cita, para el visor de fuente: lo que hay antes,
+    el fragmento exacto que ocupa la cita (como está en el documento, no como lo escribió el
+    modelo) y lo que sigue. No cruza el límite de su página y corta en palabras completas.
+    None si la cita no se localiza: el visor solo muestra lo que de verdad está en el documento.
+    """
+    tramo = tramo_de_cita(cita, documento)
+    if tramo is None:
+        return None
+    inicio, fin = tramo
+    limite_ini, limite_fin = 0, len(documento)
+    for pagina in paginas:
+        if pagina.inicio <= inicio < pagina.fin:
+            limite_ini, limite_fin = pagina.inicio, pagina.fin
+            break
+    desde = max(limite_ini, inicio - margen)
+    hasta = min(limite_fin, fin + margen)
+    if desde > limite_ini and (espacio := _ESPACIOS.search(documento, desde, inicio)):
+        desde = espacio.end()
+    if hasta < limite_fin:
+        ultimo = None
+        for ultimo in _ESPACIOS.finditer(documento, fin, hasta):
+            pass
+        if ultimo is not None:
+            hasta = ultimo.start()
+    return {
+        "antes": documento[desde:inicio],
+        "fragmento": documento[inicio:fin],
+        "despues": documento[fin:hasta],
+        "recortado_inicio": desde > limite_ini,
+        "recortado_fin": hasta < limite_fin,
+    }
 
 
 def pagina_de_cita(cita: str, documento: str, paginas: List[RangoPagina]) -> Tuple[bool, Optional[int]]:

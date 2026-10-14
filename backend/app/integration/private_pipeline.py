@@ -1,5 +1,4 @@
 """Preserve the team's generation/PDF logic; scope its storage to a verified owner."""
-import os
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
@@ -59,7 +58,6 @@ class _OwnerPDFStorage:
 class PrivateCorreo(ServicioCorreo):
     def __init__(self, owner):
         super().__init__()
-        self.smtp_from = os.getenv('SMTP_FROM') or self.smtp_user
         self.owner_storage = None
         if self.cliente_oci:
             self.owner_storage = _OwnerPDFStorage(self.cliente_oci, owner)

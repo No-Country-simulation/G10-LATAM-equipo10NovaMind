@@ -27,6 +27,16 @@ from app.storage.oci_client import OCIObjectStorageClient, _slugify
 logger = logging.getLogger("novamind.servicio_correo")
 
 
+def enmascarar_correo(correo: Optional[str]) -> str:
+    """Dirección apta para logs: 'alumno@ejemplo.com' → 'al***@ejemplo.com'. Nunca la completa."""
+    if not correo:
+        return "(sin destinatario)"
+    local, arroba, dominio = correo.partition("@")
+    if not arroba:
+        return "***"
+    return f"{local[:2]}***@{dominio}"
+
+
 class ServicioCorreo:
     """Gestiona el envío silencioso de dossiers educativos en PDF."""
 
@@ -35,6 +45,7 @@ class ServicioCorreo:
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
         self.smtp_user = os.getenv("SMTP_USER")
         self.smtp_password = os.getenv("SMTP_PASSWORD")
+        self.smtp_from = os.getenv("SMTP_FROM") or self.smtp_user
         self.generador_pdf = GeneradorPDFEducativo()
         try:
             self.cliente_oci = OCIObjectStorageClient()
@@ -56,7 +67,8 @@ class ServicioCorreo:
         lo respalda en OCI Object Storage y lo envía por correo electrónico.
         """
         slug = doc_id or f"doc-{_slugify(titulo_documento)[:12]}"
-        logger.info("[servicio_correo] Iniciando procesamiento silencioso de PDF para '%s'...", destinatario)
+        logger.info("[servicio_correo] Iniciando procesamiento silencioso de PDF para '%s'...",
+                    enmascarar_correo(destinatario))
 
         # 1. Compilación del PDF en memoria
         pdf_bytes = self.generador_pdf.generar_pdf_estandarizado(
@@ -68,17 +80,18 @@ class ServicioCorreo:
         )
 
         # 2. Respaldo silencioso en OCI Object Storage
-        objeto_oci_id = f"reportes-pdf/dossier-{slug}.pdf"
+        # Solo la ruta que devuelve la subida real; sin cliente o si falla, None (nunca una ruta supuesta)
+        objeto_oci_id: Optional[str] = None
         if self.cliente_oci:
             try:
-                self.cliente_oci.subir_documento_original(
+                objeto_oci_id = self.cliente_oci.subir_documento_original(
                     doc_id=slug,
                     extension=".pdf",
                     data=pdf_bytes,
                 )
                 logger.info("[servicio_correo] PDF respaldado en OCI: %s (%d bytes)", objeto_oci_id, len(pdf_bytes))
             except Exception as exc:
-                logger.warning("[servicio_correo] Fallo al respaldar PDF en OCI: %s", exc)
+                logger.warning("[servicio_correo] Fallo al respaldar PDF en OCI: %s", type(exc).__name__)
 
         # 3. Envío SMTP o Modo Simulación
         if not self.smtp_host or not self.smtp_user:
@@ -86,14 +99,15 @@ class ServicioCorreo:
                 "[servicio_correo] SMTP no configurado; ejecutando en modo SIMULACIÓN SILENCIOSA. "
                 "Dossier PDF generado (%d bytes) para destinatario: %s",
                 len(pdf_bytes),
-                destinatario,
+                enmascarar_correo(destinatario),
             )
             return {
                 "status": "simulado",
                 "destinatario": destinatario,
                 "bytes_pdf": len(pdf_bytes),
                 "objeto_oci": objeto_oci_id,
-                "mensaje": "Dossier PDF generado y archivado en OCI Object Storage.",
+                "mensaje": ("Dossier PDF generado y archivado en OCI Object Storage." if objeto_oci_id
+                            else "Dossier PDF generado; no se archivó en OCI."),
             }
 
         try:
@@ -126,7 +140,7 @@ class ServicioCorreo:
                 servidor.login(self.smtp_user, self.smtp_password or "")
                 servidor.sendmail(self.smtp_from, [destinatario], msg.as_string())
 
-            logger.info("[servicio_correo] Correo enviado exitosamente a %s", destinatario)
+            logger.info("[servicio_correo] Correo enviado exitosamente a %s", enmascarar_correo(destinatario))
             return {
                 "status": "enviado",
                 "destinatario": destinatario,
@@ -134,7 +148,9 @@ class ServicioCorreo:
                 "objeto_oci": objeto_oci_id,
             }
         except Exception as exc:
-            logger.error("[servicio_correo] Error al enviar correo SMTP a %s: %s", destinatario, exc)
+            # Solo el tipo: el texto de algunas excepciones SMTP repite la dirección del destinatario
+            logger.error("[servicio_correo] Error al enviar correo SMTP a %s: %s",
+                         enmascarar_correo(destinatario), type(exc).__name__)
             return {
                 "status": "error_smtp",
                 "destinatario": destinatario,
