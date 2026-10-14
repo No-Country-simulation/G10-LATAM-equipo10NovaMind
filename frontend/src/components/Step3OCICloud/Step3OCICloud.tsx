@@ -20,6 +20,13 @@ interface Step3Props {
   onDownloadAnkiCSV: () => void;
 }
 
+const ESTADO_OCI: Record<string, { texto: string; activo: boolean }> = {
+  completado: { texto: 'Guardado en OCI', activo: true },
+  pendiente: { texto: 'Guardando…', activo: false },
+  error: { texto: 'No se pudo guardar', activo: false },
+  omitido: { texto: 'No guardado en OCI', activo: false },
+};
+
 export const Step3OCICloud = ({
   contentPackage,
   onDownloadJSON,
@@ -38,38 +45,18 @@ export const Step3OCICloud = ({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const evaluacion = contentPackage?.evaluacion_calidad || {
-    anclaje_fuente_score: 0.98,
-    claridad_pedagogica: 'Sobresaliente',
-    observaciones: 'Evaluación anclada al contenido técnico provisto.',
-    mitigacion_alucinaciones: 'Verificación estricta de fuentes activa.',
-    chunks_procesados: 8,
-    similitud_coseno_promedio: 0.94,
-  };
+  // Regla 1: sin dato del backend se muestra «N/D» o «sin auditar», nunca un valor de relleno.
+  // Antes, un paquete sin evaluación mostraba un 98 % y «Sincronizado» con un ETag inventado.
+  const evaluacion = contentPackage?.evaluacion_calidad;
+  const almacenamiento = contentPackage?.almacenamiento_oci;
+  const metadatos = contentPackage?.metadatos;
 
-const almacenamiento = contentPackage?.almacenamiento_oci || {
-    bucket: 'novamind-contenidos-educativos',
-    objeto_id: 'novamind-artifact-latest.json',
-    status_upload: 'completado',
-    region: 'sa-santiago-1',
-    etag: 'etag-verified-md5',
-    tamano_bytes: realBytesCount,
-    url_always_free: 'https://objectstorage.sa-santiago-1.oraclecloud.com/p/always-free',
-  };
-
-  const metadatos = contentPackage?.metadatos || {
-    perfil_aplicado: 'Principiante',
-    formato_generado: 'Paquete Completo',
-    tiempo_estimado_estudio_minutos: 15,
-    conceptos_clave: [],
-    fecha_generacion: '2026-10-05T00:00:00.000Z',
-    modelo_llm: 'gemini-2.5-flash',
-  };
-
-  // Sin score (auditoría no ejecutada) se muestra N/D: nunca un porcentaje inventado
-  const groundingScore = evaluacion.anclaje_fuente_score;
-  const isAudited = typeof groundingScore === 'number';
+  const groundingScore = evaluacion?.anclaje_fuente_score;
+  const isAudited = evaluacion?.auditoria_ejecutada !== false && typeof groundingScore === 'number';
   const groundingLabel = isAudited ? `${Math.round(groundingScore * 100)}%` : 'N/D';
+
+  const estadoOCI = ESTADO_OCI[almacenamiento?.status_upload ?? 'omitido'] ?? ESTADO_OCI.omitido;
+  const enOCI = almacenamiento?.status_upload === 'completado';
 
   return (
     <div className={styles.container}>
@@ -109,7 +96,7 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
               </h3>
             </div>
             <span className={styles.verifiedPill}>
-              {isAudited ? 'Zero-Hallucination Verified' : 'Sin auditar'}
+              {isAudited ? 'Auditada' : 'Sin auditar'}
             </span>
           </div>
 
@@ -123,7 +110,9 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
                 Puntaje de Anclaje en Fuente (Grounding Score)
               </div>
               <p className={styles.gaugeSubtext}>
-                Fidelidad calculada mediante similitud semántica contra los chunks del documento procesado.
+                {isAudited
+                  ? 'Proporción de afirmaciones del contenido que un auditor independiente encontró respaldadas en el documento.'
+                  : 'La auditoría de fidelidad no se ejecutó para este paquete. Revisa las citas de cada estación.'}
               </p>
             </div>
           </div>
@@ -132,35 +121,37 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
           <div className={styles.auditDetailsGrid}>
             <div className={styles.metricTile}>
               <span className={styles.metricTileLabel}>Claridad Pedagógica</span>
-              <span className={styles.metricTileValue}>{evaluacion.claridad_pedagogica || 'Sobresaliente'}</span>
+              <span className={styles.metricTileValue}>{isAudited ? evaluacion?.claridad_pedagogica || 'N/D' : 'N/D'}</span>
             </div>
 
             <div className={styles.metricTile}>
               <span className={styles.metricTileLabel}>Chunks Procesados</span>
               <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
-                {evaluacion.chunks_procesados ? `${evaluacion.chunks_procesados} fragmentos` : 'N/D'}
+                {evaluacion?.chunks_procesados ? `${evaluacion.chunks_procesados} fragmentos` : 'N/D'}
               </span>
             </div>
 
             <div className={styles.metricTile}>
               <span className={styles.metricTileLabel}>Similitud Coseno Media</span>
               <span className={styles.metricTileValue} style={{ color: 'var(--color-emerald-400)', fontFamily: 'var(--font-code)' }}>
-                {evaluacion.similitud_coseno_promedio ?? 'N/D'}
+                {evaluacion?.similitud_coseno_promedio || 'N/D'}
               </span>
             </div>
 
             <div className={styles.metricTile}>
               <span className={styles.metricTileLabel}>Modelo LLM</span>
               <span className={styles.metricTileValue} style={{ color: 'var(--color-violet-300)' }}>
-                {metadatos.modelo_llm || 'gemini-2.5-flash'}
+                {metadatos?.modelo_llm || 'N/D'}
               </span>
             </div>
           </div>
 
           {/* Observaciones del Agente */}
-          <div className={styles.agentObservationBox}>
-            <strong>Observación del Agente Crítico:</strong> {evaluacion.observaciones || 'No se registraron desvíos respecto al material fuente.'}
-          </div>
+          {evaluacion?.observaciones && (
+            <div className={styles.agentObservationBox}>
+              <strong>{isAudited ? 'Observación del auditor:' : 'Nota:'}</strong> {evaluacion.observaciones}
+            </div>
+          )}
         </div>
 
         {/* TARJETA 2: OCI Object Storage Always Free */}
@@ -172,60 +163,72 @@ const almacenamiento = contentPackage?.almacenamiento_oci || {
                 OCI Object Storage Always Free
               </h3>
             </div>
-            <div className={styles.syncPill}>
-              <span className={styles.pulseCyanDot} />
-              Sincronizado
+            <div className={`${styles.syncPill} ${estadoOCI.activo ? '' : styles.syncPillInactivo}`} role="status">
+              <span className={estadoOCI.activo ? styles.pulseCyanDot : styles.dotInactivo} />
+              {estadoOCI.texto}
             </div>
           </div>
 
           <div className={styles.ociMetaStack}>
-            <div className={styles.ociHighlightBlock}>
-              <span className={styles.ociBlockLabel}>Bucket Always Free</span>
-              <div className={styles.ociBucketName}>{almacenamiento.bucket}</div>
-            </div>
+            {enOCI && almacenamiento?.bucket && (
+              <div className={styles.ociHighlightBlock}>
+                <span className={styles.ociBlockLabel}>Bucket</span>
+                <div className={styles.ociBucketName}>{almacenamiento.bucket}</div>
+              </div>
+            )}
 
-            <div className={styles.ociHighlightBlock}>
-              <span className={styles.ociBlockLabel}>Objeto Persistido (JSON)</span>
-              <div className={styles.ociObjectId}>{almacenamiento.objeto_id}</div>
-            </div>
+            {enOCI && almacenamiento?.objeto_id && (
+              <div className={styles.ociHighlightBlock}>
+                <span className={styles.ociBlockLabel}>Objeto guardado</span>
+                <div className={styles.ociObjectId}>{almacenamiento.objeto_id}</div>
+              </div>
+            )}
+
+            {!enOCI && (
+              <p className={styles.ociNota}>
+                {almacenamiento?.status_upload === 'error'
+                  ? 'El servidor intentó guardar el paquete en OCI y falló. El contenido sigue disponible aquí y puedes descargarlo.'
+                  : 'Este paquete no se guardó en OCI (el servidor no tiene credenciales configuradas o es un paquete de ejemplo). Puedes descargarlo igualmente.'}
+              </p>
+            )}
 
             <div className={styles.auditDetailsGrid}>
-              <div className={styles.metricTile}>
-                <span className={styles.metricTileLabel}>Región OCI</span>
-                <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
-                  {almacenamiento.region}
-                </span>
-              </div>
+              {enOCI && almacenamiento?.region && (
+                <div className={styles.metricTile}>
+                  <span className={styles.metricTileLabel}>Región OCI</span>
+                  <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
+                    {almacenamiento.region}
+                  </span>
+                </div>
+              )}
 
               <div className={styles.metricTile}>
-                <span className={styles.metricTileLabel}>Cifrado</span>
-                <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
-                  AES-256 Oracle Managed
-                </span>
-              </div>
-
-              <div className={styles.metricTile}>
-                <span className={styles.metricTileLabel}>Tamaño Real</span>
+                <span className={styles.metricTileLabel}>Tamaño del paquete</span>
                 <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
                   {realBytesCount} bytes
                 </span>
               </div>
 
-              <div className={styles.metricTile}>
-                <span className={styles.metricTileLabel}>ETag MD5</span>
-                <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
-                  {almacenamiento.etag}
-                </span>
-              </div>
+              {enOCI && almacenamiento?.etag && (
+                <div className={styles.metricTile}>
+                  <span className={styles.metricTileLabel}>ETag</span>
+                  <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
+                    {almacenamiento.etag}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className={styles.ociUrlDownloadRow}>
-            <span className={styles.ociUrlText}>{almacenamiento.url_always_free}</span>
+            <span className={styles.ociUrlText}>
+              {enOCI && almacenamiento?.url_always_free ? almacenamiento.url_always_free : 'Descargar el paquete (JSON)'}
+            </span>
             <button
               type="button"
               onClick={onDownloadJSON}
-              title="Descargar artefacto sincronizado"
+              title="Descargar el paquete (JSON)"
+              aria-label="Descargar el paquete (JSON)"
               className={styles.downloadIconBtn}
             >
               <Download size={14} />

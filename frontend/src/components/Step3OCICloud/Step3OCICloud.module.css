@@ -168,6 +168,25 @@
   box-shadow: 0 0 8px var(--color-cyan-400);
 }
 
+/* Sin subida real a OCI: gris, sin pulso */
+.syncPillInactivo {
+  color: var(--color-text-muted);
+}
+
+.dotInactivo {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-text-muted);
+}
+
+.ociNota {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
 /* Gauge / Medidor de Grounding */
 .scoreGaugeBox {
   display: flex;

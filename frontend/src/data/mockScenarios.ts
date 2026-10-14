@@ -15,7 +15,7 @@ export const SCENARIOS: TechnicalScenario[] = [
         tiempo_estimado_estudio_minutos: 6,
         conceptos_clave: ['VM.Standard.E2.1.Micro', 'OOM Killer (SIGKILL 137)', 'Swap de 4 GB', 'Swappiness 20', 'Persistencia /etc/fstab'],
         fecha_generacion: '2026-10-07T23:00:00Z',
-        modelo_llm: 'NovaMind Multi-Agente RAG + LangGraph (Cohere / OCI SDK)'
+        modelo_llm: 'Ejemplo incluido en la app (no lo generó un modelo)'
       },
       contenido_adaptado: {
         titulo: 'Dominando la Memoria en OCI: Aprovisionamiento de 4 GB Swap sin Costos',
@@ -212,22 +212,15 @@ export const SCENARIOS: TechnicalScenario[] = [
           }
         ]
       },
+      // Paquete de ejemplo escrito a mano: no pasó por el auditor ni se subió a OCI, y lo dice
       evaluacion_calidad: {
-        anclaje_fuente_score: 1.0,
-        claridad_pedagogica: 'Sobresaliente',
-        observaciones: 'Contenido 100% anclado a la documentación de arquitectura OCI Always Free y comandos de administración de memoria en Ubuntu.',
-        mitigacion_alucinaciones: 'Cero alucinaciones: comandos, especificaciones de hardware de VM.Standard.E2.1.Micro y valores de sysctl verificados.',
-        chunks_procesados: 5,
-        similitud_coseno_promedio: 0.965
+        anclaje_fuente_score: null,
+        auditoria_ejecutada: false,
+        claridad_pedagogica: 'Alta',
+        observaciones: 'Paquete de ejemplo incluido en la app: no pasó por la auditoría de fidelidad.'
       },
       almacenamiento_oci: {
-        bucket: 'novamind-contenidos-educativos',
-        objeto_id: 'novamind-swap-oci-principiante-001.json',
-        status_upload: 'completado',
-        region: 'sa-santiago-1',
-        etag: '9f8b7a6c5d4e3f2a1b0c9d8e7f6a5b4c',
-        tamano_bytes: 4892,
-        url_always_free: 'https://objectstorage.sa-santiago-1.oraclecloud.com/n/novamind/b/novamind-contenidos-educativos/o/novamind-swap-oci-principiante-001.json'
+        status_upload: 'omitido'
       }
     }
   }
