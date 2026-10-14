@@ -20,7 +20,7 @@ La configuración `backend/pytest.ini` debe revisarse para confirmar rutas/impor
 
 ## Estado de Ejecución y Cobertura Verificada
 La suite automatizada fue ejecutada en su totalidad mediante pytest:
-- **Resultado:** 🟢 **70 pasadas, 0 fallidas (100% de éxito)**.
+- **Resultado:** 🟢 **275 pasadas, 0 fallidas (100% de éxito en backend) + 23 pasadas en frontend**.
 - **Tiempo de ejecución:** ~3.8 a 16 segundos según el entorno.
 
 ### Distribución de los 70 Tests:
@@ -45,6 +45,13 @@ La suite automatizada fue ejecutada en su totalidad mediante pytest:
    - Inyección correcta de few-shots según formato pedagógico solicitado.
    - Control de lotes de embeddings para llamadas seguras a Cohere (máx. 96 chunks por lote).
    - Manejo de caídas transitorias de API mediante backoff exponencial.
+
+
+### Actualización de Cobertura (Fase 21 · Resiliencia Gemini 429 y Concurrencia):
+La suite ha crecido sistemáticamente hasta 275 pruebas backend en `backend/tests/`:
+- **`test_servicio_gemini.py` (18 pruebas):** Clasificación de errores 429 (`cuota_diaria`, `cuota_minuto`, desconocida), expiración hasta medianoche del Pacífico, fail-fast de modelos agotados, y reintentos condicionales con presupuesto.
+- **`test_generacion_paralela.py` (24 pruebas):** Semáforos por modelo (`GEMINI_CONCURRENCIA_POR_MODELO`), fail-fast inmediato a modelo de respaldo sin llamadas de red si el modelo primario está marcado agotado, jitter aleatorio anti-avalancha y advertencias de proveniencia honesta en los recursos generados.
+- **Suite completa:** 275 pasadas en ~33s sin saturar cuotas externas (mocks asíncronos y fixtures controlados).
 
 ## Validación End-to-End (E2E) Real con `apache_kafka_introduction.md`
 Certificación en vivo contra el documento técnico oficial de Kafka (11.052 caracteres):

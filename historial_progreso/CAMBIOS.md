@@ -373,11 +373,37 @@ Verificación: 59 pruebas (`python -m pytest tests -q`) en chromadb 0.5.20 + pyd
    - Documentación en [deploy/auditoria/para_claude.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/deploy/auditoria/para_claude.md).
    - Validación total de calidad: **255 tests backend + 17 tests frontend pasando al 100%**.
 
+## Fase 21: Resiliencia ante 429 de Gemini, Semáforos por Modelo y Comparador de Modelos
+
+1. **Clasificación Granular de Errores 429 (`google.rpc`):**
+   - Inspección del cuerpo de error de Gemini (`error.details`): detección de `@type: .../google.rpc.QuotaFailure` (`violations[].quotaId` con `PerDay` o `PerMinute`) y `@type: .../google.rpc.RetryInfo` (`retryDelay`).
+   - Clasificación en `cuota_diaria`, `cuota_minuto` o `desconocido`, extrayendo el tiempo de espera exacto `retry_after_s`.
+   - Si se detecta `cuota_diaria`, el modelo se registra en memoria como agotado (`marcar_modelo_agotado`) con expiración automática hasta la próxima medianoche del Pacífico (PST/PDT), hora oficial de reinicio de cuota en Google AI Studio.
+   - Fail-fast inmediato sin llamadas de red infructuosas para modelos agotados en memoria.
+   - Si se detecta `cuota_minuto` y `retry_after_s <= 10.0` con presupuesto de tiempo remanente, espera asíncrona no bloqueante y reintento único defensivo; si excede 10s o agota presupuesto, conmuta de inmediato al modelo de respaldo.
+2. **Semáforos por Modelo y Mitigación de Avalanchas (Jitter):**
+   - Nuevo parámetro `GEMINI_CONCURRENCIA_POR_MODELO: int = 2` (rango 1–10) en `backend/app/core/config.py`, configurable por variable de entorno `GEMINI_CONCURRENCIA_POR_MODELO`.
+   - Semáforos asíncronos por modelo en `GeneradorParalelo` (`_semaforo_para_modelo`) vinculados al event loop activo para proteger los límites de peticiones por minuto (RPM) de la capa gratuita sin colapsar las tareas paralelas A, B1 y B2.
+   - Pausa aleatoria con jitter (`random.uniform(0.0, 1.5)`) previa a la invocación del modelo de respaldo para evitar saturación simultánea (*thundering herd*) ante caídas del modelo principal.
+3. **Proveniencia Honesta en Recursos Fallados o Conmutados:**
+   - Registro transparente en `estado_recursos[recurso].advertencia`:
+     - `"generado con el modelo de respaldo X porque Y no respondió (cuota diaria)"`
+     - `"generado con el modelo de respaldo X porque Y no respondió (cuota por minuto)"`
+     - `"generado con el modelo de respaldo X porque Y no respondió"` (ante caídas 5xx o desconocidas).
+   - Sin inventos ni silencios: el usuario y la telemetría conocen con exactitud qué modelo generó cada recurso y por qué falló el primario.
+4. **Herramienta de Benchmarking Comparativo (`deploy/comparar_modelos.py`):**
+   - Script CLI para evaluar y comparar modelos (`gemini-3.5-flash-lite` vs `gemini-3.8-flash`) sobre documentos de muestra.
+   - Métricas de latencia de inferencia, tasa de errores, consumo de tokens y verificación fáctica de citas textuales mediante `backend/app/core/fuentes.py`.
+5. **Verificación y Cobertura:**
+   - 8 nuevos tests especializados agregados a `backend/tests/test_servicio_gemini.py` y `backend/tests/test_generacion_paralela.py`.
+   - Cobertura total de la suite de backend escalada a **275 pruebas pasando al 100%** (`pytest backend/tests -q`).
+   - Suite de frontend intacta con **23 pruebas pasando al 100%** (`npm test`).
+
 ---
 
 **Firmado por:**  
 🤖 **Modelo de IA: Gemini 3.8 & Antigravity Agent**  
 *Arquitectura de Soluciones Cloud OCI, DevOps & Integración Full-Stack*  
-*Fecha: 13 de Octubre de 2026*
+*Fecha: 14 de Octubre de 2026*
 
 

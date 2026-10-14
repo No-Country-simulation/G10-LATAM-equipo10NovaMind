@@ -275,3 +275,136 @@ Esto probablemente explica también el 0 de 7 del resumen del ENISA del 13 de oc
 | Segunda | 9,9 s (extracción del PDF) | Ninguna | Tareas y auditoría reutilizadas, mismo anclaje 0,92 |
 
 Backend: 265 tests.
+
+---
+
+## 14 oct 2026 · Primera tanda del front de `newmind-edtech-oci`
+
+Portados a mano, porque esa rama no comparte historia con la nuestra. Sin commit.
+
+| Origen | Qué | Cómo |
+|---|---|---|
+| `54ed643` | Flashcards: la tarjeta ajusta su altura al contenido; la pista didáctica pasa al anverso (en el reverso ya se veía la respuesta); botones "Girar tarjeta" y "Volver al frente"; los clics en la pista no giran la tarjeta | `git apply`, limpio |
+| `e895d38` | El botón de la medalla final abre la vitrina de trofeos | `git apply`, limpio |
+| `a0e841e` | Texto más amable al agotar los escudos ("El error es parte del aprendizaje") | `git apply`, limpio |
+| `f2f648f` | Regla del 100 % **solo en el quiz** (decisión del usuario). Las estaciones 1 a 4 siguen aprobando con el 60 % | A mano |
+
+**Descartados**
+- `95c68ec`, `b273df0`, `0018ff8` y `f23d614` (100 % en las estaciones 1 a 4): el usuario quiere el 100 % solo en el quiz.
+- `c1b0334` (valores por defecto "genéricos" en la Estación 1): nuestra versión ya muestra "—" cuando falta el dato, que es lo honesto.
+- `df18965` (storyboard): sustituiría el video narrado.
+- `7b4616c`, `30a0665` y `cc5d028`: llaman a Gemini desde el navegador.
+
+**Problemas**
+- Los parches traían espacios al final de línea; los quité.
+- `Station5Quiz.tsx` es CRLF: el reemplazo se hizo conservando ese final de línea.
+
+**Reintento por pregunta en el quiz** (decisión del usuario, inspirado en `5508c84`)
+- Con el 100 % y una sola respuesta por pregunta, un error obligaba a repetir el examen entero.
+- Ahora, al fallar, se pierde un escudo y la alternativa queda marcada y bloqueada. Se puede probar otra sin que se revele la correcta, y los 3 escudos siguen limitando los errores.
+- Al acertar, la fundamentación explica también por qué fallaban las descartadas, a partir de `explicaciones_opciones` del backend. Antes de acertar no se muestra, porque esa explicación puede delatar la correcta.
+- Los fallos se guardan en `QuizState.failedOptions` y viajan con el progreso; los estados antiguos se completan con `EMPTY_QUIZ`. Servirán para el repaso guiado que propuso el usuario (anotado en `PROXIMOS_PASOS`).
+- A diferencia del original, no usa `setTimeout` para limpiar la selección: la alternativa fallada queda marcada.
+
+**Verificación:** `tsc` sin errores, 17 tests del frontend, `eslint` sin errores en los archivos tocados y build correcto.
+
+---
+
+## 14 oct 2026 · Repaso guiado del quiz
+
+Idea del usuario: aprovechar los errores del quiz para indicar dónde profundizar. Se hizo sin modelo y sin gastar cuota.
+
+**Qué hace**
+- `utils/repasoQuiz.ts` (`puntosDeRepaso`) toma los fallos guardados en `QuizState.failedOptions`. Devuelve las preguntas falladas, primero las que más fallos tienen, con la cita y la `fuente` (página) que el backend ya localizó en el documento.
+- `Station5Quiz/RepasoGuiado.tsx` lo muestra en dos momentos:
+  - **Al agotar los escudos:** solo la pregunta y el fragmento del documento para releer, sin la respuesta. Después vuelven las mismas preguntas, y revelarla haría que se aprobara de memoria.
+  - **Al aprobar:** además la respuesta correcta, la fundamentación y por qué fallaba cada alternativa descartada, si el backend generó `explicaciones_opciones`.
+- Si la cita no se localizó, el chip lo dice ("Cita no encontrada en el documento"). Si la pregunta no trae cita, se indica.
+
+**Por qué sin modelo:** las referencias ya existen y están verificadas en el propio paquete. Pedírselas a un modelo podría inventar fuentes. Queda como opción futura que un modelo redacte un plan de repaso que se apoye solo en estas citas.
+
+**Verificación:** 22 tests del frontend (5 nuevos en `tests/repasoQuiz.test.ts`), `tsc` sin errores, `eslint` sin errores en los archivos tocados y build correcto. Falta probarlo en el navegador.
+
+---
+
+## 14 oct 2026 · Resiliencia ante 429 de Gemini: clasificación de cuotas, semáforos por modelo y comparación
+
+**Estado:** sin commit.
+
+**Qué**
+1. **Clasificación del 429 de Gemini (`backend/app/servicios/servicio_gemini.py`):**
+   - Se procesa `error.details` identificando entradas `google.rpc.QuotaFailure` (`violations[].quotaId` o `description` conteniendo `PerDay` o `PerMinute`) y `google.rpc.RetryInfo` (`retryDelay`).
+   - Se clasifica el error en `GeminiError` con los atributos `tipo_cuota` (`"cuota_diaria"` | `"cuota_minuto"` | `"desconocido"`) y `retry_after_s`.
+   - **Cuota diaria:** no se reintenta el modelo (`reintentable=False`) y se marca en memoria del proceso (`_MODELOS_AGOTADOS_HASTA`) como agotado hasta la medianoche del Pacífico (`America/Los_Angeles` vía `zoneinfo`). Las llamadas subsiguientes a ese modelo en el proceso fallan de inmediato sin gastar peticiones a la red y conmutan directo al respaldo.
+   - **Cuota por minuto:** si `retryDelay <= 10.0 s` y resta plazo en el presupuesto, se espera y se reintenta una única vez; si el retardo es superior o no queda plazo, pasa directamente al modelo de respaldo.
+   - Cuerpos de error no interpretables mantienen el comportamiento preexistente.
+2. **Escalonamiento de caída al respaldo (`backend/app/agentes/generacion_paralela.py` y `backend/app/core/config.py`):**
+   - Concurrencia por modelo acotada mediante `asyncio.Semaphore` por modelo (`(bucle, modelo)`), configurable vía `gemini_concurrencia_por_modelo` en `Config` (`GEMINI_CONCURRENCIA_POR_MODELO`, defecto 2).
+   - Inyección de desfase aleatorio (`random.uniform(0.0, 1.5)`) antes de invocar al modelo de respaldo para evitar saturación simultánea desde tareas concurrentes (A, B1, B2).
+   - Procedencia honesta en los avisos de recursos: cuando se recurre al respaldo, se preserva la plantilla de aviso indicando explícitamente si fue por `(cuota diaria)` o `(cuota por minuto)` (ej. `"generado con el modelo de respaldo X porque Y no respondió (cuota diaria)"`).
+   - Se mantiene intacto el mecanismo de heartbeats SSE y los límites de tiempo de Cloudflare.
+3. **Script de comparación de modelos (`deploy/comparar_modelos.py`):**
+   - Script independiente que evalúa `gemini-3.5-flash-lite` y `gemini-3.8-flash` en la generación de resúmenes (Tarea A).
+   - Mide latencia, errores (HTTP / cuotas), consumo de tokens y citas verificadas contra el documento original mediante `ubicar_cita` de `app.core.fuentes`. Solo creado, no ejecutado para preservar cuota.
+
+**Por qué**
+- Cuando las tareas A, B1 y B2 corrían en paralelo compartiendo el modelo principal, una saturación simultánea de cuota las hacía conmutar al mismo tiempo al modelo de respaldo, saturando también este último o provocando fallos en cascada en la generación en vivo.
+- Tratar por igual una cuota diaria y una por minuto gastaba reintentos inútiles cuando la cuota diaria ya no se reiniciaría hasta las 00:00 PT.
+
+**Problemas**
+- El uso de `asyncio.Semaphore` debe ser seguro frente a múltiples bucles de eventos (ej. en suites de pruebas con `asyncio.run()`), por lo que se asocia por `(id(bucle), modelo)`.
+- Se aseguró la compatibilidad con CRLF en todos los archivos modificados.
+
+**Verificación**
+- 18 tests en `backend/tests/test_servicio_gemini.py` (4 tests nuevos para cuota diaria, cuota por minuto con retryDelay <= 10s, retryDelay > 10s y cuerpo no interpretable).
+- 24 tests en `backend/tests/test_generacion_paralela.py` (4 tests nuevos para procedencia con cuota diaria sin llamadas de red posteriores, cuota por minuto, aviso clásico y saturación de respaldo con jitter y semáforo).
+- Suite completa del backend: 275 tests pasados (`pytest -q`).
+- Validación sintáctica de `deploy/comparar_modelos.py` mediante `py_compile`.
+
+---
+
+## 14 oct 2026 · Lint del frontend a cero y voces latinas por nombre
+
+**Lint:** `npx eslint .` pasa de 13 errores y 1 aviso a cero. A partir de ahora, cualquier error nuevo se ve sin tener que comparar con HEAD.
+- **`any` en `Step2KnowledgeQuest.tsx`:** 6 casos. El helper `listaDe(valor, ...claves)` acepta la lista directa o envuelta (`{ pasos }`, `{ scenes }`…), como antes, pero tipado.
+- **`any` en `api.ts` y `MermaidDiagram.tsx`:** el evento SSE tiene ahora su tipo `EventoSSE`; el error de Mermaid pasa a `unknown`.
+- **`api.ts`:** el error que se relanza conserva el original en `cause`.
+- **`MermaidDiagram.tsx`:**
+  - antes, el efecto ponía estados de carga de forma síncrona;
+  - ahora se guarda el resultado del último diagrama dibujado, y "cargando" se deriva de si ese resultado corresponde al diagrama actual.
+- **`App.tsx`:**
+  - **`latestState`:** antes se escribía durante el render; ahora se hace en un `useLayoutEffect`. Los seis lectores son un `useEffect` y manejadores de eventos, así que siguen viendo el valor fresco.
+  - **Modo local:** el estado inicial (`ready` y el mensaje) se calcula al crear el estado, no en el efecto.
+  - **Limpieza del efecto de sesión:** usa una copia del ref.
+  - **`finally` de la generación:** ya no tiene `return`. Mismo comportamiento: si cambió la cuenta, no se toca el estado.
+
+**Voces del navegador (`7c21e99`):** casi todo ya estaba portado (la cascada de regiones y la espera de `voiceschanged`). Faltaba un paso: si no hay voz con región latinoamericana, se prefiere una voz en español cuyo nombre lo indique (Paulina, Sabina, Tomás, "latino", "México"…), comparando sin tildes. Para quitar las tildes se usa `/\p{M}/gu`, porque los heredocs convertían el rango de escapes en caracteres invisibles. El original tenía una errata: buscaba "paulino" en lugar de "paulina".
+
+**Verificación:** 23 tests del frontend (uno nuevo de voces), `tsc` sin errores, `eslint .` con 0 problemas y build correcto. Falta probarlo en el navegador: la Estación 4 con la voz del navegador y un diagrama Mermaid.
+
+---
+
+## 14 oct 2026 · Revisión del trabajo de Gemini sobre los 429
+
+Claude revisó el bloque anterior antes del commit y corrigió dos problemas.
+
+**1. El semáforo por modelo frenaba cada generación sin proteger la cuota.**
+- **Problema:** vivía dentro de `GeneradorParalelo`, que se crea en cada petición, y se aplicaba también al modelo principal. Como A, B1 y B2 usan el mismo modelo (`3.5-flash-lite`) y el límite es 2, una de las tres tareas esperaba siempre, aunque no hubiera ningún 429. Además no limitaba nada entre peticiones simultáneas.
+- **Arreglo:**
+  - El semáforo es ahora del proceso (`_SEMAFOROS_RESPALDO`, uno por bucle de eventos y modelo) y solo se aplica al respaldo, que es donde coinciden todas las tareas cuando el principal se satura.
+  - El principal vuelve a salir con las tres tareas a la vez.
+  - El desfase aleatorio y el semáforo quedan en `_llamar_respaldo`.
+
+**2. La cuota diaria no tenía prioridad.**
+- **Problema:** si Google listaba primero una violación `PerMinute` y después una `PerDay`, el error se clasificaba como "por minuto", se reintentaba y el modelo no quedaba marcado como agotado.
+- **Arreglo:** si alguna violación es diaria, gana la diaria. De paso se quitaron una condición que siempre era verdadera y un `if ... pass` muerto.
+
+**Tests**
+- El test de saturación del respaldo ahora exige que el principal llegue a 3 llamadas simultáneas y el respaldo no pase de 2.
+- Nuevos:
+  - `test_limite_del_respaldo_es_del_proceso_no_de_cada_generacion`: dos generaciones simultáneas suman 6 llamadas al principal, y como mucho 2 a la vez en el respaldo.
+  - `test_429_con_violaciones_mixtas_gana_la_cuota_diaria`.
+- `conftest.py` limpia también los modelos agotados entre tests.
+- Se corrigió la descripción del semáforo en `backend/docs/ARCHITECTURE.md` y `CHANGELOG.md`.
+
+**Verificación:** 275 tests del backend.

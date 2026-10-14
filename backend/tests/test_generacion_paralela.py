@@ -19,7 +19,11 @@ from app.agentes.generacion_paralela import GeneracionParalelaError, GeneradorPa
 from app.auth import Principal, require_user
 from app.core.config import Config
 from app.core.schemas import RangoPagina, SolicitudAdaptacion
-from app.servicios.servicio_gemini import ClienteGemini
+from app.servicios.servicio_gemini import (
+    ClienteGemini,
+    limpiar_modelos_agotados,
+    modelo_esta_agotado,
+)
 
 CLAVE = "AIzaClaveDePruebaQueNoDebeFiltrarse1234567"
 
@@ -456,3 +460,224 @@ def test_una_auditoria_fallida_no_se_recuerda():
     auditor = Auditor()
     _generar(Simulador(), auditor=auditor, registro=registro)
     assert len(auditor.llamadas) == 1  # se reintenta en la siguiente generación
+
+
+# --- Resiliencia y procedencia de 429 -------------------------------------------------
+def test_respaldo_indica_cuota_diaria_y_no_gasta_llamada_posterior():
+    limpiar_modelos_agotados()
+    sim = Simulador()
+    original = sim.__call__
+
+    def _429_diario():
+        return httpx.Response(429, json={
+            "error": {
+                "code": 429,
+                "message": "Resource has been exhausted (check quota)",
+                "details": [
+                    {
+                        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                        "violations": [{"quotaId": "GenerateRequestsPerDay"}],
+                    }
+                ],
+            }
+        })
+
+    async def por_modelo(request):
+        cuerpo = json.loads(request.content)
+        if cuerpo["model"] == "modelo-resumen":
+            sim.peticiones.append(("A", cuerpo))
+            return _429_diario()
+        return await original(request)
+
+    respuesta, eventos = _generar(por_modelo)
+    assert [c["model"] for t, c in sim.peticiones if t == "A"] == ["modelo-resumen", "respaldo-resumen"]
+    estado = respuesta.contenido_adaptado.estado_recursos["resumen"]
+    assert estado.estado == "completado" and estado.modelo == "respaldo-resumen"
+    aviso_esperado = "generado con el modelo de respaldo respaldo-resumen porque modelo-resumen no respondió (cuota diaria)"
+    assert aviso_esperado in estado.avisos
+    assert any(aviso_esperado in a for a in respuesta.advertencias)
+    assert modelo_esta_agotado("modelo-resumen") is True
+
+    # Segunda ejecución: el modelo-resumen no se llama ni una sola vez porque está agotado en memoria
+    peticiones_antes = len(sim.peticiones)
+    respuesta2, eventos2 = _generar(por_modelo)
+    peticiones_a = [c["model"] for t, c in sim.peticiones[peticiones_antes:] if t == "A"]
+    assert peticiones_a == ["respaldo-resumen"]  # directo al respaldo
+    estado2 = respuesta2.contenido_adaptado.estado_recursos["resumen"]
+    assert aviso_esperado in estado2.avisos
+    limpiar_modelos_agotados()
+
+
+def test_respaldo_indica_cuota_por_minuto_cuando_falla():
+    limpiar_modelos_agotados()
+    sim = Simulador()
+    original = sim.__call__
+
+    def _429_minuto():
+        return httpx.Response(429, json={
+            "error": {
+                "code": 429,
+                "message": "Quota exceeded per minute",
+                "details": [
+                    {
+                        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                        "violations": [{"quotaId": "GenerateRequestsPerMinute"}],
+                    },
+                    {
+                        "@type": "type.googleapis.com/google.rpc.RetryInfo",
+                        "retryDelay": "25s",
+                    },
+                ],
+            }
+        })
+
+    async def por_modelo(request):
+        cuerpo = json.loads(request.content)
+        if cuerpo["model"] == "modelo-resumen":
+            sim.peticiones.append(("A", cuerpo))
+            return _429_minuto()
+        return await original(request)
+
+    respuesta, eventos = _generar(por_modelo)
+    estado = respuesta.contenido_adaptado.estado_recursos["resumen"]
+    assert estado.estado == "completado" and estado.modelo == "respaldo-resumen"
+    aviso_esperado = "generado con el modelo de respaldo respaldo-resumen porque modelo-resumen no respondió (cuota por minuto)"
+    assert aviso_esperado in estado.avisos
+    assert any(aviso_esperado in a for a in respuesta.advertencias)
+    assert modelo_esta_agotado("modelo-resumen") is False
+
+
+def test_respaldo_cuerpo_desconocido_mantiene_aviso_original():
+    limpiar_modelos_agotados()
+    sim = Simulador()
+    original = sim.__call__
+
+    async def por_modelo(request):
+        cuerpo = json.loads(request.content)
+        if cuerpo["model"] == "modelo-resumen":
+            sim.peticiones.append(("A", cuerpo))
+            return httpx.Response(429, text="Too Many Requests")
+        return await original(request)
+
+    respuesta, eventos = _generar(por_modelo)
+    estado = respuesta.contenido_adaptado.estado_recursos["resumen"]
+    assert estado.estado == "completado" and estado.modelo == "respaldo-resumen"
+    aviso_esperado = "generado con el modelo de respaldo respaldo-resumen porque modelo-resumen no respondió"
+    assert aviso_esperado in estado.avisos
+    assert modelo_esta_agotado("modelo-resumen") is False
+
+
+def test_concurrencia_por_modelo_y_jitter_ante_saturacion_respaldo():
+    limpiar_modelos_agotados()
+    # Las tres tareas comparten el mismo modelo principal y el mismo respaldo
+    config_comun = replace(
+        CONFIG,
+        gemini_summary_model="modelo-comun",
+        gemini_resources_model="modelo-comun",
+        gemini_summary_fallback_model="respaldo-comun",
+        gemini_resources_fallback_model="respaldo-comun",
+        gemini_concurrencia_por_modelo=2,
+    )
+
+    en_vuelo_por_modelo = {"modelo-comun": 0, "respaldo-comun": 0}
+    max_en_vuelo_por_modelo = {"modelo-comun": 0, "respaldo-comun": 0}
+    jitters_dormidos = []
+
+    async def dormir_con_registro(s):
+        jitters_dormidos.append(s)
+        await asyncio.sleep(0.001)
+
+    async def handler(request):
+        cuerpo = json.loads(request.content)
+        mod = cuerpo["model"]
+        en_vuelo_por_modelo[mod] += 1
+        max_en_vuelo_por_modelo[mod] = max(max_en_vuelo_por_modelo[mod], en_vuelo_por_modelo[mod])
+        await asyncio.sleep(0.02)
+        en_vuelo_por_modelo[mod] -= 1
+
+        if mod == "modelo-comun":
+            # Todas las tareas fallan con 429 por minuto en el modelo común
+            return httpx.Response(429, json={
+                "error": {
+                    "code": 429,
+                    "message": "Resource exhausted",
+                    "details": [
+                        {"@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                         "violations": [{"quotaId": "GenerateRequestsPerMinute"}]},
+                        {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "20s"}
+                    ]
+                }
+            })
+        # En el respaldo: A falla también por saturación (503), pero B1 y B2 entregan recurso
+        tarea = tarea_de(request)
+        if tarea == "A":
+            return httpx.Response(503, json={"error": {"message": "respaldo saturado"}})
+        if tarea == "B1":
+            return _ok(salida_b1())
+        return _ok(salida_b2())
+
+    eventos = []
+    async def run():
+        cliente = ClienteGemini(CLAVE, transport=httpx.MockTransport(handler), max_reintentos=0,
+                                dormir=dormir_con_registro)
+        async with cliente:
+            gen = GeneradorParalelo(cliente, config_comun, auditor=Auditor(), dormir=dormir_con_registro)
+            return await gen.generar(SOLICITUD, eventos.append)
+
+    respuesta = asyncio.run(run())
+
+    # El principal no se limita: las tres tareas de la generación salen a la vez, como siempre.
+    # El respaldo, donde caen todas juntas, nunca supera el límite por modelo.
+    assert max_en_vuelo_por_modelo["modelo-comun"] == 3
+    assert max_en_vuelo_por_modelo["respaldo-comun"] <= 2
+
+    # Se aplicó jitter antes de llamar al respaldo (para las 3 tareas que cayeron a la vez)
+    assert len(jitters_dormidos) >= 3
+    assert all(0.0 <= j <= 1.5 for j in jitters_dormidos)
+
+    # Aislamiento: A falló en el respaldo sin tumbar los recursos de B1 y B2
+    estados = respuesta.contenido_adaptado.estado_recursos
+    assert estados["resumen"].estado == "fallido"
+    assert estados["flashcards"].estado == "completado"
+    assert estados["guion"].estado == "completado"
+
+
+def test_limite_del_respaldo_es_del_proceso_no_de_cada_generacion():
+    """Dos generaciones simultáneas comparten el límite del respaldo (antes era uno por petición)."""
+    config_comun = replace(
+        CONFIG,
+        gemini_summary_model="principal-x", gemini_resources_model="principal-x",
+        gemini_summary_fallback_model="respaldo-x", gemini_resources_fallback_model="respaldo-x",
+        gemini_concurrencia_por_modelo=2,
+    )
+    en_vuelo = {"principal-x": 0, "respaldo-x": 0}
+    maximo = {"principal-x": 0, "respaldo-x": 0}
+
+    async def handler(request):
+        mod = json.loads(request.content)["model"]
+        en_vuelo[mod] += 1
+        maximo[mod] = max(maximo[mod], en_vuelo[mod])
+        await asyncio.sleep(0.02)
+        en_vuelo[mod] -= 1
+        if mod == "principal-x":
+            return httpx.Response(503, json={"error": {"message": "saturado"}})
+        tarea = tarea_de(request)
+        return _ok(salida_a() if tarea == "A" else salida_b1() if tarea == "B1" else salida_b2())
+
+    async def sin_espera(_s):
+        await asyncio.sleep(0)
+
+    async def run():
+        cliente = ClienteGemini(CLAVE, transport=httpx.MockTransport(handler), max_reintentos=0,
+                                max_concurrencia=10, dormir=sin_espera)
+        async with cliente:
+            def gen(prop):
+                return GeneradorParalelo(cliente, config_comun, auditor=Auditor(), dormir=sin_espera,
+                                         propietario=prop)
+            # Otro documento, para que la segunda generación no se una a las tareas en vuelo de la primera
+            otra = SOLICITUD.model_copy(update={"documento_contenido": DOCUMENTO + " Segunda versión."})
+            return await asyncio.gather(gen("u1").generar(SOLICITUD), gen("u2").generar(otra))
+
+    asyncio.run(run())
+    assert maximo["principal-x"] == 6  # 3 tareas x 2 generaciones, sin límite
+    assert maximo["respaldo-x"] <= 2   # 6 tareas en el respaldo, como mucho 2 a la vez

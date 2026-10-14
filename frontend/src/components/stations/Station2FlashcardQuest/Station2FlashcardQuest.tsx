@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, useRef, useEffect, type MouseEvent } from 'react';
 import { RotateCw, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight, HelpCircle, Sparkles, BookOpen, Award } from 'lucide-react';
 import type { FlashcardItem } from '../../../types/types';
 import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
@@ -25,6 +25,10 @@ export const Station2FlashcardQuest = ({
   const [showHint, setShowHint] = useState<boolean>(false);
   const [masteredCards, setMasteredCards] = useState<Record<string, boolean>>({});
   const [tilt, setTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const frontFaceRef = useRef<HTMLDivElement>(null);
+  const backFaceRef = useRef<HTMLDivElement>(null);
+  const [dynamicHeight, setDynamicHeight] = useState<number | undefined>(undefined);
 
   // Sincronización limpia en fase de render sin useEffect
   if (cards !== prevCards) {
@@ -59,7 +63,27 @@ export const Station2FlashcardQuest = ({
   };
 
   const handleMouseLeave = () => setTilt({ x: 0, y: 0 });
-  const handleFlip = () => setIsFlipped(!isFlipped);
+  const handleFlip = () => setIsFlipped((prev) => !prev);
+
+  const handleCardClick = (e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Evitar que el clic en botones, pistas didácticas o elementos interactivos gire la tarjeta
+    if (
+      target.closest('button') ||
+      target.closest(`.${styles.hintSection}`) ||
+      target.closest(`.${styles.hintToggleBtn}`) ||
+      target.closest(`.${styles.hintCallout}`)
+    ) {
+      return;
+    }
+    handleFlip();
+  };
+
+  const handleToggleHint = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowHint((prev) => !prev);
+  };
 
   const handleNext = () => {
     setIsFlipped(false);
@@ -104,6 +128,55 @@ export const Station2FlashcardQuest = ({
   const masteredCount = Object.values(masteredCards).filter(Boolean).length;
   const isPassed = masteredCount >= minRequired;
 
+  // Medición y ajuste dinámico robusto del alto de la flashcard
+  useEffect(() => {
+    const computeHeight = () => {
+      const activeFace = isFlipped ? backFaceRef.current : frontFaceRef.current;
+      if (!activeFace) return;
+
+      const topEl = activeFace.querySelector<HTMLElement>(`.${styles.cardTopRow}`);
+      const centerEl = activeFace.querySelector<HTMLElement>(isFlipped ? `.${styles.backCenter}` : `.${styles.frontCenter}`);
+      const bottomEl = activeFace.querySelector<HTMLElement>(`.${styles.cardBottomRow}`);
+
+      if (!centerEl) return;
+
+      const isDesktop = window.innerWidth >= 640;
+      const padTop = isDesktop ? 26 : 20;
+      const padBottom = isDesktop ? 26 : 20;
+
+      const topH = topEl?.offsetHeight || 24;
+      // centerEl.scrollHeight contiene la totalidad del contenido (pregunta, icono, botón y pista desplegada)
+      const centerH = Math.max(centerEl.scrollHeight, centerEl.offsetHeight || 0);
+      const bottomH = bottomEl?.offsetHeight || 36;
+      const bottomMargin = 16;
+
+      // Margen generoso de respiro para que el botón "Girar tarjeta" mantenga distancia visual holgada
+      const breathingRoom = showHint ? 44 : 28;
+
+      const totalCalculated = padTop + topH + centerH + bottomMargin + bottomH + padBottom + breathingRoom;
+
+      // Alturas mínimas de base según si la pista está desplegada o no
+      const baseline = showHint
+        ? (isDesktop ? 480 : 430)
+        : (isDesktop ? 360 : 320);
+
+      const finalHeight = Math.ceil(Math.max(baseline, totalCalculated));
+      setDynamicHeight(finalHeight);
+    };
+
+    // Actualización inmediata
+    computeHeight();
+
+    // Actualización a los 40ms para asegurar renderizado de tipografías y animación de entrada
+    const timer = setTimeout(computeHeight, 40);
+
+    window.addEventListener('resize', computeHeight);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', computeHeight);
+    };
+  }, [currentIndex, isFlipped, showHint, currentCard]);
+
   return (
     <div className={styles.stationWrapper}>
       {/* Header Info */}
@@ -147,14 +220,15 @@ export const Station2FlashcardQuest = ({
         <div
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
-          onClick={handleFlip}
+          onClick={handleCardClick}
           style={{
             transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y + (isFlipped ? 180 : 0)}deg)`,
+            ...(dynamicHeight ? { height: `${dynamicHeight}px` } : {}),
           }}
-          className={styles.cardFlipper}
+          className={`${styles.cardFlipper} ${showHint ? styles.cardFlipperWithHint : ''}`}
         >
           {/* FRENTE */}
-          <div className={`${styles.cardFace} ${styles.cardFront}`}>
+          <div ref={frontFaceRef} className={`${styles.cardFace} ${styles.cardFront}`}>
             <div className={styles.cardTopRow}>
               <span className={styles.frontFaceTag}>
                 Tarjeta 0{currentIndex + 1} · Frente
@@ -174,16 +248,52 @@ export const Station2FlashcardQuest = ({
               <p className={styles.frontInstructions}>
                 Formula la respuesta mentalmente antes de girar la tarjeta.
               </p>
+
+              {currentCard.pista_didactica && (
+                <div
+                  className={styles.hintSection}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onMouseUp={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={handleToggleHint}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    className={styles.hintToggleBtn}
+                  >
+                    <Lightbulb size={16} color="var(--color-amber-400)" />
+                    <span>{showHint ? 'Ocultar pista didáctica' : 'Revelar pista didáctica'}</span>
+                  </button>
+
+                  {showHint && (
+                    <div className={styles.hintCallout}>
+                      <strong style={{ color: 'var(--color-amber-300)' }}>💡 Pista:</strong> {currentCard.pista_didactica}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className={styles.cardBottomRow}>
               <span>Active Recall Simulator</span>
-              <span style={{ color: 'var(--color-cyan-400)', fontWeight: 600 }}>Girar tarjeta ↺</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleFlip();
+                }}
+                className={styles.flipActionButtonCyan}
+              >
+                <span>Girar tarjeta</span>
+                <RotateCw size={13} />
+              </button>
             </div>
           </div>
 
           {/* REVERSO */}
-          <div className={`${styles.cardFace} ${styles.cardBack}`}>
+          <div ref={backFaceRef} className={`${styles.cardFace} ${styles.cardBack}`}>
             <div className={styles.cardTopRow}>
               <span className={styles.backFaceTag}>
                 Tarjeta 0{currentIndex + 1} · Reverso & Síntesis
@@ -197,30 +307,21 @@ export const Station2FlashcardQuest = ({
               <div className={styles.backAnswerBox}>
                 {currentCard.dorso}
               </div>
-
-              {currentCard.pista_didactica && (
-                <div onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={() => setShowHint(!showHint)}
-                    className={styles.hintToggleBtn}
-                  >
-                    <Lightbulb size={16} color="var(--color-amber-400)" />
-                    <span>{showHint ? 'Ocultar pista' : 'Revelar pista didáctica'}</span>
-                  </button>
-
-                  {showHint && (
-                    <div className={styles.hintCallout}>
-                      <strong style={{ color: 'var(--color-amber-300)' }}>💡 Pista:</strong> {currentCard.pista_didactica}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             <div className={styles.cardBottomRow}>
               <span>Fidelidad Pedagógica</span>
-              <span style={{ color: 'var(--color-violet-400)', fontWeight: 600 }}>Volver al frente ↺</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleFlip();
+                }}
+                className={styles.flipActionButtonViolet}
+              >
+                <span>Volver al frente</span>
+                <RotateCw size={13} />
+              </button>
             </div>
           </div>
         </div>

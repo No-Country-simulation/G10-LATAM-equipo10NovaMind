@@ -15,7 +15,13 @@ import httpx
 import pytest
 from pydantic import BaseModel, Field
 
-from app.servicios.servicio_gemini import ClienteGemini, GeminiError, esquema_json
+from app.servicios.servicio_gemini import (
+    ClienteGemini,
+    GeminiError,
+    esquema_json,
+    limpiar_modelos_agotados,
+    modelo_esta_agotado,
+)
 
 CLAVE = "AIzaClaveDePruebaQueNoDebeFiltrarse1234567"
 
@@ -79,11 +85,11 @@ def _cliente(guion, esperas=None, **kw) -> ClienteGemini:
     return ClienteGemini(CLAVE, transport=httpx.MockTransport(guion), dormir=dormir, espera_base_s=0.01, **kw)
 
 
-def _json(cliente, **kw):
+def _json(cliente, modelo="gemini-3.5-flash-lite", **kw):
     async def run():
         async with cliente:
             return await cliente.generar_json(
-                modelo="gemini-3.5-flash-lite", instrucciones="i", entrada="e", esquema_salida=Concepto, **kw
+                modelo=modelo, instrucciones="i", entrada="e", esquema_salida=Concepto, **kw
             )
 
     return asyncio.run(run())
@@ -228,3 +234,132 @@ def test_audio_corrupto_se_reintenta():
             return await c.sintetizar_voz(modelo="m", texto="Hola")
 
     assert asyncio.run(run()).uso.intentos == 2
+
+
+# --- Clasificación y resiliencia de 429 ------------------------------------------------
+def test_429_cuota_diaria_no_reintenta_y_marca_agotado():
+    limpiar_modelos_agotados()
+    modelo = "gemini-test-cuota-diaria"
+    resp_429 = httpx.Response(429, json={
+        "error": {
+            "code": 429,
+            "message": "Resource has been exhausted (check quota)",
+            "status": "RESOURCE_EXHAUSTED",
+            "details": [
+                {
+                    "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                    "violations": [
+                        {
+                            "subject": "project:test-proj",
+                            "description": "Quota exceeded for quota metric 'Requests per day'",
+                            "quotaId": "GenerateRequestsPerDay",
+                        }
+                    ],
+                }
+            ],
+        }
+    })
+    guion = Guion([resp_429])
+    with pytest.raises(GeminiError) as exc:
+        _json(_cliente(guion, max_reintentos=2), modelo=modelo)
+
+    assert exc.value.codigo == "rate_limit"
+    assert exc.value.tipo_cuota == "cuota_diaria"
+    assert exc.value.reintentable is False
+    assert len(guion.peticiones) == 1  # No reintenta
+    assert modelo_esta_agotado(modelo) is True
+
+    # La siguiente llamada con el mismo modelo falla de inmediato sin gastar llamada HTTP
+    with pytest.raises(GeminiError) as exc2:
+        _json(_cliente(guion, max_reintentos=2), modelo=modelo)
+    assert exc2.value.tipo_cuota == "cuota_diaria"
+    assert len(guion.peticiones) == 1  # Ninguna petición nueva enviada a la red
+    limpiar_modelos_agotados()
+
+
+def test_429_cuota_minuto_reintenta_si_retraso_menor_o_igual_a_10s():
+    limpiar_modelos_agotados()
+    esperas = []
+    resp_429 = httpx.Response(429, json={
+        "error": {
+            "code": 429,
+            "message": "Quota exceeded for quota metric 'Requests per minute'",
+            "status": "RESOURCE_EXHAUSTED",
+            "details": [
+                {
+                    "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                    "violations": [{"quotaId": "GenerateRequestsPerMinute"}],
+                },
+                {
+                    "@type": "type.googleapis.com/google.rpc.RetryInfo",
+                    "retryDelay": "4s",
+                },
+            ],
+        }
+    })
+    guion = Guion([resp_429, _ok_texto('{"concepto": "Swap"}')])
+    r = _json(_cliente(guion, esperas, max_reintentos=0), modelo="gemini-minuto-ok")
+    assert r.uso.intentos == 2
+    assert esperas == [4.0]
+    assert modelo_esta_agotado("gemini-minuto-ok") is False
+
+
+def test_429_cuota_minuto_no_reintenta_si_retraso_mayor_a_10s():
+    limpiar_modelos_agotados()
+    esperas = []
+    resp_429 = httpx.Response(429, json={
+        "error": {
+            "code": 429,
+            "message": "Quota exceeded per minute",
+            "status": "RESOURCE_EXHAUSTED",
+            "details": [
+                {
+                    "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                    "violations": [{"quotaId": "GenerateRequestsPerMinute"}],
+                },
+                {
+                    "@type": "type.googleapis.com/google.rpc.RetryInfo",
+                    "retryDelay": "37s",
+                },
+            ],
+        }
+    })
+    guion = Guion([resp_429, _ok_texto('{"concepto": "Swap"}')])
+    with pytest.raises(GeminiError) as exc:
+        _json(_cliente(guion, esperas, max_reintentos=2), modelo="gemini-minuto-largo")
+
+    assert exc.value.codigo == "rate_limit"
+    assert exc.value.tipo_cuota == "cuota_minuto"
+    assert exc.value.retry_after_s == 37.0
+    assert len(guion.peticiones) == 1
+    assert esperas == []  # No se quedó esperando 37s
+
+
+def test_429_cuerpo_ilegible_mantiene_comportamiento():
+    limpiar_modelos_agotados()
+    esperas = []
+    # 429 con cuerpo sin details ni formato RPC
+    resp_429 = httpx.Response(429, headers={"retry-after": "5"}, text="Too Many Requests")
+    guion = Guion([resp_429, _ok_texto('{"concepto": "Swap"}')])
+    r = _json(_cliente(guion, esperas, max_reintentos=2), modelo="gemini-ilegible")
+    assert r.uso.intentos == 2
+    assert esperas == [5.0]
+    assert modelo_esta_agotado("gemini-ilegible") is False
+
+
+def test_429_con_violaciones_mixtas_gana_la_cuota_diaria():
+    """Si Google lista una violación por minuto y otra diaria, el modelo no tiene cuota hoy."""
+    modelo = "gemini-test-mixta"
+    resp_429 = httpx.Response(429, json={"error": {"code": 429, "message": "exhausted", "details": [
+        {"@type": "type.googleapis.com/google.rpc.QuotaFailure", "violations": [
+            {"quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier"},
+            {"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier"},
+        ]},
+        {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "5s"},
+    ]}})
+    guion = Guion([resp_429])
+    with pytest.raises(GeminiError) as exc:
+        _json(_cliente(guion, max_reintentos=2), modelo=modelo)
+    assert exc.value.tipo_cuota == "cuota_diaria"
+    assert len(guion.peticiones) == 1  # ni siquiera el reintento corto de la cuota por minuto
+    assert modelo_esta_agotado(modelo) is True

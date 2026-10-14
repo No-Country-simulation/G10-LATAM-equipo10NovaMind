@@ -10,7 +10,7 @@ Esta carpeta centraliza todos los informes de avance, bitácoras de cambios, esp
 | :--- | :--- | :--- |
 | [para_claude.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/para_claude.md) | Informe Técnico | Análisis forense de integración multirama, topografía de dos raíces de Git y estrategia de convergencia a producción. |
 | [BITACORA_FULLSTACK_V2.md](BITACORA_FULLSTACK_V2.md) | Bitácora | Registro desde el 12 oct 2026 de la rama `feature/fullstack-nuevamente-v2`: generación paralela con Gemini, video narrado bajo demanda, respaldo de modelos e imágenes y PDF escaneados como fuente. |
-| [CAMBIOS.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/CAMBIOS.md) | Bitácora / Changelog | Registro cronológico y detallado de las 20 fases de integración técnica del proyecto. |
+| [CAMBIOS.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/CAMBIOS.md) | Bitácora / Changelog | Registro cronológico y detallado de las 21 fases de integración técnica del proyecto. |
 | [INFORME_ORQUESTACION_MULTI_PROVEEDOR_FASE9.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/INFORME_ORQUESTACION_MULTI_PROVEEDOR_FASE9.md) | Reporte Técnico | Arquitectura multi-proveedor (Gemini/Groq/Cohere), streaming SSE anti-timeout 524 de Cloudflare, semáforo de memoria en OCI y auditoría RAG real. |
 | [ESQUEMA_INTEGRACION_FULLSTACK.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/ESQUEMA_INTEGRACION_FULLSTACK.md) | Arquitectura | Diagramas de flujo, contratos de API, mapeo de puertos y topología de integración Backend + Frontend + OCI. |
 | [INFORME_INTEGRACION_OCI_FASE3.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/INFORME_INTEGRACION_OCI_FASE3.md) | Reporte Técnico | Validación y persistencia híbrida en Oracle Cloud Infrastructure (OCI Object Storage Always Free). |
@@ -45,10 +45,11 @@ Esta carpeta centraliza todos los informes de avance, bitácoras de cambios, esp
 * **Fase 18 — Ingesta Multimodal con Transcripción IA Honesta:** Soporte nativo para extracción de imágenes (PNG/JPG) y PDFs escaneados mediante visión artificial con delimitadores de página `[Página N]` y revisión humana obligatoria.
 * **Fase 19 — Robustecimiento y Auditoría E2E de Producción:** Cobertura escalada a 255 pruebas backend y 17 frontend, con 0 errores de tipado TypeScript y build de producción optimizado en Vite.
 * **Fase 20 — Análisis Forense Multirama y Convergencia a Main:** Mapeo de historias inconexas de Git, verificación de absorción completa de `backend` e `integracion` (+42 y +25 commits adelante) y roadmap de fast-forward limpio hacia `main`.
+* **Fase 21 — Resiliencia 429 Gemini, Semáforos por Modelo y Benchmark:** Clasificación de errores 429 (`cuota_diaria` vs `cuota_minuto`) vía `google.rpc`, memoria en proceso hasta medianoche del Pacífico, semáforos por modelo (`GEMINI_CONCURRENCIA_POR_MODELO=2`), jitter aleatorio en fallback, proveniencia honesta en advertencias de recursos y comparador `deploy/comparar_modelos.py`. Cobertura escalada a 275 pruebas backend (100% pasando).
 
 ---
 
 **Firmado por:**  
 🤖 **Modelo de IA: Gemini 3.8 & Antigravity Agent**  
 *Arquitectura de Soluciones Cloud OCI, DevOps Senior & Integración Full-Stack*  
-*Fecha: 13 de Octubre de 2026*
+*Fecha: 14 de Octubre de 2026*

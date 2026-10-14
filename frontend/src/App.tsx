@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { supabase, authUser, requireSupabase } from './services/supabase';
 import { listPackages, createPackage, readState, writeState, EMPTY_QUIZ } from './services/persistence';
 import type { PackageRow, QuizState } from './services/persistence';
@@ -75,13 +75,19 @@ export default function App() {
   // Identidad del recorrido montado en el Paso 2. Se fija al abrir un paquete o al empezar a
   // recibir recursos, y no cambia cuando llega el paquete final: así la estación en uso no se reinicia.
   const [questKey, setQuestKey] = useState<string>('demo');
-  const [ready, setReady] = useState(false);
+  // Sin Supabase no hay sesión que comprobar: se arranca listo y en modo local.
+  const [ready, setReady] = useState(!supabase);
   const [quizState, setQuizState] = useState<QuizState>(EMPTY_QUIZ);
-  const [syncMessage, setSyncMessage] = useState('Comprobando sesión…');
+  const [syncMessage, setSyncMessage] = useState(
+    supabase ? 'Comprobando sesión…' : 'Modo local (sin Supabase). Tu trabajo se guardará en esta sesión.',
+  );
   const accountVersion = useRef(0);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const latestState = useRef({ currentStep, activeStationIndex, completedStations, cognitiveShields, xp, achievements, quizState });
-  latestState.current = { currentStep, activeStationIndex, completedStations, cognitiveShields, xp, achievements, quizState };
+  // Se actualiza tras cada render (no durante él), antes que cualquier useEffect que lo lea.
+  useLayoutEffect(() => {
+    latestState.current = { currentStep, activeStationIndex, completedStations, cognitiveShields, xp, achievements, quizState };
+  });
 
   const restorePackage = async (row: PackageRow, version: number) => {
     const { progress, state } = await readState(row.id);
@@ -97,11 +103,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!supabase) {
-      setSyncMessage('Modo local (sin Supabase). Tu trabajo se guardará en esta sesión.');
-      setReady(true);
-      return;
-    }
+    if (!supabase) return;
+    const versiones = accountVersion;
     let disposed = false;
     let currentOwner: string | null | undefined;
     const refresh = async () => {
@@ -144,7 +147,7 @@ export default function App() {
     };
     void refresh();
     const { data } = supabase.auth.onAuthStateChange(() => { setTimeout(() => { if (!disposed) void refresh(); }, 0); });
-    return () => { disposed = true; accountVersion.current++; data.subscription.unsubscribe(); };
+    return () => { disposed = true; versiones.current++; data.subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -330,12 +333,14 @@ export default function App() {
       alert(`⚠️ ${errMsg}`);
       setCurrentStep(1);
     } finally {
-      if (version !== accountVersion.current) return;
-      if (version === accountVersion.current) setReady(true);
-      setIsGenerating(false);
-      setIsProcessing(false);
-      setProcessingStage("");
-      setGeneratingMessage("");
+      // Si cambió la cuenta durante la generación, el estado ya se reinició: no tocarlo.
+      if (version === accountVersion.current) {
+        setReady(true);
+        setIsGenerating(false);
+        setIsProcessing(false);
+        setProcessingStage("");
+        setGeneratingMessage("");
+      }
     }
   };
 

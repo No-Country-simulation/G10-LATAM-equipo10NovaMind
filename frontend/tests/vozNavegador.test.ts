@@ -15,6 +15,16 @@ test('prefiere las regiones latinoamericanas en el orden acordado', () => {
   assert.equal(elegirVozNavegador(voces.filter((v) => v.name !== 'Elena'))?.name, 'Sabina');
 });
 
+test('sin región preferida, prefiere una voz con nombre latinoamericano (sin tildes ni mayúsculas)', () => {
+  const voces = [voz('Helena', 'es-ES'), voz('Microsoft Tomás', 'es'), voz('Zira', 'en-US')];
+  assert.equal(elegirVozNavegador(voces)?.name, 'Microsoft Tomás');
+  assert.equal(elegirVozNavegador([voz('Helena', 'es-ES'), voz('Paulina', 'es')])?.name, 'Paulina');
+  // El nombre solo cuenta si la voz es en español
+  assert.equal(elegirVozNavegador([voz('Mexico English', 'en-US'), voz('Helena', 'es-ES')])?.name, 'Helena');
+  // La región sigue mandando sobre el nombre
+  assert.equal(elegirVozNavegador([voz('Paulina', 'es'), voz('Sabina', 'es-MX')])?.name, 'Sabina');
+});
+
 test('sin región preferida usa cualquier español; sin español, ninguna', () => {
   assert.equal(elegirVozNavegador([voz('Zira', 'en-US'), voz('Helena', 'es-ES')])?.name, 'Helena');
   assert.equal(elegirVozNavegador([voz('Zira', 'en-US')]), undefined);

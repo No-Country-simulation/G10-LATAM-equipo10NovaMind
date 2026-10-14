@@ -2,6 +2,18 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.5.0] - 2026-10-14
+
+### 🛡️ Resiliencia ante 429 de Gemini, Semáforos por Modelo y Benchmarking (Fase 21)
+- **Clasificación Granular de Cuotas HTTP 429:** Inspección de payloads `google.rpc.QuotaFailure` y `google.rpc.RetryInfo` en `backend/app/servicios/servicio_gemini.py` para distinguir cuotas diarias de límites por minuto, extrayendo `retry_after_s`.
+- **Memoria de Modelos Agotados (Fail-Fast):** Modelos con cuota diaria agotada se marcan en memoria hasta la medianoche del Pacífico (hora de reseteo de Google AI Studio), evitando peticiones de red redundantes.
+- **Reintento Condicional para Cuota por Minuto:** Espera asíncrona y reintento único cuando `retry_after_s <= 10.0` y queda presupuesto de tiempo; de lo contrario, conmuta de inmediato a fallback.
+- **Semáforo del respaldo por modelo:** Nuevo parámetro `GEMINI_CONCURRENCIA_POR_MODELO=2` (1–10). Limita las llamadas simultáneas a cada modelo de respaldo en todo el proceso (no por petición). El principal no se limita: las tres tareas de una generación siguen saliendo a la vez.
+- **Jitter en Conmutación de Respaldo:** Pausa aleatoria (`0.0 - 1.5s`) antes de invocar el modelo de respaldo para evitar saturación simultánea (*thundering herd*).
+- **Proveniencia Honesta en Recursos:** Advertencias explícitas en el estado del recurso indicando si se generó con modelo de respaldo debido a cuota diaria o por minuto.
+- **Script Comparador de Modelos (`deploy/comparar_modelos.py`):** Utilidad de benchmarking CLI para contrastar latencia, errores, consumo de tokens y verificación de citas entre `gemini-3.5-flash-lite` y `gemini-3.8-flash`.
+- **Suite de Pruebas Ampliada:** Cobertura de backend incrementada a **275 pruebas automatizadas al 100% de éxito**.
+
 ## [2.4.0] - 2026-10-10
 
 ### ⚡ Concurrencia Optimizada, Renderizador Mermaid en UI y Navegación Fluida (Fase 13)

@@ -14,16 +14,28 @@ export interface VozDisponible {
 /** Español latinoamericano primero; idea de origin/feature/newmind-edtech-oci (7c21e99). */
 export const LOCALES_PREFERIDOS = ['es-AR', 'es-419', 'es-MX', 'es-CO', 'es-CL', 'es-US'] as const;
 
+/**
+ * Pistas en el nombre de voces latinoamericanas, para sistemas que solo informan `es` sin región
+ * (Paulina en macOS, Sabina y Tomás en Windows…). Se comparan sin tildes y en minúsculas.
+ */
+export const NOMBRES_LATINOS = ['latino', 'latinoamerica', 'mexico', 'argentina', 'colombia', 'chile', 'paulina', 'sabina', 'tomas'] as const;
+
 // Algunos sistemas informan 'es_MX' en lugar de 'es-MX'
 const normalizar = (lang: string) => lang.replace('_', '-').toLowerCase();
+const sinTildes = (texto: string) => texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+const esEspanol = (v: VozDisponible) => normalizar(v.lang).startsWith('es');
 
-/** Primera voz de la cascada de regiones; si no hay ninguna, cualquier voz en español. */
+/**
+ * Primera voz de la cascada de regiones; si no hay ninguna, una voz en español con nombre
+ * latinoamericano; y si tampoco, cualquier voz en español.
+ */
 export const elegirVozNavegador = <T extends VozDisponible>(voces: readonly T[]): T | undefined => {
   for (const locale of LOCALES_PREFERIDOS) {
     const voz = voces.find((v) => normalizar(v.lang) === locale.toLowerCase());
     if (voz) return voz;
   }
-  return voces.find((v) => normalizar(v.lang).startsWith('es'));
+  const latina = voces.find((v) => esEspanol(v) && NOMBRES_LATINOS.some((n) => sinTildes(v.name).includes(n)));
+  return latina ?? voces.find(esEspanol);
 };
 
 /**

@@ -43,6 +43,15 @@ function mensajeDeEvento(evento: EventoGeneracion): string {
     : `✅ ${nombre} listo · verificación pendiente.`;
 }
 
+/** Evento del flujo SSE de `/adaptar/stream`; los de generación se validan con `esEventoGeneracion`. */
+interface EventoSSE {
+  tipo?: string;
+  mensaje?: string;
+  estacion_desbloqueada?: unknown;
+  datos?: unknown;
+  detalle?: string;
+}
+
 export interface AdaptarParams {
   docTitle: string;
   docContent: string;
@@ -122,7 +131,7 @@ export async function solicitarAdaptacion(
 
           if (trimmed.startsWith('data:')) {
             const jsonStr = trimmed.slice(5).trim();
-            let evento: any;
+            let evento: EventoSSE;
             try {
               evento = JSON.parse(jsonStr);
             } catch {
@@ -170,7 +179,8 @@ export async function solicitarAdaptacion(
     // Para cualquier documento real (Kafka, ENISA, Swap, etc.), nunca sustituir silenciosamente con el mock
     if (selectedScenarioId !== 'demo-offline-swap') {
       throw new Error(
-        `Error al procesar "${docTitle || 'documento'}" con el orquestador real: ${mensaje}`
+        `Error al procesar "${docTitle || 'documento'}" con el orquestador real: ${mensaje}`,
+        { cause: err },
       );
     }
     console.warn('Backend no disponible para demo offline explícita.');

@@ -27,8 +27,10 @@ import asyncio
 import hashlib
 import json
 import logging
+import random
 import re
 import time
+import weakref
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Literal, Optional, Tuple, Type
@@ -63,7 +65,7 @@ from app.core.schemas import (
     huella_documento,
 )
 from app.servicios.registro_tareas import RegistroTareas
-from app.servicios.servicio_gemini import ClienteGemini, GeminiError, esquema_json
+from app.servicios.servicio_gemini import ClienteGemini, GeminiError, esquema_json, modelo_esta_agotado
 
 logger = logging.getLogger("novamind.generacion_paralela")
 
@@ -583,7 +585,7 @@ _MENSAJES_ERROR = {
 # Errores del modelo principal que justifican probar el de respaldo: saturación, cuota,
 # red o una salida defectuosa (todos reintentables) y un modelo retirado.
 def _pasa_al_respaldo(exc: GeminiError) -> bool:
-    return exc.reintentable or exc.codigo == "modelo_no_encontrado"
+    return exc.reintentable or exc.codigo in ("modelo_no_encontrado", "rate_limit")
 
 
 # Con respaldo, el principal tiene una fracción del tiempo para que el respaldo aún quepa
@@ -650,6 +652,24 @@ async def _llamada_compartida(propietario: str, huella: str, fabrica: Callable[[
 # Auditorías ya ejecutadas, por propietario + afirmaciones + texto auditado. Si todos los
 # recursos se reutilizaron, el veredicto también: el 2026-10-14, repetir el ENISA al minuto
 # hizo que Groq respondiera 413 (tokens por minuto agotados) y la auditoría no se ejecutara.
+# Respaldo escalonado: cuando el principal se satura, todas las tareas de todas las
+# generaciones en curso caen a la vez al mismo modelo de respaldo. Desfase aleatorio y un
+# límite de llamadas simultáneas por modelo, compartido por todo el proceso (no por petición).
+_JITTER_RESPALDO_S = 1.5
+_SEMAFOROS_RESPALDO: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, Dict[Tuple[str, int], asyncio.Semaphore]]" = (
+    weakref.WeakKeyDictionary()
+)
+
+
+def _semaforo_respaldo(modelo: str, limite: int) -> asyncio.Semaphore:
+    """Semáforo del proceso para un modelo de respaldo (uno por bucle de eventos: las pruebas crean varios)."""
+    por_bucle = _SEMAFOROS_RESPALDO.setdefault(asyncio.get_running_loop(), {})
+    clave = (modelo, max(1, limite))
+    if clave not in por_bucle:
+        por_bucle[clave] = asyncio.Semaphore(clave[1])
+    return por_bucle[clave]
+
+
 _MAX_AUDITORIAS_RECORDADAS = 32
 _AUDITORIAS: Dict[str, Dict[str, Any]] = {}
 
@@ -717,6 +737,7 @@ class GeneradorParalelo:
         registro: Optional[RegistroTareas] = None,
         propietario: str = "anonimo",
         presupuesto_s: float = PRESUPUESTO_GENERACION_S,
+        dormir: Optional[Callable[[float], Awaitable[None]]] = None,
     ) -> None:
         self._cliente = cliente
         self._config = config
@@ -725,6 +746,10 @@ class GeneradorParalelo:
         self._registro = registro
         self._propietario = propietario
         self._presupuesto_s = presupuesto_s
+        self._dormir = dormir or getattr(cliente, "_dormir", asyncio.sleep)
+
+    def _semaforo_respaldo(self, modelo: str) -> asyncio.Semaphore:
+        return _semaforo_respaldo(modelo, getattr(self._config, "gemini_concurrencia_por_modelo", 2))
 
     async def generar(self, solicitud: SolicitudAdaptacion, publicar: Publicar = lambda _e: None) -> RespuestaAdaptacion:
         t0 = time.perf_counter()
@@ -850,14 +875,23 @@ class GeneradorParalelo:
                 ej.filas[recurso] = _fila(tarea, recurso, huella, inicio, estado)
                 ej.publicar({"tipo": "recurso", "recurso": recurso, "estado": estado.model_dump()})
                 continue
+            if uso.modelo != tarea.modelo:
+                motivo_cuota = getattr(uso, "motivo_respaldo", None)
+                if motivo_cuota == "cuota_diaria":
+                    aviso_respaldo = f"generado con el modelo de respaldo {uso.modelo} porque {tarea.modelo} no respondió (cuota diaria)"
+                elif motivo_cuota == "cuota_minuto":
+                    aviso_respaldo = f"generado con el modelo de respaldo {uso.modelo} porque {tarea.modelo} no respondió (cuota por minuto)"
+                else:
+                    aviso_respaldo = f"generado con el modelo de respaldo {uso.modelo} porque {tarea.modelo} no respondió"
+                avisos_modelo = [aviso_respaldo]
+            else:
+                avisos_modelo = []
+
             estado = EstadoRecurso(
                 **base, estado="completado", verificacion="pendiente",
                 citas_totales=len(listo.fuentes),
                 citas_verificadas=sum(1 for f in listo.fuentes if f["verificada"]),
-                avisos=listo.avisos + (
-                    [f"generado con el modelo de respaldo {uso.modelo} porque {tarea.modelo} no respondió"]
-                    if uso.modelo != tarea.modelo else []
-                ),
+                avisos=listo.avisos + avisos_modelo,
             )
             ej.contenido.update(listo.campos)
             ej.afirmaciones[recurso] = listo.afirmaciones
@@ -882,6 +916,19 @@ class GeneradorParalelo:
 
         if tarea.respaldo is None:
             return await llamada(tarea.modelo, timeout_s=tarea.timeout_s)
+
+        # Si el modelo principal tiene cuota diaria agotada en memoria, ir directo al respaldo sin gastar llamada
+        if modelo_esta_agotado(tarea.modelo):
+            logger.warning("[paralelo] Tarea %s: %s tiene la cuota diaria agotada; se usa %s directo.",
+                           tarea.id, tarea.modelo, tarea.respaldo)
+            ej.publicar({"tipo": "tarea", "tarea": tarea.id, "estado": "respaldo", "modelo": tarea.respaldo,
+                         "modelo_principal": tarea.modelo, "error_codigo": "rate_limit",
+                         "tipo_cuota": "cuota_diaria"})
+            return await self._llamar_respaldo(tarea, llamada, "cuota_diaria")
+
+        # El principal no pasa por el semáforo por modelo: las tres tareas de una generación
+        # corren en paralelo como siempre. El límite solo protege al respaldo, que es donde
+        # coinciden todas cuando el principal se satura.
         try:
             return await llamada(tarea.modelo, timeout_s=tarea.timeout_s * _FRACCION_TIMEOUT_PRINCIPAL,
                                  max_reintentos=0)
@@ -890,9 +937,23 @@ class GeneradorParalelo:
                 raise
             logger.warning("[paralelo] Tarea %s: %s falló (%s); se usa %s.",
                            tarea.id, tarea.modelo, exc.codigo, tarea.respaldo)
-            ej.publicar({"tipo": "tarea", "tarea": tarea.id, "estado": "respaldo", "modelo": tarea.respaldo,
-                         "modelo_principal": tarea.modelo, "error_codigo": exc.codigo})
-        return await llamada(tarea.respaldo, timeout_s=tarea.timeout_s)
+            evento = {
+                "tipo": "tarea", "tarea": tarea.id, "estado": "respaldo", "modelo": tarea.respaldo,
+                "modelo_principal": tarea.modelo, "error_codigo": exc.codigo,
+            }
+            if getattr(exc, "tipo_cuota", None):
+                evento["tipo_cuota"] = exc.tipo_cuota
+            ej.publicar(evento)
+
+            return await self._llamar_respaldo(tarea, llamada, getattr(exc, "tipo_cuota", None))
+
+    async def _llamar_respaldo(self, tarea: Tarea, llamada, motivo: Optional[str]):
+        """Respaldo escalonado: desfase aleatorio y límite de llamadas simultáneas por modelo en el proceso."""
+        await self._dormir(random.uniform(0.0, _JITTER_RESPALDO_S))
+        async with self._semaforo_respaldo(tarea.respaldo):
+            res = await llamada(tarea.respaldo, timeout_s=tarea.timeout_s)
+        res.uso.motivo_respaldo = motivo
+        return res
 
     async def _fallar(self, tarea: Tarea, codigo: str, recursos: List[str], ej: _Ejecucion) -> None:
         ej.publicar({"tipo": "tarea", "tarea": tarea.id, "estado": "fallida", "modelo": tarea.modelo,

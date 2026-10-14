@@ -43,23 +43,23 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
   const safeId = `mermaid-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [svgHtml, setSvgHtml] = useState<string>('');
-  const [renderError, setRenderError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Resultado del último diagrama dibujado. Mientras no corresponda al diagrama actual, se está
+  // renderizando: así el efecto no tiene que poner estados de carga de forma síncrona.
+  const [resultado, setResultado] = useState<{ chart: string; svg: string; error: string | null }>(
+    { chart: '', svg: '', error: null },
+  );
   const [showCode, setShowCode] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
   // Sin diagrama no se dibuja uno genérico: el llamador decide si mostrar el componente.
   const cleanChart = (chart || '').trim();
+  const isLoading = resultado.chart !== cleanChart;
+  const svgHtml = isLoading ? '' : resultado.svg;
+  const renderError = isLoading ? null : resultado.error;
 
   useEffect(() => {
     let isMounted = true;
-    if (!cleanChart) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    setRenderError(null);
+    if (!cleanChart) return;
 
     const renderChart = async () => {
       try {
@@ -73,16 +73,15 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
         code = code.trim();
 
         const { svg } = await mermaid.render(`${safeId}-svg`, code);
-        if (isMounted) {
-          setSvgHtml(svg);
-          setRenderError(null);
-          setIsLoading(false);
-        }
-      } catch (err: any) {
+        if (isMounted) setResultado({ chart: cleanChart, svg, error: null });
+      } catch (err: unknown) {
         console.warn('[MermaidDiagram] Fallo de renderizado SVG:', err);
         if (isMounted) {
-          setRenderError(err?.message || 'Error al procesar la sintaxis Mermaid.');
-          setIsLoading(false);
+          setResultado({
+            chart: cleanChart,
+            svg: '',
+            error: (err instanceof Error && err.message) || 'Error al procesar la sintaxis Mermaid.',
+          });
         }
       }
     };
