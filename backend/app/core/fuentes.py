@@ -55,17 +55,29 @@ def _fin_de_nota(texto: str, i: int) -> int:
     return fin
 
 
+# Línea que abre o cierra un bloque de código Markdown, con su etiqueta de lenguaje ("```bash").
+# Al citar una frase y el comando que la sigue, los modelos omiten la marca; la etiqueta no es
+# texto del documento que vea el lector. Medido el 2026-10-14 en la prueba de nichos: 7 de 18
+# citas rechazadas eran literales y solo fallaban por "bash" o "text" en medio.
+_VALLA_CODIGO = re.compile(r"^[ \t]{0,3}(?:`{3,}|~{3,})[^\n]*", re.MULTILINE)
+
+
 def _normalizar(texto: str) -> Tuple[str, array]:
     """
     Solo letras y dígitos, en minúsculas y sin tildes (NFKD: "ﬁ" → "fi", "é" → "e"),
     guardando para cada carácter normalizado su offset en el texto original. Las llamadas
-    a nota al pie (dígitos pegados tras una letra o ")", superíndices) se descartan.
+    a nota al pie (dígitos pegados tras una letra o ")", superíndices) y las líneas que
+    abren o cierran bloques de código se descartan.
     """
     salida: List[str] = []
     mapa = array("l")
+    vallas = {m.start(): m.end() for m in _VALLA_CODIGO.finditer(texto)} if "``" in texto or "~~" in texto else {}
     saltar_hasta = 0
     for i, c in enumerate(texto):
         if i < saltar_hasta:
+            continue
+        if i in vallas:
+            saltar_hasta = vallas[i]
             continue
         if c.isdigit() and (fin := _fin_de_nota(texto, i)) > i:
             saltar_hasta = fin
