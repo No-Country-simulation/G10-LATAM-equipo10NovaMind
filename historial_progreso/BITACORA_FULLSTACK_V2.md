@@ -1054,3 +1054,26 @@ Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos caso
 - **Ajuste:** solo se hace con los proveedores que cobran cada escena (`cobra_por_escena`: ElevenLabs sí, Gemini no). Con la voz de Gemini, que usa cuota gratuita, las escenas vuelven a ir a la vez. Un test lo comprueba.
 
 **Verificación.** Backend: 314 tests.
+
+
+## 14 oct 2026 · Despliegue en OCI desde cero (commit `41d8d5c`)
+
+**Contexto.** Las VM tenían una versión muy antigua, subida con WinSCP y no como repositorio git. El usuario decidió borrarla y empezar de cero, y ejecutó él los comandos. El runbook está en `deploy/RUNBOOK_OCI_2026-10-14.md`, que no se versiona.
+
+**Hallazgos de la preparación:**
+- **La VM 1 tenía Python 3.10** y el código necesita 3.11 o superior: `asyncio.timeout_at` en la narración, y en 3.10 `asyncio.TimeoutError` es distinto de `TimeoutError`. Se instaló Python 3.12 desde deadsnakes.
+- **El script que propuso Gemini no servía:** hacía `git pull` en una carpeta que no era un repositorio, compilaba el front en una VM de 1 GB y ponía una clave de Supabase de relleno.
+- «El caballero de la armadura oxidada» no está en git y se subió a mano. Los otros 4 documentos del catálogo sí están.
+- El `.env` del PC usaba una ruta relativa para `OCI_KEY_FILE`, que el servicio, al arrancar en `backend/`, no encontraría. Se cambió por la absoluta y se añadieron `APP_ENV=prod` y `PERMITIR_MODO_INVITADO=true`.
+
+**Qué se hizo:**
+- **VM 1:** se apagó y borró `~/nuevamente`, se instaló Python 3.12, se clonó `feature/fullstack-nuevamente-v2` en la misma ruta, se creó un venv 3.12 con `requirements.txt`, se subieron el `.env` y la clave de OCI con WinSCP y se reutilizó la unidad de systemd existente, porque sus rutas no cambian.
+- **VM 2:** el build de producción se hizo en el PC (`VITE_API_URL=https://novamind.techgk.cl`, sin `localhost`), se subió `dist/` con WinSCP y se añadió `client_max_body_size 16m` en `location /api/`.
+
+**Comprobado desde fuera:**
+- La web sirve el build nuevo (`index-BA8SFzwu.js`).
+- `/health` responde a través de Cloudflare.
+- El catálogo trae 5 documentos y descarga «El caballero…» y el ENISA (200).
+- Una subida de 2 MB llega al backend (400 por el tipo de archivo), sin el 413 de nginx.
+
+**Pendiente:** las comprobaciones en el navegador: generar un paquete por SSE, la caché de invitados, la narración y la RAM de la VM 1 durante una generación.

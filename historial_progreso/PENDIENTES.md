@@ -55,7 +55,12 @@ Corte: **14 de octubre de 2026, tarde**. Las preguntas de la sección 1 son las 
    - El detalle está en la bitácora.
    - Para repetirlo: `node tests/e2e_narracion.manual.ts`, desde `frontend/`, o `--spec <guion.json>` para reutilizar un guion.
 4. **¿Se unifican las ramas?** El push de la rama de trabajo ya se hace con cada commit de Gemini. Falta un `merge --ff-only` de `backend` e `integracion` a la rama de trabajo, seguido de push. Son acciones sobre el remoto compartido: las hace el usuario o las autoriza explícitamente.
-5. **¿Se despliega en la VM?** La guía está en `deploy/README_DESPLIEGUE_OCI.md`, sección 3b. Bloqueantes:
+5. **¿Se despliega en la VM?** La guía está en `deploy/README_DESPLIEGUE_OCI.md`, sección 3b.
+   - **Revisado el 14/10 con el commit `41d8d5c`:** la guía sigue al día (las variables existen en el código y en `.env.example`).
+   - El front pasa 26 tests, `tsc` y el build; el backend, 314 tests.
+   - **Aviso:** el modo «clásico» (LangGraph), último respaldo, no puede funcionar, porque `langchain_text_splitters` no está en `requirements.txt` ni instalado. El modo por defecto («paralelo») y la cadena no lo usan.
+
+   Bloqueantes:
    - `client_max_body_size 16m` en nginx; sin esto, toda subida de más de 1 MB da 413;
    - `GEMINI_API_KEY`, `GROQ_API_KEY`, `SUPABASE_*` y `ELEVENLABS_*` en el `.env` de la VM;
    - `PERMITIR_MODO_INVITADO=true` si la demo usa invitados con `APP_ENV=prod`;
