@@ -39,6 +39,8 @@ logger = logging.getLogger("novamind.servicio_gemini")
 URL_BASE = "https://generativelanguage.googleapis.com/v1beta"
 _ESTADOS_REINTENTABLES = {429, 500, 502, 503, 504}
 _MAX_ESPERA_S = 30.0
+# Voz (TTS): espera máxima por una cuota por minuto. La narración tiene 80 s de plazo en total.
+ESPERA_MAX_CUOTA_MINUTO_VOZ_S = 45.0
 _PATRON_CLAVE = re.compile(r"AIza[0-9A-Za-z_\-]{20,}")
 
 M = TypeVar("M", bound=BaseModel)
@@ -349,7 +351,8 @@ class ClienteGemini:
 
     # ------------------------------------------------------------------ núcleo
     async def _interactuar(self, cuerpo: Dict[str, Any], *, timeout_s: Optional[float], procesar,
-                           max_reintentos: Optional[int] = None):
+                           max_reintentos: Optional[int] = None,
+                           espera_max_cuota_minuto_s: float = 10.0, reintentos_cuota_minuto_max: int = 1):
         """POST con reintentos. `procesar(json, intentos, inicio)` puede lanzar GeminiError reintentable."""
         reintentos = self._max_reintentos if max_reintentos is None else max_reintentos
         modelo = cuerpo["model"]
@@ -397,7 +400,8 @@ class ClienteGemini:
             if getattr(ultimo, "tipo_cuota", None) == "cuota_diaria":
                 break
 
-            # Cuota por minuto: reintentar 1 vez si retryDelay <= 10s y queda plazo; si no, pasar al respaldo
+            # Cuota por minuto: reintentar si retryDelay cabe en la espera máxima y queda plazo; si no,
+            # pasar al respaldo. Por defecto 1 vez y ≤ 10 s (la generación tiene modelo de respaldo).
             if getattr(ultimo, "tipo_cuota", None) == "cuota_minuto":
                 retraso_s = (
                     ultimo.retry_after_s
@@ -406,7 +410,8 @@ class ClienteGemini:
                 )
                 limite_s = timeout_s or self._timeout_s
                 plazo_restante = limite_s - (time.perf_counter() - inicio)
-                if reintentos_cuota_minuto == 0 and retraso_s <= 10.0 and plazo_restante > (retraso_s + 1.0):
+                if (reintentos_cuota_minuto < reintentos_cuota_minuto_max and retraso_s <= espera_max_cuota_minuto_s
+                        and plazo_restante > (retraso_s + 1.0)):
                     reintentos_cuota_minuto += 1
                     await self._dormir(retraso_s)
                     continue
@@ -519,7 +524,12 @@ class ClienteGemini:
                 uso=_uso(cuerpo_resp, modelo, intentos, inicio),
             )
 
-        return await self._interactuar(cuerpo, timeout_s=timeout_s, procesar=procesar)
+        # La voz de Gemini es el último proveedor del servidor: ante una cuota por minuto conviene
+        # esperar a que se renueve (el plazo de la narración la acota). Prueba en OCI del 14/10:
+        # 429 por minuto en las 3 escenas y la narración se rindió con ~60 s de plazo libres.
+        return await self._interactuar(cuerpo, timeout_s=timeout_s, procesar=procesar,
+                                       espera_max_cuota_minuto_s=ESPERA_MAX_CUOTA_MINUTO_VOZ_S,
+                                       reintentos_cuota_minuto_max=2)
 
 
 # --------------------------------------------------------------------- esquemas

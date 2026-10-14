@@ -9,6 +9,7 @@ import { BookMarked, Layers, ListChecks, ScrollText } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { AdaptedContentPackage, RecursoId } from '../../types/types';
 import { estadoDe, motivoError, NOMBRE_RECURSO } from '../../utils/paqueteIncremental';
+import { resumenEnPuntos } from '../../utils/resumenEnPuntos';
 import { ChipVerificacion, FuenteChip } from '../RecursoEstado/RecursoEstado';
 import styles from './RecursosApoyo.module.css';
 
@@ -46,25 +47,18 @@ function Bloque({ paquete, recurso, icono, abierto = false, cantidad, children }
   );
 }
 
-export function RecursosApoyo({ paquete, estacion }: Props) {
-  const c = paquete.contenido_adaptado;
-  const bloques: ReactNode[] = [];
-
-  if (estacion === 0) {
-    if (c.objetivos_aprendizaje?.length || estadoDe(paquete, 'objetivos')) {
-      bloques.push(
-        <Bloque key="objetivos" paquete={paquete} recurso="objetivos" abierto
-          icono={<ListChecks size={16} aria-hidden="true" />} cantidad={c.objetivos_aprendizaje?.length}>
-          <ul className={styles.lista}>{c.objetivos_aprendizaje?.map((o) => <li key={o}>{o}</li>)}</ul>
-        </Bloque>,
-      );
-    }
-    if (c.resumen_ejecutivo) {
-      const r = c.resumen_ejecutivo;
-      bloques.push(
-        <Bloque key="ejecutivo" paquete={paquete} recurso="resumen"
-          icono={<ScrollText size={16} aria-hidden="true" />}>
-          <p className={styles.parrafo}>{r.texto}</p>
+/** Resumen ejecutivo: una frase, puntos clave y, plegados, el detalle por secciones y las conclusiones. */
+export function ResumenEjecutivo({ paquete }: { paquete: AdaptedContentPackage }) {
+  const r = paquete.contenido_adaptado.resumen_ejecutivo;
+  if (!r) return null;
+  const { frase, puntos } = resumenEnPuntos(r.texto);
+  return (
+    <Bloque paquete={paquete} recurso="resumen" abierto icono={<ScrollText size={16} aria-hidden="true" />}>
+      <p className={styles.frase}><strong>En una frase:</strong> {frase}</p>
+      {puntos.length > 0 && <ul className={styles.lista}>{puntos.map((p) => <li key={p}>{p}</li>)}</ul>}
+      {(r.por_secciones.length > 0 || r.conclusiones.length > 0) && (
+        <details className={styles.detalle}>
+          <summary>Por secciones y conclusiones</summary>
           {r.por_secciones.length > 0 && (
             <>
               <h5 className={styles.subtitulo}>Por secciones</h5>
@@ -84,8 +78,28 @@ export function RecursosApoyo({ paquete, estacion }: Props) {
               <ul className={styles.lista}>{r.conclusiones.map((x) => <li key={x}>{x}</li>)}</ul>
             </>
           )}
+        </details>
+      )}
+    </Bloque>
+  );
+}
+
+export function RecursosApoyo({ paquete, estacion }: Props) {
+  const c = paquete.contenido_adaptado;
+  const bloques: ReactNode[] = [];
+
+  if (estacion === 0) {
+    if (c.objetivos_aprendizaje?.length || estadoDe(paquete, 'objetivos')) {
+      bloques.push(
+        <Bloque key="objetivos" paquete={paquete} recurso="objetivos" abierto
+          icono={<ListChecks size={16} aria-hidden="true" />} cantidad={c.objetivos_aprendizaje?.length}>
+          <ul className={styles.lista}>{c.objetivos_aprendizaje?.map((o) => <li key={o}>{o}</li>)}</ul>
         </Bloque>,
       );
+    }
+    // Con la Estación 1 en pantalla, el resumen va dentro de ella (entre la síntesis y los puntos clave)
+    if (c.resumen_ejecutivo && !c.resumen_ninja) {
+      bloques.push(<ResumenEjecutivo key="ejecutivo" paquete={paquete} />);
     }
   }
 

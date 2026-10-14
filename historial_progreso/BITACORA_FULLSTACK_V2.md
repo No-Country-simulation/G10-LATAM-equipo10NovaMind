@@ -1077,3 +1077,19 @@ Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos caso
 - Una subida de 2 MB llega al backend (400 por el tipo de archivo), sin el 413 de nginx.
 
 **Pendiente:** las comprobaciones en el navegador: generar un paquete por SSE, la caché de invitados, la narración y la RAM de la VM 1 durante una generación.
+
+
+## 14 oct 2026 · Primeras pruebas en producción: diagrama, difuminado, voz y resumen
+
+**Lo que vio el usuario en https://novamind.techgk.cl:**
+- **Diagrama Mermaid gigante.** El CSS forzaba `max-width: 100% !important` sobre el ancho natural que fija Mermaid. Corregido en `3de44c4`.
+- **La diapositiva seguía difuminada en pausa.** La capa del botón de reproducir llevaba `backdrop-filter: blur(2px)`. Corregido en `3de44c4`.
+- **«feliz» (foto sin texto):** el aviso de que no hay nada verificable es el comportamiento correcto.
+- **La narración falló.** Según el log de la VM 1, ElevenLabs se quedó sin créditos (tope de 500: una sola narración) y la voz de Gemini dio un 429 por **cuota por minuto** en sus dos intentos. Se rindió con unos 60 s de plazo libres.
+- **El resumen salía debajo del diagrama**, en `RecursosApoyo`, y no junto a la síntesis.
+
+**Cambios (sin commit):**
+- **Voz de Gemini:** `ClienteGemini._interactuar` acepta `espera_max_cuota_minuto_s` y `reintentos_cuota_minuto_max`. La voz espera hasta 45 s (`ESPERA_MAX_CUOTA_MINUTO_VOZ_S`), como máximo 2 veces, porque es el último proveedor del servidor. El plazo de 80 s de la narración la sigue acotando. La generación del paquete conserva su regla (1 vez, ≤ 10 s), porque tiene modelo de respaldo. Hay 2 tests nuevos en `test_servicio_gemini.py`.
+- **Resumen ejecutivo en la Estación 1:** va entre la «Síntesis Conceptual» y los «Puntos clave», con el formato «**En una frase:** …» y puntos, y con las secciones y conclusiones plegadas. `utils/resumenEnPuntos.ts` parte el texto auditado por oraciones, sin reescribirlo: no corta «p. ej.» ni «1.5 GB». Hay 3 tests nuevos. Si el paquete no tiene `resumen_ninja`, el resumen sigue en `RecursosApoyo`.
+
+**Verificación.** Backend: 316 tests. Frontend: 29 tests, `tsc`, `eslint` en los archivos tocados y build. El build para OCI está en `deploy/frontend-dist-oci/` (`index-fLDdjBGQ.js`). El cambio del backend necesita commit, `git pull` en la VM 1 y reiniciar el servicio.

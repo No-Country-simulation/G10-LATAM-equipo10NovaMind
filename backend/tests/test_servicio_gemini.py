@@ -335,6 +335,51 @@ def test_429_cuota_minuto_no_reintenta_si_retraso_mayor_a_10s():
     assert esperas == []  # No se quedó esperando 37s
 
 
+def _429_minuto(retraso: str) -> httpx.Response:
+    return httpx.Response(429, json={"error": {
+        "code": 429, "message": "Quota exceeded per minute", "status": "RESOURCE_EXHAUSTED",
+        "details": [
+            {"@type": "type.googleapis.com/google.rpc.QuotaFailure",
+             "violations": [{"quotaId": "GenerateRequestsPerMinute"}]},
+            {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": retraso},
+        ],
+    }})
+
+
+def test_voz_espera_la_cuota_por_minuto_aunque_pase_de_10s():
+    # La voz no tiene modelo de respaldo: espera a que se renueve la cuota (caso real en OCI, 14/10)
+    limpiar_modelos_agotados()
+    esperas = []
+    guion = Guion([_429_minuto("37s"), _429_minuto("20s"), _ok_audio(_wav(1.0))])
+
+    async def run():
+        async with _cliente(guion, esperas, timeout_s=90.0) as c:
+            return await c.sintetizar_voz(modelo="tts-minuto", texto="Hola")
+
+    assert asyncio.run(run()).uso.intentos == 3
+    assert esperas == [37.0, 20.0]
+
+
+def test_voz_no_espera_mas_de_45s_ni_mas_de_dos_veces():
+    limpiar_modelos_agotados()
+    esperas = []
+    guion = Guion([_429_minuto("50s"), _ok_audio(_wav(1.0))])
+
+    async def run():
+        async with _cliente(guion, esperas, timeout_s=90.0) as c:
+            return await c.sintetizar_voz(modelo="tts-minuto-largo", texto="Hola")
+
+    with pytest.raises(GeminiError):
+        asyncio.run(run())
+    assert esperas == []
+
+    esperas.clear()
+    guion = Guion([_429_minuto("5s"), _429_minuto("5s"), _429_minuto("5s"), _ok_audio(_wav(1.0))])
+    with pytest.raises(GeminiError):
+        asyncio.run(run())
+    assert esperas == [5.0, 5.0]
+
+
 def test_429_cuerpo_ilegible_mantiene_comportamiento():
     limpiar_modelos_agotados()
     esperas = []

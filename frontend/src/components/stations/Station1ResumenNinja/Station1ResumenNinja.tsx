@@ -24,6 +24,8 @@ interface Station1Props {
   onOpenNinjaBadge: () => void;
   diagramaMermaid?: string;
   onNextStation?: () => void;
+  /** Resumen ejecutivo: va entre la síntesis y los puntos clave */
+  resumen?: React.ReactNode;
 }
 
 export const Station1ResumenNinja: React.FC<Station1Props> = ({
@@ -33,6 +35,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
   onOpenNinjaBadge,
   diagramaMermaid,
   onNextStation,
+  resumen,
 }) => {
   const [prevData, setPrevData] = useState(data);
   const [checkedConcepts, setCheckedConcepts] = useState<
@@ -109,6 +112,8 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
           </div>
         </div>
       </div>
+
+      {resumen}
 
       {/* Puntos Clave para Validación */}
       <div className={styles.conceptsCard}>
