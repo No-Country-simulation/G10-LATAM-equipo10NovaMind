@@ -175,6 +175,11 @@ class EscenaGenerada(_Salida):
     consejo_pedagogico: str = Field(..., min_length=1)
     objetivo_pedagogico: str = Field(..., min_length=1)
     visual: VisualGenerado
+    palabra_clave_imagen: str = Field(
+        ..., min_length=2, max_length=60,
+        description="1 a 3 palabras EN INGLÉS para buscar una foto genérica que ilustre la escena "
+                    "(objeto, lugar o actividad; sin marcas, personas famosas ni texto). Ej.: 'server rack'",
+    )
     citas: List[str] = Field(..., min_length=1, max_length=3, description=_CITA)
 
 
@@ -193,7 +198,7 @@ class PasoTutorial(_Salida):
 
 
 class SalidaProduccion(_Salida):
-    guion: List[EscenaGenerada] = Field(..., min_length=3, max_length=3)
+    guion: List[EscenaGenerada] = Field(..., min_length=2, max_length=3)
     diapositivas: List[DiapositivaGenerada] = Field(..., min_length=3, max_length=6)
     tutorial: List[PasoTutorial] = Field(..., min_length=3, max_length=5)
     diagrama_mermaid: str = Field(..., min_length=1, description="Diagrama Mermaid válido (flowchart TD o sequenceDiagram)")
@@ -235,10 +240,28 @@ _TAREA_B1 = """Eres el diseñador de evaluación de NovaMind. Produce recursos d
 - objetivos_aprendizaje: lo que el estudiante podrá hacer al terminar, empezando con un verbo observable."""
 
 _TAREA_B2 = f"""Eres el productor audiovisual de NovaMind. Produce:
-- guion: exactamente 3 escenas de una microclase de 60 segundos como máximo. El guion_locutor completo (las 3 escenas juntas) debe sumar entre {PALABRAS_GUION_MIN} y {PALABRAS_GUION_MAX} palabras: unas 40 por escena. Es texto para leer en voz alta: sin viñetas, sin markdown, sin URLs.
+- guion: las escenas de un video narrado de 60 segundos como máximo; cada escena es una diapositiva con voz. El guion_locutor completo (todas las escenas juntas) debe sumar entre {PALABRAS_GUION_MIN} y {PALABRAS_GUION_MAX} palabras, repartidas en partes similares. Es texto para leer en voz alta: sin viñetas, sin markdown, sin URLs.
 - diapositivas: propuesta en orden didáctico, con concepto visual por diapositiva.
 - tutorial: pasos prácticos progresivos con una acción concreta tomada del documento y cómo verificarla.
 - diagrama_mermaid: un diagrama Mermaid válido que modele el flujo o la arquitectura principal, sin bloque de código."""
+
+
+# Escenas del video narrado según el documento: uno breve o de una sola idea cabe en 2
+# diapositivas; uno con varias secciones necesita 3. Se decide aquí y no en el modelo.
+MIN_PALABRAS_TRES_ESCENAS = 900
+MIN_SECCIONES_TRES_ESCENAS = 3
+
+
+def escenas_video(solicitud: SolicitudAdaptacion) -> int:
+    largo = contar_palabras(solicitud.documento_contenido) >= MIN_PALABRAS_TRES_ESCENAS
+    seccionado = len(solicitud.secciones) >= MIN_SECCIONES_TRES_ESCENAS
+    return 3 if largo and seccionado else 2
+
+
+def _instrucciones_produccion(solicitud: SolicitudAdaptacion) -> str:
+    n = escenas_video(solicitud)
+    por_escena = round((PALABRAS_GUION_MIN + PALABRAS_GUION_MAX) / 2 / n)
+    return f"ESCENAS DEL GUION: exactamente {n}, de unas {por_escena} palabras cada una."
 
 
 def _entrada(solicitud: SolicitudAdaptacion) -> Tuple[str, bool]:
@@ -422,6 +445,7 @@ def procesar_guion(datos: SalidaProduccion, solicitud: SolicitudAdaptacion) -> R
             "consejo_pedagogico": e.consejo_pedagogico,
             "objetivo_pedagogico": e.objetivo_pedagogico,
             "visual": e.visual.model_dump(),
+            "imagen": {"tipo": "diapositiva", "palabra_clave": e.palabra_clave_imagen},
             "fuentes": [{"chunk_id": f"cita-{i}-{j}", "texto_fuente": c} for j, c in enumerate(e.citas, start=1)],
         }
         for i, e in enumerate(datos.guion, start=1)
@@ -512,6 +536,11 @@ class Tarea:
     procesadores: Tuple[Tuple[str, Callable[[Any, SolicitudAdaptacion], RecursoListo]], ...]
     timeout_s: float
     thinking_level: Optional[str]
+    # Instrucciones que dependen del documento (p. ej. cuántas escenas); entran en la huella
+    extra: Optional[Callable[[SolicitudAdaptacion], str]] = None
+
+    def instrucciones_para(self, solicitud: SolicitudAdaptacion) -> str:
+        return f"{self.instrucciones}\n\n{self.extra(solicitud)}" if self.extra else self.instrucciones
 
     @property
     def recursos(self) -> List[str]:
@@ -530,7 +559,7 @@ def tareas_para(config: Config) -> List[Tarea]:
         Tarea("B2", config.gemini_resources_model, _TAREA_B2, SalidaProduccion,
               (("guion", procesar_guion), ("diapositivas", procesar_diapositivas),
                ("tutorial", procesar_tutorial), ("diagrama", procesar_diagrama)),
-              timeout_s=90.0, thinking_level="minimal"),
+              timeout_s=90.0, thinking_level="minimal", extra=_instrucciones_produccion),
     ]
 
 
@@ -543,7 +572,7 @@ _MENSAJES_ERROR = {
 }
 
 # Sube este número si cambian las comprobaciones deterministas: invalida lo reutilizable.
-VERSION_PROCESADO = 1
+VERSION_PROCESADO = 2
 
 
 def _auditor_groq(afirmaciones: List[str], documento: str) -> Dict[str, Any]:
@@ -564,7 +593,7 @@ def huella_tarea(solicitud: SolicitudAdaptacion, tarea: Tarea) -> str:
         "tema": solicitud.tema_consulta or "",
         "tarea": tarea.id,
         "modelo": tarea.modelo,
-        "instrucciones": tarea.instrucciones + _REGLAS_FIDELIDAD,
+        "instrucciones": tarea.instrucciones_para(solicitud) + _REGLAS_FIDELIDAD,
         "esquema": esquema_json(tarea.esquema),
         "procesado": VERSION_PROCESADO,
     }
@@ -755,7 +784,7 @@ class GeneradorParalelo:
         try:
             respuesta = await _llamada_compartida(self._propietario, huella, lambda: self._cliente.generar_json(
                 modelo=tarea.modelo,
-                instrucciones=f"{tarea.instrucciones}\n\n{_instrucciones_audiencia(ej.solicitud)}\n\n{_REGLAS_FIDELIDAD}",
+                instrucciones=f"{tarea.instrucciones_para(ej.solicitud)}\n\n{_instrucciones_audiencia(ej.solicitud)}\n\n{_REGLAS_FIDELIDAD}",
                 entrada=ej.entrada,
                 esquema_salida=tarea.esquema,
                 timeout_s=tarea.timeout_s,

@@ -18,7 +18,6 @@ import {
   Award,
   Download,
   BookOpen,
-  Layers,
   Play,
   Pause,
   RotateCcw,
@@ -27,9 +26,12 @@ import {
   Copy,
   Check,
   Timer,
+  Mic,
+  LoaderCircle,
   TriangleAlert as AlertTriangle,
 } from 'lucide-react';
-import type { DirectorScene, EspecificacionVisual, VideoJobSpec } from '../../../types/types';
+import type { DirectorScene, RespuestaNarracion, VideoJobSpec } from '../../../types/types';
+import { solicitarNarracion, urlsDeAudio } from '../../../services/api';
 import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
 import {
   BASE_WPM,
@@ -40,6 +42,7 @@ import {
   sceneSeconds,
   splitWords,
 } from '../../../utils/microclassTiming';
+import { SlideNarrada } from './SlideNarrada';
 import styles from './Station4DirectorCut.module.css';
 
 const MAX_FRAME_DELTA_SECONDS = 0.25; // evita saltos al volver de una pestaña en segundo plano
@@ -51,19 +54,14 @@ const WPM_PRESETS = [
   { value: 160, label: 'Ágil' },
 ] as const;
 
-const VISUAL_LABELS: Record<EspecificacionVisual['tipo'], string> = {
-  diagrama_bloques: 'Diagrama de bloques',
-  ppt_concepto: 'Concepto',
-  palabras_clave: 'Palabras clave',
-  comparativa: 'Comparativa',
-};
+/** La voz se genera solo si se pide: gasta cuota de Gemini. */
+type EstadoNarracion =
+  | { fase: 'inactiva' }
+  | { fase: 'generando' }
+  | { fase: 'lista'; respuesta: RespuestaNarracion; urls: Record<number, string> }
+  | { fase: 'error'; mensaje: string };
 
-const VISUAL_VARIANTS: Record<EspecificacionVisual['tipo'], string> = {
-  diagrama_bloques: styles.visualSpecBoxBlocks,
-  ppt_concepto: styles.visualSpecBoxConcept,
-  palabras_clave: styles.visualSpecBoxTags,
-  comparativa: styles.visualSpecBoxCompare,
-};
+const liberarUrls = (urls: Record<number, string>) => Object.values(urls).forEach((u) => URL.revokeObjectURL(u));
 
 const FALLBACK_SCENES: DirectorScene[] = [
   {
@@ -143,6 +141,8 @@ interface Station4Props {
   documentId?: string;
   /** Sustituciones del sistema reportadas por el backend (video_job_spec.degradaciones) */
   degradaciones?: string[];
+  /** Guion del video tal como lo entregó el backend (lleva la palabra clave de cada imagen) */
+  videoJobSpec?: VideoJobSpec | null;
 }
 
 /**
@@ -162,6 +162,7 @@ const DirectorStudio = ({
   onNextStation,
   documentId,
   degradaciones = [],
+  videoJobSpec,
 }: Station4Props) => {
   const hasRealScenes = Array.isArray(scenes) && scenes.length > 0;
   const safeScenes = hasRealScenes ? scenes : FALLBACK_SCENES;
@@ -177,6 +178,18 @@ const DirectorStudio = ({
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   const [showRagDetails, setShowRagDetails] = useState(true);
+  const [narracion, setNarracion] = useState<EstadoNarracion>({ fase: 'inactiva' });
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const urlsRef = useRef<Record<number, string>>({});
+  const vivoRef = useRef(true);
+  useEffect(() => {
+    vivoRef.current = true;
+    return () => {
+      vivoRef.current = false;
+      liberarUrls(urlsRef.current);
+    };
+  }, []);
 
   // Progreso 0..1 de la escena: vive en un ref para no re-renderizar en cada frame
   const progressRef = useRef(0);
@@ -195,13 +208,25 @@ const DirectorStudio = ({
   // Modelo de tiempo único (mismo que VideoJobSpec en el backend): palabras reales del guion,
   // nunca estimacion_palabras ni duracion_segundos declarados por el LLM.
   const wordCount = scriptWords.length;
-  const sceneDurationSec = sceneSeconds(wordCount, wpm);
+
+  // Con narración lista, la escena trae su foto y su audio; la duración es la MEDIDA del WAV.
+  const narrada = narracion.fase === 'lista' ? narracion.respuesta.video_job_spec.escenas[currentSceneIndex] : undefined;
+  const viewScene = narrada ?? currentScene;
+  const audioUrl = narracion.fase === 'lista' && narrada?.audio ? narracion.urls[narrada.escena] : undefined;
+  const audioMode = Boolean(audioUrl);
+  const tiemposPalabras =
+    audioMode && narrada?.audio?.tiempos_palabras?.length === scriptWords.length
+      ? narrada.audio.tiempos_palabras
+      : null;
+  const sceneDurationSec = audioMode && narrada?.audio ? narrada.audio.duracion_real_s : sceneSeconds(wordCount, wpm);
 
   const microclass = useMemo(
     () => microclassTiming(safeScenes.map((sc) => sc.guion_locutor), wpm),
     [safeScenes, wpm],
   );
-  const isOverTime = microclass.totalSeconds > MAX_MICROCLASS_SECONDS;
+  const realTotalSec =
+    narracion.fase === 'lista' ? (narracion.respuesta.duracion_total_real_s ?? null) : null;
+  const isOverTime = (realTotalSec ?? microclass.totalSeconds) > MAX_MICROCLASS_SECONDS;
   const isWordBudgetOk =
     microclass.totalWords >= TARGET_WORDS_MIN && microclass.totalWords <= TARGET_WORDS_MAX;
   const templateScenes = hasRealScenes ? safeScenes.filter((sc) => sc.origen === 'plantilla').length : 0;
@@ -220,6 +245,7 @@ const DirectorStudio = ({
 
   const resetPlayback = () => {
     progressRef.current = 0;
+    if (audioRef.current) audioRef.current.currentTime = 0;
     setActiveWord(-1);
     setIsFinished(false);
   };
@@ -267,14 +293,28 @@ const DirectorStudio = ({
     paintTeleprompter(domRefs, 0, sceneDurationSec);
   };
 
-  // Motor del teleprompter: un paso por frame, con delta real de tiempo
+  // Motor del teleprompter: un paso por frame. Con narración, el reloj es el audio;
+  // sin ella, el delta real de tiempo al ritmo elegido.
   const onFrame = useEffectEvent((dtSeconds: number) => {
     if (progressRef.current >= 1) return; // ya resuelto; espera el commit del cambio de escena
 
-    const next = Math.min(1, progressRef.current + dtSeconds / sceneDurationSec);
+    const audio = audioMode ? audioRef.current : null;
+    const audioSec = audio && Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : sceneDurationSec;
+    const next = audio
+      ? audio.ended
+        ? 1
+        : Math.min(1, audio.currentTime / audioSec)
+      : Math.min(1, progressRef.current + dtSeconds / sceneDurationSec);
     progressRef.current = next;
     paintTeleprompter(domRefs, next, sceneDurationSec);
-    setActiveWord(wordIndexAt(wordBoundaries, next)); // React descarta el set si el índice no cambió
+    // Con tiempos reales (ElevenLabs) la palabra activa es la que suena; si no, se estima
+    const word = tiemposPalabras && audio
+      ? (() => {
+          const idx = tiemposPalabras.findIndex((fin) => audio.currentTime < fin);
+          return idx === -1 ? tiemposPalabras.length : idx;
+        })()
+      : wordIndexAt(wordBoundaries, next);
+    setActiveWord(word); // React descarta el set si el índice no cambió
 
     if (next >= 1) {
       if (autoAdvance && currentSceneIndex < totalScenes - 1) {
@@ -299,6 +339,71 @@ const DirectorStudio = ({
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [isPlaying]);
+
+  // El audio sigue al estado de reproducción; al cambiar de escena cambia su `src` y,
+  // si se estaba reproduciendo (auto-avance), arranca la voz de la nueva escena.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.play().catch(() => setIsPlaying(false)); // p. ej. el navegador bloquea el autoplay
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, audioUrl]);
+
+  const contratoActual = (): VideoJobSpec => ({
+    video_job_id: videoJobSpec?.video_job_id || `vjob-${documentId || 'doc-novamind'}`,
+    // El id del guion (doc-<huella>) es el que permite al backend asociar la narración al documento
+    document_id: videoJobSpec?.document_id || documentId || 'doc-novamind',
+    target_duration: 50,
+    max_duration: MAX_MICROCLASS_SECONDS,
+    aspect_ratio: '9:16',
+    idioma: 'es',
+    estado: 'contract_ready',
+    // Duraciones, tramos y totales al MISMO wpm que se serializa (el backend recalcula igual)
+    escenas: safeScenes.map((sc, i) => ({
+      ...sc,
+      // La palabra clave de la foto viaja en el guion del backend aunque `scenes` venga de director_cut
+      imagen: sc.imagen ?? videoJobSpec?.escenas?.[i]?.imagen ?? null,
+      estimacion_palabras: microclass.scenes[i].words,
+      duracion_segundos: microclass.scenes[i].seconds,
+      tiempo: microclass.scenes[i].span,
+    })),
+    total_palabras: microclass.totalWords,
+    duracion_total_estimada: microclass.totalSeconds,
+    wpm: Math.round(wpm),
+    degradaciones,
+  });
+
+  const handleGenerarNarracion = async () => {
+    setIsPlaying(false);
+    setNarracion({ fase: 'generando' });
+    try {
+      const respuesta = await solicitarNarracion({ ...contratoActual(), wpm: BASE_WPM });
+      if (respuesta.status !== 'exito') {
+        setNarracion({
+          fase: 'error',
+          mensaje: respuesta.advertencias[0] ?? 'No se pudo generar la narración. Prueba de nuevo.',
+        });
+        return;
+      }
+      const urls = await urlsDeAudio(respuesta);
+      if (!vivoRef.current) {
+        liberarUrls(urls);
+        return;
+      }
+      liberarUrls(urlsRef.current);
+      urlsRef.current = urls;
+      progressRef.current = 0;
+      setActiveWord(-1);
+      setIsFinished(false);
+      setNarracion({ fase: 'lista', respuesta, urls });
+    } catch (err) {
+      const detalle = err instanceof Error ? err.message : String(err);
+      setNarracion({ fase: 'error', mensaje: `No se pudo generar la narración: ${detalle}` });
+    }
+  };
 
   // Atajos globales: Espacio (Play/Pausa), Flechas (escena). Respeta foco en controles nativos.
   const onGlobalKeyDown = useEffectEvent((e: KeyboardEvent) => {
@@ -349,26 +454,9 @@ const DirectorStudio = ({
   };
 
   const handleExportContractJson = () => {
-    const contract: VideoJobSpec = {
-      video_job_id: `vjob-${Date.now()}`,
-      document_id: documentId || 'doc-novamind',
-      target_duration: 50,
-      max_duration: MAX_MICROCLASS_SECONDS,
-      aspect_ratio: '9:16',
-      idioma: 'es',
-      estado: 'contract_ready',
-      // Duraciones, tramos y totales al MISMO wpm que se serializa (el backend recalcula igual)
-      escenas: safeScenes.map((sc, i) => ({
-        ...sc,
-        estimacion_palabras: microclass.scenes[i].words,
-        duracion_segundos: microclass.scenes[i].seconds,
-        tiempo: microclass.scenes[i].span,
-      })),
-      total_palabras: microclass.totalWords,
-      duracion_total_estimada: microclass.totalSeconds,
-      wpm: Math.round(wpm),
-      degradaciones,
-    };
+    // Con narración, el guion exportado ya incluye fotos, rutas de audio y duraciones medidas
+    const contract: VideoJobSpec =
+      narracion.fase === 'lista' ? narracion.respuesta.video_job_spec : contratoActual();
 
     const blob = new Blob([JSON.stringify(contract, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -393,8 +481,6 @@ const DirectorStudio = ({
   };
 
   const sceneLabel = (idx: number) => `Escena ${String(idx + 1).padStart(2, '0')}`;
-  const visual = currentScene.visual;
-  const visualPoints = Array.isArray(visual?.puntos_clave) ? visual.puntos_clave : [];
   const fuentes = Array.isArray(currentScene.fuentes) ? currentScene.fuentes : [];
   const verifiedCount = fuentes.filter((f) => f.verificada).length;
   const currentSpan = microclass.scenes[currentSceneIndex]?.span ?? currentScene.tiempo;
@@ -466,9 +552,15 @@ const DirectorStudio = ({
           Microclase: <strong>{microclass.totalWords} palabras</strong> (meta {TARGET_WORDS_MIN}–{TARGET_WORDS_MAX})
         </span>
         <span aria-hidden="true">·</span>
-        <span>
-          <strong>{formatSeconds(microclass.totalSeconds)}</strong> / {MAX_MICROCLASS_SECONDS}s a {Math.round(wpm)} WPM
-        </span>
+        {realTotalSec !== null ? (
+          <span>
+            Voz real: <strong>{formatSeconds(realTotalSec)}</strong> / {MAX_MICROCLASS_SECONDS}s (medido del audio)
+          </span>
+        ) : (
+          <span>
+            <strong>{formatSeconds(microclass.totalSeconds)}</strong> / {MAX_MICROCLASS_SECONDS}s a {Math.round(wpm)} WPM
+          </span>
+        )}
         {isOverTime && <span className={styles.budgetWarnText}>Excede el máximo de 60 s a este ritmo</span>}
       </div>
 
@@ -616,28 +708,42 @@ const DirectorStudio = ({
               <span ref={clockRef} className={styles.countdownBadge} aria-hidden="true" />
             </div>
 
-            <div className={styles.wpmControls} role="group" aria-labelledby="s4-wpm-label">
-              <span id="s4-wpm-label" className={styles.wpmLabel}>
-                <Gauge size={13} aria-hidden="true" />
-                Ritmo
+            {audioMode ? (
+              <span
+                className={styles.voiceChip}
+                title={
+                  tiemposPalabras
+                    ? 'El ritmo lo marca la voz y el resaltado sigue el tiempo real de cada palabra.'
+                    : 'El ritmo lo marca la voz. El resaltado reparte la duración real del audio entre las palabras: es aproximado.'
+                }
+              >
+                <Mic size={13} aria-hidden="true" />
+                Voz {narrada?.audio?.voz} · resaltado {tiemposPalabras ? 'exacto' : 'aproximado'}
               </span>
-              {WPM_PRESETS.map((preset) => (
-                <button
-                  key={preset.value}
-                  type="button"
-                  aria-pressed={wpm === preset.value}
-                  aria-label={`${preset.label}: ${preset.value} palabras por minuto`}
-                  title={preset.label}
-                  onClick={() => setWpm(preset.value)}
-                  className={`${styles.wpmPill} ${wpm === preset.value ? styles.wpmPillActive : ''}`}
-                >
-                  {preset.value}
-                </button>
-              ))}
-              <span className={styles.wpmUnit} aria-hidden="true">
-                WPM
-              </span>
-            </div>
+            ) : (
+              <div className={styles.wpmControls} role="group" aria-labelledby="s4-wpm-label">
+                <span id="s4-wpm-label" className={styles.wpmLabel}>
+                  <Gauge size={13} aria-hidden="true" />
+                  Ritmo
+                </span>
+                {WPM_PRESETS.map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    aria-pressed={wpm === preset.value}
+                    aria-label={`${preset.label}: ${preset.value} palabras por minuto`}
+                    title={preset.label}
+                    onClick={() => setWpm(preset.value)}
+                    className={`${styles.wpmPill} ${wpm === preset.value ? styles.wpmPillActive : ''}`}
+                  >
+                    {preset.value}
+                  </button>
+                ))}
+                <span className={styles.wpmUnit} aria-hidden="true">
+                  WPM
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Caja del Guion: línea de lectura central, palabra activa resaltada */}
@@ -752,13 +858,16 @@ const DirectorStudio = ({
         <section className={styles.storyboardCard} aria-label="Storyboard visual">
           <div className={styles.storyboardBody}>
             <div className={styles.panelHeader}>
-              <span className={styles.panelTitleCyan}>
-                Storyboard Visual · Especificación Determinista
-              </span>
+              <span className={styles.panelTitleCyan}>Video narrado · Diapositiva de la escena</span>
               <Video size={16} className={styles.iconCyan} aria-hidden="true" />
             </div>
 
-            {visual && <VisualSpecPanel visual={visual} points={visualPoints} />}
+            <SlideNarrada scene={viewScene} span={currentSpan} />
+            {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" />}
+
+            {hasRealScenes && (
+              <NarrationControls estado={narracion} totalScenes={totalScenes} onGenerar={handleGenerarNarracion} />
+            )}
 
             <div className={styles.storyboardVisualContent}>
               <div className={styles.storyboardVisualLabel}>Guion Visual / Puesta en Escena:</div>
@@ -811,63 +920,70 @@ const DirectorStudio = ({
   );
 };
 
-interface VisualSpecPanelProps {
-  visual: EspecificacionVisual;
-  points: string[];
+
+interface NarrationControlsProps {
+  estado: EstadoNarracion;
+  totalScenes: number;
+  onGenerar: () => void;
 }
 
-/** Render determinista de EspecificacionVisual; tolera `tipo` desconocido del LLM. */
-const VisualSpecPanel = ({ visual, points }: VisualSpecPanelProps) => {
-  const variant = VISUAL_VARIANTS[visual.tipo] ?? styles.visualSpecBoxConcept;
-  const label = VISUAL_LABELS[visual.tipo] ?? String(visual.tipo ?? 'visual').replace(/_/g, ' ');
+/** Botón bajo demanda + estado honesto de la narración (qué se midió, qué falló y por qué). */
+const NarrationControls = ({ estado, totalScenes, onGenerar }: NarrationControlsProps) => {
+  const lista = estado.fase === 'lista' ? estado.respuesta : null;
+  const resumen =
+    estado.fase === 'generando'
+      ? `Generando la voz de ${totalScenes} escenas…`
+      : lista
+        ? `Voz ${lista.video_job_spec.escenas[0]?.audio?.voz ?? ''} (${
+            lista.proveedor === 'elevenlabs' ? 'ElevenLabs' : 'Gemini, respaldo'
+          }) · ${formatSeconds(lista.duracion_total_real_s ?? 0)} medidos${
+            lista.reutilizado ? ' · recuperada sin gastar cuota' : ''
+          }`
+        : 'Sin voz: el teleprompter avanza al ritmo elegido. La voz se genera solo si la pides.';
 
   return (
-    <div className={`${styles.visualSpecBox} ${variant}`}>
-      <div className={styles.visualSpecHeader}>
-        <Layers size={14} aria-hidden="true" />
-        <span className={styles.visualSpecType}>{label}</span>
-        <strong className={styles.visualSpecTitle}>{visual.titulo}</strong>
+    <div className={styles.narrationPanel}>
+      <div className={styles.narrationRow}>
+        <p className={styles.narrationStatus} role="status" aria-live="polite">
+          <Mic size={14} aria-hidden="true" />
+          <span>{resumen}</span>
+        </p>
+        {!lista && (
+          <button
+            type="button"
+            onClick={onGenerar}
+            disabled={estado.fase === 'generando'}
+            className={styles.narrationBtn}
+          >
+            {estado.fase === 'generando' ? (
+              <LoaderCircle size={14} className={styles.spin} aria-hidden="true" />
+            ) : (
+              <Sparkles size={14} aria-hidden="true" />
+            )}
+            <span>
+              {estado.fase === 'generando'
+                ? 'Generando…'
+                : estado.fase === 'error'
+                  ? 'Reintentar narración'
+                  : 'Generar narración'}
+            </span>
+          </button>
+        )}
       </div>
 
-      {points.length > 0 && visual.tipo === 'diagrama_bloques' && (
-        <ol className={styles.blocksFlowContainer} aria-label="Flujo secuencial">
-          {points.map((pt, pIdx) => (
-            <li key={pIdx} className={styles.blockFlowItem}>
-              <span className={styles.blockFlowStep}>{String(pIdx + 1).padStart(2, '0')}</span>
-              <span className={styles.blockFlowLabel}>{pt}</span>
-              {pIdx < points.length - 1 && (
-                <span className={styles.blockFlowArrow} aria-hidden="true">
-                  →
-                </span>
-              )}
-            </li>
-          ))}
-        </ol>
+      {estado.fase === 'error' && (
+        <p className={styles.narrationError} role="alert">
+          <AlertTriangle size={14} aria-hidden="true" />
+          <span>{estado.mensaje}</span>
+        </p>
       )}
 
-      {points.length > 0 && visual.tipo === 'palabras_clave' && (
-        <ul className={styles.tagsContainer}>
-          {points.map((pt, pIdx) => (
-            <li key={pIdx} className={styles.keywordChip}>
-              <Sparkles size={11} aria-hidden="true" />
-              {pt}
-            </li>
+      {lista && lista.advertencias.length > 0 && (
+        <ul className={styles.narrationNotes}>
+          {lista.advertencias.map((aviso, i) => (
+            <li key={i}>{aviso}</li>
           ))}
         </ul>
-      )}
-
-      {points.length > 0 && visual.tipo !== 'diagrama_bloques' && visual.tipo !== 'palabras_clave' && (
-        <ul className={styles.visualPointsList}>
-          {points.map((pt, pIdx) => (
-            <li key={pIdx}>{pt}</li>
-          ))}
-        </ul>
-      )}
-
-      {visual.codigo_o_estructura && (
-        <pre className={styles.visualCode} tabIndex={0}>
-          <code>{visual.codigo_o_estructura}</code>
-        </pre>
       )}
     </div>
   );

@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from dataclasses import replace
@@ -31,14 +32,18 @@ from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadF
 from app.auth import Principal, ensure_document, persist_result, private_query, require_user
 from app.auth import settings as supabase_settings
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import ValidationError
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
 from app.agentes.generacion_paralela import NOMBRES_RECURSO, GeneradorParalelo
 from app.core.config import Config, ConfigError
 from app.servicios.registro_tareas import RegistroSupabase, RegistroTareas
-from app.servicios.servicio_gemini import ClienteGemini
+from app.servicios.servicio_gemini import ClienteGemini, GeminiError
+from app.servicios.servicio_imagenes import BuscadorImagenes
+from app.servicios.servicio_narracion import Narrador
+from app.servicios.servicio_voz import VozElevenLabs, VozGemini
+from app.storage.almacen_narracion import almacen_del_entorno, prefijo_narraciones, ruta_segura
 from app.integration.private_pipeline import PrivateCadena, PrivateCorreo, notification_recipient
 from app.core.ingestion import IngestionError, cargar_documento_desde_bytes, detectar_secciones
 from app.core.schemas import (
@@ -49,7 +54,10 @@ from app.core.schemas import (
     NivelDetalle,
     PerfilDestinatario,
     RespuestaAdaptacion,
+    RespuestaNarracion,
     SolicitudAdaptacion,
+    SolicitudNarracion,
+    VideoJobSpec,
 )
 from app.orquestador import OrquestadorNuevaMente, crear_orquestador
 from app.servicios.servicio_correo import ServicioCorreo
@@ -651,6 +659,108 @@ async def adaptar_contenido_stream(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Etapa 6 · Video narrado bajo demanda (diapositivas + voz; el JSON es el guion)
+# ---------------------------------------------------------------------------
+_PATRON_DOCUMENTO = re.compile(r"doc-([0-9a-f]{16})")
+_TIPOS_ARCHIVO_NARRACION = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".json": "application/json"}
+
+
+def _voces_narracion(voz_gemini: str) -> list:
+    """ElevenLabs (principal) → Gemini TTS (respaldo); solo los que estén configurados."""
+    cfg = Config.desde_entorno()
+    voces: list = []
+    if cfg.elevenlabs_api_key:
+        voces.append(VozElevenLabs(
+            cfg.elevenlabs_api_key, modelo=cfg.elevenlabs_tts_model,
+            voz_id=cfg.elevenlabs_voice_id, voz_nombre=cfg.elevenlabs_voice_name,
+        ))
+    try:
+        voces.append(VozGemini(_cliente_gemini(), cfg.gemini_tts_model, voz_gemini))
+    except GeminiError:
+        pass  # sin GEMINI_API_KEY: queda solo ElevenLabs
+    return voces
+
+
+async def _registro_narracion(principal: Principal, spec: VideoJobSpec) -> Optional[RegistroTareas]:
+    """La fila de `documents` se localiza por la huella que ya lleva el guion (doc-<16 hex>)."""
+    coincidencia = _PATRON_DOCUMENTO.fullmatch(spec.document_id)
+    if principal.is_guest or not coincidencia:
+        return None
+    try:
+        filas = await asyncio.to_thread(private_query, principal, "documents", {
+            "select": "id", "user_id": "eq." + principal.user_id,
+            "content_hash": f"like.{coincidencia.group(1)}*", "limit": "1",
+        })
+        if not filas:
+            return None
+        url, clave = supabase_settings()
+        return RegistroSupabase(url, clave, principal.token, principal.user_id, filas[0]["id"])
+    except Exception as exc:
+        logger.warning("Narración sin registro de tareas (%s).", type(exc).__name__)
+        return None
+
+
+@app.post("/api/v1/narracion/generar", response_model=RespuestaNarracion, tags=["Video narrado"])
+async def generar_narracion(
+    solicitud: SolicitudNarracion, principal: Principal = Depends(require_user)
+) -> RespuestaNarracion:
+    """
+    Convierte el guion (VideoJobSpec) en video narrado: voz por escena (ElevenLabs y, si no
+    puede, Gemini TTS con la voz `voz`), duración medida (máximo 60 s) y fotos libres opcionales.
+    Usuarios: se guarda en su almacén privado y se reutiliza si se pide de nuevo.
+    Invitados: el audio vuelve en la respuesta y no se guarda.
+    """
+    try:
+        almacen = None if principal.is_guest else almacen_del_entorno()
+    except ValueError as exc:
+        logger.warning("Almacén de narración no disponible: %s", exc)
+        raise HTTPException(503, "El almacenamiento privado de audio no está disponible.") from exc
+    voces = _voces_narracion(solicitud.voz)
+    if not voces:
+        raise HTTPException(503, "La narración no está disponible: no hay servicio de voz configurado.")
+
+    registro = await _registro_narracion(principal, solicitud.video_job_spec)
+    buscador = BuscadorImagenes()
+    try:
+        narrador = Narrador(
+            voces, buscador=buscador, almacen=almacen,
+            prefijo=None if principal.is_guest else prefijo_narraciones(principal.user_id), registro=registro,
+        )
+        async with _cupo(principal):
+            return await narrador.narrar(solicitud)
+    finally:
+        await buscador.aclose()
+        for voz in voces:
+            await voz.aclose()
+        if registro is not None:
+            await registro.aclose()
+
+
+@app.get("/api/v1/narracion/archivo/{ruta:path}", tags=["Video narrado"])
+async def descargar_archivo_narracion(ruta: str, principal: Principal = Depends(require_user)) -> Response:
+    """Audio o guion guardado del propio usuario (el bucket es privado: nunca hay URL pública)."""
+    extension = Path(ruta).suffix.lower()
+    if (
+        principal.is_guest
+        or extension not in _TIPOS_ARCHIVO_NARRACION
+        or not ruta_segura(ruta)
+        or not ruta.startswith(prefijo_narraciones(principal.user_id) + "/")
+    ):
+        raise HTTPException(404, "Archivo no encontrado.")
+    try:
+        datos = await asyncio.to_thread(almacen_del_entorno().leer, ruta)
+    except Exception as exc:
+        logger.warning("No se pudo leer %s del almacén: %s", extension, type(exc).__name__)
+        raise HTTPException(503, "El almacenamiento privado de audio no está disponible.") from None
+    if datos is None:
+        raise HTTPException(404, "Archivo no encontrado.")
+    return Response(
+        content=datos, media_type=_TIPOS_ARCHIVO_NARRACION[extension],
+        headers={"Cache-Control": "private, max-age=86400"},
     )
 
 

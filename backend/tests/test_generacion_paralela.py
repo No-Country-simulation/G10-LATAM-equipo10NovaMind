@@ -104,7 +104,8 @@ def salida_b2(diagrama: str = "flowchart TD\n  A[Subred] --> B[NAT]") -> dict:
     escena = lambda i, cita: {  # noqa: E731
         "titulo": f"Escena {i}", "guion_locutor": _palabras(40, f"e{i}p"),
         "storyboard_visual": "Plano.", "consejo_pedagogico": "Pausa.", "objetivo_pedagogico": "Comprender.",
-        "visual": {"tipo": "ppt_concepto", "titulo": "Idea", "puntos_clave": ["a", "b"]}, "citas": [cita],
+        "visual": {"tipo": "ppt_concepto", "titulo": "Idea", "puntos_clave": ["a", "b"]},
+        "palabra_clave_imagen": "network router", "citas": [cita],
     }
     return {
         "guion": [escena(1, C1), escena(2, C2), escena(3, C3)],

@@ -83,6 +83,55 @@ export interface DirectorScene {
   visual?: EspecificacionVisual;
   fuentes?: FuenteRAG[];
   origen?: 'llm' | 'llm_reparada' | 'plantilla';
+  imagen?: ImagenEscena | null;
+  /** Solo existe tras pedir la narración (bajo demanda) */
+  audio?: AudioEscena | null;
+}
+
+/**
+ * Imagen de la escena en el video narrado. "diapositiva": se dibuja desde el JSON.
+ * "foto": además lleva una foto libre de fondo; la licencia CC exige mostrar autor y licencia.
+ */
+export interface ImagenEscena {
+  tipo: 'diapositiva' | 'foto';
+  palabra_clave?: string | null;
+  url?: string | null;
+  alt?: string | null;
+  autor?: string | null;
+  licencia?: string | null;
+  licencia_url?: string | null;
+  fuente_url?: string | null;
+  proveedor?: 'openverse' | 'wikimedia' | null;
+}
+
+/** Narración real de la escena: la duración se mide del WAV, no se estima. */
+export interface AudioEscena {
+  /** Ruta en el almacén privado; null para invitados (el audio llega en la respuesta) */
+  ruta?: string | null;
+  duracion_real_s: number;
+  voz: string;
+  modelo: string;
+  proveedor?: 'elevenlabs' | 'gemini';
+  mime_type?: 'audio/wav' | 'audio/mpeg';
+  /** Fin (s) de cada palabra del guion, en el orden de splitWords. Solo ElevenLabs lo entrega. */
+  tiempos_palabras?: number[] | null;
+}
+
+export type VozNarracion = 'Kore' | 'Charon' | 'Puck' | 'Aoede';
+
+export interface RespuestaNarracion {
+  status: 'exito' | 'excede_duracion' | 'error';
+  video_job_spec: VideoJobSpec;
+  duracion_total_real_s?: number | null;
+  duraciones_medidas_s: number[];
+  reutilizado: boolean;
+  /** ElevenLabs es la voz principal; Gemini, el respaldo */
+  proveedor?: 'elevenlabs' | 'gemini' | null;
+  almacenamiento: 'oci' | 'local' | 'en_linea';
+  /** Invitados: número de escena → audio en base64 */
+  audios_en_linea: Record<string, string>;
+  advertencias: string[];
+  error_codigo?: string | null;
 }
 
 export interface VideoJobSpec {
@@ -106,8 +155,10 @@ export interface VideoJobSpec {
   wpm?: number;
   /** Sustituciones del sistema, p. ej. "escena_2_plantilla" */
   degradaciones?: string[];
-  manifiesto_url_oci?: string;
-  video_url_oci?: string;
+  manifiesto_url_oci?: string | null;
+  video_url_oci?: string | null;
+  /** Suma de las duraciones medidas de los WAV; null mientras no se pida la narración */
+  duracion_total_real?: number | null;
 }
 
 /**

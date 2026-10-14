@@ -9,6 +9,9 @@ import type {
   OutputFormat,
   IndustryNiche,
   DetailLevel,
+  RespuestaNarracion,
+  VideoJobSpec,
+  VozNarracion,
 } from '../types/types';
 import { SCENARIOS } from '../data/mockScenarios';
 import { bearerHeaders } from './supabase';
@@ -202,4 +205,61 @@ export async function solicitarAdaptacion(
   demoPackage.metadatos.fecha_generacion = new Date().toISOString();
 
   return demoPackage;
+}
+
+async function detalleDeError(response: Response): Promise<string> {
+  try {
+    const cuerpo = await response.json();
+    if (typeof cuerpo?.detail === 'string') return cuerpo.detail;
+  } catch {
+    // cuerpo no JSON
+  }
+  return `Error HTTP ${response.status}`;
+}
+
+/**
+ * Convierte el guion (VideoJobSpec) en video narrado. Solo se llama al pulsar
+ * "Generar narración": la voz gasta cuota de Gemini y no se produce por adelantado.
+ */
+export async function solicitarNarracion(
+  spec: VideoJobSpec,
+  voz: VozNarracion = 'Kore',
+): Promise<RespuestaNarracion> {
+  const response = await fetch(`${BASE_URL}/api/v1/narracion/generar`, {
+    method: 'POST',
+    headers: { ...(await bearerHeaders()), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ video_job_spec: spec, voz }),
+  });
+  if (!response.ok) throw new Error(await detalleDeError(response));
+  return response.json();
+}
+
+const blobDeBase64 = (base64: string, mime: string) => {
+  const binario = atob(base64);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+};
+
+/**
+ * URLs reproducibles (blob:) por número de escena. Invitados: el audio viene en la
+ * respuesta. Usuarios: se descarga con su sesión, porque el bucket es privado.
+ * Quien las recibe debe liberarlas con URL.revokeObjectURL.
+ */
+export async function urlsDeAudio(respuesta: RespuestaNarracion): Promise<Record<number, string>> {
+  const headers = await bearerHeaders();
+  const pares = await Promise.all(
+    respuesta.video_job_spec.escenas.map(async (escena) => {
+      const mime = escena.audio?.mime_type || 'audio/wav';
+      const enLinea = respuesta.audios_en_linea[String(escena.escena)];
+      if (enLinea) return [escena.escena, blobDeBase64(enLinea, mime)] as const;
+      const ruta = escena.audio?.ruta;
+      if (!ruta) throw new Error(`La escena ${escena.escena} no tiene audio.`);
+      const rutaUrl = ruta.split('/').map(encodeURIComponent).join('/');
+      const response = await fetch(`${BASE_URL}/api/v1/narracion/archivo/${rutaUrl}`, { headers });
+      if (!response.ok) throw new Error(await detalleDeError(response));
+      return [escena.escena, await response.blob()] as const;
+    }),
+  );
+  return Object.fromEntries(pares.map(([n, blob]) => [n, URL.createObjectURL(blob)]));
 }

@@ -1,0 +1,148 @@
+/*
+ * Diapositiva del video narrado (16:9). Todo escala con el ancho del contenedor (cqw),
+ * así la misma diapositiva se ve igual en el estudio y a pantalla completa.
+ * Paleta: la de la Estación 04 (fucsia), heredada de .stationWrapper.
+ */
+.marco {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.slide {
+  container-type: inline-size;
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--s4-accent-border);
+  color: var(--color-text-primary);
+  background:
+    radial-gradient(120% 90% at 100% 0%, var(--s4-accent-glow), transparent 60%),
+    linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-base) 100%);
+}
+
+/* La foto queda detrás de un velo oscuro: el texto del documento siempre manda */
+.conFoto {
+  background:
+    linear-gradient(
+      90deg,
+      oklch(0.1398 0.0117 265.76 / 94%) 0%,
+      oklch(0.1398 0.0117 265.76 / 80%) 55%,
+      oklch(0.1398 0.0117 265.76 / 40%) 100%
+    ),
+    var(--foto) center / cover no-repeat,
+    var(--color-bg-base);
+}
+
+.contenido {
+  position: absolute;
+  inset: 0;
+  padding: 5.5cqw 6cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4cqw;
+}
+
+.meta {
+  margin: 0;
+  font: 600 2.6cqw/1.2 var(--font-code);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--s4-accent-soft);
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 5.6cqw;
+  font-weight: 800;
+  line-height: 1.08;
+  text-wrap: balance;
+  color: var(--color-text-primary);
+}
+
+.puntos {
+  margin: 0;
+  padding-left: 4cqw;
+  display: grid;
+  gap: 0.9cqw;
+  font-size: 3.2cqw;
+  line-height: 1.35;
+  color: var(--color-text-secondary);
+}
+
+.flujo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 2.4cqw;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 2.9cqw;
+  line-height: 1.25;
+}
+
+.flujo li {
+  flex: 1;
+  position: relative;
+  padding: 1.8cqw 1.4cqw;
+  border: 0.25cqw solid var(--s4-accent-border);
+  border-radius: 1.4cqw;
+  background: var(--s4-accent-bg);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.flujo li:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -2.1cqw;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--s4-accent);
+}
+
+.cita {
+  margin: auto 0 0;
+  padding-left: 2.2cqw;
+  border-left: 0.5cqw solid var(--s4-accent);
+  font-size: 2.6cqw;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+/* Citas largas: 3 líneas en la diapositiva; completas en "Citas del documento" */
+.citaTexto {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cita cite {
+  display: block;
+  margin-top: 0.6cqw;
+  font: normal 2.2cqw var(--font-code);
+  color: var(--color-text-muted);
+}
+
+.credito {
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.credito a {
+  color: var(--color-cyan-300);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

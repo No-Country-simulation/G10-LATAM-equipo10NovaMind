@@ -56,6 +56,7 @@ from app.core.schemas import (
     EspecificacionVisual,
     EvaluacionCalidad,
     FuenteRAG,
+    ImagenEscena,
     MAX_TEXTO_FUENTE,
     MetadatosSalida,
     calcular_documento_id,
@@ -94,6 +95,19 @@ def _limpiar_json(texto: str) -> Dict[str, Any]:
 # Utilidades de normalización del Director Cut (Estación 4)
 # -----------------------------------------------------------------------------
 _MAX_ESCENAS_DIRECTOR_CUT = 3
+
+
+def _imagen_valida(raw: Any) -> Optional[Dict[str, Any]]:
+    """Una imagen mal formada se descarta: nunca convierte la escena en plantilla."""
+    if not isinstance(raw, dict):
+        return None
+    try:
+        return ImagenEscena.model_validate(raw).model_dump()
+    except ValidationError:
+        palabra = raw.get("palabra_clave")
+        if isinstance(palabra, str) and palabra.strip():
+            return {"tipo": "diapositiva", "palabra_clave": palabra.strip()[:60]}
+        return None
 _UMBRAL_ANCLAJE_CADENA = 0.75
 _MAX_CONTEXTO_AUDITORIA = 24000  # caracteres de la fuente que ve el auditor
 _MAX_AFIRMACIONES_AUDITORIA = 16
@@ -338,6 +352,7 @@ class CadenaColaborativaMultiModelo:
             "visual": visual,
             "fuentes": fuentes,
             "origen": origen,
+            "imagen": _imagen_valida(raw.get("imagen")),
         })
         return escena, degradaciones
 

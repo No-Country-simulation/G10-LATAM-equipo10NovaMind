@@ -686,6 +686,48 @@ class EspecificacionVisual(BaseModel):
     prompt_grafico: Optional[str] = None
 
 
+class ImagenEscena(BaseModel):
+    """
+    Imagen de la escena en el video narrado (diapositiva + voz).
+
+    - tipo="diapositiva": el navegador dibuja la escena desde el JSON (título, puntos, cita).
+    - tipo="foto": además lleva una foto de fondo de un banco libre. Solo se guarda la URL
+      y su atribución, nunca el binario; la licencia CC exige mostrar autor y licencia.
+    """
+
+    tipo: Literal["diapositiva", "foto"] = "diapositiva"
+    # 1 a 3 palabras en inglés para buscar la foto (los bancos indexan en inglés)
+    palabra_clave: Optional[str] = Field(default=None, max_length=60)
+    url: Optional[str] = Field(default=None, max_length=1000)
+    alt: Optional[str] = Field(default=None, max_length=300)
+    autor: Optional[str] = Field(default=None, max_length=200)
+    licencia: Optional[str] = Field(default=None, max_length=60)
+    licencia_url: Optional[str] = Field(default=None, max_length=500)
+    fuente_url: Optional[str] = Field(default=None, max_length=1000)
+    proveedor: Optional[Literal["openverse", "wikimedia"]] = None
+
+    @model_validator(mode="after")
+    def _foto_completa(self) -> "ImagenEscena":
+        if self.tipo == "foto" and not (self.url and self.autor and self.licencia and self.proveedor):
+            raise ValueError("una foto requiere url, autor, licencia y proveedor")
+        return self
+
+
+class AudioEscena(BaseModel):
+    """Narración real de la escena: la duración se mide del WAV, no se estima."""
+
+    # Ruta del objeto en el almacenamiento privado (None para invitados: el audio viaja en línea)
+    ruta: Optional[str] = Field(default=None, max_length=500)
+    duracion_real_s: float = Field(..., gt=0, le=60.0)
+    voz: str = Field(..., min_length=1, max_length=40)
+    modelo: str = Field(..., min_length=1, max_length=100)
+    proveedor: Literal["elevenlabs", "gemini"] = "gemini"
+    mime_type: Literal["audio/wav", "audio/mpeg"] = "audio/wav"
+    # Fin (s) de cada palabra del guion (mismo orden que contar_palabras). Solo si el proveedor
+    # da la alineación (ElevenLabs); si falta, el teleprompter estima y lo dice.
+    tiempos_palabras: Optional[List[float]] = Field(default=None, max_length=400)
+
+
 class EscenaDirectorCut(BaseModel):
     """
     Escena pedagógica del Director Cut / Storyboard con trazabilidad RAG estricta
@@ -708,6 +750,9 @@ class EscenaDirectorCut(BaseModel):
     fuentes: List[FuenteRAG] = Field(default_factory=list)
     # llm: tal cual del modelo · llm_reparada: el normalizador completó campos · plantilla: texto genérico del sistema
     origen: Literal["llm", "llm_reparada", "plantilla"] = "llm"
+    imagen: Optional[ImagenEscena] = None
+    # Solo existe tras pedir la narración (bajo demanda)
+    audio: Optional[AudioEscena] = None
 
     @model_validator(mode="after")
     def _derivar_tiempos(self) -> "EscenaDirectorCut":
@@ -749,6 +794,8 @@ class VideoJobSpec(BaseModel):
     degradaciones: List[str] = Field(default_factory=list)
     manifiesto_url_oci: Optional[str] = None
     video_url_oci: Optional[str] = None
+    # Suma de las duraciones medidas de los WAV; None mientras no se pida la narración
+    duracion_total_real: Optional[float] = Field(default=None, ge=0, le=60.0)
 
     @model_validator(mode="after")
     def _calcular_totales(self) -> "VideoJobSpec":
@@ -767,6 +814,42 @@ class VideoJobSpec(BaseModel):
         self.total_palabras = sum(e.estimacion_palabras or 0 for e in self.escenas)
         self.duracion_total_estimada = redondear_decima(acumulado)
         return self
+
+
+class SolicitudNarracion(BaseModel):
+    """POST /api/v1/narracion/generar: el guion (VideoJobSpec) que se convierte en video narrado."""
+
+    video_job_spec: VideoJobSpec
+    voz: Literal["Kore", "Charon", "Puck", "Aoede"] = "Kore"
+    buscar_fotos: bool = True
+
+    @model_validator(mode="after")
+    def _escenas_validas(self) -> "SolicitudNarracion":
+        if not 1 <= len(self.video_job_spec.escenas) <= 3:
+            raise ValueError("el video narrado admite de 1 a 3 escenas")
+        return self
+
+
+class RespuestaNarracion(BaseModel):
+    """
+    status:
+      - "exito": hay audio para todas las escenas y la suma medida cabe en max_duration.
+      - "excede_duracion": la voz real supera el máximo incluso con ritmo ágil; no se guarda nada.
+      - "error": Gemini no entregó el audio (cuota, red...); `error_codigo` dice por qué.
+    """
+
+    status: Literal["exito", "excede_duracion", "error"]
+    video_job_spec: VideoJobSpec
+    duracion_total_real_s: Optional[float] = None
+    duraciones_medidas_s: List[float] = Field(default_factory=list)
+    reutilizado: bool = False
+    # Quién puso la voz: ElevenLabs es el principal; Gemini, el respaldo
+    proveedor: Optional[Literal["elevenlabs", "gemini"]] = None
+    almacenamiento: Literal["oci", "local", "en_linea"] = "en_linea"
+    # Invitados: {número de escena: audio en base64}; nada se guarda en el servidor
+    audios_en_linea: Dict[int, str] = Field(default_factory=dict)
+    advertencias: List[str] = Field(default_factory=list)
+    error_codigo: Optional[str] = None
 
 
 class EstadoRecurso(BaseModel):

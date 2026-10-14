@@ -1214,3 +1214,122 @@
     transition: none;
   }
 }
+
+/* Video narrado: botón bajo demanda y estado de la voz */
+.narrationPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: var(--radius-md);
+  background: var(--s4-accent-bg);
+  border: 1px solid var(--s4-accent-border);
+}
+
+.narrationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.narrationStatus {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  flex: 1 1 14rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.narrationStatus svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: var(--s4-accent-soft);
+}
+
+.narrationBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: var(--s4-control-height);
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--s4-accent-border);
+  background: var(--s4-accent-strong);
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.narrationBtn:hover:not(:disabled) {
+  background: var(--s4-accent);
+  color: var(--color-bg-base);
+}
+
+.narrationBtn:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.narrationError {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-amber-300);
+}
+
+.narrationError svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.narrationNotes {
+  margin: 0;
+  padding-left: 1.125rem;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.voiceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: var(--s4-control-height);
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  background: var(--s4-accent-bg);
+  border: 1px solid var(--s4-accent-border);
+  color: var(--s4-accent-soft);
+  font-size: 0.6875rem;
+  font-family: var(--font-code);
+  cursor: help;
+}
+
+.spin {
+  animation: s4-spin 0.9s linear infinite;
+}
+
+@keyframes s4-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}

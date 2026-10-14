@@ -105,6 +105,13 @@ class Config:
     gemini_resources_model: str = "gemini-3.5-flash-lite"
     gemini_tts_model: str = "gemini-3.8-flash-lite-tts"
 
+    # --- Voz del video narrado: ElevenLabs principal, Gemini TTS respaldo ---
+    # Verificado el 2026-10-13: flash_v2_5 cuesta 0,5 créditos/carácter y habla español.
+    elevenlabs_api_key: Optional[str] = None
+    elevenlabs_tts_model: str = "eleven_flash_v2_5"
+    elevenlabs_voice_id: str = "Xb7hH8MSUJpSbSDYk0k2"  # Alice: "Clear, Engaging Educator"
+    elevenlabs_voice_name: str = "Alice"
+
     @classmethod
     def desde_entorno(cls, cargar_dotenv: bool = True) -> "Config":
         if cargar_dotenv:
@@ -147,6 +154,10 @@ class Config:
             gemini_summary_model=os.getenv("GEMINI_SUMMARY_MODEL") or "gemini-3.8-flash",
             gemini_resources_model=os.getenv("GEMINI_RESOURCES_MODEL") or "gemini-3.5-flash-lite",
             gemini_tts_model=os.getenv("GEMINI_TTS_MODEL") or "gemini-3.8-flash-lite-tts",
+            elevenlabs_api_key=os.getenv("ELEVENLABS_API_KEY") or None,
+            elevenlabs_tts_model=os.getenv("ELEVENLABS_TTS_MODEL") or "eleven_flash_v2_5",
+            elevenlabs_voice_id=os.getenv("ELEVENLABS_VOICE_ID") or "Xb7hH8MSUJpSbSDYk0k2",
+            elevenlabs_voice_name=os.getenv("ELEVENLABS_VOICE_NAME") or "Alice",
         )
 
     def exigir_cohere(self) -> str:

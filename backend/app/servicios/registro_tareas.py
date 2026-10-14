@@ -22,7 +22,7 @@ logger = logging.getLogger("novamind.registro_tareas")
 # Columnas de una fila; el lote de upsert de PostgREST exige las mismas claves en todas.
 COLUMNAS = (
     "resource", "task", "content_hash", "status", "verification", "model", "attempts",
-    "latency_s", "result", "error_code", "error_message", "started_at", "finished_at",
+    "latency_s", "result", "result_storage_path", "error_code", "error_message", "started_at", "finished_at",
 )
 
 

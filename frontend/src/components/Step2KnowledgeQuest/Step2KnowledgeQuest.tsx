@@ -350,6 +350,7 @@ export const Step2KnowledgeQuest = ({
                   'doc-novamind'
                 }
                 degradaciones={contentPackage.contenido_adaptado.video_job_spec?.degradaciones}
+                videoJobSpec={contentPackage.contenido_adaptado.video_job_spec}
                 scenes={
                   Array.isArray(contentPackage.contenido_adaptado.director_cut)
                     ? contentPackage.contenido_adaptado.director_cut

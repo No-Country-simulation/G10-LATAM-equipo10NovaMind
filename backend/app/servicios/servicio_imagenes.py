@@ -1,0 +1,140 @@
+"""
+Fotos de fondo para las diapositivas del video narrado (bancos libres, sin clave ni coste).
+
+Orden de búsqueda: Openverse → Wikimedia Commons. Prueba real del 2026-10-13 con el
+guion de Kafka: Openverse acertó 3 de 3; Wikimedia 1 de 3 (devolvió una portada de libro
+y un cartel con texto), por eso aquí solo entra con filtros estrictos:
+- solo JPEG apaisado de 1000 px o más (descarta logos, diagramas y portadas verticales);
+- títulos con palabras de portada, cartel, logo, mapa, captura... se descartan;
+- solo licencias que permiten adaptar la obra (la diapositiva superpone texto):
+  CC BY, CC BY-SA, CC0 o dominio público. Nunca NC ni ND.
+
+Solo se guarda la URL y la atribución; la imagen nunca pasa por el servidor.
+Una búsqueda fallida devuelve None: la escena queda como diapositiva sin foto.
+"""
+
+from __future__ import annotations
+
+import html
+import logging
+import re
+from typing import Any, Dict, List, Optional
+
+import httpx
+
+from app.core.schemas import ImagenEscena
+
+logger = logging.getLogger("novamind.servicio_imagenes")
+
+URL_OPENVERSE = "https://api.openverse.org/v1/images/"
+URL_WIKIMEDIA = "https://commons.wikimedia.org/w/api.php"
+# Wikimedia exige un User-Agent identificable
+AGENTE = "NovaMind/2.0 (plataforma educativa; contacto via repositorio del proyecto)"
+
+ANCHO_MINIMO_PX = 1000
+PROPORCION_MINIMA = 1.3  # ancho / alto: solo apaisadas, el video es 16:9
+MAX_RESULTADOS = 10
+
+_PALABRAS_EXCLUIDAS = re.compile(
+    r"\b(cover|book|logo|poster|banner|sign|signage|flyer|screenshot|screen ?shot|map|flag|diagram|"
+    r"chart|graph|infographic|text|slide|portada|libro|cartel|letrero|mapa|bandera|captura|"
+    r"diagrama|gr[aá]fico|plakat|schild|karte)\b",
+    re.IGNORECASE,
+)
+_LICENCIAS_OPENVERSE = {"by": "CC BY", "by-sa": "CC BY-SA", "cc0": "CC0", "pdm": "Dominio público"}
+_LICENCIA_WIKIMEDIA_OK = re.compile(r"^(CC BY(-SA)? [\d.]+|CC0|Public domain)$", re.IGNORECASE)
+_ETIQUETAS_HTML = re.compile(r"<[^>]+>")
+
+
+def _texto_plano(valor: Any, maximo: int) -> str:
+    texto = html.unescape(_ETIQUETAS_HTML.sub("", str(valor or "")))
+    return re.sub(r"\s+", " ", texto).strip()[:maximo]
+
+
+def _titulo_aceptable(titulo: str) -> bool:
+    return not _PALABRAS_EXCLUIDAS.search(titulo.replace("_", " ").replace("-", " "))
+
+
+def elegir_openverse(resultados: List[Dict[str, Any]], alt: str) -> Optional[ImagenEscena]:
+    for r in resultados:
+        licencia = _LICENCIAS_OPENVERSE.get(str(r.get("license") or "").lower())
+        autor = _texto_plano(r.get("creator"), 200)
+        url = r.get("thumbnail") or r.get("url")
+        if not (licencia and autor and url and _titulo_aceptable(str(r.get("title") or ""))):
+            continue
+        version = str(r.get("license_version") or "").strip()
+        if licencia.startswith("CC BY") and version:
+            licencia = f"{licencia} {version}"
+        return ImagenEscena(
+            tipo="foto", url=url, alt=alt[:300], autor=autor, licencia=licencia,
+            licencia_url=r.get("license_url"), fuente_url=r.get("foreign_landing_url"),
+            proveedor="openverse",
+        )
+    return None
+
+
+def elegir_wikimedia(paginas: List[Dict[str, Any]], alt: str) -> Optional[ImagenEscena]:
+    for pagina in sorted(paginas, key=lambda p: p.get("index", 99)):
+        info = (pagina.get("imageinfo") or [{}])[0]
+        meta = info.get("extmetadata") or {}
+        licencia = _texto_plano((meta.get("LicenseShortName") or {}).get("value"), 60)
+        autor = _texto_plano((meta.get("Artist") or {}).get("value"), 200)
+        ancho, alto = int(info.get("width") or 0), int(info.get("height") or 0)
+        if not (
+            info.get("mime") == "image/jpeg"
+            and ancho >= ANCHO_MINIMO_PX and alto > 0 and ancho / alto >= PROPORCION_MINIMA
+            and _LICENCIA_WIKIMEDIA_OK.match(licencia)
+            and autor and info.get("thumburl")
+            and _titulo_aceptable(str(pagina.get("title") or ""))
+        ):
+            continue
+        return ImagenEscena(
+            tipo="foto", url=info["thumburl"], alt=alt[:300], autor=autor,
+            licencia="Dominio público" if licencia.lower() == "public domain" else licencia,
+            licencia_url=(meta.get("LicenseUrl") or {}).get("value"),
+            fuente_url=info.get("descriptionurl"), proveedor="wikimedia",
+        )
+    return None
+
+
+class BuscadorImagenes:
+    def __init__(self, *, timeout_s: float = 8.0, transport: Optional[httpx.AsyncBaseTransport] = None):
+        self._http = httpx.AsyncClient(
+            timeout=timeout_s, headers={"User-Agent": AGENTE}, transport=transport,
+            follow_redirects=True, trust_env=False,
+        )
+
+    async def aclose(self) -> None:
+        await self._http.aclose()
+
+    async def buscar(self, palabra_clave: str, alt: str) -> Optional[ImagenEscena]:
+        consulta = palabra_clave.strip()[:60]
+        if not consulta:
+            return None
+        for buscar in (self._openverse, self._wikimedia):
+            try:
+                imagen = await buscar(consulta, alt)
+            except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+                logger.warning("[imagenes] %s falló para '%s' (%s).", buscar.__name__, consulta, type(exc).__name__)
+                continue
+            if imagen:
+                return imagen
+        return None
+
+    async def _openverse(self, consulta: str, alt: str) -> Optional[ImagenEscena]:
+        r = await self._http.get(URL_OPENVERSE, params={
+            "q": consulta, "page_size": MAX_RESULTADOS, "license_type": "commercial,modification",
+            "aspect_ratio": "wide", "mature": "false",
+        })
+        r.raise_for_status()
+        return elegir_openverse(r.json().get("results") or [], alt)
+
+    async def _wikimedia(self, consulta: str, alt: str) -> Optional[ImagenEscena]:
+        r = await self._http.get(URL_WIKIMEDIA, params={
+            "action": "query", "format": "json", "generator": "search",
+            "gsrsearch": f"filetype:bitmap {consulta}", "gsrnamespace": 6, "gsrlimit": MAX_RESULTADOS,
+            "prop": "imageinfo", "iiprop": "url|size|mime|extmetadata", "iiurlwidth": 1280,
+        })
+        r.raise_for_status()
+        paginas = list(((r.json().get("query") or {}).get("pages") or {}).values())
+        return elegir_wikimedia(paginas, alt)
