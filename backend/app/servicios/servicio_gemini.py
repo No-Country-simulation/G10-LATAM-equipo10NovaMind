@@ -151,6 +151,18 @@ def _uso(cuerpo: Dict[str, Any], modelo: str, intentos: int, inicio: float) -> U
     )
 
 
+def entrada_con_archivo(texto: str, datos: bytes, mime_type: str) -> List[Dict[str, Any]]:
+    """
+    Entrada multimodal: texto + archivo inline (imagen o PDF). Verificado el 2026-10-13:
+    content[type="image"|"document"] con `data` base64 y `mime_type`.
+    """
+    tipo = "document" if mime_type == "application/pdf" else "image"
+    return [{"type": "user_input", "content": [
+        {"type": "text", "text": texto},
+        {"type": tipo, "data": base64.b64encode(datos).decode("ascii"), "mime_type": mime_type},
+    ]}]
+
+
 class ClienteGemini:
     """Un cliente por proceso: su semáforo limita las llamadas simultáneas a la cuota del proyecto."""
 
@@ -232,7 +244,7 @@ class ClienteGemini:
         *,
         modelo: str,
         instrucciones: str,
-        entrada: str,
+        entrada: str | List[Dict[str, Any]],
         esquema_salida: Type[M],
         timeout_s: Optional[float] = None,
         thinking_level: Optional[str] = None,
@@ -242,6 +254,7 @@ class ClienteGemini:
         """
         Genera JSON con esquema estructurado y lo valida con `esquema_salida` (Pydantic).
         `max_reintentos` sustituye al del cliente (0 si hay un modelo de respaldo esperando).
+        `entrada` es texto o una entrada multimodal (`entrada_con_archivo`).
         """
         config: Dict[str, Any] = {}
         if thinking_level:

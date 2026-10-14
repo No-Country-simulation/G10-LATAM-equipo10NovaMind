@@ -110,6 +110,11 @@ class Config:
     gemini_summary_fallback_model: Optional[str] = "gemini-3.1-flash-lite"
     gemini_resources_fallback_model: Optional[str] = "gemini-3.1-flash-lite"
     gemini_tts_model: str = "gemini-3.8-flash-lite-tts"
+    # Transcripción de imágenes y PDF escaneados (POST /api/v1/documentos/extraer). Medido el
+    # 2026-10-13: 3.1-flash-lite transcribe literal una página escaneada en ~3 s (~1.100 tokens).
+    # Respaldo: 3.8-flash y 3.7-flash agotaron la cuota (429); 3.5-flash-lite respondió tras 503.
+    gemini_transcription_model: str = "gemini-3.1-flash-lite"
+    gemini_transcription_fallback_model: Optional[str] = "gemini-3.5-flash-lite"
 
     # --- Voz del video narrado: ElevenLabs principal, Gemini TTS respaldo ---
     # Verificado el 2026-10-13: flash_v2_5 cuesta 0,5 créditos/carácter y habla español.
@@ -162,6 +167,8 @@ class Config:
             gemini_summary_fallback_model=os.getenv("GEMINI_SUMMARY_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
             gemini_resources_fallback_model=os.getenv("GEMINI_RESOURCES_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
             gemini_tts_model=os.getenv("GEMINI_TTS_MODEL") or "gemini-3.8-flash-lite-tts",
+            gemini_transcription_model=os.getenv("GEMINI_TRANSCRIPTION_MODEL") or "gemini-3.1-flash-lite",
+            gemini_transcription_fallback_model=os.getenv("GEMINI_TRANSCRIPTION_FALLBACK_MODEL", "gemini-3.5-flash-lite") or None,
             elevenlabs_api_key=os.getenv("ELEVENLABS_API_KEY") or None,
             elevenlabs_tts_model=os.getenv("ELEVENLABS_TTS_MODEL") or "eleven_flash_v2_5",
             elevenlabs_voice_id=os.getenv("ELEVENLABS_VOICE_ID") or "Xb7hH8MSUJpSbSDYk0k2",

@@ -9,6 +9,8 @@ import type {
   OutputFormat,
   IndustryNiche,
   DetailLevel,
+  DocumentoExtraido,
+  OrigenContenido,
   RespuestaNarracion,
   VideoJobSpec,
   VozNarracion,
@@ -49,8 +51,9 @@ export interface AdaptarParams {
   niche: IndustryNiche;
   detail: DetailLevel;
   selectedScenarioId?: string;
-  pdfBase64?: string | null;
   rawFile?: File | null;
+  /** transcripcion_ia: docContent es la transcripción revisada de una imagen o un PDF escaneado */
+  origenContenido?: OrigenContenido;
 }
 
 export type StationProgressCallback = (
@@ -67,7 +70,7 @@ export async function solicitarAdaptacion(
   params: AdaptarParams,
   onProgress?: StationProgressCallback
 ): Promise<AdaptedContentPackage> {
-  const { docTitle, docContent, profile, format, niche, detail, selectedScenarioId, rawFile } = params;
+  const { docTitle, docContent, profile, format, niche, detail, selectedScenarioId, rawFile, origenContenido } = params;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 300000);
 
@@ -88,6 +91,7 @@ export async function solicitarAdaptacion(
     } else {
       formData.append('documento_contenido', docContent);
       formData.append('texto_directo', docContent);
+      if (origenContenido === 'transcripcion_ia') formData.append('origen_contenido', origenContenido);
     }
 
     const response = await fetch(`${BASE_URL}/api/v1/adaptar/stream`, {
@@ -211,10 +215,35 @@ async function detalleDeError(response: Response): Promise<string> {
   try {
     const cuerpo = await response.json();
     if (typeof cuerpo?.detail === 'string') return cuerpo.detail;
+    // IngestionError lo responde el manejador global como {status, mensaje}
+    if (typeof cuerpo?.mensaje === 'string') return cuerpo.mensaje;
   } catch {
     // cuerpo no JSON
   }
   return `Error HTTP ${response.status}`;
+}
+
+/**
+ * Texto que se usará como fuente, para previsualizarlo antes de generar. Las imágenes y los
+ * PDF escaneados vuelven transcritos por IA (origen 'transcripcion_ia'): una llamada a Gemini.
+ */
+export async function extraerDocumento(archivo: File): Promise<DocumentoExtraido> {
+  const formData = new FormData();
+  formData.append('archivo', archivo, archivo.name);
+  const response = await fetch(`${BASE_URL}/api/v1/documentos/extraer`, {
+    method: 'POST',
+    headers: await bearerHeaders(),
+    body: formData,
+  });
+  if (!response.ok) throw new Error(await detalleDeError(response));
+  return response.json();
+}
+
+/** Texto de un documento de la biblioteca de ejemplos (el backend ya lo tiene: no se sube nada). */
+export async function textoDocumentoEjemplo(nombreArchivo: string): Promise<DocumentoExtraido> {
+  const response = await fetch(`${BASE_URL}/api/v1/documentos/ejemplos/${encodeURIComponent(nombreArchivo)}/texto`);
+  if (!response.ok) throw new Error(await detalleDeError(response));
+  return response.json();
 }
 
 /**

@@ -5,7 +5,9 @@ Orden de búsqueda: Openverse → Wikimedia Commons. Prueba real del 2026-10-13 
 guion de Kafka: Openverse acertó 3 de 3; Wikimedia 1 de 3 (devolvió una portada de libro
 y un cartel con texto), por eso aquí solo entra con filtros estrictos:
 - solo JPEG apaisado de 1000 px o más (descarta logos, diagramas y portadas verticales);
-- títulos con palabras de portada, cartel, logo, mapa, captura... se descartan;
+- títulos con palabras de portada, cartel, logo, mapa, captura... se descartan; en Wikimedia
+  se revisan también categorías y descripción, se excluyen temas sensibles o de actualidad
+  (redadas, pruebas judiciales, eventos...) y fotos con restricciones de derechos de imagen;
 - solo licencias que permiten adaptar la obra (la diapositiva superpone texto):
   CC BY, CC BY-SA, CC0 o dominio público. Nunca NC ni ND.
 
@@ -36,9 +38,18 @@ PROPORCION_MINIMA = 1.3  # ancho / alto: solo apaisadas, el video es 16:9
 MAX_RESULTADOS = 10
 
 _PALABRAS_EXCLUIDAS = re.compile(
-    r"\b(cover|book|logo|poster|banner|sign|signage|flyer|screenshot|screen ?shot|map|flag|diagram|"
-    r"chart|graph|infographic|text|slide|portada|libro|cartel|letrero|mapa|bandera|captura|"
-    r"diagrama|gr[aá]fico|plakat|schild|karte)\b",
+    r"\b(covers?|books?|logos?|posters?|banners?|signs?|signage|flyers?|screenshots?|screen ?shots?|maps?|"
+    r"flags?|diagrams?|charts?|graphs?|infographics?|text|slides?|portadas?|libros?|carteles|cartel|"
+    r"letreros?|mapas?|banderas?|capturas?|diagramas?|gr[aá]ficos?|plakate?|schilder?|karten?)\b",
+    re.IGNORECASE,
+)
+# Wikimedia: el tema de la foto, no su contenido visual. Prueba real del 2026-10-13:
+# "server rack" devolvía una prueba de los Epstein Files (redada del FBI) y "event
+# streaming", fotos de eventos de marcas. Una diapositiva educativa no lleva nada de eso.
+_TEMAS_EXCLUIDOS = re.compile(
+    r"\b(epstein|raids?|crimes?|criminal|evidence|police|polic[ií]a|court|trials?|protests?|riots?|"
+    r"wars?|military|weapons?|victims?|accidents?|disasters?|funerals?|nudity|nude|events?|festivals?|"
+    r"birthday|conferences?|summits?|parades?|ceremon(y|ies)|elections?|campaigns?|advertis\w*)\b",
     re.IGNORECASE,
 )
 _LICENCIAS_OPENVERSE = {"by": "CC BY", "by-sa": "CC BY-SA", "cc0": "CC0", "pdm": "Dominio público"}
@@ -53,6 +64,22 @@ def _texto_plano(valor: Any, maximo: int) -> str:
 
 def _titulo_aceptable(titulo: str) -> bool:
     return not _PALABRAS_EXCLUIDAS.search(titulo.replace("_", " ").replace("-", " "))
+
+
+def _metadatos_wikimedia_aceptables(titulo: str, meta: Dict[str, Any]) -> bool:
+    """
+    Título, categorías y descripción: un mapa o un cartel suelen delatarse en las categorías
+    ("Maps showing 2025") aunque el título no lo diga. Las fotos con restricciones de
+    derechos de imagen (personas identificables) tampoco se usan.
+    """
+    if _texto_plano((meta.get("Restrictions") or {}).get("value"), 200):
+        return False
+    texto = " ".join([
+        titulo,
+        _texto_plano((meta.get("Categories") or {}).get("value"), 2000).replace("|", " "),
+        _texto_plano((meta.get("ImageDescription") or {}).get("value"), 1000),
+    ]).replace("_", " ").replace("-", " ")
+    return not (_PALABRAS_EXCLUIDAS.search(texto) or _TEMAS_EXCLUIDOS.search(texto))
 
 
 def elegir_openverse(resultados: List[Dict[str, Any]], alt: str) -> Optional[ImagenEscena]:
@@ -85,7 +112,7 @@ def elegir_wikimedia(paginas: List[Dict[str, Any]], alt: str) -> Optional[Imagen
             and ancho >= ANCHO_MINIMO_PX and alto > 0 and ancho / alto >= PROPORCION_MINIMA
             and _LICENCIA_WIKIMEDIA_OK.match(licencia)
             and autor and info.get("thumburl")
-            and _titulo_aceptable(str(pagina.get("title") or ""))
+            and _metadatos_wikimedia_aceptables(str(pagina.get("title") or ""), meta)
         ):
             continue
         return ImagenEscena(

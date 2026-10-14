@@ -835,7 +835,10 @@ class GeneradorParalelo:
                 **base, estado="completado", verificacion="pendiente",
                 citas_totales=len(listo.fuentes),
                 citas_verificadas=sum(1 for f in listo.fuentes if f["verificada"]),
-                avisos=listo.avisos,
+                avisos=listo.avisos + (
+                    [f"generado con el modelo de respaldo {uso.modelo} porque {tarea.modelo} no respondió"]
+                    if uso.modelo != tarea.modelo else []
+                ),
             )
             ej.contenido.update(listo.campos)
             ej.afirmaciones[recurso] = listo.afirmaciones

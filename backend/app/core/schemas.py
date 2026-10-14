@@ -537,6 +537,9 @@ class SolicitudAdaptacion(BaseModel):
     # Contexto documental compartido: lo construye la ingesta una sola vez (vacío para texto pegado).
     paginas: List[RangoPagina] = Field(default_factory=list)
     secciones: List[SeccionDocumento] = Field(default_factory=list, max_length=MAX_SECCIONES_DOCUMENTO)
+    # "transcripcion_ia": el texto es la transcripción (revisada por el usuario) de una imagen o
+    # un PDF escaneado; las citas se verifican contra ella, no contra el original.
+    origen_contenido: Literal["documento", "transcripcion_ia"] = "documento"
 
     @model_validator(mode="after")
     def _contexto_coherente(self) -> "SolicitudAdaptacion":
