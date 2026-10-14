@@ -359,6 +359,26 @@ def test_guion_reutiliza_el_contrato_de_tiempos():
     assert spec.estado == "contract_ready"  # la narración es bajo demanda, no se lanza aquí
 
 
+def test_las_citas_verificadas_del_guion_llevan_contexto_para_el_visor_de_la_estacion_4():
+    respuesta, _ = _generar(Simulador())
+    escena = respuesta.contenido_adaptado.video_job_spec.escenas[1]  # cita de la página 2
+    fuente = escena.fuentes[0]
+    assert fuente.verificada and fuente.contexto is not None
+    assert fuente.contexto.fragmento in P2
+    assert (fuente.contexto.antes + fuente.contexto.fragmento + fuente.contexto.despues).strip() == P2.strip()
+    # Viaja también en el director_cut que recibe el front
+    assert respuesta.contenido_adaptado.director_cut[1]["fuentes"][0]["contexto"]["fragmento"] == fuente.contexto.fragmento
+
+
+def test_una_cita_del_guion_no_verificada_no_lleva_contexto():
+    from app.agentes.generacion_paralela import _normalizador
+
+    crudas = [{"id": "sc-1", "titulo": "T", "guion_locutor": "Texto de la escena.",
+               "fuentes": [{"chunk_id": "x", "texto_fuente": "Esta frase no aparece en ningún documento real"}]}]
+    escenas, _ = _normalizador()._normalizar_director_cut(crudas, SOLICITUD)
+    assert not escenas[0].fuentes[0].verificada and escenas[0].fuentes[0].contexto is None
+
+
 def _avisos_guion(eventos):
     return next(e["estado"]["avisos"] for e in eventos if e["tipo"] == "recurso" and e["recurso"] == "guion")
 
