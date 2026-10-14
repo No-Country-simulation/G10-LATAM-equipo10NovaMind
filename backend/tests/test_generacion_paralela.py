@@ -286,6 +286,11 @@ def test_modelo_saturado_pasa_al_respaldo_sin_reintentar():
     assert [c["model"] for t, c in sim.peticiones if t == "A"] == ["modelo-resumen", "respaldo-resumen"]
     estado = respuesta.contenido_adaptado.estado_recursos["resumen"]
     assert estado.estado == "completado" and estado.modelo == "respaldo-resumen"
+    # Visible en la barra del recurso y en las advertencias del paquete
+    respaldo = "generado con el modelo de respaldo respaldo-resumen porque modelo-resumen no respondió"
+    assert respaldo in estado.avisos
+    assert any(respaldo in a for a in respuesta.advertencias)
+    assert all(respaldo not in a for a in respuesta.contenido_adaptado.estado_recursos["flashcards"].avisos)
     aviso = next(e for e in eventos if e["tipo"] == "tarea" and e["estado"] == "respaldo")
     assert aviso == {"tipo": "tarea", "tarea": "A", "estado": "respaldo", "modelo": "respaldo-resumen",
                      "modelo_principal": "modelo-resumen", "error_codigo": "servidor"}

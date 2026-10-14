@@ -1,7 +1,10 @@
 """
 Ingesta y extracción de texto de documentos técnicos.
 
-Soporta los tres formatos exigidos: PDF, Markdown y texto plano.
+Soporta los tres formatos exigidos: PDF, Markdown y texto plano. Las imágenes y los PDF
+escaneados no tienen texto extraíble: se transcriben aparte (servicio_transcripcion) y aquí
+solo se reconocen (`tipo_mime_imagen`, `PdfSinTexto`) y se reconstruyen sus páginas
+(`texto_con_marcadores`, `paginas_desde_marcadores`).
 
 Además del texto, construye el contexto documental compartido que reutilizan
 todas las tareas de generación: rangos de página (PDF) y secciones detectadas.
@@ -30,6 +33,58 @@ from app.core.schemas import (
 
 class IngestionError(Exception):
     """Error al extraer contenido de un documento de entrada."""
+
+
+class PdfSinTexto(IngestionError):
+    """PDF sin capa de texto (escaneo): hay que transcribirlo."""
+
+    def __init__(self, nombre: str, num_paginas: int):
+        super().__init__(
+            f"El PDF '{nombre}' no contiene texto extraíble (es un escaneo): "
+            "transcríbelo primero (POST /api/v1/documentos/extraer)."
+        )
+        self.num_paginas = num_paginas
+
+
+# Formatos de imagen que Gemini lee. La extensión la elige el cliente: se exige además la
+# firma de los bytes, para no mandar a transcribir cualquier cosa renombrada.
+EXTENSIONES_IMAGEN = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+_FIRMAS_IMAGEN = {
+    "image/png": lambda b: b.startswith(b"\x89PNG\r\n\x1a\n"),
+    "image/jpeg": lambda b: b.startswith(b"\xff\xd8\xff"),
+    "image/webp": lambda b: b[:4] == b"RIFF" and b[8:12] == b"WEBP",
+}
+FORMATOS_VALIDOS = ".pdf, .md, .markdown, .txt, .png, .jpg, .jpeg, .webp"
+
+
+def tipo_mime_imagen(contenido: bytes, nombre_archivo: str) -> Optional[str]:
+    """MIME si la extensión es de imagen (None si no lo es); falla si los bytes no lo confirman."""
+    nombre = Path(str(nombre_archivo).replace("\\", "/")).name
+    mime = EXTENSIONES_IMAGEN.get(Path(nombre).suffix.lower())
+    if mime is None:
+        return None
+    if not _FIRMAS_IMAGEN[mime](contenido):
+        raise IngestionError(f"El archivo '{nombre}' no es una imagen {mime} válida.")
+    return mime
+
+
+# Una línea "[Página N]" por página transcrita. Sobrevive a que el usuario corrija el texto:
+# las páginas se recalculan desde los marcadores y no desde posiciones guardadas.
+_MARCADOR_PAGINA = re.compile(r"^\[Página (\d{1,4})\][ \t]*$", re.MULTILINE)
+
+
+def texto_con_marcadores(paginas: List[str]) -> str:
+    return "\n\n".join(f"[Página {n}]\n{texto.strip()}" for n, texto in enumerate(paginas, start=1))
+
+
+def paginas_desde_marcadores(texto: str) -> List[RangoPagina]:
+    """Rangos de página según los marcadores; si los números no crecen, sin paginación."""
+    marcas = list(_MARCADOR_PAGINA.finditer(texto))
+    numeros = [int(m.group(1)) for m in marcas]
+    if not marcas or any(b <= a for a, b in zip(numeros, numeros[1:])):
+        return []
+    inicios = [m.start() for m in marcas] + [len(texto)]
+    return [RangoPagina(numero=n, inicio=inicios[i], fin=inicios[i + 1]) for i, n in enumerate(numeros)]
 
 
 @dataclass
@@ -81,9 +136,7 @@ def _extraer_pdf(path: Path) -> tuple[str, List[RangoPagina]]:
             ) from exc
 
     if not "".join(paginas).strip():
-        raise IngestionError(
-            f"El PDF '{path.name}' no contiene texto extraíble (¿es un escaneo sin OCR?)."
-        )
+        raise PdfSinTexto(path.name, len(paginas))
 
     # El patrón es por línea y las páginas se unen con "\n": limpiar cada página y luego
     # unir produce exactamente el mismo texto que unir y luego limpiar, pero conserva
@@ -162,9 +215,13 @@ def cargar_documento(path: str | Path, titulo: str | None = None) -> DocumentoIn
     elif extension in (".md", ".markdown", ".txt"):
         texto = _extraer_texto_plano(path)
     else:
+        if extension in EXTENSIONES_IMAGEN:
+            raise IngestionError(
+                "Las imágenes no tienen texto que extraer: transcríbelas primero "
+                "(POST /api/v1/documentos/extraer) y genera desde esa transcripción."
+            )
         raise IngestionError(
-            f"Formato no soportado: '{extension}'. "
-            "Formatos válidos: .pdf, .md, .markdown, .txt"
+            f"Formato no soportado: '{extension}'. Formatos válidos: {FORMATOS_VALIDOS}"
         )
 
     return DocumentoIngresado(

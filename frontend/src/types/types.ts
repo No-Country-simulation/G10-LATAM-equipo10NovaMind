@@ -119,6 +119,19 @@ export interface AudioEscena {
 
 export type VozNarracion = 'Kore' | 'Charon' | 'Puck' | 'Aoede';
 
+/** documento: texto del propio archivo · transcripcion_ia: imagen o PDF escaneado transcrito por Gemini */
+export type OrigenContenido = 'documento' | 'transcripcion_ia';
+
+/** Respuesta de POST /api/v1/documentos/extraer */
+export interface DocumentoExtraido {
+  titulo: string;
+  texto: string;
+  origen: OrigenContenido;
+  paginas: number;
+  modelo: string | null;
+  advertencias: string[];
+}
+
 export interface RespuestaNarracion {
   status: 'exito' | 'excede_duracion' | 'error';
   video_job_spec: VideoJobSpec;

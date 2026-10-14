@@ -234,13 +234,31 @@ def test_openverse_descarta_portadas_y_licencias_no_libres():
     assert elegir_openverse(candidatos[:3], "x") is None
 
 
-def _wm(titulo="File:Servers in a Rack.jpg", mime="image/jpeg", ancho=1600, alto=900, licencia="CC BY-SA 3.0", indice=1):
+def _wm(titulo="File:Servers in a Rack.jpg", mime="image/jpeg", ancho=1600, alto=900, licencia="CC BY-SA 3.0",
+        indice=1, categorias="Computer racks|Self-published work", descripcion="Servers in a rack", restricciones=""):
     return {"index": indice, "title": titulo, "imageinfo": [{
         "mime": mime, "width": ancho, "height": alto, "thumburl": "https://upload.wikimedia.org/x.jpg",
         "descriptionurl": "https://commons.wikimedia.org/wiki/File:x.jpg",
         "extmetadata": {"LicenseShortName": {"value": licencia},
-                        "Artist": {"value": '<a href="//commons.wikimedia.org/wiki/User:Abigor">Abigor</a>'}},
+                        "Artist": {"value": '<a href="//commons.wikimedia.org/wiki/User:Abigor">Abigor</a>'},
+                        "Categories": {"value": categorias}, "ImageDescription": {"value": descripcion},
+                        "Restrictions": {"value": restricciones}},
     }]}
+
+
+def test_wikimedia_mira_categorias_y_tema_y_no_solo_el_titulo():
+    # Casos reales del 2026-10-13 que pasaban el filtro por título
+    rechazadas = [
+        _wm(titulo="File:Data center infrastructure in the United States.jpg",
+            categorias="PD US Government|Data centers|Maps showing 2025"),
+        _wm(titulo="File:EFTA00002522 - Cluttered server rack filled with colorful cables.jpg",
+            categorias="Computer racks|2019 FBI raid on Epstein's private island",
+            descripcion="Part of Epstein Files released by the DOJ"),
+        _wm(titulo="File:Soy milk brand event in Shibuya Stream.jpg", descripcion="Soy milk brand event"),
+        _wm(restricciones="personality"),  # personas identificables
+    ]
+    assert elegir_wikimedia(rechazadas, "x") is None
+    assert elegir_wikimedia(rechazadas + [_wm(titulo="File:Wikimedia Servers-0001 42.jpg", indice=9)], "x")
 
 
 def test_wikimedia_solo_acepta_fotos_apaisadas_libres_y_sin_titulo_sospechoso():

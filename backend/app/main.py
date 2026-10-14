@@ -17,6 +17,7 @@ import re
 import time
 from contextlib import asynccontextmanager
 from dataclasses import replace
+from functools import lru_cache
 from uuid import UUID
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
@@ -45,7 +46,16 @@ from app.servicios.servicio_narracion import Narrador
 from app.servicios.servicio_voz import VozElevenLabs, VozGemini
 from app.storage.almacen_narracion import almacen_del_entorno, prefijo_narraciones, ruta_segura
 from app.integration.private_pipeline import PrivateCadena, PrivateCorreo, notification_recipient
-from app.core.ingestion import IngestionError, cargar_documento_desde_bytes, detectar_secciones
+from app.core.ingestion import (
+    IngestionError,
+    PdfSinTexto,
+    cargar_documento,
+    cargar_documento_desde_bytes,
+    detectar_secciones,
+    paginas_desde_marcadores,
+    tipo_mime_imagen,
+)
+from app.servicios.servicio_transcripcion import ORIGEN_TRANSCRIPCION, transcribir
 from app.core.schemas import (
     DIRECTIVAS_NICHO_SECTOR,
     DIRECTIVAS_PERFIL_DESTINATARIO,
@@ -213,6 +223,25 @@ async def _generar(
     publicar=None,
     on_progress: ProgresoCallback = None,
 ) -> RespuestaAdaptacion:
+    resp = await _generar_segun_modo(principal, solicitud, modo_rag, publicar, on_progress)
+    if solicitud.origen_contenido == ORIGEN_TRANSCRIPCION:
+        resp.advertencias.insert(0, AVISO_TRANSCRIPCION)
+    return resp
+
+
+AVISO_TRANSCRIPCION = (
+    "📷 El texto fuente es una transcripción hecha por IA de una imagen o un PDF escaneado: "
+    "las citas se verificaron contra esa transcripción, no contra el original."
+)
+
+
+async def _generar_segun_modo(
+    principal: Principal,
+    solicitud: SolicitudAdaptacion,
+    modo_rag: str,
+    publicar=None,
+    on_progress: ProgresoCallback = None,
+) -> RespuestaAdaptacion:
     """paralelo → (cadena → clásico) · vectorless → (cadena → clásico) · otro → clásico."""
     modo = modo_rag.lower()
     if modo == "paralelo":
@@ -335,6 +364,65 @@ def obtener_opciones_configuracion() -> Dict[str, List[str]]:
     }
 
 
+async def _leer_subida(archivo: UploadFile) -> bytes:
+    contenido = await archivo.read(MAX_BYTES_ARCHIVO + 1)
+    if len(contenido) > MAX_BYTES_ARCHIVO:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"El archivo supera el máximo de {MAX_BYTES_ARCHIVO // (1024 * 1024)} MB.",
+        )
+    if not contenido:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo subido está vacío.",
+        )
+    return contenido
+
+
+@app.post("/api/v1/documentos/extraer", tags=["Adaptación Pedagógica"])
+async def extraer_documento(
+    principal: Principal = Depends(require_user),
+    archivo: UploadFile = File(..., description="PDF, MD, TXT o imagen (PNG, JPG, WEBP)"),
+) -> Dict[str, Any]:
+    """
+    Texto que se usará como fuente, para revisarlo antes de generar. PDF con texto, MD y TXT
+    se extraen tal cual (origen "documento"). Imágenes y PDF escaneados se transcriben con
+    Gemini (origen "transcripcion_ia"): el cliente debe mostrar ese texto, dejar corregirlo y
+    enviarlo después como `texto_directo` con `origen_contenido=transcripcion_ia`.
+    """
+    contenido = await _leer_subida(archivo)
+    nombre = archivo.filename or "documento"
+    titulo = Path(nombre.replace("\\", "/")).stem or "Documento"
+    mime = tipo_mime_imagen(contenido, nombre)  # IngestionError → 400 si los bytes no cuadran
+    paginas_pdf = 1
+    if mime is None:
+        try:
+            doc = await asyncio.to_thread(cargar_documento_desde_bytes, contenido, nombre)
+            return {
+                "titulo": doc.titulo, "texto": doc.texto, "origen": "documento",
+                "paginas": len(doc.paginas), "modelo": None, "advertencias": [],
+            }
+        except PdfSinTexto as exc:
+            mime, paginas_pdf = "application/pdf", exc.num_paginas
+    try:
+        async with _cupo(principal):
+            resultado = await transcribir(
+                _cliente_gemini(), Config.desde_entorno(), contenido, mime, paginas_esperadas=paginas_pdf,
+            )
+    except GeminiError as exc:
+        logger.warning("Transcripción fallida (%s): %s", exc.codigo, exc.mensaje)
+        detalle = (
+            "La transcripción con IA no está configurada en este servidor."
+            if exc.codigo in ("sin_clave", "no_autorizado")
+            else f"No se pudo transcribir el archivo ahora ({exc.codigo}). Prueba de nuevo en unos minutos."
+        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detalle) from None
+    return {
+        "titulo": titulo, "texto": resultado.texto, "origen": ORIGEN_TRANSCRIPCION,
+        "paginas": resultado.paginas, "modelo": resultado.modelo, "advertencias": resultado.advertencias,
+    }
+
+
 async def _extraer_solicitud(
     archivo: Optional[UploadFile],
     texto_directo: Optional[str],
@@ -345,27 +433,19 @@ async def _extraer_solicitud(
     nivel_detalle: str,
     tema_consulta: Optional[str],
     documento_contenido: Optional[str] = None,
+    origen_contenido: Optional[str] = None,
 ) -> SolicitudAdaptacion:
     """Extrae el contenido documental y valida los parámetros de la solicitud pedagógica."""
     contenido_texto = ""
     doc_titulo = titulo or "Documento Técnico"
     paginas: List[Any] = []
     secciones: List[Any] = []
+    origen = "documento"
 
     texto_candidato = (texto_directo or "").strip() or (documento_contenido or "").strip()
 
     if archivo and archivo.filename:
-        contenido_bytes = await archivo.read(MAX_BYTES_ARCHIVO + 1)
-        if len(contenido_bytes) > MAX_BYTES_ARCHIVO:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"El archivo supera el máximo de {MAX_BYTES_ARCHIVO // (1024 * 1024)} MB.",
-            )
-        if not contenido_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="El archivo subido está vacío.",
-            )
+        contenido_bytes = await _leer_subida(archivo)
         try:
             doc_ingresado = cargar_documento_desde_bytes(
                 contenido_bytes, archivo.filename, titulo=titulo
@@ -379,6 +459,13 @@ async def _extraer_solicitud(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error de ingesta: {exc}",
             ) from exc
+    elif texto_candidato and origen_contenido == ORIGEN_TRANSCRIPCION:
+        # Transcripción de /api/v1/documentos/extraer, quizá corregida por el usuario: las
+        # páginas salen de sus marcadores "[Página N]", nunca de posiciones que envíe el cliente.
+        contenido_texto = texto_candidato
+        origen = ORIGEN_TRANSCRIPCION
+        paginas = paginas_desde_marcadores(texto_candidato)
+        secciones = detectar_secciones(texto_candidato, ".pdf", paginas)
     elif texto_candidato:
         contenido_texto = texto_candidato
         # El texto pegado suele venir en Markdown; sin paginación real.
@@ -401,6 +488,7 @@ async def _extraer_solicitud(
                 "tema_consulta": tema_consulta,
                 "paginas": paginas,
                 "secciones": secciones,
+                "origen_contenido": origen,
             }
         )
     except ValidationError as exc:
@@ -433,6 +521,7 @@ async def adaptar_contenido(
     documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
     modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (cadena colaborativa), 'paralelo' (Gemini concurrente con publicación incremental) o 'clasico' (LangGraph)"),
     email_notificacion: Optional[str] = Form(None, description="Correo electrónico opcional para recibir dossier en PDF"),
+    origen_contenido: Optional[str] = Form(None, description="'transcripcion_ia' si texto_directo es una transcripción de /api/v1/documentos/extraer"),
 ) -> RespuestaAdaptacion:
     """
     Endpoint principal: recibe el documento y los parámetros pedagógicos.
@@ -450,6 +539,7 @@ async def adaptar_contenido(
         nivel_detalle=nivel_detalle,
         tema_consulta=tema_consulta,
         documento_contenido=documento_contenido,
+        origen_contenido=origen_contenido,
     )
 
     email_notificacion = notification_recipient(principal, email_notificacion)
@@ -493,6 +583,7 @@ async def adaptar_contenido_stream(
     documento_contenido: Optional[str] = Form(None, description="Contenido de texto (alias de texto_directo)"),
     modo_rag: str = Form("vectorless", description="Modo RAG: 'vectorless' (cadena colaborativa), 'paralelo' (Gemini concurrente con publicación incremental) o 'clasico' (LangGraph)"),
     email_notificacion: Optional[str] = Form(None, description="Correo electrónico opcional para recibir dossier en PDF"),
+    origen_contenido: Optional[str] = Form(None, description="'transcripcion_ia' si texto_directo es una transcripción de /api/v1/documentos/extraer"),
 ) -> StreamingResponse:
     """
     Endpoint con Server-Sent Events (SSE) y heartbeats periódicos (cada 15s)
@@ -509,6 +600,7 @@ async def adaptar_contenido_stream(
         nivel_detalle=nivel_detalle,
         tema_consulta=tema_consulta,
         documento_contenido=documento_contenido,
+        origen_contenido=origen_contenido,
     )
 
     email_notificacion = notification_recipient(principal, email_notificacion)
@@ -894,4 +986,23 @@ def obtener_documento_ejemplo(nombre_archivo: str) -> FileResponse:
         )
     media_type = "application/pdf" if archivo.suffix.lower() == ".pdf" else "text/markdown; charset=utf-8"
     return FileResponse(path=str(archivo), filename=archivo.name, media_type=media_type)
+
+
+@lru_cache(maxsize=8)
+def _texto_documento_ejemplo(ruta: str, _modificado: float) -> Dict[str, Any]:
+    """El ENISA tarda ~8 s en extraerse: se hace una vez por versión del archivo."""
+    doc = cargar_documento(ruta)
+    return {"titulo": doc.titulo, "texto": doc.texto, "origen": "documento",
+            "paginas": len(doc.paginas), "modelo": None, "advertencias": []}
+
+
+@app.get("/api/v1/documentos/ejemplos/{nombre_archivo}/texto", tags=["Biblioteca de Documentos"])
+async def obtener_texto_documento_ejemplo(nombre_archivo: str) -> Dict[str, Any]:
+    """Texto extraído de un documento del catálogo, para la vista previa (misma forma que /documentos/extraer)."""
+    if Path(nombre_archivo).name not in {d["nombre_archivo"] for d in CATALOGO_DOCUMENTOS}:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Documento no encontrado en la biblioteca.")
+    archivo = _obtener_directorio_documentos() / Path(nombre_archivo).name
+    if not archivo.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Documento no encontrado en la biblioteca.")
+    return await asyncio.to_thread(_texto_documento_ejemplo, str(archivo), archivo.stat().st_mtime)
 

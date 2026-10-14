@@ -8,6 +8,7 @@ Esta carpeta centraliza todos los informes de avance, bitácoras de cambios, esp
 
 | Archivo | Tipo | Descripción |
 | :--- | :--- | :--- |
+| [BITACORA_FULLSTACK_V2.md](BITACORA_FULLSTACK_V2.md) | Bitácora | Registro desde el 12 oct 2026 de la rama `feature/fullstack-nuevamente-v2`: generación paralela con Gemini, video narrado bajo demanda, respaldo de modelos e imágenes y PDF escaneados como fuente. |
 | [CAMBIOS.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/CAMBIOS.md) | Bitácora / Changelog | Registro cronológico y detallado de las 9 fases de integración técnica del proyecto. |
 | [INFORME_ORQUESTACION_MULTI_PROVEEDOR_FASE9.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/INFORME_ORQUESTACION_MULTI_PROVEEDOR_FASE9.md) | Reporte Técnico | Arquitectura multi-proveedor (Gemini/Groq/Cohere), streaming SSE anti-timeout 524 de Cloudflare, semáforo de memoria en OCI y auditoría RAG real. |
 | [ESQUEMA_INTEGRACION_FULLSTACK.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/ESQUEMA_INTEGRACION_FULLSTACK.md) | Arquitectura | Diagramas de flujo, contratos de API, mapeo de puertos y topología de integración Backend + Frontend + OCI. |

@@ -1,10 +1,22 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock } from 'lucide-react';
-import type { RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset } from '../../types/types';
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import {
+  UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock, ScanText, PenLine, AlertTriangle, Loader2,
+} from 'lucide-react';
+import type {
+  RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset, OrigenContenido,
+} from '../../types/types';
 import { REAL_DOCUMENTS_CATALOG } from '../../data/mockScenarios';
+import { extraerDocumento, textoDocumentoEjemplo } from '../../services/api';
 import styles from './Step1Ingestion.module.css';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+const ARCHIVOS_ACEPTADOS = '.pdf,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp';
+const esImagen = (f: File) => f.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(f.name);
+const esPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+
+/** bloquea=false: solo falta la vista previa; el archivo ya se puede enviar */
+type Extraccion = { estado: 'inactiva' } | { estado: 'cargando' | 'error'; mensaje: string; bloquea?: boolean };
 
 interface Step1Props {
   onStartPipeline: (
@@ -15,8 +27,8 @@ interface Step1Props {
     niche: IndustryNiche,
     detail: DetailLevel,
     selectedScenarioId?: string,
-    pdfBase64?: string | null,
-    rawFile?: File | null
+    rawFile?: File | null,
+    origenContenido?: OrigenContenido
   ) => void;
   isProcessing: boolean;
   processingStage: string;
@@ -36,10 +48,25 @@ export const Step1Ingestion = ({
   const [niche, setNiche] = useState<IndustryNiche>('General');
   const [detail, setDetail] = useState<DetailLevel>('Didáctico');
   const [fileName, setFileName] = useState<string | null>(null);
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [rawFile, setRawFile] = useState<File | null>(null);
+  // transcripcion_ia: el texto lo transcribió Gemini de una imagen o un PDF escaneado y es editable
+  const [origen, setOrigen] = useState<OrigenContenido>('documento');
+  const [extraccion, setExtraccion] = useState<Extraccion>({ estado: 'inactiva' });
+  const [avisosFuente, setAvisosFuente] = useState<string[]>([]);
+  const turnoSubida = useRef(0); // descarta respuestas de una subida anterior
+  const esTranscripcion = origen === 'transcripcion_ia';
+  const extrayendo = extraccion.estado === 'cargando' && extraccion.bloquea !== false;
+
+  const reiniciarFuente = () => {
+    turnoSubida.current += 1;
+    setOrigen('documento');
+    setExtraccion({ estado: 'inactiva' });
+    setAvisosFuente([]);
+  };
 
   const handleSelectRealDocument = async (doc: RealDocumentPreset) => {
+    reiniciarFuente();
+    const turno = turnoSubida.current;
     setSelectedDocId(doc.id);
     setIsLoadingPreset(true);
     setDocTitle(doc.titulo);
@@ -47,35 +74,41 @@ export const Step1Ingestion = ({
     setProfile(doc.perfil);
     setFormat(doc.formato_sugerido);
     setFileName(doc.nombre_archivo);
+    setRawFile(null);
+    setDocContent('');
+    setExtraccion({ estado: 'cargando', mensaje: 'Cargando el documento…' });
 
     try {
       const res = await fetch(`${BASE_URL}/api/v1/documentos/ejemplos/${encodeURIComponent(doc.nombre_archivo)}`);
-      if (res.ok) {
-        const blob = await res.blob();
-        const mimeType = doc.tipo === 'pdf' ? 'application/pdf' : 'text/markdown';
-        const file = new File([blob], doc.nombre_archivo, { type: mimeType });
-        setRawFile(file);
-
-        if (doc.tipo === 'markdown') {
-          const text = await blob.text();
-          setDocContent(text);
-          setPdfBase64(null);
-        } else {
-          setPdfBase64(null);
-          const mb = (blob.size / (1024 * 1024)).toFixed(2);
-          setDocContent(
-            `📄 [ARCHIVO PDF OFICIAL CARGADO]: "${doc.nombre_archivo}" (${mb} MB)\nEl archivo binario se transmitirá directamente al motor RAG de NovaMind (pypdf + ChromaDB + Cohere Embeddings) para extraer la semántica de sus páginas y alimentar la orquestación multi-agente en tiempo real.`
-          );
-        }
-      } else {
-        throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`No se pudo descargar «${doc.titulo}» (HTTP ${res.status}).`);
+      const blob = await res.blob();
+      const mimeType = doc.tipo === 'pdf' ? 'application/pdf' : 'text/markdown';
+      if (turno !== turnoSubida.current) return;
+      setRawFile(new File([blob], doc.nombre_archivo, { type: mimeType }));
+      if (doc.tipo === 'markdown') {
+        setDocContent(await blob.text());
+        setExtraccion({ estado: 'inactiva' });
+        return;
+      }
+      // El PDF ya se puede enviar; su texto (el ENISA tarda ~15 s la primera vez) solo es vista previa
+      setExtraccion({ estado: 'cargando', bloquea: false,
+        mensaje: 'Extrayendo el texto para la vista previa… ya puedes generar.' });
+      try {
+        const { texto } = await textoDocumentoEjemplo(doc.nombre_archivo);
+        if (turno !== turnoSubida.current) return;
+        setDocContent(texto);
+        setExtraccion({ estado: 'inactiva' });
+      } catch (err) {
+        if (turno !== turnoSubida.current) return;
+        setExtraccion({ estado: 'error', bloquea: false, mensaje:
+          `No se pudo previsualizar el texto (${err instanceof Error ? err.message : String(err)}); el PDF se procesará igualmente.` });
       }
     } catch (err) {
-      console.warn('Cargando documento en modo referencia:', err);
-      setRawFile(null);
-      setDocContent(
-        `📄 Documento Oficial: "${doc.titulo}" (${doc.nombre_archivo})\n\n${doc.descripcion}\n\nEste documento será analizado y contextualizado por los agentes pedagógicos de NovaMind.`
-      );
+      // Sin el documento no se genera nada: nunca a partir de la descripción del catálogo
+      if (turno !== turnoSubida.current) return;
+      setFileName(null);
+      setSelectedDocId(null);
+      setExtraccion({ estado: 'error', mensaje: err instanceof Error ? err.message : String(err) });
     } finally {
       setIsLoadingPreset(false);
     }
@@ -85,40 +118,61 @@ export const Step1Ingestion = ({
     handleSelectRealDocument(REAL_DOCUMENTS_CATALOG[0]);
   };
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = ''; // permite volver a elegir el mismo archivo
     if (!file) return;
 
+    reiniciarFuente();
+    const turno = turnoSubida.current;
     setSelectedDocId(null);
-    setRawFile(file);
     setFileName(file.name);
     setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
 
-    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        const base64Clean = result.includes(',') ? result.split(',')[1] : result;
-        setPdfBase64(base64Clean);
-        const mb = (file.size / (1024 * 1024)).toFixed(2);
-        setDocContent(
-          `📄 [ARCHIVO PDF LISTO PARA INGESTA]: "${file.name}" (${mb} MB)\nEl archivo binario se transmitirá directamente al motor RAG de NovaMind (pypdf + ChromaDB + Cohere Embeddings) para extraer la semántica de sus páginas y alimentar la orquestación multi-agente.`
-        );
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setPdfBase64(null);
+    if (!esImagen(file) && !esPdf(file)) {
+      setRawFile(file);
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
-        if (text) setDocContent(text);
+        if (text && turno === turnoSubida.current) setDocContent(text);
       };
       reader.readAsText(file);
+      return;
     }
+
+    // PDF e imágenes: se previsualiza el texto real que se va a procesar. Una imagen o un PDF
+    // escaneado vuelven transcritos por IA y se generan desde esa transcripción revisada.
+    setRawFile(null);
+    setDocContent('');
+    setExtraccion({
+      estado: 'cargando',
+      mensaje: esImagen(file) ? 'Transcribiendo la imagen con IA…' : 'Extrayendo el texto del PDF…',
+    });
+    try {
+      const doc = await extraerDocumento(file);
+      if (turno !== turnoSubida.current) return;
+      setDocContent(doc.texto);
+      setAvisosFuente(doc.advertencias);
+      setExtraccion({ estado: 'inactiva' });
+      if (doc.origen === 'transcripcion_ia') {
+        setOrigen('transcripcion_ia');
+      } else {
+        setRawFile(file); // PDF con texto: se envía el archivo, con sus páginas y secciones exactas
+      }
+    } catch (err) {
+      if (turno !== turnoSubida.current) return;
+      setFileName(null);
+      setExtraccion({ estado: 'error', mensaje: err instanceof Error ? err.message : String(err) });
+    }
+  };
+
+  const handleTranscripcionEditada = (texto: string) => {
+    if (esTranscripcion) setDocContent(texto);
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (extrayendo) return;
     if (!docContent.trim() && !rawFile) {
       alert('Por favor selecciona un documento de la biblioteca o sube un archivo antes de iniciar el pipeline.');
       return;
@@ -131,8 +185,8 @@ export const Step1Ingestion = ({
       niche,
       detail,
       selectedDocId || undefined,
-      pdfBase64,
-      rawFile
+      esTranscripcion ? null : rawFile,
+      origen
     );
   };
 
@@ -258,17 +312,18 @@ export const Step1Ingestion = ({
 
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>
-                Carga de Archivo (PDF, MD o TXT)
+                Carga de Archivo (PDF, MD, TXT o imagen)
               </label>
               <label className={styles.fileDropzone}>
                 <UploadCloud size={18} color="var(--color-violet-400)" />
                 <span className={styles.fileText}>
-                  {fileName ? `Archivo: ${fileName}` : 'Subir archivo .pdf, .md o .txt'}
+                  {fileName ? `Archivo: ${fileName}` : 'Subir .pdf, .md, .txt o imagen (.png, .jpg, .webp)'}
                 </span>
                 <input
                   type="file"
-                  accept=".pdf,.md,.markdown,.txt"
+                  accept={ARCHIVOS_ACEPTADOS}
                   onChange={handleFileUpload}
+                  disabled={extrayendo}
                   style={{ display: 'none' }}
                 />
               </label>
@@ -280,36 +335,63 @@ export const Step1Ingestion = ({
             <div className={styles.fieldLabelRow}>
               <span className={styles.fieldLabel}>Previsualización del Documento Técnico</span>
               <div className={styles.previewBadgesRow}>
-                <span className={styles.readOnlyBadge}>
-                  <Eye size={12} />
-                  <span>Solo Lectura · Previsualización</span>
-                </span>
+                {esTranscripcion ? (
+                  <span className={styles.transcriptionBadge}>
+                    <ScanText size={12} />
+                    <span>Transcripción IA · revísala y corrígela</span>
+                  </span>
+                ) : (
+                  <span className={styles.readOnlyBadge}>
+                    <Eye size={12} />
+                    <span>Solo Lectura · Previsualización</span>
+                  </span>
+                )}
                 {docContent && (
                   <span className={styles.charCountBadge}>
                     {docContent.length.toLocaleString()} caracteres
                   </span>
                 )}
-                {pdfBase64 && (
-                  <span className={styles.pdfNotice}>
-                    ✓ PDF listo para Gemini Multimodal
-                  </span>
-                )}
               </div>
             </div>
 
+            {extraccion.estado !== 'inactiva' && (
+              <div
+                className={extraccion.estado === 'error' ? styles.sourceError : styles.sourceLoading}
+                role={extraccion.estado === 'error' ? 'alert' : 'status'}
+              >
+                {extraccion.estado === 'error'
+                  ? <AlertTriangle size={14} />
+                  : <Loader2 size={14} className={styles.spinningIcon} />}
+                <span>{extraccion.mensaje}</span>
+              </div>
+            )}
+
             <div className={styles.previewBoxWrapper}>
               <textarea
-                rows={5}
+                rows={esTranscripcion ? 10 : 5}
                 value={docContent}
-                readOnly
-                placeholder="Selecciona un documento oficial de la biblioteca superior o sube un archivo (PDF, MD o TXT) para previsualizar su contenido aquí..."
+                readOnly={!esTranscripcion}
+                onChange={(e) => handleTranscripcionEditada(e.target.value)}
+                placeholder="Selecciona un documento oficial de la biblioteca superior o sube un archivo (PDF, MD, TXT o imagen) para previsualizar su contenido aquí..."
                 className={styles.previewTextArea}
               />
               <div className={styles.previewFooterNotice}>
-                <Lock size={12} />
-                <span>Documento protegido contra edición: el contenido fuente se procesará íntegro sin modificaciones manuales.</span>
+                {esTranscripcion ? <PenLine size={12} /> : <Lock size={12} />}
+                <span>
+                  {esTranscripcion
+                    ? 'Texto transcrito por IA desde tu archivo: corrige lo que esté mal leído. Las citas del material se verificarán contra este texto, no contra la imagen.'
+                    : 'Documento protegido contra edición: el contenido fuente se procesará íntegro sin modificaciones manuales.'}
+                </span>
               </div>
             </div>
+
+            {avisosFuente.length > 0 && (
+              <ul className={styles.sourceNotices}>
+                {avisosFuente.map((aviso) => (
+                  <li key={aviso}>{aviso}</li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* 4 Parámetros Pedagógicos */}
@@ -412,6 +494,7 @@ export const Step1Ingestion = ({
               <button
                 type="submit"
                 className={styles.submitButton}
+                disabled={extrayendo}
               >
                 <Sparkles size={16} color="#fde047" />
                 <span>Generar Adaptación Pedagógica RAG</span>

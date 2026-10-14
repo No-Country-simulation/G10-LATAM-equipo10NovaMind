@@ -141,6 +141,7 @@ export const Step2KnowledgeQuest = ({
   const recursoActivo = RECURSO_POR_ESTACION[activeStationIndex];
   const estadoActivo = estadoDe(contentPackage, recursoActivo);
   const isCurrentStationAvailable = estacionDisponible(contentPackage, activeStationIndex);
+  const avisosPaquete = contentPackage.advertencias ?? [];
 
   return (
     <div className={styles.container}>
@@ -175,6 +176,20 @@ export const Step2KnowledgeQuest = ({
             Estaciones listas: {unlockedList.length} de 5
           </span>
         </div>
+      )}
+
+      {/* Avisos del backend sobre la procedencia del material (transcripción IA, modelo de respaldo...) */}
+      {!isGenerating && avisosPaquete.length > 0 && (
+        <details className={styles.packageNotices} open={avisosPaquete.length <= 2}>
+          <summary>
+            {avisosPaquete.length} aviso{avisosPaquete.length > 1 ? 's' : ''} sobre este material
+          </summary>
+          <ul>
+            {avisosPaquete.map((aviso) => (
+              <li key={aviso}>{aviso}</li>
+            ))}
+          </ul>
+        </details>
       )}
 
       {/* RPG Stepper Strip */}

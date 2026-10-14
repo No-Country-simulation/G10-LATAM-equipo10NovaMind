@@ -23,6 +23,7 @@ import type {
   IndustryNiche,
   DetailLevel,
   Achievement,
+  OrigenContenido,
 } from "./types/types";
 import { triggerLevelUpConfetti, triggerSmallConfetti } from "./utils/confetti";
 import { solicitarAdaptacion } from "./services/api";
@@ -245,8 +246,8 @@ export default function App() {
     niche: IndustryNiche,
     detail: DetailLevel,
     selectedScenarioId?: string,
-    pdfBase64?: string | null,
     rawFile?: File | null,
+    origenContenido?: OrigenContenido,
   ) => {
     if (isProcessing) return;
     const version = accountVersion.current;
@@ -277,8 +278,8 @@ export default function App() {
           niche,
           detail,
           selectedScenarioId,
-          pdfBase64,
           rawFile,
+          origenContenido,
         },
         (stage, partialPackage) => {
           if (version !== accountVersion.current) return;
