@@ -1,15 +1,24 @@
 # Pendientes y próximos pasos
 
-Corte: **14 de octubre de 2026**. Las preguntas de la sección 1 son las que el agente debe hacer al retomar el trabajo. El detalle técnico está en `deploy/auditoria/PROXIMOS_PASOS.md` (no versionado) y la historia, en `BITACORA_FULLSTACK_V2.md`.
+Corte: **14 de octubre de 2026, tarde**. Las preguntas de la sección 1 son las que el agente debe hacer al retomar el trabajo. El detalle técnico está en `deploy/auditoria/PROXIMOS_PASOS.md` (no versionado) y la historia, en `BITACORA_FULLSTACK_V2.md` (las últimas entradas cuentan la jornada del 14/10).
+
+## Al retomar (leer primero)
+
+- **Quién hace qué:** Claude trabaja en esta carpeta y deja los cambios verificados **sin commit**, con el mensaje propuesto. **Los commits y el push los hace Gemini** o el usuario. Gemini trabaja en `../NovaMind-gemini` (rama `gemini/pruebas`) y a veces lanza scripts en `../pruebas_nichos/` sin abrir puertos: revisar `git status` y `git log -1` antes de editar.
+- **Último commit en el remoto:** `7a6cd6f` (documentación, CHANGELOG 2.7.0). Solo falta subir este archivo con `docs: pendientes listos para retomar`. Si ya está en `git log`, ignorar esta línea.
+- **En curso fuera del repo:**
+  - **El encargado de Supabase** revisa la página de migraciones (artefacto «Migraciones Supabase de NovaMind»: https://claude.ai/code/artifact/178338d3-0d5b-4af9-9321-795137a8c70a), con los 2 SQL de `supabase/migrations/`.
+  - **Lista de despliegue en las VM:** https://claude.ai/code/artifact/fc2a9cf5-f4a0-40c8-b6b0-453de2a8c0d4. Ya está al día (versión 2: `VITE_OCI_PAR_URL` ya no existe).
+- **Siguiente trabajo propuesto, sin cuota:** palabras clave de las fotos de la narración (sección 3, punto 6) o versionar `backend/docs/modulos/` (punto 10).
+- **Servidores locales:** el backend de Claude (puerto 8000) y el front (5173) pueden seguir abiertos desde la sesión anterior; si el puerto está ocupado, preguntar antes de reiniciarlos.
 
 ## Estado de las ramas
 
 | Rama | Commit | Situación |
 |---|---|---|
-| `feature/fullstack-nuevamente-v2` (local) | `abd1a54` | Rama de trabajo (Claude, carpeta principal) |
-| `origin/feature/fullstack-nuevamente-v2` | `6078fdd` | 1 commit por detrás: falta hacer push de `abd1a54` |
-| `gemini/pruebas` (worktree `../NovaMind-gemini`) | `abd1a54` | Rama de Gemini, al día. Desde el 14/10 Gemini hace los commits |
-| `backend` e `integracion` (local y remoto) | `394d19c` | Muy por detrás: falta un fast-forward a la rama de trabajo |
+| `feature/fullstack-nuevamente-v2` (local y `origin`) | `7a6cd6f` | Rama de trabajo, sincronizada con el remoto |
+| `gemini/pruebas` (worktree `../NovaMind-gemini`) | `7a6cd6f` o posterior | Rama de Gemini, que hace los commits |
+| `backend` e `integracion` (local y remoto) | `394d19c` | Muy por detrás: falta un fast-forward a la rama de trabajo (lo decide el usuario) |
 | `origin/frontEnd` | — | Absorbida el 14/10. Se deja sin tocar |
 | `origin/feature/newmind-edtech-oci` | — | Absorbido o descartado con motivo todo lo aprovechable |
 
@@ -45,13 +54,13 @@ Corte: **14 de octubre de 2026**. Las preguntas de la sección 1 son las que el 
    - `tsc` limpio.
    - El detalle está en la bitácora.
    - Para repetirlo: `node tests/e2e_narracion.manual.ts`, desde `frontend/`, o `--spec <guion.json>` para reutilizar un guion.
-4. **¿Se hace push y se unifican las ramas?** Los comandos son `git push`, y un `merge --ff-only` de `backend` e `integracion` a la rama de trabajo seguido de push. Son acciones sobre el remoto compartido: las hace el usuario o las autoriza explícitamente.
+4. **¿Se unifican las ramas?** El push de la rama de trabajo ya se hace con cada commit de Gemini. Falta un `merge --ff-only` de `backend` e `integracion` a la rama de trabajo, seguido de push. Son acciones sobre el remoto compartido: las hace el usuario o las autoriza explícitamente.
 5. **¿Se despliega en la VM?** La guía está en `deploy/README_DESPLIEGUE_OCI.md`, sección 3b. Bloqueantes:
    - `client_max_body_size 16m` en nginx; sin esto, toda subida de más de 1 MB da 413;
    - `GEMINI_API_KEY`, `GROQ_API_KEY`, `SUPABASE_*` y `ELEVENLABS_*` en el `.env` de la VM;
    - `PERMITIR_MODO_INVITADO=true` si la demo usa invitados con `APP_ENV=prod`;
    - `VITE_SUPABASE_*` en el build del front.
-6. **¿Está aplicada la migración `202610120001_generation_tasks.sql` en Supabase?** Sin ella, la caché de usuarios con cuenta y el registro de la narración no se guardan.
+6. **¿Qué respondió el encargado de Supabase?** Revisa la página de migraciones (enlace en «Al retomar»): las 2 migraciones de `supabase/migrations/`, RLS en las 6 tablas y las URL de vuelta `/auth/callback`. Sin la segunda migración, la caché de los usuarios con cuenta y el registro de la narración no se guardan.
 
 ## 2. Decisiones del equipo
 
