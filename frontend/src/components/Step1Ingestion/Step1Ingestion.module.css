@@ -659,15 +659,48 @@
   background-color: var(--color-violet-bg);
 }
 
-.descripcionPaquete {
-  margin: 0;
+/* Prompt de rol que resume las instrucciones reales enviadas a la IA */
+.promptPaquete {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   padding: 0.75rem 1rem;
+  border: 1px solid var(--border-subtle);
   border-left: 3px solid var(--color-violet-500);
   border-radius: var(--radius-md);
-  background-color: rgba(13, 17, 26, 0.7);
-  font-size: 0.8rem;
-  line-height: 1.55;
-  color: var(--color-text-secondary);
+  background-color: #0b0f19;
+}
+
+.promptEtiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-violet-300);
+}
+
+.promptEtiqueta em {
+  font-style: normal;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text-muted);
+}
+
+.promptTexto {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+.promptTexto::before {
+  content: '> ';
+  color: var(--color-violet-400);
 }
 
 .paramsGrid {

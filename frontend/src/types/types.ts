@@ -23,10 +23,7 @@ export type IndustryNiche =
   | 'Educación y Academia'
   | 'Ciencias e Investigación'
   | 'Industria y Operaciones'
-  | 'General'
-  | 'Fintech'
-  | 'Salud'
-  | 'E-commerce';
+  | 'General';
 
 export type DetailLevel = 
   | 'Didáctico'

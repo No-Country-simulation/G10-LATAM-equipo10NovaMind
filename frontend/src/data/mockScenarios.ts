@@ -249,7 +249,7 @@ export const REAL_DOCUMENTS_CATALOG: RealDocumentPreset[] = [
     id: 'apache-kafka',
     nombre_archivo: 'apache_kafka_introduction.md',
     titulo: 'Apache Kafka: Fundamentos y Arquitectura de Event Streaming',
-    nicho: 'Fintech',
+    nicho: 'Finanzas y Contabilidad',
     perfil: 'Desarrollador Junior',
     formato_sugerido: 'Paquete Educativo Completo (5 Estaciones)',
     tipo: 'markdown',
