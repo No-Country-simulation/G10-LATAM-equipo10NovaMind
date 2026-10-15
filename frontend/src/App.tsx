@@ -261,8 +261,8 @@ export default function App() {
     setReady(false);
     setIsProcessing(true);
     setIsGenerating(true);
-    setProcessingStage("Iniciando orquestación con agentes de NovaMind...");
-    setGeneratingMessage("Conectando con el orquestador multi-agente de NovaMind...");
+    setProcessingStage("Iniciando orquestación con agentes de NuevaMente...");
+    setGeneratingMessage("Conectando con el orquestador multi-agente de NuevaMente...");
     setCompletedStations({});
     setActiveStationIndex(0);
     setQuizState(EMPTY_QUIZ);
@@ -328,7 +328,7 @@ export default function App() {
         // Se mostraron recursos parciales de una generación que no terminó: volver a lo anterior
         setCurrentPackage(prior.pkg); setPackageId(prior.packageId); setQuestKey(prior.questKey);
       }
-      console.error("Error en el pipeline de NovaMind:", err);
+      console.error("Error en el pipeline de NuevaMente:", err);
       const errMsg = err instanceof Error ? err.message : String(err);
       alert(`⚠️ ${errMsg}`);
       setCurrentStep(1);

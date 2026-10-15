@@ -45,7 +45,7 @@ if str(ROOT_DIR / "backend") not in sys.path:
 
 def print_banner():
     print("=" * 68)
-    print("       NOVAMIND — RESTABLECIMIENTO A ESTADO CERO (ZERO-STATE)")
+    print("       NUEVAMENTE — RESTABLECIMIENTO A ESTADO CERO (ZERO-STATE)")
     print("=" * 68)
     print(f"Directorio Raíz: {ROOT_DIR}\n")
 

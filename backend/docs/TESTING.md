@@ -73,7 +73,7 @@ Certificación en vivo contra el documento técnico oficial de Kafka (11.052 car
 - **Auditoría RAG:** 27 afirmaciones técnicas evaluadas punto por punto con Google Gemini 2.5 Flash en **23.80 s**.
 - **Fidelidad RAG:** Score de anclaje de **1.0 (100% de afirmaciones verificadas, 0 alucinaciones)**.
 - **Claridad Pedagógica:** **Alta**.
-- **Persistencia OCI:** Completada (`status_upload: completado`) en el bucket `novamind-contenidos-educativos`.
+- **Persistencia OCI:** Completada (`status_upload: completado`) en el bucket `nuevamente-contenidos-educativos`.
 
 ## Benchmark de Concurrencia y Prueba de Estrés (`scripts/prueba_estres.py`)
 Resultados empíricos obtenidos bajo tráfico concurrente y carga de trabajo pesada:

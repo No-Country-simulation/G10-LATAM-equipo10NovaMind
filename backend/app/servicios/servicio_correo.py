@@ -2,7 +2,7 @@
 backend/app/servicios/servicio_correo.py
 ----------------------------------------
 Servicio de Despacho Asíncrono de Reportes Pedagógicos por Correo Electrónico
-Hackathon ONE G10 (NovaMind / NuevaMente)
+Hackathon ONE G10 (NuevaMente)
 
 Capacidades:
 - Envío silencioso en segundo plano con adjunto PDF estandarizado.
@@ -24,7 +24,7 @@ from typing import Any, Dict, Optional
 from app.servicios.generador_pdf import GeneradorPDFEducativo
 from app.storage.oci_client import OCIObjectStorageClient, _slugify
 
-logger = logging.getLogger("novamind.servicio_correo")
+logger = logging.getLogger("nuevamente.servicio_correo")
 
 
 def enmascarar_correo(correo: Optional[str]) -> str:
@@ -114,7 +114,7 @@ class ServicioCorreo:
             msg = MIMEMultipart()
             msg["From"] = self.smtp_from
             msg["To"] = destinatario
-            msg["Subject"] = f"🎓 Tu Dossier Educativo NovaMind: {titulo_documento}"
+            msg["Subject"] = f"🎓 Tu Dossier Educativo NuevaMente: {titulo_documento}"
 
             cuerpo = (
                 f"Hola,\n\n"
@@ -126,7 +126,7 @@ class ServicioCorreo:
                 f"3. Guía Práctica Paso a Paso (Tutorial)\n"
                 f"4. Diagrama de Arquitectura y Flujo\n"
                 f"5. Quiz Interactivo con Justificaciones RAG\n\n"
-                f"Generado por NovaMind Multi-Agente con respaldo en Oracle Cloud Infrastructure Always Free.\n"
+                f"Generado por NuevaMente Multi-Agente con respaldo en Oracle Cloud Infrastructure Always Free.\n"
             )
             msg.attach(MIMEText(cuerpo, "plain"))
 

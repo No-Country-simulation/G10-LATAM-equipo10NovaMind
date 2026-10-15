@@ -68,7 +68,7 @@ from app.core.schemas import (
 from app.servicios.registro_tareas import RegistroTareas
 from app.servicios.servicio_gemini import ClienteGemini, GeminiError, esquema_json, modelo_esta_agotado
 
-logger = logging.getLogger("novamind.generacion_paralela")
+logger = logging.getLogger("nuevamente.generacion_paralela")
 
 MAX_CARACTERES_DOCUMENTO = 350_000
 PRESUPUESTO_GENERACION_S = 240.0  # después, las tareas pendientes se cancelan y se publica lo que haya

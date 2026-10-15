@@ -34,7 +34,7 @@ from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 import httpx
 from pydantic import BaseModel, ValidationError
 
-logger = logging.getLogger("novamind.servicio_gemini")
+logger = logging.getLogger("nuevamente.servicio_gemini")
 
 URL_BASE = "https://generativelanguage.googleapis.com/v1beta"
 _ESTADOS_REINTENTABLES = {429, 500, 502, 503, 504}

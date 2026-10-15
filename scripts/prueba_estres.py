@@ -1,5 +1,5 @@
 """
-Suite de Prueba de Estrés y Resiliencia para NovaMind Backend (FastAPI + LangGraph)
+Suite de Prueba de Estrés y Resiliencia para NuevaMente Backend (FastAPI + LangGraph)
 Evalúa:
 1. Ráfaga de alta concurrencia en endpoints REST (/health, /api/v1/config/opciones).
 2. Capacidad de respuesta de /health bajo carga pesada de inferencia RAG simultánea (prueba de no-bloqueo del event loop).
@@ -152,7 +152,7 @@ def test_health_durante_inferencia_pesada():
 
 def main():
     print("="*60)
-    print("🧪 BATERÍA DE PRUEBAS DE ESTRÉS Y RENDIMIENTO — NOVAMIND BACKEND")
+    print("🧪 BATERÍA DE PRUEBAS DE ESTRÉS Y RENDIMIENTO — NUEVAMENTE BACKEND")
     print("="*60)
 
     # 1. Ráfaga /health (100 peticiones, 20 hilos)

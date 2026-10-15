@@ -1,6 +1,6 @@
-# 🧠 NovaMind — Microservicio Frontend (React 19 + Vite + TypeScript)
+# 🧠 NuevaMente — Microservicio Frontend (React 19 + Vite + TypeScript)
 
-> **Plataforma Oficial:** NovaMind — Sistema Inteligente de Adaptación Pedagógica Multi-Agente RAG  
+> **Plataforma Oficial:** NuevaMente — Sistema Inteligente de Adaptación Pedagógica Multi-Agente RAG  
 > **Tecnologías:** React 19, TypeScript, Vite 8, Lucide React, Canvas Confetti, OKLCH Tokens, CSS Modules  
 > **Puerto por Defecto:** `http://localhost:5173`  
 > **Backend Vinculado:** `http://127.0.0.1:8000` (FastAPI + LangGraph)  
@@ -10,7 +10,7 @@
 
 ## 📖 1. Visión General del Frontend
 
-El frontend de **NovaMind** es una Single Page Application (SPA) modular de alta fidelidad estética (Dark Glassmorphism con paleta de tokens OKLCH y tipografías Syne + Plus Jakarta Sans). Guía al usuario en un circuito de aprendizaje gamificado estructurado en 3 pasos:
+El frontend de **NuevaMente** es una Single Page Application (SPA) modular de alta fidelidad estética (Dark Glassmorphism con paleta de tokens OKLCH y tipografías Syne + Plus Jakarta Sans). Guía al usuario en un circuito de aprendizaje gamificado estructurado en 3 pasos:
 
 1. **Paso 1: Configuración e Ingesta (`Step1Ingestion`):**  
    - Ingesta de documentos técnicos reales (`.pdf`, `.md`, `.txt` o texto libre).
@@ -27,7 +27,7 @@ El frontend de **NovaMind** es una Single Page Application (SPA) modular de alta
 
 3. **Paso 3: Auditoría RAG & Persistencia OCI Cloud (`Step3OCICloud`):**  
    - Medidor visual del Score de Anclaje a la Fuente (Zero Hallucination Audit).
-   - Metadatos de persistencia en Oracle Cloud Object Storage (`novamind-contenidos-educativos`, región `sa-santiago-1`, ETag verificado).
+   - Metadatos de persistencia en Oracle Cloud Object Storage (`nuevamente-contenidos-educativos`, región `sa-santiago-1`, ETag verificado).
    - Exportación instantánea del paquete pedagógico en JSON estructurado.
 
 4. **Capa Transversal de Gamificación (`PlayerHUD` & Recompensas):**  
@@ -63,7 +63,7 @@ El frontend de **NovaMind** es una Single Page Application (SPA) modular de alta
 |---|---|---|:---:|---|
 | **`App.tsx`** | Componente Raíz / Estado Global | [`src/App.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/App.tsx) | ✅ **Activo** | Gestiona el stepper principal (Pasos 1, 2, 3), sistema de XP, escudos cognitivos, medallas y orquesta la API. |
 | **`PlayerHUD`** | Barra de Gamificación | [`src/components/PlayerHUD/PlayerHUD.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/PlayerHUD/PlayerHUD.tsx) | ✅ **Activo** | Muestra XP en tiempo real, días de racha, 3 escudos cognitivos y progreso de medallas. |
-| **`Header`** | Barra de Identidad | [`src/components/Header/Header.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Header/Header.tsx) | ✅ **Activo** | Isotipo Möbius oficial, branding NovaMind, estado de conexión y acceso a perfil de usuario. |
+| **`Header`** | Barra de Identidad | [`src/components/Header/Header.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Header/Header.tsx) | ✅ **Activo** | Isotipo Möbius oficial, branding NuevaMente, estado de conexión y acceso a perfil de usuario. |
 | **`Step1Ingestion`** | Paso 1: Configuración & Ingesta | [`src/components/Step1Ingestion/Step1Ingestion.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Step1Ingestion/Step1Ingestion.tsx) | ✅ **Activo** | Carga de archivos, botón de 1-click `⚡ Cargar Guía OCI Swap`, selección de perfiles y barra de progreso. |
 | **`Step2KnowledgeQuest`** | Paso 2: Circuito 5 Estaciones | [`src/components/Step2KnowledgeQuest/Step2KnowledgeQuest.tsx`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/Step2KnowledgeQuest/Step2KnowledgeQuest.tsx) | ✅ **Activo** | Navegación entre las 5 estaciones pedagógicas, desbloqueo secuencial y cálculo de avance. |
 | **`Station1ResumenNinja`** | Estación 1: Síntesis TL;DR | [`src/components/stations/Station1ResumenNinja/`](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/frontend/src/components/stations/Station1ResumenNinja/Station1ResumenNinja.tsx) | ✅ **Activo** | Analogía central didáctica, métricas rápidas de impacto y conceptos clave verificados (+50 XP). |
@@ -83,9 +83,9 @@ frontend/
 ├── package.json               # Dependencias (React 19, Vite 8, Lucide, Canvas Confetti)
 ├── tsconfig.json              # Configuración base TypeScript
 ├── vite.config.ts             # Configuración de empaquetado Vite
-├── index.html                 # Punto de entrada HTML con meta NovaMind
+├── index.html                 # Punto de entrada HTML con meta NuevaMente
 ├── public/                    # Isotipo oficial SVG y recursos estáticos
-│   ├── Isotipo.svg            # Isotipo Möbius NovaMind
+│   ├── Isotipo.svg            # Isotipo Möbius NuevaMente
 │   └── IsotipoMonocromo.svg   # Versión monocromo
 │
 └── src/                       # Código fuente de la aplicación
@@ -172,4 +172,4 @@ Idea original de la rama `frontEnd` (guía de arranque para el equipo de backend
 Para más detalles sobre la arquitectura integral y la evolución del sistema, consultar:
 * [guia_optimizacion_swap_oci.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/data/documents/guia_optimizacion_swap_oci.md): Documentación oficial del benchmark y guía técnica de memoria Swap OCI.
 * [CAMBIOS.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/CAMBIOS.md): Bitácora cronológica de versiones y cambios del proyecto.
-* [README.md Maestro](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/README.md): Manual general y arquitectura unificada de NovaMind.
+* [README.md Maestro](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/README.md): Manual general y arquitectura unificada de NuevaMente.

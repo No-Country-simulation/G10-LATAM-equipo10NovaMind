@@ -1093,3 +1093,39 @@ Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos caso
 - **Resumen ejecutivo en la Estación 1:** va entre la «Síntesis Conceptual» y los «Puntos clave», con el formato «**En una frase:** …» y puntos, y con las secciones y conclusiones plegadas. `utils/resumenEnPuntos.ts` parte el texto auditado por oraciones, sin reescribirlo: no corta «p. ej.» ni «1.5 GB». Hay 3 tests nuevos. Si el paquete no tiene `resumen_ninja`, el resumen sigue en `RecursosApoyo`.
 
 **Verificación.** Backend: 316 tests. Frontend: 29 tests, `tsc`, `eslint` en los archivos tocados y build. El build para OCI está en `deploy/frontend-dist-oci/` (`index-fLDdjBGQ.js`). El cambio del backend necesita commit, `git pull` en la VM 1 y reiniciar el servicio.
+
+
+## 14 oct 2026 · Propuesta de Gemini sobre `newmind-edtech-oci` y tarjeta del archivo en la Estación 1
+
+**Propuesta revisada.** Gemini volvió a analizar `cc5d028`, `30a0665` y `7b4616c` y propuso 4 cosas. Revisadas contra el código; el usuario decidió:
+- **Subir varios archivos y la directiva multidocumento: para después de entregar el proyecto.** No basta con portar la interfaz: hoy `fuentes.py` verifica la página contra un solo documento, así que cada cita tendría que nombrar su archivo. Además hay que contar con el límite de 16 MB de nginx, la VM de 1 GB, el corte de 100 s de Cloudflare y una huella de caché con varios archivos.
+- **Ejemplos concretos por sector (PCI-DSS, CyberDay, historias clínicas…): descartados.** Empujan al modelo a atribuir al documento usos que no tiene, el mismo fallo que cerró la 4.ª corrida de nichos.
+- **Estilos de la zona de carga: hechos** (abajo).
+- Aviso: el informe no recordaba que de `cc5d028` ya se habían sacado las directivas de nivel de detalle (entrada «nivel de detalle y prompt visual»).
+
+**Cambios (sin commit):**
+- `Step1Ingestion.tsx`: bajo la zona de carga aparece una tarjeta del archivo elegido con su nombre, una etiqueta de tipo (PDF, MD, TXT o IMG), el tamaño en KB o MB y un botón para quitarlo. Quitarlo limpia el documento, el título y la vista previa. Si se quita durante una extracción, la respuesta se descarta por turno, como ya pasaba al cambiar de archivo. El tamaño se guarda aparte (`bytesArchivo`), porque `rawFile` queda vacío mientras se extrae y con las transcripciones. La zona de carga ya no repite «Archivo: …».
+- `Step1Ingestion.module.css`: al arrastrar, la zona se ve con fondo violeta y brillo (antes solo cambiaba el borde). El color de la tarjeta y de la etiqueta depende del tipo: rosa para PDF, violeta para MD, cian para TXT y ámbar para imagen. Solo usa tokens de `tokens.css`.
+
+**Verificación.** Frontend: 29 tests, `tsc` y `eslint` sin errores en `Step1Ingestion/`, y build correcto. Falta la revisión visual en local (5173).
+
+
+## 14 oct 2026 · Ojo de la contraseña, nombre NuevaMente y plan del visor de cámara
+
+**Segunda propuesta de Gemini** (diferencias visuales con `newmind-edtech-oci`). El usuario decidió:
+- **Ojo para ver la contraseña: hecho.**
+- **«Olvidé mi contraseña»: descartado**, no se hará.
+- **El visor de cámara de la Estación 4 se conserva:** hay que integrarlo (antes estaba descartado). El plan está en `historial_progreso/PLAN_VISOR_DIRECTOR.md`. Todos sus datos tienen que ser reales: en la rama original, «Atmósfera», «Encuadre», «Dinamismo» y «Anclaje 100 %» salían de una lista fija por número de escena, y «24 FPS · REC» describe un video que no existe.
+- **El nombre del producto es NuevaMente**, no NovaMind ni NewMind.
+
+**Ojo (`AuthModal.tsx`).** El campo de la contraseña tiene un botón para mostrarla u ocultarla, con `aria-pressed` y una etiqueta que cambia. Los campos llevan los iconos de correo y candado. El CSS (`inputWrapper`, `inputIcon`, `inputWithToggle`, `toggleVisibilityBtn`) ya estaba en el módulo, heredado de la otra rama, pero nada lo usaba.
+
+**Nombre.** Se cambió con un script de `perl` que conserva los finales de línea (comprobado: ningún archivo cambió entre CRLF y LF). Abarca 41 archivos:
+- **Lo que ve el usuario:** el `<title>` y la descripción de `index.html`, los mensajes de progreso, la Estación 1, la ventana de inicio de sesión (`invitado@nuevamente.local`, también en `auth.py`), la cabecera y el pie del PDF, el asunto y el cuerpo del correo, y el `User-Agent` que reciben Openverse y Wikimedia.
+- **Lo interno:** los nombres de los loggers (`novamind.*` pasa a `nuevamente.*`, y los tests con `caplog` se ajustaron), las cabeceras de los módulos, los README, `backend/docs/`, los `.bat` y los scripts. En la documentación, el bucket `novamind-contenidos-educativos` se corrigió por el real, `nuevamente-contenidos-educativos`.
+- **Sin tocar, a propósito:**
+  - **Los prompts del modelo** («Eres el redactor de síntesis de NovaMind…»): forman parte de `huella_tarea`, así que cambiarlos invalidaría la caché de todos los paquetes y la demo volvería a gastar cuota. El usuario no los ve.
+  - **Los identificadores internos:** `doc-novamind` y el prefijo de la carpeta temporal.
+  - **Lo externo:** el dominio `novamind.techgk.cl`, las rutas de las carpetas, el nombre del repositorio y las ramas.
+  - **El documento de ejemplo** `data/documents/guia_optimizacion_swap_oci.md`: es contenido fuente, y cambiarlo invalidaría su caché.
+  - **El historial** (`historial_progreso/`, `legado/`).

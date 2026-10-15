@@ -1,11 +1,11 @@
 @echo off
 setlocal
 set "PYTHONIOENCODING=utf-8"
-title NovaMind - Restablecer Estado Cero (Zero-State)
+title NuevaMente - Restablecer Estado Cero (Zero-State)
 
 echo =======================================================
 echo    Restablecimiento de Entorno a Estado Cero
-echo                     NovaMind
+echo                     NuevaMente
 echo =======================================================
 echo.
 

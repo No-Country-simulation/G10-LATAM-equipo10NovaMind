@@ -1,6 +1,6 @@
 # 🧠 NuevaMente — Sistema Inteligente de Adaptación y Generación de Contenido Educativo
 
-> **Desarrollado por el Equipo 10 (G10 - NovaMind) para No-Country**  
+> **Desarrollado por el Equipo 10 (G10 - NuevaMente) para No-Country**  
 > **Hackathon ONE G10 · Oracle Next Education & Alura · Proyecto 1**  
 > Solución integral desacoplada en **Microservicios (Backend FastAPI + Frontend React 19 + Vite)** con orquestación multi-agente en **LangGraph**, **RAG vectorial con Cohere**, **ChromaDB**, y persistencia modular.
 
@@ -40,7 +40,7 @@ La revisión de 217 archivos de texto candidatos a Git y archivos compilados del
 
 **NuevaMente** es una plataforma diseñada para democratizar y personalizar el aprendizaje técnico. Transforma documentos complejos (manuales de ingeniería, guías de arquitectura, documentación de APIs) en **5 formatos pedagógicos adaptados** al perfil del estudiante, nivel de profundidad y sector laboral.
 
-### La Fusión Multidisciplinaria del Equipo NovaMind (Integración Multirama)
+### La Fusión Multidisciplinaria del Equipo NuevaMente (Integración Multirama)
 Este sistema consolida la integración técnica de las diferentes ramas y roles de trabajo del equipo:
 1. **Gobernanza y Planificación (`origin/project-manager`)**: Definición del alcance pedagógico, matriz de requerimientos del Hackathon ONE G10, actas y criterios de aceptación.
 2. **Microservicio Frontend (`origin/frontEnd`)**: Interfaz web reactiva (React 19 + TypeScript + Vite) con visualizadores pedagógicos dinámicos (Flashcards 3D, Quiz, Tutorial, TL;DR, Guión) y dashboard de auditoría RAG.
@@ -623,7 +623,7 @@ El detalle por área está en [backend/docs/TESTING.md](backend/docs/TESTING.md)
 * **Pedro (`origin/feature/agents-langgraph`)**: Motor multi-agente en LangGraph, prompting pedagógico adaptativo, RAG vectorial con Cohere y ChromaDB, validación de contratos Pydantic v2 y suite determinista de 70 pruebas automatizadas (100% éxito).
 * **Frontend Lead (`origin/frontEnd`)**: Microservicio web cliente en React 19 + TypeScript + Vite, cliente HTTP desacoplado con soporte multipart, visualizadores interactivos de los 5 formatos pedagógicos (Flashcards 3D, Quiz, Tutorial, TL;DR, Guión) y dashboard de métricas RAG.
 * **Project Manager (`origin/project-manager`)**: Gobernanza, definición funcional de requerimientos, cronograma de trabajo, actas de acuerdos y alineación estratégica con los objetivos del Hackathon ONE G10.
-* **Equipo NovaMind (`origin/integracion` ➔ `origin/main`)**: Sinergia técnica de integración continua, armonización de contratos, scripts unificados de ejecución local (`iniciar_local.bat`), validación End-to-End con score de anclaje RAG de 1.00 y empaquetado para release final.
+* **Equipo NuevaMente (`origin/integracion` ➔ `origin/main`)**: Sinergia técnica de integración continua, armonización de contratos, scripts unificados de ejecución local (`iniciar_local.bat`), validación End-to-End con score de anclaje RAG de 1.00 y empaquetado para release final.
 
 # Integración de autenticación y persistencia (9–10 de octubre de 2026)
 

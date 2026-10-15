@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Protocol, Tuple
 
 import httpx
 
-logger = logging.getLogger("novamind.registro_tareas")
+logger = logging.getLogger("nuevamente.registro_tareas")
 
 # Columnas de una fila; el lote de upsert de PostgREST exige las mismas claves en todas.
 COLUMNAS = (

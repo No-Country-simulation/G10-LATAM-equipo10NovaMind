@@ -587,7 +587,7 @@ const DirectorStudio = ({
   };
 
   // Prompt para un generador de imágenes externo: lo genera el usuario con su herramienta,
-  // NovaMind no gasta cuota ni presenta la imagen como propia.
+  // NuevaMente no gasta cuota ni presenta la imagen como propia.
   const promptVisual = promptVisualEscena(currentScene);
   const handleCopyPrompt = async () => {
     try {

@@ -1,5 +1,5 @@
 """
-Script de prueba End-to-End para NovaMind con apache_kafka_introduction.md
+Script de prueba End-to-End para NuevaMente con apache_kafka_introduction.md
 """
 
 import sys

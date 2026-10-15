@@ -1,5 +1,5 @@
 /**
- * Servicio de Comunicación con FastAPI & Resiliencia Offline — NovaMind
+ * Servicio de Comunicación con FastAPI & Resiliencia Offline — NuevaMente
  * Conecta con el orquestador multi-agente LangGraph o conmuta al Modo Demo si el backend está apagado.
  */
 
@@ -85,7 +85,7 @@ export async function solicitarAdaptacion(
 
   // 1. Intentar comunicación con el Backend FastAPI vía SSE Streaming
   try {
-    onProgress?.('Iniciando conexión con el orquestador de NovaMind...', undefined, 0);
+    onProgress?.('Iniciando conexión con el orquestador de NuevaMente...', undefined, 0);
 
     const formData = new FormData();
     if (docTitle) formData.append('titulo', docTitle);
