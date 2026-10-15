@@ -173,7 +173,7 @@ def test_estado_incompleto_no_se_reintenta():
 
 # --- Seguridad de logs y errores ------------------------------------------------------
 def test_la_clave_nunca_aparece_en_errores_ni_logs(caplog):
-    caplog.set_level(logging.DEBUG, logger="novamind.servicio_gemini")
+    caplog.set_level(logging.DEBUG, logger="nuevamente.servicio_gemini")
     guion = Guion([httpx.Response(400, json={"error": {"message": f"API key {CLAVE} inválida"}})])
     with pytest.raises(GeminiError) as exc:
         _json(_cliente(guion))

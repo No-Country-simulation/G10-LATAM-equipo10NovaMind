@@ -1,6 +1,6 @@
-# ⚡ NovaMind — Microservicio Backend (FastAPI + LangGraph + RAG)
+# ⚡ NuevaMente — Microservicio Backend (FastAPI + LangGraph + RAG)
 
-> **Plataforma Oficial:** NovaMind — Sistema Inteligente de Adaptación Pedagógica Multi-Agente RAG  
+> **Plataforma Oficial:** NuevaMente — Sistema Inteligente de Adaptación Pedagógica Multi-Agente RAG  
 > **Tecnologías:** Python 3.10+, FastAPI, Uvicorn, LangGraph, Pydantic v2, ChromaDB, Cohere Embeddings & LLM, Google Gemini 2.5 Flash / Groq Fallback  
 > **Puerto por Defecto:** `http://127.0.0.1:8000`  
 > **Frontend Vinculado:** `http://localhost:5173` (React 19 + Vite)  
@@ -10,7 +10,7 @@
 
 ## 📖 1. Visión General del Backend
 
-El backend de **NovaMind** es un microservicio REST y Server-Sent Events (SSE) de alto rendimiento, diseñado para operar bajo restricciones de hardware rigurosas (instancias `VM.Standard.E2.1.Micro` de 1 vCPU y 1 GB de RAM física con 4 GB de Swap en OCI Always Free).
+El backend de **NuevaMente** es un microservicio REST y Server-Sent Events (SSE) de alto rendimiento, diseñado para operar bajo restricciones de hardware rigurosas (instancias `VM.Standard.E2.1.Micro` de 1 vCPU y 1 GB de RAM física con 4 GB de Swap en OCI Always Free).
 
 Orquesta una arquitectura multi-agente reflexiva con ciclo de retroalimentación:
 1. **Agente 1: Investigador RAG (`agente1_investigador.py`):**
@@ -26,7 +26,7 @@ Orquesta una arquitectura multi-agente reflexiva con ciclo de retroalimentación
    - Evaluación multi-proveedor desacoplada: **Google Gemini 2.5 Flash** (primario, ~2s) con auto-failover a **Groq (`llama-3.3-70b-versatile`)** o Cohere ante saturación o timeout.
    - Emisión del Score de Anclaje matemático (0.0 a 1.0) y desglose de afirmaciones auditadas.
 4. **Almacenamiento Híbrido Resiliente (`servicios/almacenamiento_oci.py`):**
-   - Subida automática del paquete educativo en formato JSON a OCI Object Storage (`novamind-contenidos-educativos`).
+   - Subida automática del paquete educativo en formato JSON a OCI Object Storage (`nuevamente-contenidos-educativos`).
    - Fallback transparente a disco local (`backend/data/outputs/`) en caso de contingencia offline.
 
 ---
@@ -86,7 +86,7 @@ GROQ_API_KEY=tu_clave_groq  # Opcional, para auto-failover
 OCI_CONFIG_FILE=~/.oci/config
 OCI_PROFILE=DEFAULT
 OCI_NAMESPACE=tu_namespace
-OCI_BUCKET_NAME=novamind-contenidos-educativos
+OCI_BUCKET_NAME=nuevamente-contenidos-educativos
 ```
 
 ### Paso 3: Iniciar Servidor

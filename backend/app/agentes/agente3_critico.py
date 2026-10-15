@@ -1,6 +1,6 @@
 """
 Agente 3 - Crítico / Revisor
-Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Desarrollado por: Equipo 10 (G10 - NuevaMente) para No-Country
 Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Responsable de:

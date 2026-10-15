@@ -2,7 +2,7 @@
 backend/app/servicios/generador_pdf.py
 --------------------------------------
 Generador de Cuadernillo Pedagógico Estandarizado en PDF (ReportLab)
-Hackathon ONE G10 (NovaMind / NuevaMente)
+Hackathon ONE G10 (NuevaMente)
 
 Compila las estaciones educativas generadas:
 1. Portada & Metadatos (Perfil, Nicho, Anclaje RAG)
@@ -40,7 +40,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-logger = logging.getLogger("novamind.generador_pdf")
+logger = logging.getLogger("nuevamente.generador_pdf")
 
 
 class GeneradorPDFEducativo:
@@ -51,7 +51,7 @@ class GeneradorPDFEducativo:
         self._configurar_estilos()
 
     def _configurar_estilos(self) -> None:
-        """Define la paleta y tipografía del informe institucional NovaMind."""
+        """Define la paleta y tipografía del informe institucional NuevaMente."""
         self.color_primario = colors.HexColor("#0f172a")    # Slate 900
         self.color_acento = colors.HexColor("#4f46e5")      # Indigo 600
         self.color_secundario = colors.HexColor("#0284c7")  # Sky 600
@@ -141,7 +141,7 @@ class GeneradorPDFEducativo:
         # -------------------------------------------------------------
         # 1. CABECERA & METADATOS
         # -------------------------------------------------------------
-        elementos.append(Paragraph("NOVAMIND / NUEVAMENTE", ParagraphStyle(
+        elementos.append(Paragraph("NUEVAMENTE", ParagraphStyle(
             name="BrandBadge",
             fontName="Helvetica-Bold",
             fontSize=9,
@@ -321,7 +321,7 @@ class GeneradorPDFEducativo:
         elementos.append(Spacer(1, 14))
         elementos.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#94a3b8"), spaceAfter=8))
         elementos.append(Paragraph(
-            "Generado automáticamente por NovaMind / NuevaMente — Simulación Hackathon ONE G10. Respaldado en Oracle Cloud Infrastructure.",
+            "Generado automáticamente por NuevaMente — Simulación Hackathon ONE G10. Respaldado en Oracle Cloud Infrastructure.",
             ParagraphStyle(
                 name="Pie",
                 fontName="Helvetica",

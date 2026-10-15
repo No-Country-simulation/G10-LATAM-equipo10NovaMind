@@ -331,6 +331,85 @@
 
 .fileDropzoneActiva {
   border-style: solid;
+  background-color: var(--color-violet-bg);
+  box-shadow: var(--shadow-glow-violet);
+}
+
+/* Tarjeta del archivo elegido: el color del borde y de la etiqueta indica el tipo */
+.fileCard {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.5rem 0.45rem 0.75rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-card-subtle);
+  border: 1px solid var(--border-subtle);
+  border-left-width: 3px;
+  min-width: 0;
+}
+
+.fileCardPDF { border-left-color: var(--color-rose-500); }
+.fileCardMD { border-left-color: var(--color-violet-500); }
+.fileCardTXT { border-left-color: var(--color-cyan-500); }
+.fileCardIMG { border-left-color: var(--color-amber-500); }
+
+.fileCardIcon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.fileCardName {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileTypeBadge {
+  flex-shrink: 0;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.fileTypeBadgePDF { background: var(--color-rose-bg); border-color: var(--color-rose-border); color: var(--color-rose-400); }
+.fileTypeBadgeMD { background: var(--color-violet-bg); border-color: var(--color-violet-border); color: var(--color-violet-300); }
+.fileTypeBadgeTXT { background: var(--color-cyan-bg); border-color: var(--color-cyan-border); color: var(--color-cyan-300); }
+.fileTypeBadgeIMG { background: var(--color-amber-bg); border-color: var(--color-amber-border); color: var(--color-amber-300); }
+
+.fileCardMeta {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fileCardRemove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.fileCardRemove:hover,
+.fileCardRemove:focus-visible {
+  color: var(--color-rose-400);
+  background-color: var(--color-rose-bg);
 }
 
 .fieldGroupAncho {

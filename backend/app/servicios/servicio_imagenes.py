@@ -27,12 +27,12 @@ import httpx
 
 from app.core.schemas import ImagenEscena
 
-logger = logging.getLogger("novamind.servicio_imagenes")
+logger = logging.getLogger("nuevamente.servicio_imagenes")
 
 URL_OPENVERSE = "https://api.openverse.org/v1/images/"
 URL_WIKIMEDIA = "https://commons.wikimedia.org/w/api.php"
 # Wikimedia exige un User-Agent identificable
-AGENTE = "NovaMind/2.0 (plataforma educativa; contacto via repositorio del proyecto)"
+AGENTE = "NuevaMente/2.0 (plataforma educativa; contacto via repositorio del proyecto)"
 
 # Openverse tarda ~18 s en una búsqueda que no tiene en caché (medido el 2026-10-14; 0,5 s si
 # la tiene). Con 8 s fallaba casi siempre y decidía Wikimedia, peor en significado. Las fotos

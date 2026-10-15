@@ -2,7 +2,7 @@
 backend/app/agentes/cadena_colaborativa.py
 -----------------------------------------
 Pipeline Colaborativo Multi-Modelo (Vectorless In-Context RAG + Auditoría LPU + Humanización)
-Hackathon ONE G10 (NovaMind / NuevaMente)
+Hackathon ONE G10 (NuevaMente)
 
 Flujo de Relevos:
   1. GEMINI 2.5 FLASH:
@@ -71,7 +71,7 @@ from app.core.schemas import (
 from app.core.fuentes import contexto_de_cita, pagina_de_cita
 from app.storage.oci_client import OCIObjectStorageClient, _slugify
 
-logger = logging.getLogger("novamind.cadena_colaborativa")
+logger = logging.getLogger("nuevamente.cadena_colaborativa")
 
 
 def _limpiar_json(texto: str) -> Dict[str, Any]:

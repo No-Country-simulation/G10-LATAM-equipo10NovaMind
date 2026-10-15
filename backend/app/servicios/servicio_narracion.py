@@ -45,7 +45,7 @@ from app.servicios.servicio_imagenes import BuscadorImagenes
 from app.servicios.servicio_voz import ErrorVoz, Sintetizador, VozGenerada
 from app.storage.almacen_narracion import AlmacenBinario
 
-logger = logging.getLogger("novamind.servicio_narracion")
+logger = logging.getLogger("nuevamente.servicio_narracion")
 
 # Sube este número si cambia la medición o el formato guardado: invalida lo reutilizable.
 VERSION_NARRACION = 2

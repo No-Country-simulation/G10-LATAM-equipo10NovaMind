@@ -155,7 +155,7 @@ def test_el_correo_del_destinatario_nunca_aparece_completo_en_los_logs(caplog):
     servicio = ServicioCorreo()
     servicio.smtp_host = None
     servicio.smtp_user = None
-    with caplog.at_level("INFO", logger="novamind.servicio_correo"):
+    with caplog.at_level("INFO", logger="nuevamente.servicio_correo"):
         servicio.enviar_dossier_pedagogico_silencioso(
             destinatario="alumno@ejemplo.com", titulo_documento="Arquitectura Cloud",
             perfil="Principiante", nicho="General", contenido_adaptado={"introduccion_contextualizada": "Intro"},
@@ -173,7 +173,7 @@ def test_error_smtp_no_filtra_la_direccion_en_el_log(caplog):
             raise smtplib.SMTPRecipientsRefused({"alumno@ejemplo.com": (550, b"rechazado")})
 
     with patch("app.servicios.servicio_correo.smtplib.SMTP", SmtpQueRechaza), \
-         caplog.at_level("INFO", logger="novamind.servicio_correo"):
+         caplog.at_level("INFO", logger="nuevamente.servicio_correo"):
         r = servicio.enviar_dossier_pedagogico_silencioso(
             destinatario="alumno@ejemplo.com", titulo_documento="T", perfil="Principiante", nicho="General",
             contenido_adaptado={"introduccion_contextualizada": "Intro"},
@@ -186,8 +186,8 @@ def test_el_remitente_existe_tambien_en_la_clase_base(monkeypatch):
     monkeypatch.setenv("SMTP_USER", "envios@ejemplo.com")
     monkeypatch.delenv("SMTP_FROM", raising=False)
     assert ServicioCorreo().smtp_from == "envios@ejemplo.com"
-    monkeypatch.setenv("SMTP_FROM", "NovaMind <no-responder@ejemplo.com>")
-    assert ServicioCorreo().smtp_from == "NovaMind <no-responder@ejemplo.com>"
+    monkeypatch.setenv("SMTP_FROM", "NuevaMente <no-responder@ejemplo.com>")
+    assert ServicioCorreo().smtp_from == "NuevaMente <no-responder@ejemplo.com>"
 
 
 def _crear_respuesta_mock() -> RespuestaAdaptacion:

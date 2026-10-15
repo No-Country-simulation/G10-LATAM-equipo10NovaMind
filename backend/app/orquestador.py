@@ -1,6 +1,6 @@
 """
 Orquestador LangGraph de NuevaMente.
-Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Desarrollado por: Equipo 10 (G10 - NuevaMente) para No-Country
 Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Coordina los tres agentes y decide qué pasa después de cada paso:

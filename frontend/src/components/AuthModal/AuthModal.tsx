@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { requireSupabase, authUser } from '../../services/supabase';
 import styles from './AuthModal.module.css';
 
@@ -10,6 +11,7 @@ interface Props { isOpen: boolean; onClose: () => void; onLoginSuccess: (user: A
 export function AuthModal({ isOpen, onClose, onLoginSuccess }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [verPassword, setVerPassword] = useState(false);
   const [register, setRegister] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -36,7 +38,7 @@ export function AuthModal({ isOpen, onClose, onLoginSuccess }: Props) {
           onLoginSuccess({
             id: '00000000-0000-0000-0000-000000000000',
             name: 'Invitado Demo',
-            email: 'invitado@novamind.local',
+            email: 'invitado@nuevamente.local',
             provider: 'local',
           });
           onClose();
@@ -51,14 +53,30 @@ export function AuthModal({ isOpen, onClose, onLoginSuccess }: Props) {
           : await client.auth.signInWithPassword({ email, password });
         if (result.error) throw result.error;
         if (result.data.session && result.data.user) {
-          onLoginSuccess(authUser(result.data.user)); setPassword(''); onClose();
+          onLoginSuccess(authUser(result.data.user)); setPassword(''); setVerPassword(false); onClose();
         } else setMessage('Revisa tu correo para confirmar la cuenta antes de ingresar.');
       }); }}>
         <label className={styles.label}>Correo electrónico
-          <input className={styles.input} type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} />
+          <span className={styles.inputWrapper}>
+            <Mail size={16} className={styles.inputIcon} aria-hidden />
+            <input className={styles.input} type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} />
+          </span>
         </label>
         <label className={styles.label}>Contraseña
-          <input className={styles.input} type="password" autoComplete={register ? 'new-password' : 'current-password'} required minLength={8} value={password} onChange={e => setPassword(e.target.value)} />
+          <span className={styles.inputWrapper}>
+            <Lock size={16} className={styles.inputIcon} aria-hidden />
+            <input className={`${styles.input} ${styles.inputWithToggle}`} type={verPassword ? 'text' : 'password'} autoComplete={register ? 'new-password' : 'current-password'} required minLength={8} value={password} onChange={e => setPassword(e.target.value)} />
+            <button
+              type="button"
+              className={styles.toggleVisibilityBtn}
+              onClick={() => setVerPassword(v => !v)}
+              aria-label={verPassword ? 'Ocultar la contraseña' : 'Mostrar la contraseña'}
+              aria-pressed={verPassword}
+              title={verPassword ? 'Ocultar la contraseña' : 'Mostrar la contraseña'}
+            >
+              {verPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </span>
         </label>
         <button className={styles.submitBtn} disabled={busy}>{register ? 'Crear cuenta' : 'Ingresar'}</button>
       </form>

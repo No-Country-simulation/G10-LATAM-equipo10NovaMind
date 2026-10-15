@@ -26,7 +26,7 @@ from app.core.ingestion import IngestionError, texto_con_marcadores
 from app.core.schemas import MIN_CARACTERES_DOCUMENTO
 from app.servicios.servicio_gemini import ClienteGemini, GeminiError, entrada_con_archivo
 
-logger = logging.getLogger("novamind.transcripcion")
+logger = logging.getLogger("nuevamente.transcripcion")
 
 ORIGEN_TRANSCRIPCION = "transcripcion_ia"
 # Datos inline: la petición entera debe quedar por debajo de 20 MB y el base64 ocupa 4/3.

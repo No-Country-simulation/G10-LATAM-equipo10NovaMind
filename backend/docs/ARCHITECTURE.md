@@ -62,7 +62,7 @@ flowchart LR
 
 ### 4. Capa de Persistencia y Almacenamiento
 - **ChromaDB**: Base vectorial local persistente (`./chroma_db` o `data/chroma/`) con métrica de similitud coseno (`cosine`).
-- **OCI Object Storage Always Free (`backend/app/servicios/almacenamiento_oci.py`)**: Cliente oficial SDK (`oci.object_storage.UploadManager`) que persiste documentos originales en `documentos-originales/` y paquetes estructurados en `contenidos-generados/` dentro del bucket `novamind-contenidos-educativos` (`sa-santiago-1`).
+- **OCI Object Storage Always Free (`backend/app/servicios/almacenamiento_oci.py`)**: Cliente oficial SDK (`oci.object_storage.UploadManager`) que persiste documentos originales en `documentos-originales/` y paquetes estructurados en `contenidos-generados/` dentro del bucket `nuevamente-contenidos-educativos` (`sa-santiago-1`).
 - **Almacenamiento Local (`backend/app/servicios/almacenamiento_oci.py`)**: Respaldo automático transparente en `data/outputs/` si OCI está fuera de línea o sin credenciales configuradas.
 
 ## Flujo de Adaptación End-to-End

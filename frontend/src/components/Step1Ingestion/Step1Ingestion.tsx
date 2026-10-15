@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import {
   UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock, ScanText, PenLine, AlertTriangle, Loader2,
-  Dices, SlidersHorizontal,
+  Dices, SlidersHorizontal, FileText, X,
 } from 'lucide-react';
 import type {
   RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset, OrigenContenido,
@@ -15,6 +15,17 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const ARCHIVOS_ACEPTADOS = '.pdf,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp';
 const esImagen = (f: File) => f.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(f.name);
 const esPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+// Tarjeta del archivo elegido: etiqueta de tipo y tamaño legible
+const tipoArchivo = (nombre: string): 'PDF' | 'MD' | 'TXT' | 'IMG' => {
+  if (/\.pdf$/i.test(nombre)) return 'PDF';
+  if (/\.(md|markdown)$/i.test(nombre)) return 'MD';
+  if (/\.(png|jpe?g|webp)$/i.test(nombre)) return 'IMG';
+  return 'TXT';
+};
+const tamanoLegible = (bytes: number) =>
+  bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
 // Opciones de adaptación: las usan los selectores (modo Personalizado) y el sorteo (Sorpréndeme)
 const PERFILES: ReadonlyArray<[RecipientProfile, string]> = [
   ['Principiante', 'Principiante / Transición'],
@@ -109,6 +120,8 @@ export const Step1Ingestion = ({
   const [detail, setDetail] = useState<DetailLevel>(() => alAzar(NIVELES));
   const [fileName, setFileName] = useState<string | null>(null);
   const [rawFile, setRawFile] = useState<File | null>(null);
+  // rawFile queda vacío mientras se extrae o si el texto es una transcripción: el tamaño se guarda aparte
+  const [bytesArchivo, setBytesArchivo] = useState<number | null>(null);
   // transcripcion_ia: el texto lo transcribió Gemini de una imagen o un PDF escaneado y es editable
   const [origen, setOrigen] = useState<OrigenContenido>('documento');
   const [extraccion, setExtraccion] = useState<Extraccion>({ estado: 'inactiva' });
@@ -160,6 +173,7 @@ export const Step1Ingestion = ({
     setFormat(doc.formato_sugerido);
     setFileName(doc.nombre_archivo);
     setRawFile(null);
+    setBytesArchivo(null);
     setDocContent('');
     setExtraccion({ estado: 'cargando', mensaje: 'Cargando el documento…' });
 
@@ -170,6 +184,7 @@ export const Step1Ingestion = ({
       const mimeType = doc.tipo === 'pdf' ? 'application/pdf' : 'text/markdown';
       if (turno !== turnoSubida.current) return;
       setRawFile(new File([blob], doc.nombre_archivo, { type: mimeType }));
+      setBytesArchivo(blob.size);
       if (doc.tipo === 'markdown') {
         setDocContent(await blob.text());
         setExtraccion({ estado: 'inactiva' });
@@ -231,6 +246,7 @@ export const Step1Ingestion = ({
     const turno = turnoSubida.current;
     setSelectedDocId(null);
     setFileName(file.name);
+    setBytesArchivo(file.size);
     setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
 
     if (!esImagen(file) && !esPdf(file)) {
@@ -270,6 +286,17 @@ export const Step1Ingestion = ({
     }
   };
 
+  // Quita el documento elegido; si aún se estaba extrayendo, su respuesta se descarta por turno
+  const quitarArchivo = () => {
+    reiniciarFuente();
+    setSelectedDocId(null);
+    setFileName(null);
+    setRawFile(null);
+    setBytesArchivo(null);
+    setDocContent('');
+    setDocTitle('');
+  };
+
   const handleTranscripcionEditada = (texto: string) => {
     if (esTranscripcion) setDocContent(texto);
   };
@@ -305,7 +332,7 @@ export const Step1Ingestion = ({
               Pipeline RAG & Agentes Pedagógicos
             </span>
             <span className={styles.hackathonSign}>
-              Oracle Next Education · Hackathon ONE G10 · NovaMind
+              Oracle Next Education · Hackathon ONE G10 · NuevaMente
             </span>
           </div>
 
@@ -419,11 +446,9 @@ export const Step1Ingestion = ({
                 <span className={styles.fileText}>
                   {arrastrando
                     ? 'Suelta el archivo aquí'
-                    : fileName
-                      ? `Archivo: ${fileName}`
-                      : sinDocumento
-                        ? 'Arrastra tu documento aquí o haz clic para elegirlo'
-                        : 'Arrastra o haz clic para cambiar de documento'}
+                    : sinDocumento
+                      ? 'Arrastra tu documento aquí o haz clic para elegirlo'
+                      : 'Arrastra o haz clic para cambiar de documento'}
                 </span>
                 {sinDocumento && (
                   <span className={styles.fileHint}>
@@ -438,6 +463,28 @@ export const Step1Ingestion = ({
                   style={{ display: 'none' }}
                 />
               </label>
+              {fileName && (() => {
+                const tipo = tipoArchivo(fileName);
+                return (
+                  <div className={`${styles.fileCard} ${styles[`fileCard${tipo}`]}`}>
+                    <FileText size={16} className={styles.fileCardIcon} aria-hidden />
+                    <span className={styles.fileCardName} title={fileName}>{fileName}</span>
+                    <span className={`${styles.fileTypeBadge} ${styles[`fileTypeBadge${tipo}`]}`}>{tipo}</span>
+                    {bytesArchivo !== null && (
+                      <span className={styles.fileCardMeta}>{tamanoLegible(bytesArchivo)}</span>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.fileCardRemove}
+                      onClick={quitarArchivo}
+                      aria-label={`Quitar ${fileName}`}
+                      title="Quitar el documento"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className={`${styles.fieldGroup} ${styles.fieldGroupAncho}`}>
@@ -596,7 +643,7 @@ export const Step1Ingestion = ({
           <div className={styles.promptPaquete}>
             <span className={styles.promptEtiqueta}>
               <Sparkles size={12} />
-              Lo que NovaMind le pedirá a la IA <em>(resumen de las instrucciones reales)</em>
+              Lo que NuevaMente le pedirá a la IA <em>(resumen de las instrucciones reales)</em>
             </span>
             <p className={styles.promptTexto} aria-live="polite">
               {promptPaquete(profile, niche, detail)}

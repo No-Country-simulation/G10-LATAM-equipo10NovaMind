@@ -1,6 +1,6 @@
 """
 Backend de NuevaMente — API REST (FastAPI).
-Desarrollado por: Equipo 10 (G10 - NovaMind) para No-Country
+Desarrollado por: Equipo 10 (G10 - NuevaMente) para No-Country
 Simulación Hackathon ONE G10 (Oracle Next Education & Alura)
 
 Expone los servicios de adaptación educativa mediante LangGraph, Agentes y RAG.

@@ -12,8 +12,9 @@ Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las 
   - El usuario ejecuta los comandos en las VM. Claude no tiene acceso.
 - **Esperando al usuario:**
   1. **Revisión en local** (5173 y 8000, levantados por Claude): el resumen de la Estación 1, el diagrama y la diapositiva en pausa.
-  2. **Commit de Gemini** de lo que está sin commit: `servicio_gemini.py` y su test, `RecursosApoyo`, `Station1ResumenNinja`, `Step2KnowledgeQuest`, `resumenEnPuntos.ts` con su test y `historial_progreso/`. Mensaje propuesto: `feat(estacion1,voz): resumen en una frase y puntos junto a la sintesis; la voz de Gemini espera la cuota por minuto`.
-  3. **Desplegarlo:** en la VM 1, `git pull` y reiniciar el servicio; en la VM 2, subir `deploy/frontend-dist-oci/` (`index-fLDdjBGQ.js`).
+  2. ~~Commit del resumen y de la voz~~: hecho en `f1fbe7b`, con push.
+  3. **Desplegar `f1fbe7b`** si no se hizo: en la VM 1, `git pull` y reiniciar el servicio; en la VM 2, subir `deploy/frontend-dist-oci/` (`index-fLDdjBGQ.js`).
+  3b. **Revisar en local y hacer commit** de la tarjeta del archivo (Estación 1), del ojo de la contraseña y del cambio de nombre a NuevaMente (todo sin commit). Mensaje propuesto: `feat(ui): tarjeta del archivo en estacion 1, ojo de la contraseña y nombre NuevaMente en textos visibles`.
   4. Saber **qué voz le sonó robótica** (Alice de ElevenLabs o Kore de Gemini), para proponer otra.
   5. El texto de las 2 citas «no encontradas» del resumen de Snowflake (secciones 3 y 5). Hay que saber si es paráfrasis del modelo o un fallo del verificador.
 - **En curso fuera del repo:**
@@ -90,6 +91,12 @@ Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las 
   - una voz nativa en español sonaría más natural que Alice, que es inglesa, al mismo coste. `eleven_multilingual_v2` es aún más natural, pero gasta el doble;
   - escuchar la voz Alice y decidir si se queda;
   - restringir la clave a la IP de la VM.
+- **Decidido el 14/10 (propuesta de Gemini sobre `cc5d028`):** subir varios archivos y la directiva multidocumento se dejan **para después de la entrega**. Antes hay que resolver las citas por archivo y página, los 16 MB y la huella de caché. Los ejemplos concretos por sector se **descartan**.
+- **Decidido el 14/10 (segunda propuesta de Gemini):**
+  - el nombre del producto es **NuevaMente**;
+  - «Olvidé mi contraseña» se **descarta**;
+  - el **visor de cámara de la Estación 4 se integra** según `historial_progreso/PLAN_VISOR_DIRECTOR.md`, con datos reales.
+  - Pendiente de decidir: cambiar «NovaMind» en los prompts del modelo. Invalida la caché de todos los paquetes.
 - **Pago por uso de Gemini:** solo si en la demo falta cuota. El modelo del resumen ya está decidido: se queda `3.5-flash-lite`.
 
 ## 3. Trabajo técnico pendiente

@@ -1,10 +1,10 @@
 @echo off
 setlocal
 set "PYTHONIOENCODING=utf-8"
-title NovaMind - Lanzador de Servicios Locales
+title NuevaMente - Lanzador de Servicios Locales
 
 echo =======================================================
-echo     Iniciando Servicios de NovaMind en Local
+echo     Iniciando Servicios de NuevaMente en Local
 echo =======================================================
 echo.
 
@@ -42,21 +42,21 @@ if not exist "%~dp0frontend\node_modules" (
 
 REM 4. Iniciar Backend FastAPI en ventana propia (desde raiz con --app-dir backend)
 echo [1/2] Levantando Backend (FastAPI) en http://127.0.0.1:8000 ...
-start "NovaMind - Backend FastAPI (Puerto 8000)" cmd /k "title NovaMind - Backend FastAPI && set "PYTHONIOENCODING=utf-8" && cd /d "%~dp0" && .venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload"
+start "NuevaMente - Backend FastAPI (Puerto 8000)" cmd /k "title NuevaMente - Backend FastAPI && set "PYTHONIOENCODING=utf-8" && cd /d "%~dp0" && .venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload"
 
 echo Esperando 3 segundos a que inicialice el Backend...
 timeout /t 3 /nobreak >nul
 
 REM 5. Iniciar Frontend React + Vite en ventana propia
 echo [2/2] Levantando Frontend (React 19 + Vite) en http://localhost:5173 ...
-start "NovaMind - Frontend React Vite" cmd /k "title NovaMind - Frontend React Vite && cd /d "%~dp0frontend" && npm.cmd run dev"
+start "NuevaMente - Frontend React Vite" cmd /k "title NuevaMente - Frontend React Vite && cd /d "%~dp0frontend" && npm.cmd run dev"
 
 echo Esperando 2 segundos a que inicialice el servidor Vite...
 timeout /t 2 /nobreak >nul
 
 echo.
 echo =======================================================
-echo   Servicios de NovaMind Iniciados con Exito!
+echo   Servicios de NuevaMente Iniciados con Exito!
 echo =======================================================
 echo  - Aplicacion Web (Frontend):    http://localhost:5173
 echo  - API REST Backend (FastAPI):   http://127.0.0.1:8000

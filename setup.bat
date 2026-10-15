@@ -1,10 +1,10 @@
 @echo off
 setlocal
 set "PYTHONIOENCODING=utf-8"
-title NovaMind - Instalacion y Configuracion de Entorno
+title NuevaMente - Instalacion y Configuracion de Entorno
 
 echo =======================================================
-echo    Instalacion Automatica del Entorno - NovaMind
+echo    Instalacion Automatica del Entorno - NuevaMente
 echo =======================================================
 echo.
 

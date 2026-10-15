@@ -52,7 +52,7 @@ async def require_user(credentials: HTTPAuthorizationCredentials = Depends(beare
         if not guest_mode_enabled():
             raise HTTPException(401, 'El modo invitado está deshabilitado en este servidor.',
                                 headers={'WWW-Authenticate': 'Bearer'})
-        return Principal(GUEST_USER_ID, GUEST_TOKEN, 'invitado@novamind.local', is_guest=True)
+        return Principal(GUEST_USER_ID, GUEST_TOKEN, 'invitado@nuevamente.local', is_guest=True)
 
     url, key = settings()
     try:
