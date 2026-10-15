@@ -153,6 +153,19 @@
 }
 
 /* Formulario */
+.mensaje {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+.submitBtn:disabled,
+.googleButton:disabled,
+.guestButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 .form {
   display: flex;
   flex-direction: column;
@@ -239,7 +252,7 @@
 }
 
 .submitBtn:hover {
-  background: linear-gradient(90deg, var(--color-violet-500), var(--color-purple-600));
+  background: linear-gradient(90deg, var(--color-violet-500), var(--color-violet-400));
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
 }
 

@@ -1129,3 +1129,28 @@ Coste: menos de 1 s por documento con todas las citas de la prueba. Los dos caso
   - **Lo externo:** el dominio `novamind.techgk.cl`, las rutas de las carpetas, el nombre del repositorio y las ramas.
   - **El documento de ejemplo** `data/documents/guia_optimizacion_swap_oci.md`: es contenido fuente, y cambiarlo invalidaría su caché.
   - **El historial** (`historial_progreso/`, `legado/`).
+
+Commit `492b3d9` (hecho por el usuario).
+
+
+## 14 oct 2026 · Diseño de la ventana de inicio de sesión de `newmind-edtech-oci` y logo de la cabecera
+
+**Logo.** La cabecera seguía mostrando «Nova» y «Mind» en dos `<span>` separados, y el script del cambio de nombre buscaba la palabra entera, así que no lo encontró. Ahora pone «Nueva» y «Mente». Busqué otras marcas partidas en `src/` e `index.html` y no hay más.
+
+**Ventana de inicio de sesión** (diseño de `9142429`, portado a mano). Se trajo la estructura; el CSS ya estaba en el módulo. Incluye:
+- el isotipo, el título y un subtítulo por vista;
+- el botón de Google con su logo, el de invitado y el separador «o con correo»;
+- campos con icono y etiquetas unidas a ellos con `htmlFor`;
+- el campo «Nombre» al crear la cuenta, que se envía a Supabase como `full_name`, el dato del que `authUser()` ya saca el nombre;
+- debajo, el enlace para cambiar entre «Regístrate aquí» e «Inicia sesión»;
+- se cierra con Escape o con un clic fuera de la ventana.
+
+**Lo que no se trajo:**
+- **El usuario genérico** (`estudiante.demo@oracle-alura.edu`): la otra rama simulaba el inicio de sesión. Aquí sigue siendo el real de Supabase.
+- **El aviso «Sesión de demostración… compatible con OCI Object Storage»:** es falso con la autenticación real.
+- **Los subtítulos «almacenamiento OCI» y «Always Free»:** se sustituyeron por lo que de verdad hace la cuenta, que es guardar los paquetes y el progreso.
+- **«Olvidé mi contraseña»:** descartado por el usuario.
+
+**Error corregido.** `.submitBtn:hover` usaba `--color-purple-600`, que no existe en `tokens.css`, así que al pasar el ratón el degradado dejaba de pintarse. Ahora va de violeta 500 a violeta 400. También se añadió un estado deshabilitado a los botones mientras se espera la respuesta.
+
+**Verificación.** Frontend: 29 tests, `tsc`, `eslint` en `AuthModal/` y `Header/`, y build. Falta la revisión visual.
