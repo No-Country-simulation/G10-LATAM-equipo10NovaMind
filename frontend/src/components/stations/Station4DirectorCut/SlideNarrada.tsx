@@ -17,6 +17,8 @@ interface SlideNarradaProps {
   soloCine?: boolean;
   /** Palabras del guion y la que suena: subtítulos del Modo Cine */
   subtitulo?: { palabras: string[]; activa: number } | null;
+  /** Ninguna voz funcionó: el video avanza solo con subtítulos */
+  sinVoz?: boolean;
 }
 
 const VENTANA_SUBTITULO = 12;
@@ -42,6 +44,7 @@ export const SlideNarrada = ({
   onToggleTheater,
   soloCine = false,
   subtitulo = null,
+  sinVoz = false,
 }: SlideNarradaProps) => {
   const visual = scene.visual;
   const puntos = (Array.isArray(visual?.puntos_clave) ? visual.puntos_clave : []).slice(0, 4);
@@ -189,7 +192,7 @@ export const SlideNarrada = ({
               <div className={styles.theaterHeaderBar}>
                 <div className={styles.theaterBadge}>
                   <Clapperboard size={18} />
-                  <span>Modo Cine · Microclase Audiovisual</span>
+                  <span>Modo Cine · Microclase Audiovisual{sinVoz ? ' · sin voz' : ''}</span>
                 </div>
                 {onToggleTheater && (
                   <button

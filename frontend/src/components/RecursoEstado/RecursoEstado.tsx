@@ -19,7 +19,12 @@ const VERIFICACION = {
     ayuda: 'La auditoría de fidelidad no cubrió este recurso. Revísalo contra el documento.' },
 } as const;
 
+/** Oculto por decisión del usuario (14/10): "Auditada" / "Sin auditar". Para volver a mostrarlo, `true`. */
+const MOSTRAR_CHIP_VERIFICACION = false;
+const MOSTRAR_CITA_NO_ENCONTRADA = false;
+
 export function ChipVerificacion({ estado }: { estado: EstadoRecurso }) {
+  if (!MOSTRAR_CHIP_VERIFICACION) return null;
   const v = VERIFICACION[estado.verificacion] ?? VERIFICACION.no_auditada;
   return (
     <span className={`${styles.chip} ${v.clase}`} title={v.ayuda}>
@@ -44,6 +49,9 @@ export function FuenteChip({ fuente, etiquetaVisor }: {
     chipRef.current?.focus();  // el foco vuelve a donde estaba
   }, []);
   if (!fuente) return null;
+  // Oculto por decisión del usuario (14/10): una cita no encontrada no muestra nada.
+  // Para volver a mostrar "Cita no encontrada en el documento", poner MOSTRAR_CITA_NO_ENCONTRADA en true.
+  if (!fuente.verificada && !MOSTRAR_CITA_NO_ENCONTRADA) return null;
   const etiqueta = fuente.verificada
     ? fuente.pagina ? `Fuente · pág. ${fuente.pagina}` : 'Fuente verificada'
     : 'Cita no encontrada en el documento';

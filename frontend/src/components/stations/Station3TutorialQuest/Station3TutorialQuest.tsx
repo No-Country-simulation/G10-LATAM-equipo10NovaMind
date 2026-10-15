@@ -45,7 +45,8 @@ export const Station3TutorialQuest = ({
   ];
 
   const totalSteps = safeSteps.length;
-  const minRequired = Math.max(1, Math.ceil(totalSteps * 0.6));
+  // Aprobar exige el 100 % (decisión del usuario, 14/10; antes el 60 %)
+  const minRequired = Math.max(1, totalSteps);
   const currentStep = safeSteps[activeStepIndex] || safeSteps[0];
   const stepId = currentStep.id || `step-${activeStepIndex}`;
 
@@ -101,7 +102,7 @@ export const Station3TutorialQuest = ({
             Laboratorio de Ejecución Técnica
           </h3>
           <p className={styles.stationSubtitle}>
-            Valida los checkpoints prácticos. Umbral de aprobación: al menos {minRequired} de {totalSteps} pasos completados.
+            Valida los checkpoints prácticos. Para aprobar, valida los {totalSteps} pasos.
           </p>
         </div>
 

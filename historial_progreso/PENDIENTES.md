@@ -18,7 +18,7 @@ Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las 
   4. Saber **qué voz le sonó robótica** (Alice de ElevenLabs o Kore de Gemini), para proponer otra.
   5. El texto de las 2 citas «no encontradas» del resumen de Snowflake (secciones 3 y 5). Hay que saber si es paráfrasis del modelo o un fallo del verificador.
 - **En curso fuera del repo:**
-  - **El encargado de Supabase** revisa la página de migraciones (artefacto «Migraciones Supabase de NovaMind»: https://claude.ai/code/artifact/178338d3-0d5b-4af9-9321-795137a8c70a), con los 2 SQL de `supabase/migrations/`.
+  - ~~**El encargado de Supabase** revisa la página de migraciones~~ **Hecho el 14/10: respondió que todo está correcto.** Página (artefacto «Migraciones Supabase de NovaMind»: https://claude.ai/code/artifact/178338d3-0d5b-4af9-9321-795137a8c70a), con los 2 SQL de `supabase/migrations/`.
   - **Lista de despliegue en las VM:** https://claude.ai/code/artifact/fc2a9cf5-f4a0-40c8-b6b0-453de2a8c0d4. **Desactualizada:** el despliegue real siguió el runbook, que añade Python 3.12, el build en el PC y el `.env` subido por WinSCP.
 - **ElevenLabs:** la clave de producción tiene un tope de 500 créditos, que da para **una sola narración**, y ya se gastó. Ahora narra Gemini.
 - **Servidores locales:** el backend de Claude (8000) y el front (5173) pueden seguir abiertos; si el puerto está ocupado, preguntar antes de reiniciarlos.
@@ -76,7 +76,7 @@ Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las 
    - `GEMINI_API_KEY`, `GROQ_API_KEY`, `SUPABASE_*` y `ELEVENLABS_*` en el `.env` de la VM;
    - `PERMITIR_MODO_INVITADO=true` si la demo usa invitados con `APP_ENV=prod`;
    - `VITE_SUPABASE_*` en el build del front.
-6. **¿Qué respondió el encargado de Supabase?** Revisa la página de migraciones (enlace en «Al retomar»): las 2 migraciones de `supabase/migrations/`, RLS en las 6 tablas y las URL de vuelta `/auth/callback`. Sin la segunda migración, la caché de los usuarios con cuenta y el registro de la narración no se guardan.
+6. ~~**¿Qué respondió el encargado de Supabase?**~~ **14/10: todo correcto** (migraciones, RLS y URL de vuelta).   Revisa la página de migraciones (enlace en «Al retomar»): las 2 migraciones de `supabase/migrations/`, RLS en las 6 tablas y las URL de vuelta `/auth/callback`. Sin la segunda migración, la caché de los usuarios con cuenta y el registro de la narración no se guardan.
 
 ## 2. Decisiones del equipo
 

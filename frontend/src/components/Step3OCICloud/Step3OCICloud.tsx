@@ -102,9 +102,10 @@ export const Step3OCICloud = ({
                 Auditoría de Grounding & Fidelidad
               </h3>
             </div>
+            {/* Píldora "Auditada / Sin auditar" oculta por decisión del usuario (14/10):
             <span className={styles.verifiedPill}>
               {isAudited ? 'Auditada' : 'Sin auditar'}
-            </span>
+            </span> */}
           </div>
 
           {/* Medidor de Score */}
