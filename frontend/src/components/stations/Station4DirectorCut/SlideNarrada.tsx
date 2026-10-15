@@ -1,15 +1,9 @@
 import { useEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Pause, Maximize2, Minimize2, Clapperboard, X } from 'lucide-react';
-import type { DirectorScene, EspecificacionVisual } from '../../../types/types';
+import type { DirectorScene } from '../../../types/types';
+import { ETIQUETA_VISUAL } from '../../../utils/datosVisor';
 import styles from './SlideNarrada.module.css';
-
-const ETIQUETA_VISUAL: Record<EspecificacionVisual['tipo'], string> = {
-  diagrama_bloques: 'Diagrama de bloques',
-  ppt_concepto: 'Concepto',
-  palabras_clave: 'Palabras clave',
-  comparativa: 'Comparativa',
-};
 
 interface SlideNarradaProps {
   scene: DirectorScene;
@@ -19,7 +13,19 @@ interface SlideNarradaProps {
   onTogglePlay?: () => void;
   isTheater?: boolean;
   onToggleTheater?: () => void;
+  /** Sin vista previa en la página: la diapositiva solo se ve en el Modo Cine */
+  soloCine?: boolean;
+  /** Palabras del guion y la que suena: subtítulos del Modo Cine */
+  subtitulo?: { palabras: string[]; activa: number } | null;
 }
+
+const VENTANA_SUBTITULO = 12;
+
+/** Las palabras alrededor de la que suena, en bloques fijos para que el texto no salte. */
+const tramoSubtitulo = (palabras: string[], activa: number) => {
+  const inicio = Math.floor(Math.max(0, activa) / VENTANA_SUBTITULO) * VENTANA_SUBTITULO;
+  return { inicio, palabras: palabras.slice(inicio, inicio + VENTANA_SUBTITULO) };
+};
 
 /**
  * Diapositiva del video narrado, dibujada siempre desde el JSON del guion: título,
@@ -34,6 +40,8 @@ export const SlideNarrada = ({
   onTogglePlay,
   isTheater = false,
   onToggleTheater,
+  soloCine = false,
+  subtitulo = null,
 }: SlideNarradaProps) => {
   const visual = scene.visual;
   const puntos = (Array.isArray(visual?.puntos_clave) ? visual.puntos_clave : []).slice(0, 4);
@@ -159,12 +167,18 @@ export const SlideNarrada = ({
     </figcaption>
   );
 
+  const lineaSubtitulo = subtitulo && subtitulo.palabras.length > 0 && subtitulo.activa >= 0
+    ? tramoSubtitulo(subtitulo.palabras, subtitulo.activa)
+    : null;
+
   return (
     <>
-      <figure className={styles.marco}>
-        {renderSlideCanvas(false)}
-        {credito}
-      </figure>
+      {!soloCine && (
+        <figure className={styles.marco}>
+          {renderSlideCanvas(false)}
+          {credito}
+        </figure>
+      )}
 
       {/* Portal de Modo Cine / Teatro Flotante */}
       {isTheater &&
@@ -194,6 +208,20 @@ export const SlideNarrada = ({
                 {renderSlideCanvas(true)}
                 {credito}
               </figure>
+
+              {/* Subtítulos: la palabra que suena, resaltada (decorativo: el guion completo está en la página) */}
+              {lineaSubtitulo && (
+                <p className={styles.subtitulos} aria-hidden="true">
+                  {lineaSubtitulo.palabras.map((p, i) => (
+                    <span
+                      key={lineaSubtitulo.inicio + i}
+                      className={lineaSubtitulo.inicio + i === subtitulo?.activa ? styles.subtituloActiva : undefined}
+                    >
+                      {p}{' '}
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
           </div>,
           document.body,

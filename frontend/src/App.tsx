@@ -70,7 +70,8 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [unlockedStations, setUnlockedStations] = useState<number[]>([0, 1, 2, 3, 4]);
   const [generatingMessage, setGeneratingMessage] = useState<string>("");
-  const [history, setHistory] = useState<PackageRow[]>([]);
+  // El historial no se muestra (decisión del usuario, 14/10); al entrar se abre el último paquete
+  const [, setHistory] = useState<PackageRow[]>([]);
   const [packageId, setPackageId] = useState<string | null>(null);
   // Identidad del recorrido montado en el Paso 2. Se fija al abrir un paquete o al empezar a
   // recibir recursos, y no cambia cuando llega el paquete final: así la estación en uso no se reinicia.
@@ -455,35 +456,12 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>
-        <section aria-label="Mi historial" style={{ padding: '1rem', marginBottom: '1rem' }}>
-          <p role="status">{syncMessage}</p>
-          {user && <><h2>Mi historial</h2>
-            <button disabled={!ready || isProcessing} onClick={() => {
-              const version = accountVersion.current; setReady(false);
-              void (async () => {
-                await saveQueue.current;
-                await writeState(user.id, packageId, latestState.current);
-                const example = structuredClone(SCENARIOS[0].data);
-                example.contenido_adaptado.titulo = 'Ejemplo de demostración · prueba de persistencia';
-                example.metadatos.fecha_generacion = new Date().toISOString();
-                const row = await createPackage(example, { source: 'explicit-demo' }, user.id);
-                if (version !== accountVersion.current) return;
-                setHistory(previous => [row, ...previous]);
-                await restorePackage(row, version);
-              })().catch(error => setSyncMessage('No se pudo guardar el ejemplo: ' + error.message))
-                .finally(() => { if (version === accountVersion.current) setReady(true); });
-            }}>Guardar ejemplo de demostración en mi cuenta</button>
-            {history.length === 0 && <p>Aún no tienes contenidos guardados en esta versión.</p>}
-            {history.map(row => <button key={row.id} disabled={!ready || isProcessing} onClick={() => {
-              const version = accountVersion.current; setReady(false);
-              void (async () => {
-                await saveQueue.current;
-                await writeState(user.id, packageId, latestState.current);
-                await restorePackage(row, version);
-              })().catch(error => setSyncMessage('No se pudo abrir: ' + error.message))
-                .finally(() => { if (version === accountVersion.current) setReady(true); });
-            }}>{row.title}</button>)}</>}
-        </section>
+        {/* El estado de la sincronización no se muestra (decisión del usuario, 14/10); sus fallos sí */}
+        {/^(Error|No se)/.test(syncMessage) && (
+          <p role="alert" style={{ padding: '0.75rem 1rem', margin: '0 0 1rem', color: 'var(--color-rose-400)' }}>
+            {syncMessage}
+          </p>
+        )}
         {currentStep === 1 && (
           <Step1Ingestion
             key={user?.id || 'guest'}

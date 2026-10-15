@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import {
   UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock, ScanText, PenLine, AlertTriangle, Loader2,
-  Dices, SlidersHorizontal, FileText, X,
+  Dices, SlidersHorizontal, FileText, X, ChevronRight,
 } from 'lucide-react';
 import type {
   RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset, OrigenContenido,
@@ -640,15 +640,15 @@ export const Step1Ingestion = ({
             </div>
           )}
 
-          <div className={styles.promptPaquete}>
-            <span className={styles.promptEtiqueta}>
-              <Sparkles size={12} />
+          {/* Plegado por defecto: está para quien quiera saber qué se le pide a la IA */}
+          <details className={styles.promptPaquete}>
+            <summary className={styles.promptEtiqueta}>
+              <ChevronRight size={12} className={styles.promptChevron} aria-hidden="true" />
+              <Sparkles size={12} aria-hidden="true" />
               Lo que NuevaMente le pedirá a la IA <em>(resumen de las instrucciones reales)</em>
-            </span>
-            <p className={styles.promptTexto} aria-live="polite">
-              {promptPaquete(profile, niche, detail)}
-            </p>
-          </div>
+            </summary>
+            <p className={styles.promptTexto}>{promptPaquete(profile, niche, detail)}</p>
+          </details>
 
           {/* Estado de Animación del Pipeline o Botón de Acción */}
       {isProcessing ? (

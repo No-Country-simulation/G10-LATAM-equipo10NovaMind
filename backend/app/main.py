@@ -40,9 +40,10 @@ from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
 from app.agentes.generacion_paralela import NOMBRES_RECURSO, GeneradorParalelo
 from app.core.config import Config, ConfigError
 from app.servicios.registro_tareas import RegistroMemoria, RegistroSupabase, RegistroTareas
+from app.servicios.servicio_ampliacion import AmpliadorEscenas
 from app.servicios.servicio_gemini import ClienteGemini, GeminiError
 from app.servicios.servicio_imagenes import BuscadorImagenes
-from app.servicios.servicio_narracion import Narrador
+from app.servicios.servicio_narracion import Narrador, diapositivas_sin_voz
 from app.servicios.servicio_voz import VozElevenLabs, VozGemini
 from app.storage.almacen_narracion import almacen_del_entorno, prefijo_narraciones, ruta_segura
 from app.integration.private_pipeline import PrivateCadena, PrivateCorreo, notification_recipient
@@ -64,8 +65,10 @@ from app.core.schemas import (
     NivelDetalle,
     PerfilDestinatario,
     RespuestaAdaptacion,
+    RespuestaAmpliacion,
     RespuestaNarracion,
     SolicitudAdaptacion,
+    SolicitudAmpliacion,
     SolicitudNarracion,
     VideoJobSpec,
 )
@@ -815,7 +818,15 @@ async def generar_narracion(
     puede, Gemini TTS con la voz `voz`), duración medida (máximo 60 s) y fotos libres opcionales.
     Usuarios: se guarda en su almacén privado y se reutiliza si se pide de nuevo.
     Invitados: el audio vuelve en la respuesta y no se guarda.
+    Con voz_servidor=false (voz del navegador) solo se buscan las fotos: ni voz ni almacén.
     """
+    if not solicitud.voz_servidor:
+        buscador = BuscadorImagenes()
+        try:
+            async with _cupo(principal):
+                return await diapositivas_sin_voz(solicitud, buscador)
+        finally:
+            await buscador.aclose()
     try:
         almacen = None if principal.is_guest else almacen_del_entorno()
     except ValueError as exc:
@@ -840,6 +851,24 @@ async def generar_narracion(
             await voz.aclose()
         if registro is not None:
             await registro.aclose()
+
+
+@app.post("/api/v1/narracion/ampliar", response_model=RespuestaAmpliacion, tags=["Video narrado"])
+async def ampliar_escena(
+    solicitud: SolicitudAmpliacion, _principal: Principal = Depends(require_user)
+) -> RespuestaAmpliacion:
+    """
+    "Profundizar concepto" (tipo guion) y "Enriquecer con IA" (tipo visual) del teleprompter.
+    Llamada breve a Gemini desde el servidor, con caché: responde en menos de 30 s, sin SSE.
+    No usa _cupo: no compite con las generaciones largas, y el cliente Gemini ya limita la concurrencia.
+    """
+    try:
+        cliente = _cliente_gemini()
+    except GeminiError as exc:
+        raise HTTPException(503, "La ampliación no está disponible: falta la configuración de Gemini.") from exc
+    cfg = Config.desde_entorno()
+    ampliador = AmpliadorEscenas(cliente, cfg.gemini_resources_model, cfg.gemini_resources_fallback_model)
+    return await ampliador.ampliar(solicitud)
 
 
 @app.get("/api/v1/narracion/archivo/{ruta:path}", tags=["Video narrado"])

@@ -1154,3 +1154,70 @@ Commit `492b3d9` (hecho por el usuario).
 **Error corregido.** `.submitBtn:hover` usaba `--color-purple-600`, que no existe en `tokens.css`, así que al pasar el ratón el degradado dejaba de pintarse. Ahora va de violeta 500 a violeta 400. También se añadió un estado deshabilitado a los botones mientras se espera la respuesta.
 
 **Verificación.** Frontend: 29 tests, `tsc`, `eslint` en `AuthModal/` y `Header/`, y build. Falta la revisión visual.
+
+Commit `6c7d235` (hecho por el usuario).
+
+
+## 14 oct 2026 · Estación 4 como estudio: teleprompter y pizarra de `newmind-edtech-oci`, acentos y video con voz del navegador
+
+El plan es `historial_progreso/PLAN_ESTACION4_ESTUDIO.md`, aprobado por el usuario («de última usamos lo que tenemos hoy»). Se hicieron las fases 1 a 4; de la 5, todo menos la revisión visual.
+
+**Backend**
+- **`POST /api/v1/narracion/ampliar`** (`servicios/servicio_ampliacion.py`): «Profundizar concepto» (`tipo: guion`) y «Enriquecer con IA» (`tipo: visual`). En la otra rama, las dos llamaban a Gemini desde el navegador con `VITE_GEMINI_API_KEY`.
+  - **El guion se amplía solo con los pasajes literales de las citas verificadas.** Sin pasajes no se llama al modelo y se responde `sin_material`; el modelo también puede responder `suficiente=false` en vez de inventar.
+  - El prompt original pedía «causas, implicaciones o metáforas» y se sustituyó por «explica únicamente lo que dicen los pasajes».
+  - **La propuesta visual es creativa**, pero no puede afirmar datos técnicos.
+  - **Gemini del servidor** con modelo de respaldo: el principal tiene 18 s y el respaldo 12 s, con salto directo al respaldo si el principal tiene la cuota diaria agotada. Caché en memoria por huella (256 entradas, `VERSION_AMPLIACION`). No usa `_cupo`, para no esperar detrás de una generación larga.
+  - **Desviación del plan:** los pasajes los manda el navegador (de `fuentes[].contexto`), en vez de leerlos del paquete guardado, porque los invitados no tienen paquete guardado. El único que puede alterarlos es el propio usuario, y el resultado se marca siempre como IA no verificada.
+- **`voz_servidor: false` en `/narracion/generar`** (`diapositivas_sin_voz`): con la voz del navegador, el servidor solo busca las fotos. No sintetiza audio, no guarda nada y no gasta ElevenLabs ni Gemini TTS. Rechaza igual un guion que no cabe en 60 s y avisa de que la duración es estimada. `buscar_fotos` pasó a ser una función del módulo, compartida con `Narrador`.
+- **Tests:** 11 en `test_ampliacion.py` y 3 en `test_narracion.py`. La caché de ampliación se vacía en `conftest.py`.
+
+**Frontend**
+- **`EstudioDirector.module.css`:** el CSS de la Estación 4 de la otra rama, **sin cambios**, más una sección de añadidos con su misma paleta:
+  - selector de acento, marca de IA, botón flotante y estado del video;
+  - `prefers-reduced-motion` (la otra rama no lo tenía).
+  - Se aplica a la cabecera, la tira de escenas, la navegación, el teleprompter y la pizarra. `Station4DirectorCut.module.css` se queda para lo exclusivo nuestro: presupuesto de 60 s, procedencia, citas y exportar el contrato.
+- **`TeleprompterEstudio.tsx`:**
+  - la estructura de la otra rama, con el radio pulsante, «Profundizar concepto», la velocidad de 1×, 1,25× o 1,5×, «Locutar» con la voz del navegador, el ecualizador, el guion entre comillas y el enfoque didáctico;
+  - **selector de acento** con las voces en español del equipo, agrupadas por país (`vocesEnEspanol` y `regionDeVoz`);
+  - el guion ampliado lleva «Ampliado por IA · no verificado» y un enlace para ver el original;
+  - debajo siguen las citas del documento.
+- **`PizarraDidactica.tsx`:** el visor de cámara, el storyboard, las etiquetas, la ficha técnica y los puntos clave de la otra rama. Todos los datos salen de `utils/datosVisor.ts`:
+  - ● «ESCENA N/M», que solo late mientras suena una voz;
+  - el tramo real y «16:9 · diapositivas narradas»;
+  - las etiquetas Foco, Imagen (foto con licencia o sin foto) y Formato;
+  - en la ficha, el tramo, las palabras, el tipo de diapositiva y las citas verificadas;
+  - los puntos clave salen de `visual.puntos_clave`, el objetivo y el consejo.
+  - Se quitaron «Anclaje RAG Verificado» y «Anclaje 100 %», que se mostraban siempre, así como «Atmósfera», «Encuadre» y «Dinamismo», que eran inventados.
+- **Botón flotante «Generar video»** (`Station4DirectorCut.tsx`):
+  1. pide las diapositivas y las fotos con `voz_servidor: false` y usa la voz elegida. Si las fotos fallan, el video se ve igual, con las diapositivas solas y un aviso;
+  2. si el navegador no tiene voces en español, si la voz da `onerror` (salvo `interrupted` y `canceled`) o si no empieza a hablar en 3 s, salta a la voz del servidor (ElevenLabs y, si no, Gemini), con el motivo a la vista.
+  - Cuando el video está listo, se abre en **Modo Cine desde la escena 1 y se reproduce solo**. Con el video ya generado, el botón pasa a ser «Ver video».
+- **Una sola voz a la vez:**
+  - al empezar el video (al generarlo o al pulsar reproducir) se cancela la locución del teleprompter;
+  - mientras suena el video, «Locutar» está desactivado;
+  - cambiar de escena, de acento o de velocidad también corta la locución;
+  - cerrar el Modo Cine pausa el video.
+- **`SlideNarrada`:**
+  - `soloCine`: la diapositiva ya no se muestra en la página, solo en el Modo Cine;
+  - **subtítulos** con la palabra que suena, que sustituyen al resaltado del teleprompter antiguo;
+  - repetir al final empieza por la escena 1;
+  - Espacio solo controla el video con el Modo Cine abierto.
+- **Lo que se quitó del teleprompter antiguo:** la barra de progreso, el reloj, el selector de palabras por minuto, «Auto-avanzar» (el video siempre avanza solo) y «Copiar guion». La duración estimada usa el ritmo base, 150 palabras por minuto.
+
+**Verificación**
+- Backend: 330 tests (14 nuevos).
+- Frontend: 33 tests (4 nuevos en `datosVisor.test.ts`), `tsc`, `eslint` en los archivos tocados y build.
+- **Prueba en local sin cuota:** `/ampliar` sin pasajes responde `sin_material` sin llamar a Gemini; `/generar` con `voz_servidor: false` responde `exito`, sin audio y con la foto de Openverse, en 2,5 s.
+- **Falta:** la revisión visual en el navegador (Chrome, Edge y móvil) y una ampliación real con Gemini, que gasta cuota y la hace el usuario.
+- **Pendiente de limpieza:** `Station4DirectorCut.module.css` conserva clases que ya no se usan (teleprompter antiguo, palabras por minuto y especificación visual). No molestan; se pueden borrar más adelante.
+
+**Ajustes tras la primera revisión del usuario (14/10)**
+- **Botón «Generar video»:** ya no flota. Está en la cabecera de la pizarra, en el sitio de «Citas verificadas», que sigue en la ficha técnica. Conserva el degradado fucsia-violeta y el pulso (`.videoBtn`).
+- **Acento:** el usuario no lo veía. Era un desplegable pequeño en el teleprompter y, si el navegador no tiene voces en español, un texto gris de 11 px. Ahora `SelectorAcento.tsx` aparece **junto al botón de video** y en el teleprompter, como píldora con icono:
+  - mientras el navegador entrega sus voces, muestra «Buscando…»;
+  - sin voces en español, avisa en ámbar de que el video usará la voz del servidor y recomienda Edge.
+  - Además se escucha `voiceschanged`, porque Edge entrega sus voces en línea más tarde.
+- **«Mi historial» y «Progreso guardado en Supabase» ya no se muestran** (`App.tsx`), por decisión del usuario. Desaparecen también los botones «Guardar ejemplo de demostración» y la lista de paquetes guardados. Al iniciar sesión se sigue abriendo el último paquete. **Los fallos de sincronización sí se muestran** (mensajes que empiezan por «Error» o «No se»), por la regla de procedencia honesta.
+- Verificación: 33 tests del frontend, `tsc`, `eslint` en los archivos tocados y build.
+- **«Lo que NuevaMente le pedirá a la IA»** (Estación 1) pasa a un desplegable (`<details>`), **plegado por defecto**, para quien quiera saber qué se le pide a la IA. Tiene una flecha que gira, un foco visible y sigue el estilo de la etiqueta. El usuario también aceptó perder la lista de paquetes guardados.

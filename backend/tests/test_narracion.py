@@ -652,3 +652,37 @@ def test_usuario_guarda_mp3_y_lo_descarga(api, tmp_path):
         assert ruta.endswith(".mp3")
         audio = api.get(f"/api/v1/narracion/archivo/{ruta}")
         assert audio.status_code == 200 and audio.headers["content-type"] == "audio/mpeg"
+
+
+# --------------------------------------------------------------------- Voz del navegador (sin voz del servidor)
+def test_sin_voz_del_servidor_trae_fotos_y_no_sintetiza():
+    from app.servicios.servicio_narracion import AVISO_VOZ_NAVEGADOR, diapositivas_sin_voz
+
+    banco = BancoSimulado()
+    r = asyncio.run(diapositivas_sin_voz(SolicitudNarracion(video_job_spec=_spec(2), voz_servidor=False), banco))
+    assert r.status == "exito" and r.proveedor is None and r.audios_en_linea == {}
+    assert all(e.audio is None for e in r.video_job_spec.escenas)
+    assert [e.imagen.tipo for e in r.video_job_spec.escenas] == ["foto", "foto"]
+    assert r.advertencias[0] == AVISO_VOZ_NAVEGADOR and len(banco.busquedas) == 2
+
+
+def test_sin_voz_del_servidor_rechaza_un_guion_que_no_cabe():
+    from app.servicios.servicio_narracion import diapositivas_sin_voz
+
+    banco = BancoSimulado()
+    spec = _spec_con_guiones("palabra " * 400)
+    r = asyncio.run(diapositivas_sin_voz(SolicitudNarracion(video_job_spec=spec, voz_servidor=False), banco))
+    assert r.status == "error" and r.error_codigo == "guion_largo" and banco.busquedas == []
+
+
+def test_api_sin_voz_del_servidor_no_toca_voces_ni_almacen(api):
+    _como(Principal(USUARIO, "token"))
+    with patch("app.main._voces_narracion") as voces, \
+         patch("app.main.BuscadorImagenes", return_value=_BancoCerrable()), \
+         patch("app.main.almacen_del_entorno") as almacen:
+        r = api.post("/api/v1/narracion/generar",
+                     json={"video_job_spec": _spec(2).model_dump(), "voz_servidor": False})
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "exito" and r.json()["video_job_spec"]["escenas"][0]["imagen"]["tipo"] == "foto"
+    voces.assert_not_called()
+    almacen.assert_not_called()

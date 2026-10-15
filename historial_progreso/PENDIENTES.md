@@ -95,7 +95,7 @@ Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las 
 - **Decidido el 14/10 (segunda propuesta de Gemini):**
   - el nombre del producto es **NuevaMente**;
   - «Olvidé mi contraseña» se **descarta**;
-  - el **visor de cámara de la Estación 4 se integra** según `historial_progreso/PLAN_VISOR_DIRECTOR.md`, con datos reales.
+  - el **visor de cámara de la Estación 4 se integra** con datos reales. Ampliado por el pedido del equipo en `historial_progreso/PLAN_ESTACION4_ESTUDIO.md`: teleprompter y pizarra de la otra rama, acentos de las voces del navegador, botón flotante para el video y apertura automática del modo cine. **Aprobado y hecho el 14/10, sin commit.** Falta la revisión visual del usuario.
   - Pendiente de decidir: cambiar «NovaMind» en los prompts del modelo. Invalida la caché de todos los paquetes.
 - **Pago por uso de Gemini:** solo si en la demo falta cuota. El modelo del resumen ya está decidido: se queda `3.5-flash-lite`.
 
