@@ -893,12 +893,56 @@ class SolicitudNarracion(BaseModel):
     video_job_spec: VideoJobSpec
     voz: Literal["Kore", "Charon", "Puck", "Aoede"] = "Kore"
     buscar_fotos: bool = True
+    # false: la voz la pone el navegador; el servidor solo devuelve las diapositivas con sus fotos
+    voz_servidor: bool = True
 
     @model_validator(mode="after")
     def _escenas_validas(self) -> "SolicitudNarracion":
         if not 1 <= len(self.video_job_spec.escenas) <= 3:
             raise ValueError("el video narrado admite de 1 a 3 escenas")
         return self
+
+
+class EscenaParaAmpliar(BaseModel):
+    """Lo que el teleprompter sabe de la escena; `pasajes` son textos literales del documento (citas verificadas)."""
+
+    titulo: str = Field(..., min_length=1, max_length=300)
+    guion_locutor: str = Field(..., min_length=1, max_length=3000)
+    storyboard_visual: str = Field("", max_length=3000)
+    consejo_pedagogico: str = Field("", max_length=1500)
+    pasajes: List[str] = Field(default_factory=list, max_length=6)
+
+    @field_validator("pasajes")
+    @classmethod
+    def _pasajes_acotados(cls, pasajes: List[str]) -> List[str]:
+        return [p.strip()[:2000] for p in pasajes if p and p.strip()]
+
+
+class SolicitudAmpliacion(BaseModel):
+    """
+    POST /api/v1/narracion/ampliar ("Profundizar concepto" y "Enriquecer con IA" del teleprompter).
+    guion: el guion de la escena explicado con más calma, SOLO con lo que dicen los pasajes.
+    visual: una propuesta de puesta en escena (creativa; no afirma datos que no estén en la escena).
+    """
+
+    tipo: Literal["guion", "visual"]
+    escena: EscenaParaAmpliar
+
+
+class RespuestaAmpliacion(BaseModel):
+    """
+    status:
+      - "exito": `texto` es la ampliación. Siempre es texto generado por IA y no verificado.
+      - "sin_material": el documento no da para ampliar sin inventar (no hay pasajes o el modelo lo dice).
+      - "error": Gemini no respondió; `mensaje` explica por qué.
+    """
+
+    status: Literal["exito", "sin_material", "error"]
+    texto: Optional[str] = None
+    origen: Literal["ia_ampliado"] = "ia_ampliado"
+    modelo: Optional[str] = None
+    desde_cache: bool = False
+    mensaje: Optional[str] = None
 
 
 class RespuestaNarracion(BaseModel):

@@ -332,3 +332,22 @@
   background: rgba(0, 0, 0, 0.75);
 }
 
+
+/* Subtítulos del Modo Cine: la palabra que suena, resaltada */
+.subtitulos {
+  margin: 0;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(3, 7, 18, 0.75);
+  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.subtituloActiva {
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(217, 70, 239, 0.6);
+}

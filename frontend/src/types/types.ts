@@ -146,6 +146,27 @@ export interface RespuestaNarracion {
   error_codigo?: string | null;
 }
 
+/** POST /api/v1/narracion/ampliar: "Profundizar concepto" (guion) y "Enriquecer con IA" (visual) */
+export interface EscenaParaAmpliar {
+  titulo: string;
+  guion_locutor: string;
+  storyboard_visual?: string;
+  consejo_pedagogico?: string;
+  /** Pasajes literales del documento (citas verificadas) */
+  pasajes: string[];
+}
+
+export interface RespuestaAmpliacion {
+  /** sin_material: el documento no da para ampliar sin inventar */
+  status: 'exito' | 'sin_material' | 'error';
+  texto?: string | null;
+  /** Siempre texto de IA no verificado */
+  origen: 'ia_ampliado';
+  modelo?: string | null;
+  desde_cache: boolean;
+  mensaje?: string | null;
+}
+
 export interface VideoJobSpec {
   video_job_id: string;
   document_id: string;

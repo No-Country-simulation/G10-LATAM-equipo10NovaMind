@@ -57,3 +57,43 @@ export const cargarVocesNavegador = (esperaMs = 1500): Promise<SpeechSynthesisVo
     synth.addEventListener('voiceschanged', listo);
   });
 };
+
+/** País o variante de cada región de español, para el selector de acento del teleprompter. */
+export const REGIONES_ESPANOL: Record<string, string> = {
+  'es-ar': 'Argentina',
+  'es-bo': 'Bolivia',
+  'es-cl': 'Chile',
+  'es-co': 'Colombia',
+  'es-cr': 'Costa Rica',
+  'es-cu': 'Cuba',
+  'es-do': 'República Dominicana',
+  'es-ec': 'Ecuador',
+  'es-es': 'España',
+  'es-gt': 'Guatemala',
+  'es-hn': 'Honduras',
+  'es-mx': 'México',
+  'es-ni': 'Nicaragua',
+  'es-pa': 'Panamá',
+  'es-pe': 'Perú',
+  'es-pr': 'Puerto Rico',
+  'es-py': 'Paraguay',
+  'es-sv': 'El Salvador',
+  'es-us': 'Estados Unidos',
+  'es-uy': 'Uruguay',
+  'es-ve': 'Venezuela',
+  'es-419': 'Latinoamérica',
+};
+
+/** "México" para es-MX; "Español" si la voz no informa la región. */
+export const regionDeVoz = (lang: string): string => REGIONES_ESPANOL[normalizar(lang)] ?? 'Español';
+
+/**
+ * Las voces en español que tiene este navegador, ordenadas por país y sin repetir nombre.
+ * Los acentos disponibles dependen del equipo: Edge trae voces de muchos países; Chrome, pocas.
+ */
+export const vocesEnEspanol = <T extends VozDisponible>(voces: readonly T[]): T[] => {
+  const vistas = new Set<string>();
+  return voces
+    .filter((v) => esEspanol(v) && !vistas.has(v.name) && vistas.add(v.name))
+    .sort((a, b) => regionDeVoz(a.lang).localeCompare(regionDeVoz(b.lang), 'es') || a.name.localeCompare(b.name, 'es'));
+};

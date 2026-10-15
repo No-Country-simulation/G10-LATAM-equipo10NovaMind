@@ -81,6 +81,54 @@ def _ahora() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+async def buscar_fotos(buscador: Optional[BuscadorImagenes], spec: VideoJobSpec):
+    """Una foto libre por escena con palabra clave (None si no hay) y los avisos de las que faltan."""
+    if buscador is None:
+        return [None] * len(spec.escenas), []
+
+    async def una(escena) -> Optional[ImagenEscena]:
+        imagen = escena.imagen
+        if imagen is None or imagen.tipo == "foto" or not imagen.palabra_clave:
+            return None
+        foto = await buscador.buscar(imagen.palabra_clave, escena.titulo)
+        return foto.model_copy(update={"palabra_clave": imagen.palabra_clave}) if foto else None
+
+    fotos = list(await asyncio.gather(*(una(e) for e in spec.escenas)))
+    faltan = [e.escena for e, f in zip(spec.escenas, fotos)
+              if f is None and e.imagen and e.imagen.tipo != "foto" and e.imagen.palabra_clave]
+    avisos = [f"Sin foto libre para la escena {n}: se muestra la diapositiva sola." for n in faltan]
+    return fotos, avisos
+
+
+AVISO_VOZ_NAVEGADOR = ("Voz del navegador: el audio no se genera en el servidor, así que la duración "
+                       "es estimada y no medida.")
+
+
+async def diapositivas_sin_voz(solicitud: SolicitudNarracion, buscador: Optional[BuscadorImagenes]) -> RespuestaNarracion:
+    """
+    Video para la voz del navegador (voz_servidor=false): las mismas diapositivas con sus fotos,
+    sin sintetizar audio ni guardar nada. No gasta ElevenLabs ni Gemini TTS.
+    """
+    spec = solicitud.video_job_spec.model_copy(deep=True)
+    exceso = exceso_guion_narracion([e.guion_locutor for e in spec.escenas], spec.max_duration)
+    if exceso:
+        return RespuestaNarracion(status="error", video_job_spec=spec, error_codigo="guion_largo",
+                                  advertencias=[exceso])
+    avisos = [AVISO_VOZ_NAVEGADOR]
+    if solicitud.buscar_fotos:
+        try:
+            async with asyncio.timeout(PLAZO_VOZ_S):
+                imagenes, avisos_fotos = await buscar_fotos(buscador, spec)
+        except TimeoutError:
+            imagenes = [None] * len(spec.escenas)
+            avisos_fotos = ["Las fotos no llegaron a tiempo: se muestran las diapositivas solas."]
+        avisos.extend(avisos_fotos)
+        for escena, imagen in zip(spec.escenas, imagenes):
+            if imagen is not None:
+                escena.imagen = imagen
+    return RespuestaNarracion(status="exito", video_job_spec=spec, advertencias=avisos)
+
+
 class Narrador:
     def __init__(
         self,
@@ -248,21 +296,7 @@ class Narrador:
         return [], []
 
     async def _fotos(self, spec: VideoJobSpec):
-        if self._buscador is None:
-            return [None] * len(spec.escenas), []
-
-        async def una(escena) -> Optional[ImagenEscena]:
-            imagen = escena.imagen
-            if imagen is None or imagen.tipo == "foto" or not imagen.palabra_clave:
-                return None
-            foto = await self._buscador.buscar(imagen.palabra_clave, escena.titulo)
-            return foto.model_copy(update={"palabra_clave": imagen.palabra_clave}) if foto else None
-
-        fotos = list(await asyncio.gather(*(una(e) for e in spec.escenas)))
-        faltan = [e.escena for e, f in zip(spec.escenas, fotos)
-                  if f is None and e.imagen and e.imagen.tipo != "foto" and e.imagen.palabra_clave]
-        avisos = [f"Sin foto libre para la escena {n}: se muestra la diapositiva sola." for n in faltan]
-        return fotos, avisos
+        return await buscar_fotos(self._buscador, spec)
 
     # ------------------------------------------------------------------ almacén
     def _tipo_almacen(self):

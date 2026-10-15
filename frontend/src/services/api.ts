@@ -11,6 +11,8 @@ import type {
   DetailLevel,
   DocumentoExtraido,
   OrigenContenido,
+  EscenaParaAmpliar,
+  RespuestaAmpliacion,
   RespuestaNarracion,
   VideoJobSpec,
   VozNarracion,
@@ -260,14 +262,33 @@ export async function textoDocumentoEjemplo(nombreArchivo: string): Promise<Docu
  * Convierte el guion (VideoJobSpec) en video narrado. Solo se llama al pulsar
  * "Generar narración": la voz gasta cuota de Gemini y no se produce por adelantado.
  */
+/**
+ * vozServidor=false: la voz la pone el navegador; el backend solo devuelve las diapositivas
+ * con sus fotos (no gasta ElevenLabs ni Gemini TTS).
+ */
 export async function solicitarNarracion(
   spec: VideoJobSpec,
   voz: VozNarracion = 'Kore',
+  { vozServidor = true }: { vozServidor?: boolean } = {},
 ): Promise<RespuestaNarracion> {
   const response = await fetch(`${BASE_URL}/api/v1/narracion/generar`, {
     method: 'POST',
     headers: { ...(await bearerHeaders()), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ video_job_spec: spec, voz }),
+    body: JSON.stringify({ video_job_spec: spec, voz, voz_servidor: vozServidor }),
+  });
+  if (!response.ok) throw new Error(await detalleDeError(response));
+  return response.json();
+}
+
+/** Ampliación de una escena con Gemini desde el servidor; el texto es de IA y no está verificado. */
+export async function ampliarEscena(
+  tipo: 'guion' | 'visual',
+  escena: EscenaParaAmpliar,
+): Promise<RespuestaAmpliacion> {
+  const response = await fetch(`${BASE_URL}/api/v1/narracion/ampliar`, {
+    method: 'POST',
+    headers: { ...(await bearerHeaders()), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tipo, escena }),
   });
   if (!response.ok) throw new Error(await detalleDeError(response));
   return response.json();

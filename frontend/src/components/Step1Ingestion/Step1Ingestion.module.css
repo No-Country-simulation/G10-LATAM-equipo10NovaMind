@@ -761,6 +761,28 @@
   color: var(--color-violet-300);
 }
 
+summary.promptEtiqueta {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+summary.promptEtiqueta::-webkit-details-marker {
+  display: none;
+}
+summary.promptEtiqueta:hover {
+  color: var(--color-violet-400);
+}
+summary.promptEtiqueta:focus-visible {
+  outline: 2px solid var(--color-violet-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.promptChevron {
+  transition: transform var(--transition-fast);
+}
+details[open] .promptChevron {
+  transform: rotate(90deg);
+}
 .promptEtiqueta em {
   font-style: normal;
   font-weight: 400;

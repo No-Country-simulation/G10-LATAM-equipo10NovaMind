@@ -1,5 +1,7 @@
 # Plan: visor de cámara en la Estación 4
 
+> **Sustituido el 14/10 por `PLAN_ESTACION4_ESTUDIO.md`.** Este documento queda como detalle de la fase 3 (datos reales del visor).
+
 Decisión del usuario (14/10): se conserva la estética de «estudio de director» de `origin/feature/newmind-edtech-oci` (`Station4DirectorCut.tsx`, líneas 472-720 de esa rama). Se porta a mano, porque las ramas no comparten historia, y **sobre el reproductor actual** (`SlideNarrada`), sin sustituirlo.
 
 ## Regla que manda: cada dato del visor tiene que ser verdad
