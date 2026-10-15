@@ -20,7 +20,8 @@ Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las 
 - **En curso fuera del repo:**
   - ~~**El encargado de Supabase** revisa la página de migraciones~~ **Hecho el 14/10: respondió que todo está correcto.** Página (artefacto «Migraciones Supabase de NovaMind»: https://claude.ai/code/artifact/178338d3-0d5b-4af9-9321-795137a8c70a), con los 2 SQL de `supabase/migrations/`.
   - **Lista de despliegue en las VM:** https://claude.ai/code/artifact/fc2a9cf5-f4a0-40c8-b6b0-453de2a8c0d4. **Desactualizada:** el despliegue real siguió el runbook, que añade Python 3.12, el build en el PC y el `.env` subido por WinSCP.
-- **ElevenLabs:** la clave de producción tiene un tope de 500 créditos, que da para **una sola narración**, y ya se gastó. Ahora narra Gemini.
+- **ElevenLabs:** voz **Isabela** (`1BxAZWANeDIxeyHKSJF2`), probada y aprobada por el usuario el 14/10. La clave tenía un tope de 500 créditos (una narración ≈ 375): el usuario lo sube en el panel. Gemini TTS de respaldo: `3.8-flash-lite-tts` (10 peticiones al día) y luego `3.8-flash-tts`.
+- **Despliegue pendiente:** commit de Gemini de todo lo que hay sin commit; VM 1: `git pull`, añadir `ELEVENLABS_VOICE_ID=1BxAZWANeDIxeyHKSJF2` y `ELEVENLABS_VOICE_NAME=Isabela` al `.env` y reiniciar; VM 2: subir `deploy/frontend-dist-oci/` (`index-BZkKFWR7.js`).
 - **Servidores locales:** el backend de Claude (8000) y el front (5173) pueden seguir abiertos; si el puerto está ocupado, preguntar antes de reiniciarlos.
 
 ## Estado de las ramas
