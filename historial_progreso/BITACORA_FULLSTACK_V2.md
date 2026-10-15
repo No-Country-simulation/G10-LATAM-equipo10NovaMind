@@ -1339,3 +1339,24 @@ Decisiones del usuario:
 **Experiencia que se pierde al recargar (con cuenta):** revisado el código de guardado (`writeState`) y de restauración (`refresh` y `restorePackage`) sin encontrar la causa. Hace falta el mensaje o el error que ve el usuario.
 
 **Verificación:** `tsc`, `eslint` en los 2 archivos y 33 tests del frontend. Nuevo build para OCI: `deploy/frontend-dist-oci/` (`index-BZkKFWR7.js`).
+
+## 15 oct 2026 · Espejo de Supabase en Oracle Autonomous Database
+
+**Pedido:** llevar la base de datos a OCI Database. **Decisión del usuario:** usar Oracle como espejo, igual que el bucket de OCI. Supabase sigue siendo la base principal (Auth, RLS, REST que usa el frontend) y la app nunca lee de Oracle. La copia se hace con una **sincronización periódica** y no desde el backend, porque el frontend escribe `learning_progress`, `user_state` y `learning_packages` directamente en Supabase y el backend no ve esas escrituras.
+
+**Base elegida:** Autonomous Database **Always Free**, la única base gestionada de OCI sin costo (regla 2). OCI Database with PostgreSQL se paga, y montar Postgres en la VM de 1 GB no cabe.
+
+**Qué se hizo:**
+- `oracle/espejo/001_espejo_supabase.sql`: las 6 tablas de `public.*` sin claves foráneas ni CHECK, porque el espejo no debe rechazar filas. Las conversiones: `uuid` → `VARCHAR2(36)`, `jsonb` → `CLOB IS JSON`, `timestamptz` → `TIMESTAMP` en UTC y `resource` → `resource_name` (palabra reservada). Cada tabla lleva además la columna `espejado_en`. La tabla `espejo_marcas` guarda hasta dónde se copió cada tabla y el último error.
+- `backend/app/espejo/` (`python -m app.espejo [--reconciliar] [--forzar-borrado] [--tabla X]`):
+  - **Copia incremental** por `(updated_at, clave)` con paginación *keyset* sobre PostgREST. No usa offset, que se salta filas si cambian a mitad, ni sufre con empates de `now()` en transacciones masivas. Usa `MERGE` en Oracle, y la marca avanza en la misma transacción que las filas.
+  - **Reconciliación** (diaria): borra del espejo lo eliminado en Supabase, por ejemplo una cuenta borrada. Se niega si borraría más de la mitad del espejo (y más de 10 filas), salvo con `--forzar-borrado`.
+  - **Clave de servicio validada:** rechaza la publishable o anon. Con ellas RLS devuelve listas vacías sin dar error, y la reconciliación vaciaría el espejo.
+  - Cada tabla es independiente: si una falla, las demás se copian y el error queda en `espejo_marcas.ultimo_error`.
+  - `python-oracledb` 3.3.0 en modo *thin*: sin Oracle Client, con wallet (mTLS) o TLS. Va en `requirements.txt`.
+- `.env.example`: sección 7 con `SUPABASE_SERVICE_ROLE_KEY` (secreta, solo en el backend) y las variables `ORACLE_ESPEJO_*`.
+- `deploy/systemd/` (no versionado): `nuevamente-espejo.{service,timer}` cada 15 min y `nuevamente-espejo-reconciliar.{service,timer}` a diario a las 04:30. Son procesos `oneshot` separados de la API, con `MemoryMax=150M`.
+
+**Verificación:** 18 tests nuevos en `test_espejo_oracle.py`, 350 en total. Incluyen una guarda que compara las columnas de las migraciones de Supabase, la especificación (`tablas.py`) y el DDL de Oracle. **Sin probar contra una ADB real todavía** (el `MERGE` con CLOB y el wallet): queda para cuando exista la base.
+
+**Pendiente (usuario):** crear la ADB Always Free y el usuario `ESPEJO`, ejecutar el DDL, descargar el wallet, poner la clave secreta de Supabase en el `.env` de VM1 y activar los timers.
