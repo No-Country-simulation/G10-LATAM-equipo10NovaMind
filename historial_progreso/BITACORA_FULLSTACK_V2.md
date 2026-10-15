@@ -1221,3 +1221,108 @@ El plan es `historial_progreso/PLAN_ESTACION4_ESTUDIO.md`, aprobado por el usuar
 - **«Mi historial» y «Progreso guardado en Supabase» ya no se muestran** (`App.tsx`), por decisión del usuario. Desaparecen también los botones «Guardar ejemplo de demostración» y la lista de paquetes guardados. Al iniciar sesión se sigue abriendo el último paquete. **Los fallos de sincronización sí se muestran** (mensajes que empiezan por «Error» o «No se»), por la regla de procedencia honesta.
 - Verificación: 33 tests del frontend, `tsc`, `eslint` en los archivos tocados y build.
 - **«Lo que NuevaMente le pedirá a la IA»** (Estación 1) pasa a un desplegable (`<details>`), **plegado por defecto**, para quien quiera saber qué se le pide a la IA. Tiene una flecha que gira, un foco visible y sigue el estilo de la etiqueta. El usuario también aceptó perder la lista de paquetes guardados.
+
+Commit `35b2d3f` (hecho por Gemini).
+
+
+## 14 oct 2026 · Avisos de calidad ocultos (recuperables)
+
+**Decisión del usuario:** no mostrar «N avisos sobre este material» ni la barra de cada recurso (Auditada, N/M citas localizadas, avisos de las comprobaciones). Tienen que seguir recuperables.
+
+**Cómo:** `MOSTRAR_AVISOS_DE_CALIDAD = false` en `Step2KnowledgeQuest.tsx`. Se usó una constante y no código comentado: el código queda compilado y probado, y volver a mostrarlos es cambiarla a `true`. Los datos se siguen calculando y viajan en el paquete (`advertencias` y `estado_recursos`).
+
+**Lo que sigue visible:**
+- Cada chip de cita sigue diciendo si está verificada o no.
+- Las citas de la Estación 4 conservan su estado.
+- La Estación 1 marca una transcripción hecha por IA.
+- Un recurso que falló se sigue sustituyendo por `RecursoNoDisponible`.
+
+**Lo que se pierde a la vista:** el aviso de nivel de paquete sobre el modelo de respaldo y la auditoría parcial.
+
+**Verificación:** `tsc`, `eslint` y build.
+
+
+## 14 oct 2026 · Aprobación al 100 % y más elementos ocultos (recuperables)
+
+Decisiones del usuario:
+- **Las estaciones 2, 3 y 4 exigen el 100 %**, igual que la 1 (ya pedía marcar todos los conceptos) y el quiz. Antes era el 60 %. `minRequired` es el total de tarjetas, pasos o escenas, y los textos se ajustaron: «domina las N tarjetas», «valida los N pasos», «explora las N escenas».
+- **«Auditada» y «Sin auditar» no se muestran.**
+  - `MOSTRAR_CHIP_VERIFICACION = false` en `RecursoEstado.tsx`; afecta a `RecursosApoyo` y a la barra del recurso.
+  - La píldora de `Step3OCICloud.tsx` quedó comentada. El medidor del grounding sigue mostrando «N/D» cuando no hubo auditoría.
+- **«Necesito repasar»** (Estación 2) quedó comentado, con su función `handleNeedReview`: `tsc -b` no admite variables sin usar.
+- **Una cita no encontrada no muestra nada:** `MOSTRAR_CITA_NO_ENCONTRADA = false` en `FuenteChip`. Las verificadas siguen mostrando «Fuente · pág. N» y abren el visor.
+
+**Corrección de la entrada anterior:** decía que cada chip seguía indicando si la cita estaba verificada. Ya no es así: ahora solo se ven las verificadas. La lista de citas de la Estación 4, con su estado («No encontrada literalmente…»), sigue visible.
+
+**Aviso para el equipo:** con esto, la interfaz ya no señala el contenido cuyas citas no se localizaron en el documento; simplemente no lleva fuente. Para volver a señalarlo basta con poner las constantes en `true`.
+
+**Verificación:** 33 tests del frontend, `tsc -b` en el build, `eslint` en los archivos tocados y build.
+- **Citas del documento en la Estación 4: plegadas por defecto** (`showRagDetails` empieza en `false`); se abren con «Mostrar».
+- **Supabase:** el encargado de la base de datos revisó las 2 migraciones, RLS y las URL de vuelta, y respondió que todo está correcto. Queda anotado en PENDIENTES.
+
+
+## 14 oct 2026 · El video no se generaba: ninguna voz disponible
+
+**Lo que vio el usuario:** el aviso «Este navegador no tiene voces en español…», el botón en «Generando…» y, al final, «La cuota gratuita de voz está agotada por ahora».
+
+**Causa, según el log del backend local:**
+1. El navegador del usuario no tiene voces en español, así que se pasó a la voz del servidor.
+2. ElevenLabs respondió 401 por falta de créditos (`sin_creditos`). **Ojo:** en el primer intento, una escena ya había respondido 200 antes del 401, así que se cobró una escena que no se usó.
+3. Gemini TTS respondió 429 con `cuota_diaria`, y `gemini-3.8-flash-lite-tts` quedó marcado como agotado hasta la medianoche del Pacífico.
+4. Sin voz posible, el resultado fue un error.
+
+**Arreglo: último recurso sin voz.** Si fallan todas las voces (la del navegador, ElevenLabs y Gemini), el video se abre igualmente en el Modo Cine, sin voz, con las fotos y los subtítulos y avanzando al ritmo estimado (fase `mudo`).
+- Las fotos se piden con `voz_servidor: false`, sin gasto.
+- La cabecera del Modo Cine dice «· sin voz».
+- La lógica de pedir solo las fotos pasó a `diapositivasConFotos()`, compartida por el video con voz del navegador y el video sin voz.
+
+**Oculto a petición del usuario:** el recuadro de estado del video (`MOSTRAR_ESTADO_VIDEO = false`), con la voz usada, los fallos y los avisos.
+
+**Pendiente para el usuario:** saber qué navegador usa; en Windows, Chrome y Edge traen voces en español. Para volver a tener voz del servidor, recargar créditos de ElevenLabs o esperar a que se reponga la cuota diaria de Gemini TTS.
+
+**Verificación:** 33 tests del frontend, `tsc`, `eslint` y build.
+
+
+## 14 oct 2026 · «Profundizar concepto» se negaba demasiado
+
+**Lo que vio el usuario:** «El documento no da material suficiente para ampliar esta escena sin inventar», en una escena con 2 citas verificadas.
+
+**Causa:** el log mostró que el modelo respondió con 18 tokens de salida, es decir, `suficiente=false`. Los pasajes son el contexto de cada cita (`contexto_de_cita`: unos pocos cientos de caracteres por lado), y el prompt exigía de 120 a 180 palabras usando solo esos pasajes. Con dos frases cortas, el modelo prefirió negarse antes que inventar.
+
+**Arreglo** (`_AMPLIAR_GUION`, `VERSION_AMPLIACION = 2`, lo que invalida la caché):
+- La longitud se adapta al material: de 60 a 180 palabras y de 1 a 3 párrafos. Una ampliación breve es preferible a negarse.
+- Puede definir con palabras sencillas los términos que aparecen y relacionarlos con el guion.
+- Solo se niega si los pasajes no tratan el tema de la escena.
+- Se mantiene la prohibición de añadir causas, consecuencias, cifras o ejemplos que los pasajes no sostengan.
+
+**Verificación:** 11 tests de `test_ampliacion.py`. Se reinició el backend local. La prueba real con Gemini gasta una llamada y la hace el usuario.
+
+
+## 14 oct 2026 · Cuota de voz: ElevenLabs, modelos TTS de Gemini y la voz Jhenny
+
+**ElevenLabs** (consultas de solo lectura, sin gasto):
+- **La cuenta** es del plan gratuito y lleva **1.941 de 10.000 créditos** este mes. Lo agotado es el **tope de 500 que tiene la clave**, no la cuenta: basta con subirlo en el panel (Developers → API Keys).
+- **Una narración gasta unos 375 créditos:** el guion tiene unos 750 caracteres y `eleven_flash_v2_5` cobra 0,5 créditos por carácter. Con 500 da para una narración y poco más. El ritmo ágil y las escenas cobradas antes de un fallo suman.
+- **El historial por generación no se puede leer:** la clave no tiene el permiso `speech_history_read`.
+- **Talia:** las tres voces de la biblioteca con ese nombre son inglesas, con acento estadounidense.
+- **Jhenny – Soft, Calm, Sweet** (`2Lb1en5ujrODDIqmp7F3`): español latinoamericano, `free_users_allowed: true`, elegida por el usuario. **No está en «My Voices»** de la cuenta (`/v1/voices/{id}` responde `voice_not_found`), así que hay que añadirla desde la Voice Library antes de usarla por API.
+
+**Gemini TTS** (script fuera del repositorio, con 1 petición gastada):
+- **Modelos TTS visibles para la clave:** `gemini-2.5-flash-preview-tts`, `gemini-2.5-pro-preview-tts`, `gemini-3.1-flash-tts-preview`, `gemini-3.8-flash-tts` y `gemini-3.8-flash-lite-tts`.
+- `gemini-3.8-flash-lite-tts` tiene un **límite de 10 peticiones al día en el plan gratuito** (lo dice el propio 429). Una narración usa al menos 3, así que da para unas 3 al día.
+- `gemini-3.8-flash-tts` **está habilitado** y devolvió audio con «Hola.». Su límite no se puede consultar: solo aparece en el 429.
+
+**Cambio: varios modelos TTS en cadena.**
+- `GEMINI_TTS_FALLBACK_MODELS` (`config.py` y `.env.example`), separados por comas, por defecto `gemini-3.8-flash-tts`.
+- `_voces_narracion` crea una `VozGemini` por modelo, sin repetir y en orden.
+- `VozGemini.sin_presupuesto` salta sin llamar un modelo que ya agotó su cuota diaria en el proceso.
+- El nombre de la voz incluye el modelo.
+- Efecto secundario: la huella de la narración incluye las voces, así que las narraciones guardadas con la lista anterior no se reutilizan.
+
+**Tests:** 2 nuevos en `test_narracion.py`, 332 en total.
+
+**Voz elegida: Isabela en lugar de Jhenny.**
+- **Isabela – Pleasant, Calm and Melodic** (`1BxAZWANeDIxeyHKSJF2`): es-AR, latinoamericana, profesional, `free_users_allowed: true`.
+- Está verificada para `eleven_flash_v2_5` en español y **ya está en «My Voices»** (`/v1/voices/{id}` responde 200).
+- Se añadió a `.env` local (`ELEVENLABS_VOICE_ID` y `ELEVENLABS_VOICE_NAME`) y como valor de ejemplo en `.env.example`. `config.py` sigue con Alice por defecto si faltan.
+- Pendiente: subir el tope de créditos de la clave, reiniciar el backend local y ponerla también en el `.env` de la VM 1.

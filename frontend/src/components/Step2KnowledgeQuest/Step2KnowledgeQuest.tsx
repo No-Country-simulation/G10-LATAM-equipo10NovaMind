@@ -19,6 +19,14 @@ import { Station3TutorialQuest } from '../stations/Station3TutorialQuest/Station
 import { Station4DirectorCut } from '../stations/Station4DirectorCut/Station4DirectorCut';
 import { Station5FinalTrial } from '../stations/Station5Quiz/Station5Quiz';
 import { EstadoRecursoBar, ListaRecursos, RecursoNoDisponible } from '../RecursoEstado/RecursoEstado';
+
+/**
+ * Ocultos por decisión del usuario (14/10): los avisos del paquete ("N avisos sobre este material")
+ * y la barra de cada recurso (Auditada, N/M citas localizadas, avisos de las comprobaciones).
+ * Se siguen calculando y viajan en el paquete; para volver a mostrarlos, poner `true`.
+ * Las citas no verificadas siguen marcadas en cada chip de fuente.
+ */
+const MOSTRAR_AVISOS_DE_CALIDAD = false;
 import { RecursosApoyo, ResumenEjecutivo } from '../RecursosApoyo/RecursosApoyo';
 import { RECURSO_POR_ESTACION, estacionDisponible, estadoDe } from '../../utils/paqueteIncremental';
 import styles from './Step2KnowledgeQuest.module.css';
@@ -194,7 +202,7 @@ export const Step2KnowledgeQuest = ({
       )}
 
       {/* Avisos del backend sobre la procedencia del material (transcripción IA, modelo de respaldo...) */}
-      {!isGenerating && avisosPaquete.length > 0 && (
+      {MOSTRAR_AVISOS_DE_CALIDAD && !isGenerating && avisosPaquete.length > 0 && (
         <details className={styles.packageNotices} open={avisosPaquete.length <= 2}>
           <summary>
             {avisosPaquete.length} aviso{avisosPaquete.length > 1 ? 's' : ''} sobre este material
@@ -333,7 +341,7 @@ export const Step2KnowledgeQuest = ({
           <RecursoNoDisponible recurso={recursoActivo} estado={estadoActivo} />
         ) : (
           <>
-            <EstadoRecursoBar estado={estadoActivo} />
+            {MOSTRAR_AVISOS_DE_CALIDAD && <EstadoRecursoBar estado={estadoActivo} />}
 
             {activeStationIndex === 0 && contenido.resumen_ninja && (
               <Station1ResumenNinja

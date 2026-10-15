@@ -775,7 +775,7 @@ _TIPOS_ARCHIVO_NARRACION = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".json": 
 
 
 def _voces_narracion(voz_gemini: str) -> list:
-    """ElevenLabs (principal) → Gemini TTS (respaldo); solo los que estén configurados."""
+    """ElevenLabs (principal) → Gemini TTS (respaldo, un modelo tras otro); solo los configurados."""
     cfg = Config.desde_entorno()
     voces: list = []
     if cfg.elevenlabs_api_key:
@@ -784,9 +784,12 @@ def _voces_narracion(voz_gemini: str) -> list:
             voz_id=cfg.elevenlabs_voice_id, voz_nombre=cfg.elevenlabs_voice_name,
         ))
     try:
-        voces.append(VozGemini(_cliente_gemini(), cfg.gemini_tts_model, voz_gemini))
+        cliente = _cliente_gemini()
     except GeminiError:
-        pass  # sin GEMINI_API_KEY: queda solo ElevenLabs
+        return voces  # sin GEMINI_API_KEY: queda solo ElevenLabs
+    # Cada modelo TTS tiene su propia cuota gratuita: el principal y, en orden, sus respaldos
+    for modelo in dict.fromkeys((cfg.gemini_tts_model, *cfg.gemini_tts_fallback_models)):
+        voces.append(VozGemini(cliente, modelo, voz_gemini))
     return voces
 
 

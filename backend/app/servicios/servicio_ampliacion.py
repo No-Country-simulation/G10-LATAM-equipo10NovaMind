@@ -30,7 +30,7 @@ from app.servicios.servicio_gemini import ClienteGemini, GeminiError, modelo_est
 logger = logging.getLogger("nuevamente.ampliacion")
 
 # Sube este número si cambian los prompts o las comprobaciones: invalida la caché.
-VERSION_AMPLIACION = 1
+VERSION_AMPLIACION = 2
 MAX_CACHE = 256
 TIMEOUT_PRINCIPAL_S = 18.0
 TIMEOUT_RESPALDO_S = 12.0
@@ -41,10 +41,10 @@ _REGLAS_COMUNES = """- Escribe en español, en prosa continua: sin viñetas, sin
 
 _AMPLIAR_GUION = f"""Eres el docente de NuevaMente. Amplías el texto del teleprompter de una escena para que el estudiante comprenda el concepto con más calma.
 Recibes la escena (título, guion breve y consejo pedagógico) y PASAJES LITERALES del documento original.
-- Escribe entre 120 y 180 palabras, en 2 o 3 párrafos, pensado para leerse en voz alta.
-- Explica únicamente lo que dicen los pasajes y el guion breve: puedes reformular, ordenar las ideas y relacionarlas entre sí.
+- Explica únicamente lo que dicen los pasajes y el guion breve: puedes reformular, ordenar las ideas, definir con palabras sencillas los términos que aparecen y relacionarlas entre sí y con el guion.
 - No añadas causas, consecuencias ni metáforas que los pasajes no sostengan.
-- Si los pasajes no alcanzan para ampliar sin inventar, responde suficiente=false y texto vacío.
+- La longitud depende del material: entre 60 y 180 palabras, en 1 a 3 párrafos, pensado para leerse en voz alta. Con pasajes breves, escribe una ampliación breve; es preferible a negarse.
+- Responde suficiente=false (y texto vacío) solo si los pasajes no tratan el tema de la escena.
 {_REGLAS_COMUNES}"""
 
 _AMPLIAR_VISUAL = f"""Eres el director de arte de una clase en video de NuevaMente. Propones cómo mostrar en pantalla una escena.

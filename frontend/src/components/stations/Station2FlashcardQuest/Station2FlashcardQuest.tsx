@@ -49,7 +49,8 @@ export const Station2FlashcardQuest = ({
   ];
 
   const totalCards = safeCards.length;
-  const minRequired = Math.max(1, Math.ceil(totalCards * 0.6));
+  // Aprobar exige el 100 % (decisión del usuario, 14/10; antes el 60 %)
+  const minRequired = Math.max(1, totalCards);
   const currentCard = safeCards[currentIndex] || safeCards[0];
   const cardId = currentCard.id || `card-${currentIndex}`;
 
@@ -119,10 +120,12 @@ export const Station2FlashcardQuest = ({
     }, 350);
   };
 
-  const handleNeedReview = () => {
-    setMasteredCards((prev) => ({ ...prev, [cardId]: false }));
-    handleNext();
-  };
+  // Acción del botón "Necesito repasar", oculto por decisión del usuario (14/10). Para recuperarlo,
+  // descomentar esta función y el botón de más abajo.
+  // const handleNeedReview = () => {
+  //   setMasteredCards((prev) => ({ ...prev, [cardId]: false }));
+  //   handleNext();
+  // };
 
   const isCurrentMastered = !!masteredCards[cardId];
   const masteredCount = Object.values(masteredCards).filter(Boolean).length;
@@ -197,7 +200,7 @@ export const Station2FlashcardQuest = ({
             Flashcard Quest Interactivo
           </h3>
           <p className={styles.stationSubtitle}>
-            Pon a prueba tu memoria activa con tarjetas 3D. Umbral de aprobación: al menos {minRequired} de {totalCards} dominadas.
+            Pon a prueba tu memoria activa con tarjetas 3D. Para aprobar, domina las {totalCards} tarjetas.
           </p>
         </div>
 
@@ -352,6 +355,7 @@ export const Station2FlashcardQuest = ({
         </div>
 
         <div className={styles.actionsGroup}>
+          {/* "Necesito repasar" oculto por decisión del usuario (14/10):
           <button
             type="button"
             onClick={handleNeedReview}
@@ -359,6 +363,7 @@ export const Station2FlashcardQuest = ({
           >
             Necesito repasar
           </button>
+          */}
 
           {isPassed ? (
             <button

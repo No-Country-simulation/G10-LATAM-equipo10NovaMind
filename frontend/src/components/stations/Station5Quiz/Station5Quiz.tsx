@@ -63,7 +63,7 @@ export const Station5FinalTrial = ({
   const safeQuestions = questions;
 
   const totalQuestions = safeQuestions.length;
-  // El quiz es la única estación que exige el 100 %: las demás aprueban con el 60 %.
+  // Como todas las estaciones, el quiz exige el 100 %.
   const minRequiredToPass = totalQuestions;
   const currentQ = safeQuestions[currentQuestionIndex] || safeQuestions[0];
   // Alternativas ya falladas en esta pregunta: se marcan y no se pueden volver a elegir.

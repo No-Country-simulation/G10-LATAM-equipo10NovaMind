@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Protocol, Sequence
 import httpx
 
 from app.core.schemas import contar_palabras
-from app.servicios.servicio_gemini import ClienteGemini, GeminiError, sanear
+from app.servicios.servicio_gemini import ClienteGemini, GeminiError, modelo_esta_agotado, sanear
 
 URL_ELEVENLABS = "https://api.elevenlabs.io"
 FORMATO_MP3 = "mp3_22050_32"
@@ -89,14 +89,18 @@ class VozGemini:
 
     def __init__(self, cliente: ClienteGemini, modelo: str, voz: str = "Kore", *, timeout_s: float = 90.0):
         self._cliente, self._modelo, self._voz, self._timeout_s = cliente, modelo, voz, timeout_s
-        self.nombre = f"Gemini ({voz})"
+        self.nombre = f"Gemini ({voz}, {modelo})"
 
     @property
     def identidad(self) -> str:
         return f"gemini|{self._modelo}|{self._voz}|{ESTILO_NATURAL}|{ESTILO_AGIL}"
 
     async def sin_presupuesto(self, textos: Sequence[str]) -> Optional[str]:
-        return None  # la cuota de Gemini no se puede consultar: se sabe al llamar (429)
+        # La cuota de Gemini no se puede consultar: se sabe al llamar (429). Pero un modelo que ya
+        # agotó su cuota diaria en este proceso se salta sin gastar otra llamada.
+        if modelo_esta_agotado(self._modelo):
+            return f"{self.nombre} tiene la cuota diaria agotada."
+        return None
 
     async def sintetizar(self, texto: str, *, rapido: bool = False) -> VozGenerada:
         try:

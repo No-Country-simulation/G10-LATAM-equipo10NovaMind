@@ -686,3 +686,30 @@ def test_api_sin_voz_del_servidor_no_toca_voces_ni_almacen(api):
     assert r.json()["status"] == "exito" and r.json()["video_job_spec"]["escenas"][0]["imagen"]["tipo"] == "foto"
     voces.assert_not_called()
     almacen.assert_not_called()
+
+
+# --------------------------------------------------------------------- Varios modelos TTS de Gemini
+def test_un_modelo_tts_agotado_se_salta_sin_llamar_y_responde_el_siguiente():
+    from app.servicios.servicio_gemini import marcar_modelo_agotado
+
+    agotada, siguiente = VozSimulada(), VozSimulada()
+    marcar_modelo_agotado("tts-agotado")
+    narrador = Narrador([VozGemini(agotada, "tts-agotado"), VozGemini(siguiente, "tts-libre")])
+    r = _narrar(narrador)
+    assert r.status == "exito" and r.video_job_spec.escenas[0].audio.modelo == "tts-libre"
+    assert not agotada.llamadas and siguiente.llamadas
+    assert any("cuota diaria agotada" in a for a in r.advertencias)
+
+
+def test_las_voces_incluyen_los_modelos_tts_de_respaldo_sin_repetir(monkeypatch):
+    from app.main import _voces_narracion
+
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "")  # vacía: load_dotenv no pisa una variable ya definida
+    monkeypatch.setenv("GEMINI_API_KEY", "clave-de-prueba")
+    monkeypatch.setenv("GEMINI_TTS_MODEL", "tts-a")
+    monkeypatch.setenv("GEMINI_TTS_FALLBACK_MODELS", "tts-b, tts-a ,tts-c")
+    async def voces_en_bucle():  # el cliente Gemini es uno por bucle de eventos
+        return _voces_narracion("Kore")
+
+    voces = asyncio.run(voces_en_bucle())
+    assert [v.identidad.split("|")[1] for v in voces] == ["tts-a", "tts-b", "tts-c"]

@@ -110,6 +110,9 @@ class Config:
     gemini_summary_fallback_model: Optional[str] = "gemini-3.1-flash-lite"
     gemini_resources_fallback_model: Optional[str] = "gemini-3.1-flash-lite"
     gemini_tts_model: str = "gemini-3.8-flash-lite-tts"
+    # Cada modelo TTS tiene su propia cuota gratuita (medido el 2026-10-14: 3.8-flash-lite-tts,
+    # 10 peticiones al día; 3.8-flash-tts habilitado). Se prueban en orden tras el principal.
+    gemini_tts_fallback_models: tuple = ("gemini-3.8-flash-tts",)
     # Transcripción de imágenes y PDF escaneados (POST /api/v1/documentos/extraer). Medido el
     # 2026-10-13: 3.1-flash-lite transcribe literal una página escaneada en ~3 s (~1.100 tokens).
     # Respaldo: 3.8-flash y 3.7-flash agotaron la cuota (429); 3.5-flash-lite respondió tras 503.
@@ -168,6 +171,9 @@ class Config:
             gemini_summary_fallback_model=os.getenv("GEMINI_SUMMARY_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
             gemini_resources_fallback_model=os.getenv("GEMINI_RESOURCES_FALLBACK_MODEL", "gemini-3.1-flash-lite") or None,
             gemini_tts_model=os.getenv("GEMINI_TTS_MODEL") or "gemini-3.8-flash-lite-tts",
+            gemini_tts_fallback_models=tuple(
+                m.strip() for m in os.getenv("GEMINI_TTS_FALLBACK_MODELS", "gemini-3.8-flash-tts").split(",") if m.strip()
+            ),
             gemini_transcription_model=os.getenv("GEMINI_TRANSCRIPTION_MODEL") or "gemini-3.1-flash-lite",
             gemini_transcription_fallback_model=os.getenv("GEMINI_TRANSCRIPTION_FALLBACK_MODEL", "gemini-3.5-flash-lite") or None,
             gemini_concurrencia_por_modelo=_leer_int("GEMINI_CONCURRENCIA_POR_MODELO", 2, 1, 10),

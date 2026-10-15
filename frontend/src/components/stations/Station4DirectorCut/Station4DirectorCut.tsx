@@ -66,7 +66,12 @@ type EstadoNarracion =
   | { fase: 'generando'; mensaje: string }
   | { fase: 'lista'; respuesta: RespuestaNarracion; urls: Record<number, string>; motivo?: string }
   | { fase: 'error'; mensaje: string }
-  | { fase: 'navegador'; voz: string; lang: string; respuesta: RespuestaNarracion | null; aviso?: string };
+  | { fase: 'navegador'; voz: string; lang: string; respuesta: RespuestaNarracion | null; aviso?: string }
+  // Ninguna voz funcionó: el video se ve sin voz, con subtítulos, al ritmo estimado
+  | { fase: 'mudo'; respuesta: RespuestaNarracion | null; motivo: string };
+
+/** Oculto por decisión del usuario (14/10): el recuadro de estado del video (voz, fallos y avisos). */
+const MOSTRAR_ESTADO_VIDEO = false;
 
 /** Lo que la voz del navegador informa mientras lee una escena. */
 interface HablaNavegador {
@@ -170,7 +175,8 @@ const DirectorStudio = ({
   const hasRealScenes = Array.isArray(scenes) && scenes.length > 0;
   const safeScenes = hasRealScenes ? scenes : FALLBACK_SCENES;
   const totalScenes = safeScenes.length;
-  const minRequired = Math.max(1, Math.ceil(totalScenes * 0.6));
+  // Aprobar exige el 100 % (decisión del usuario, 14/10; antes el 60 %)
+  const minRequired = Math.max(1, totalScenes);
   const wpm = BASE_WPM;
 
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
@@ -179,7 +185,8 @@ const DirectorStudio = ({
   const [isFinished, setIsFinished] = useState(false);
   const [activeWord, setActiveWord] = useState(-1);
   const [promptCopyState, setPromptCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
-  const [showRagDetails, setShowRagDetails] = useState(true);
+  // Plegada por defecto (decisión del usuario, 14/10): se abre con "Mostrar"
+  const [showRagDetails, setShowRagDetails] = useState(false);
   const [narracion, setNarracion] = useState<EstadoNarracion>({ fase: 'inactiva' });
   const [isTheater, setIsTheater] = useState(false);
 
@@ -246,13 +253,15 @@ const DirectorStudio = ({
 
   // Con video listo, la escena trae su foto (y su audio si la voz es del servidor)
   const respuestaVideo =
-    narracion.fase === 'lista' ? narracion.respuesta : narracion.fase === 'navegador' ? narracion.respuesta : null;
+    narracion.fase === 'lista' || narracion.fase === 'navegador' || narracion.fase === 'mudo'
+      ? narracion.respuesta
+      : null;
   const narrada = respuestaVideo?.video_job_spec.escenas[currentSceneIndex];
   const viewScene = narrada ?? currentScene;
   const audioUrl = narracion.fase === 'lista' && narrada?.audio ? narracion.urls[narrada.escena] : undefined;
   const audioMode = Boolean(audioUrl);
   const browserMode = narracion.fase === 'navegador';
-  const videoListo = narracion.fase === 'lista' || narracion.fase === 'navegador';
+  const videoListo = narracion.fase === 'lista' || narracion.fase === 'navegador' || narracion.fase === 'mudo';
   const tiemposPalabras =
     audioMode && narrada?.audio?.tiempos_palabras?.length === scriptWords.length
       ? narrada.audio.tiempos_palabras
@@ -507,7 +516,33 @@ const DirectorStudio = ({
     setIsPlaying(true);
   };
 
-  /** Respaldo: voz del servidor (ElevenLabs y, si no puede, Gemini). */
+  /** Diapositivas con sus fotos, sin voz del servidor (no gasta ElevenLabs ni Gemini TTS). */
+  const diapositivasConFotos = async (): Promise<{ respuesta: RespuestaNarracion | null; aviso?: string }> => {
+    try {
+      const r = await solicitarNarracion({ ...contratoActual(), wpm: BASE_WPM }, 'Kore', { vozServidor: false });
+      return r.status === 'exito' ? { respuesta: r } : { respuesta: null, aviso: r.advertencias[0] };
+    } catch (err) {
+      // Sin fotos el video se ve igual: las diapositivas se dibujan desde el guion
+      return {
+        respuesta: null,
+        aviso: `No se pudieron traer las fotos (${err instanceof Error ? err.message : String(err)}): se muestran las diapositivas solas.`,
+      };
+    }
+  };
+
+  /**
+   * Último recurso, cuando ninguna voz funciona: el video sin voz, con fotos y subtítulos,
+   * avanzando al ritmo estimado.
+   */
+  const videoSinVoz = async (motivo: string) => {
+    setNarracion({ fase: 'generando', mensaje: 'Preparando el video sin voz…' });
+    const { respuesta, aviso } = await diapositivasConFotos();
+    if (!vivoRef.current) return;
+    setNarracion({ fase: 'mudo', respuesta, motivo: aviso ? `${motivo} ${aviso}` : motivo });
+    abrirVideo();
+  };
+
+  /** Respaldo: voz del servidor (ElevenLabs y, si no puede, Gemini); si tampoco, el video sin voz. */
   const generarConVozServidor = async (motivo?: string) => {
     setIsPlaying(false);
     setIsTheater(false);
@@ -515,10 +550,7 @@ const DirectorStudio = ({
     try {
       const respuesta = await solicitarNarracion({ ...contratoActual(), wpm: BASE_WPM });
       if (respuesta.status !== 'exito') {
-        setNarracion({
-          fase: 'error',
-          mensaje: respuesta.advertencias[0] ?? 'No se pudo generar la narración. Prueba de nuevo.',
-        });
+        await videoSinVoz(respuesta.advertencias[0] ?? 'No hay ninguna voz disponible.');
         return;
       }
       const urls = await urlsDeAudio(respuesta);
@@ -532,14 +564,14 @@ const DirectorStudio = ({
       abrirVideo();
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
-      setNarracion({ fase: 'error', mensaje: `No se pudo generar la narración: ${detalle}` });
+      await videoSinVoz(`No se pudo generar la voz: ${detalle}`);
     }
   };
 
   /** Botón flotante: primero la voz del navegador con el acento elegido; si no hay, la del servidor. */
   const handleVideo = async () => {
     if (!hasRealScenes || narracion.fase === 'generando') return;
-    if (narracion.fase === 'lista') {
+    if (narracion.fase === 'lista' || narracion.fase === 'mudo') {
       abrirVideo();
       return;
     }
@@ -559,16 +591,7 @@ const DirectorStudio = ({
       return;
     }
     setNarracion({ fase: 'generando', mensaje: 'Preparando las diapositivas y sus fotos…' });
-    let respuesta: RespuestaNarracion | null = null;
-    let aviso: string | undefined;
-    try {
-      const r = await solicitarNarracion({ ...contratoActual(), wpm: BASE_WPM }, 'Kore', { vozServidor: false });
-      if (r.status === 'exito') respuesta = r;
-      else aviso = r.advertencias[0];
-    } catch (err) {
-      // Sin fotos el video se ve igual: las diapositivas se dibujan desde el guion
-      aviso = `No se pudieron traer las fotos (${err instanceof Error ? err.message : String(err)}): se muestran las diapositivas solas.`;
-    }
+    const { respuesta, aviso } = await diapositivasConFotos();
     if (!vivoRef.current) return;
     setNarracion({ fase: 'navegador', voz: voz.name, lang: voz.lang, respuesta, aviso });
     abrirVideo();
@@ -786,8 +809,8 @@ const DirectorStudio = ({
           </div>
           <h3 className={estudio.stationTitle}>Director Cut: Narrativa Pedagógica & Storyboard</h3>
           <p className={estudio.stationSubtitle}>
-            Estudio interactivo de locución y storyboard para microclases de 60 segundos. Explora{' '}
-            {minRequired} de {totalScenes} escenas para aprobar.
+            Estudio interactivo de locución y storyboard para microclases de 60 segundos. Explora las {totalScenes}{' '}
+            escenas para aprobar.
           </p>
         </div>
 
@@ -1041,7 +1064,7 @@ const DirectorStudio = ({
             )
           }
         >
-          {hasRealScenes && <EstadoVideo estado={narracion} />}
+          {MOSTRAR_ESTADO_VIDEO && hasRealScenes && <EstadoVideo estado={narracion} />}
 
           {/* Barra de Navegación de Escenas */}
           <div className={estudio.playbackNav}>
@@ -1084,6 +1107,7 @@ const DirectorStudio = ({
         onToggleTheater={toggleTheater}
         soloCine
         subtitulo={{ palabras: scriptWords, activa: activeWord }}
+        sinVoz={narracion.fase === 'mudo'}
       />
       {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" />}
 
@@ -1107,7 +1131,9 @@ const EstadoVideo = ({ estado }: { estado: EstadoNarracion }) => {
       ? [estado.motivo, ...estado.respuesta.advertencias]
       : estado.fase === 'navegador'
         ? [estado.aviso, ...(estado.respuesta?.advertencias ?? [])]
-        : [];
+        : estado.fase === 'mudo'
+          ? [estado.motivo, ...(estado.respuesta?.advertencias ?? [])]
+          : [];
   const resumen =
     estado.fase === 'generando'
       ? estado.mensaje
@@ -1121,6 +1147,8 @@ const EstadoVideo = ({ estado }: { estado: EstadoNarracion }) => {
           }${lista.reutilizado ? ' · recuperada sin gastar cuota' : ''}`
         : estado.fase === 'navegador'
           ? `Voz del navegador: ${regionDeVoz(estado.lang)} · ${estado.voz}`
+          : estado.fase === 'mudo'
+            ? 'Sin voz: el video avanza con subtítulos al ritmo estimado.'
           : estado.fase === 'error'
             ? estado.mensaje
             : 'Pulsa «Generar video» para ver las diapositivas narradas con la voz y el acento elegidos.';
