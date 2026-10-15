@@ -197,6 +197,8 @@ const DirectorStudio = ({
   const [velocidadLocucion, setVelocidadLocucion] = useState<VelocidadLocucion>(1);
   const [hablandoTele, setHablandoTele] = useState(false);
   const teleRef = useRef<SpeechSynthesisUtterance | null>(null);
+  // Con el video generado, el teleprompter reutiliza su audio de la escena (sin gastar cuota)
+  const teleAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Ampliaciones con IA por escena: clave `${tipo}-${índice}`
   const [ampliados, setAmpliados] = useState<Record<string, string>>({});
@@ -213,6 +215,7 @@ const DirectorStudio = ({
       vivoRef.current = false;
       liberarUrls(urlsRef.current);
       if (teleRef.current && hayVozNavegador) window.speechSynthesis.cancel();
+      teleAudioRef.current?.pause();
     };
   }, []);
 
@@ -295,6 +298,10 @@ const DirectorStudio = ({
     if (teleRef.current && hayVozNavegador) {
       teleRef.current = null;
       window.speechSynthesis.cancel();
+    }
+    if (teleAudioRef.current) {
+      teleAudioRef.current.pause();
+      teleAudioRef.current = null;
     }
     setHablandoTele(false);
   };
@@ -689,6 +696,9 @@ const DirectorStudio = ({
   const guionAmpliado = ampliados[claveGuion] && !verOriginal[claveGuion] ? ampliados[claveGuion] : null;
   const visualEnriquecida = ampliados[claveVisual] && !verOriginal[claveVisual] ? ampliados[claveVisual] : null;
   const guionTele = guionAmpliado ?? currentScene.guion_locutor;
+  // El audio del video solo sirve si dice exactamente el texto que se ve (no el ampliado por IA)
+  const audioTele = audioUrl && narrada?.guion_locutor?.trim() === guionTele.trim() ? audioUrl : undefined;
+  const vozVideo = audioTele && narrada?.audio ? narrada.audio.voz : undefined;
 
   const handleAmpliar = async (tipo: 'guion' | 'visual') => {
     const clave = `${tipo}-${currentSceneIndex}`;
@@ -738,13 +748,29 @@ const DirectorStudio = ({
 
   // ------------------------------------------------------------------ teleprompter con voz
   const locutar = () => {
-    if (!hayVozNavegador) return;
-    const synth = window.speechSynthesis;
     if (hablandoTele) {
       callarTeleprompter();
       return;
     }
     if (isPlaying) return; // el video está sonando
+    if (audioTele) {
+      const audio = new Audio(audioTele);
+      audio.playbackRate = velocidadLocucion;
+      const terminarAudio = () => {
+        if (teleAudioRef.current === audio) {
+          teleAudioRef.current = null;
+          setHablandoTele(false);
+        }
+      };
+      audio.onended = terminarAudio;
+      audio.onerror = terminarAudio;
+      teleAudioRef.current = audio;
+      setHablandoTele(true);
+      audio.play().catch(terminarAudio);
+      return;
+    }
+    if (!hayVozNavegador) return;
+    const synth = window.speechSynthesis;
     synth.cancel();
     const enunciado = new SpeechSynthesisUtterance(guionTele);
     const voz = vocesES.find((v) => v.name === vozElegida);
@@ -955,6 +981,7 @@ const DirectorStudio = ({
           onVoz={cambiarVoz}
           cargandoVoces={cargandoVoces}
           hayVozNavegador={hayVozNavegador}
+          vozVideo={vozVideo}
         >
           {/* Trazabilidad RAG: las citas del documento y si están verificadas */}
           {fuentes.length > 0 && (

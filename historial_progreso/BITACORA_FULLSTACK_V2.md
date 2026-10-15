@@ -1326,3 +1326,16 @@ Decisiones del usuario:
 - Está verificada para `eleven_flash_v2_5` en español y **ya está en «My Voices»** (`/v1/voices/{id}` responde 200).
 - Se añadió a `.env` local (`ELEVENLABS_VOICE_ID` y `ELEVENLABS_VOICE_NAME`) y como valor de ejemplo en `.env.example`. `config.py` sigue con Alice por defecto si faltan.
 - Pendiente: subir el tope de créditos de la clave, reiniciar el backend local y ponerla también en el `.env` de la VM 1.
+
+**Prueba y build (14/10, noche).** Se reinició el backend local con Isabela y el respaldo `3.8-flash-tts`. El usuario probó la Estación 4: todo bien. Frontend: tests, `tsc` y build de producción limpios. El build para OCI está en `deploy/frontend-dist-oci/` (`index-GQkvHiEr.js`, apunta a `https://novamind.techgk.cl`, sin `localhost`).
+
+## 15 oct 2026 · Teleprompter con la voz del video
+
+**Pedido:** que el teleprompter no hable con la voz del navegador. Se eligió reutilizar el audio del video en vez de pedir voz de Gemini por escena: el modelo principal de voz de Gemini da 10 peticiones al día y las comparte con el video.
+- **Con el video generado y voz del servidor,** «Locutar» reproduce el audio de esa escena (`teleAudioRef`), a la velocidad elegida, y muestra «Voz del video: <voz>» en lugar del selector de acento.
+- **Solo si el texto coincide:** el audio se usa si el guion de la escena del video es igual al que se ve. Con el guion ampliado por IA, o sin video, sigue la voz del navegador.
+- Una sola voz a la vez: `callarTeleprompter` también pausa este audio (al cambiar de escena, al iniciar el video y al salir).
+
+**Experiencia que se pierde al recargar (con cuenta):** revisado el código de guardado (`writeState`) y de restauración (`refresh` y `restorePackage`) sin encontrar la causa. Hace falta el mensaje o el error que ve el usuario.
+
+**Verificación:** `tsc`, `eslint` en los 2 archivos y 33 tests del frontend. Nuevo build para OCI: `deploy/frontend-dist-oci/` (`index-BZkKFWR7.js`).

@@ -25,6 +25,8 @@ interface TeleprompterEstudioProps {
   onVoz: (nombre: string) => void;
   cargandoVoces: boolean;
   hayVozNavegador: boolean;
+  /** Voz del video ya generado: si existe, "Locutar" reproduce su audio de la escena */
+  vozVideo?: string;
   /** Procedencia y citas del documento (obligatorias en esta rama) */
   children?: ReactNode;
 }
@@ -51,9 +53,11 @@ export const TeleprompterEstudio = ({
   onVoz,
   cargandoVoces,
   hayVozNavegador,
+  vozVideo,
   children,
 }: TeleprompterEstudioProps) => {
   const cargando = ampliacion.fase === 'cargando';
+  const puedeLocutar = hayVozNavegador || Boolean(vozVideo);
   return (
     <section className={styles.teleprompterCard} aria-label="Teleprompter docente">
       <div className={styles.panelHeader}>
@@ -85,7 +89,7 @@ export const TeleprompterEstudio = ({
             <span>{velocidad}x</span>
           </button>
 
-          {hayVozNavegador && (
+          {puedeLocutar && (
             <button
               type="button"
               onClick={onLocutar}
@@ -108,10 +112,16 @@ export const TeleprompterEstudio = ({
         </div>
       </div>
 
-      {hayVozNavegador && (
+      {vozVideo ? (
         <div className={styles.accentRow}>
-          <SelectorAcento voces={voces} vozElegida={vozElegida} onVoz={onVoz} cargando={cargandoVoces} />
+          <span className={styles.accentHint}>🎙 Voz del video: {vozVideo}</span>
         </div>
+      ) : (
+        hayVozNavegador && (
+          <div className={styles.accentRow}>
+            <SelectorAcento voces={voces} vozElegida={vozElegida} onVoz={onVoz} cargando={cargandoVoces} />
+          </div>
+        )
       )}
 
       {/* Estado de onda de audio cuando está reproduciendo */}
