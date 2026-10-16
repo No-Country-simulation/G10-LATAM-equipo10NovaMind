@@ -100,5 +100,11 @@ TROUBLESHOOTING.md
 audiovisual.md
 CLAUDE.md
 *claude*.md
+# Documentación histórica: solo en local, no se sube a GitHub
+historial_progreso/
+legado/
+backend/docs/CHANGELOG.md
+backend/docs/PROJECT_AUDIT.md
+
 # Documentación modular interna y análisis estático
 backend/docs/modulos/
