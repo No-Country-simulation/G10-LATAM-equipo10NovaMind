@@ -375,7 +375,7 @@ export const Step1Ingestion = ({
           <div className={styles.tagRow}>
             <span className={styles.pipelineTag}>
               <Sparkles size={14} color="#fbbf24" />
-              Pipeline RAG & Agentes Pedagógicos
+              Agentes Pedagógicos
             </span>
             <span className={styles.hackathonSign}>
               Oracle Next Education · Hackathon ONE G10 · NuevaMente
@@ -746,7 +746,7 @@ export const Step1Ingestion = ({
               <div className={styles.processingHeader}>
                 <Cpu size={24} className={styles.spinningIcon} />
                 <span className={styles.processingStageText}>
-                  {processingStage || 'Orquestando Agentes RAG & OCI...'}
+                  {processingStage || 'Orquestando agentes pedagógicos...'}
                 </span>
               </div>
               <div className={styles.progressBarBg}>
