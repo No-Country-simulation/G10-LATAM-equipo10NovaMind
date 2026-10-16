@@ -4,6 +4,52 @@
 > **Hackathon ONE G10 · Oracle Next Education & Alura · Proyecto 1**  
 > Solución integral desacoplada en **Microservicios (Backend FastAPI + Frontend React 19 + Vite)** con orquestación multi-agente en **LangGraph**, **RAG vectorial con Cohere**, **ChromaDB**, y persistencia modular.
 
+<p align="center">
+  <img src="docs/flujo-nuevamente.svg" alt="Flujo de NuevaMente: el documento se ingiere, Gemini genera en paralelo el resumen, las tarjetas y la producción y después el cuestionario, se verifican las citas, el paquete llega por SSE a las 5 estaciones y el video narrado se genera bajo demanda" width="960">
+</p>
+
+---
+
+## Estado actual — 16 de octubre de 2026
+
+Las secciones posteriores conservan la historia de las fases del proyecto (LangGraph, Cohere, ChromaDB). Así funciona hoy la aplicación:
+
+**Recorrido del estudiante**
+
+1. **Configuración e ingesta.** Sin sesión se elige un documento de la biblioteca (Don Quijote I y II, Apache Kafka, ENISA Threat Landscape, Snowflake y la guía de swap de OCI). Cada uno trae su perfil, sector y nivel, y se abre su **muestra pregenerada** (`frontend/public/ejemplos/`), sin llamar a ningún modelo. El botón «Prueba rápida 😊» hace lo mismo en un clic. Con sesión se puede subir un archivo propio (PDF, MD, TXT o imagen) y elegir perfil, sector y nivel.
+2. **Visualizar Resultados: cinco estaciones.**
+
+| Estación | Qué enseña |
+|---|---|
+| 1 · Resumen | Analogía central, conceptos con su cita verificada, resumen por secciones y diagrama Mermaid |
+| 2 · Tarjetas didácticas | Pregunta y respuesta con pista |
+| 3 · Guía paso a paso | «¿Cuál es la meta de leer "‹título›"?»: objetivos de aprendizaje y pasos con qué hacer y cómo comprobarlo; el comando en terminal solo si el documento es técnico |
+| 4 · Contenido AudioVisual | Microclase narrada de hasta 60 s, dibujada en el navegador con Remotion Player (sin MP4 en el servidor) |
+| 5 · Cuestionario | Examen final sobre lo que enseñaron las estaciones 1 a 4 |
+
+3. **Métricas & OCI Cloud.** Auditoría de fidelidad y dónde quedó guardado el paquete.
+
+**Cómo se genera un paquete** (`backend/app/agentes/generacion_paralela.py`)
+
+- Tres llamadas a Gemini en paralelo: **A** (resumen), **B1** (tarjetas, glosario y objetivos) y **B2** (guion del video, diapositivas, guía paso a paso y diagrama). B2 pide de 3 a 7 pasos según el largo y las secciones del documento.
+- Después, **C** genera el cuestionario con el temario que enseñaron A, B1 y B2, para que solo pregunte por lo que el estudiante ya vio.
+- Cada recurso se comprueba antes de publicarse: cada cita se busca literalmente en el documento y la página sale de ahí, nunca del modelo. Se envía por SSE en cuanto está listo y al final lo audita Groq.
+- La voz del video se genera bajo demanda: ElevenLabs y, de respaldo, Gemini TTS.
+
+**Los tres modos de generación (`modo_rag`) y el relevo entre ellos** (`backend/app/main.py`, `_generar_segun_modo`)
+
+| Modo | Qué hace | Dónde |
+|---|---|---|
+| `paralelo` | **El que usa la aplicación:** el frontend lo envía por defecto (`VITE_MODO_RAG`). Gemini con las tareas A, B1, B2 y C descritas arriba, publicación incremental por SSE, citas verificadas en Python, caché por huella en `generation_tasks` y auditoría con Groq. | `agentes/generacion_paralela.py` |
+| `vectorless` (cadena colaborativa) | RAG sin vectores: el documento entra completo en el contexto. Gemini genera las estaciones, Groq audita las afirmaciones contra el documento (`anclaje_fuente_score`) y Cohere adapta el tono al perfil y al sector. Es el valor por defecto del formulario de la API si no se envía `modo_rag`. | `agentes/cadena_colaborativa.py` |
+| `clasico` | RAG vectorial con LangGraph: Cohere crea los embeddings, ChromaDB recupera fragmentos, un agente redacta y otro audita, con reintentos si el anclaje no llega al umbral. | `core/orchestrator.py`, `agentes/agente{1,2,3}_*.py` |
+
+Si un modo no da resultado, se pasa al siguiente y el paquete lo advierte: **paralelo → cadena colaborativa → clásico**. El modo paralelo solo conmuta si ninguna tarea produjo recursos; si falla un recurso suelto, ese recurso queda marcado como fallido y no se inventa. Dentro de la cadena colaborativa, una cuota agotada (429) pasa de un proveedor a otro entre Gemini, Groq y Cohere antes de recurrir al clásico.
+
+**Base de datos (Supabase).** Las migraciones de `supabase/migrations/` se aplican en orden; la última, `202610160001_tarea_cuestionario.sql`, admite la tarea `C` en `generation_tasks`. El detalle está en [backend/docs/DATABASE.md](backend/docs/DATABASE.md).
+
+**Documentación por área:** arquitectura en [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md), API en [backend/docs/API.md](backend/docs/API.md), cambios en [backend/docs/CHANGELOG.md](backend/docs/CHANGELOG.md), frontend en [frontend/README.md](frontend/README.md) y pendientes en [historial_progreso/PENDIENTES.md](historial_progreso/PENDIENTES.md).
+
 ---
 
 ## Integración Supabase sobre la última versión del equipo — 12 de octubre de 2026
@@ -593,7 +639,7 @@ Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben t
 
 ## 🧪 9. Suite de Pruebas Automatizadas
 
-Las pruebas son deterministas: Gemini, Groq, ElevenLabs y los bancos de imágenes se simulan, así que no gastan cuota. Al 14/10/2026 son **300 en el backend y 26 en el frontend**; la cifra al día es la que dan los comandos:
+Las pruebas son deterministas: Gemini, Groq, ElevenLabs y los bancos de imágenes se simulan, así que no gastan cuota. Al 16/10/2026 son **355 en el backend y 45 en el frontend**; la cifra al día es la que dan los comandos:
 
 ```bash
 cd backend && ../.venv/Scripts/python -m pytest -q
@@ -613,7 +659,7 @@ El detalle por área está en [backend/docs/TESTING.md](backend/docs/TESTING.md)
   - Límite de lote de embeddings en llamadas a Cohere (máx. 96 textos).
   - Manejo resiliente de caídas transitorias de API con reintentos exponenciales.
 
-**Estado de la suite al 14/10/2026:** 🟢 **300 pasadas en backend y 26 en frontend, 0 fallidas.**
+**Estado de la suite al 16/10/2026:** 🟢 **355 pasadas en backend y 45 en frontend, 0 fallidas.**
 
 ---
 

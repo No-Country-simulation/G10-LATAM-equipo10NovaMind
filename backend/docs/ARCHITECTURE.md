@@ -28,13 +28,13 @@ flowchart LR
 ### 1. Capa de Presentación (Frontend React 19)
 - **`frontend/src/App.tsx`**: Orquestador del flujo de gamificación, HUD superior (XP, racha, escudos), modals de medallas (`BadgeModal`) y comunicación con la API.
 - **`frontend/src/components/PlayerHUD/`**: Barra superior de estado gamificado en tiempo real (XP acumulado, racha diaria y 3 escudos cognitivos).
-- **`frontend/src/components/Step1Ingestion/`**: Ingesta multi-formato con zona nativa e interactiva de *Drag & Drop* (animada con estados visuales para .pdf, .md, .txt e imágenes/OCR), selector compacto de biblioteca en `<select>`, modo **«Sorpréndeme»** activo por defecto para selección aleatoria instantánea, y visualización en tiempo real del prompt de rol de la IA ("Eres un tutor experto...").
+- **`frontend/src/components/Step1Ingestion/`**: Ingesta multi-formato con zona nativa e interactiva de *Drag & Drop* (animada con estados visuales para .pdf, .md, .txt e imágenes/OCR), biblioteca de documentos de ejemplo (Don Quijote I y II, Apache Kafka, ENISA, Snowflake y la guía de swap de OCI), cada uno con perfil, sector y nivel fijos, y botón «Prueba rápida 😊» que abre su muestra pregenerada (`frontend/public/ejemplos/`, sin llamar a ningún modelo). Sin sesión solo se usan esos documentos; con sesión se puede subir un archivo propio y elegir el perfil (Personalizado por defecto o «Sorpréndeme», perfil al azar).
 - **`frontend/src/components/Step2KnowledgeQuest/`**: Orquestador del circuito pedagógico gamificado de 5 estaciones:
-  - **Estación 1: Resumen Ninja (`Station1ResumenNinja`)**: Síntesis TL;DR con analogía central, métricas clave y diagrama interactivo Mermaid.js.
-  - **Estación 2: Flashcard Quest (`Station2FlashcardQuest`)**: Tarjetas interactivas 3D con giros, pistas y glosario de términos.
-  - **Estación 3: Tutorial Quest (`Station3TutorialQuest`)**: Laboratorio CLI interactivo con comandos estructurados y sandbox de terminal.
-  - **Estación 4: Director Cut (`Station4DirectorCut`)**: Storyboard audiovisual y teleprompter estructurado por escenas (≤60s), botón **«Copiar Prompt Visual»** para generadores externos, reproductor adaptativo 16:9 y **medalla de proveniencia honesta** (cero datos inventados).
-  - **Estación 5: The Final Trial (`Station5Quiz`)**: Cuestionario interactivo con retroalimentación RAG, citas textuales con derivación de página real, penalización de escudos y repaso interactivo de errores.
+  - **Estación 1 · Resumen (`Station1ResumenNinja`)**: síntesis con analogía central, conceptos verificados, resumen por secciones (desplegable) y diagrama Mermaid.
+  - **Estación 2 · Tarjetas didácticas (`Station2FlashcardQuest`)**: tarjetas 3D con pista; se aprueba marcando cada una como «Concepto dominado».
+  - **Estación 3 · Guía paso a paso (`Station3TutorialQuest`)**: responde «¿Cuál es la meta de leer "‹título›"?» con los `objetivos_aprendizaje` del paquete; cada paso muestra qué hacer, el comando en terminal solo si es un comando real (`utils/pasoGuia.ts`) o la «Clave del paso» en texto, y cómo comprobar que se logró.
+  - **Estación 4 · Contenido AudioVisual (`Station4DirectorCut`)**: teleprompter, pizarra por escena y, debajo, la microclase narrada como video en el navegador con Remotion Player (`video/`): subtítulos que se pueden ocultar (botón CC junto al tiempo), pantalla completa al reproducir y botón «Ver la microclase» que la reproduce. Nunca MP4 en el servidor.
+  - **Estación 5 · Cuestionario (`Station5Quiz`)**: examen final con citas a la fuente, escudos y repaso de errores; sus preguntas salen de lo que enseñaron las estaciones 1 a 4 (tarea C).
 - **`frontend/src/components/Step3OCICloud/`**: Panel de auditoría de calidad RAG, Score de Anclaje a fuentes, metadatos de persistencia OCI Always Free y exportación de paquete en JSON.
 - **`frontend/src/services/api.ts`**: Cliente HTTP nativo con Fetch API y `FormData` desacoplado, soporte de streaming SSE y fallback resiliente al banco de datos offline (`mockScenarios.ts`).
 
@@ -105,17 +105,19 @@ Disponible en `POST /api/v1/adaptar` y `POST /api/v1/adaptar/stream`. Lo impleme
 ```mermaid
 flowchart LR
   ING["Ingesta única<br/>texto + páginas + secciones"] --> A["A · Resumen<br/>GEMINI_SUMMARY_MODEL"]
-  ING --> B1["B1 · Flashcards, cuestionario,<br/>glosario, objetivos<br/>GEMINI_RESOURCES_MODEL"]
+  ING --> B1["B1 · Flashcards, glosario,<br/>objetivos<br/>GEMINI_RESOURCES_MODEL"]
   ING --> B2["B2 · Guion + VideoJobSpec, diapositivas,<br/>tutorial, diagrama<br/>GEMINI_RESOURCES_MODEL"]
   A --> CHK["Comprobaciones deterministas por recurso"]
   B1 --> CHK
   B2 --> CHK
+  A & B1 & B2 -->|"temario enseñado"| C["C · Cuestionario<br/>GEMINI_RESOURCES_MODEL"]
+  C --> CHK
   CHK -->|"SSE 'recurso' · verificación pendiente"| UI["Frontend"]
   CHK --> AUD["Auditoría de fidelidad (Groq)"]
   AUD -->|"SSE 'auditoria' + 'resultado'"| UI
 ```
 
-- **Concurrencia y Semáforos por Modelo:** las tres llamadas empiezan a la vez; B no depende de A. Un único `ClienteGemini` por proceso limita las llamadas simultáneas (`GEMINI_MAX_CONCURRENCIA`, por defecto 4), porque la cuota de Gemini es por proyecto. El modelo principal no tiene más límites; cuando se satura y las tareas caen al respaldo, un semáforo por modelo compartido por todo el proceso (`GEMINI_CONCURRENCIA_POR_MODELO`, por defecto 2, de 1 a 10) limita cuántas llamadas al respaldo van a la vez, sumando todas las generaciones en curso.
+- **Concurrencia y Semáforos por Modelo:** A, B1 y B2 empiezan a la vez; B no depende de A. El cuestionario (tarea C) corre después, con lo que enseñaron las otras tres. Un único `ClienteGemini` por proceso limita las llamadas simultáneas (`GEMINI_MAX_CONCURRENCIA`, por defecto 4), porque la cuota de Gemini es por proyecto. El modelo principal no tiene más límites; cuando se satura y las tareas caen al respaldo, un semáforo por modelo compartido por todo el proceso (`GEMINI_CONCURRENCIA_POR_MODELO`, por defecto 2, de 1 a 10) limita cuántas llamadas al respaldo van a la vez, sumando todas las generaciones en curso.
 - **Comprobaciones antes de publicar:** validación Pydantic del JSON, ubicación de cada cita en el documento (`app/core/fuentes.py`, que ignora espacios, mayúsculas y marcas Markdown en línea; la página se deriva del offset y nunca se toma del modelo), eliminación de duplicados, preguntas con 4 alternativas distintas, cabecera Mermaid válida y el contrato de tiempos del guion (110–125 palabras, ≤ 60 s).
 - **Aislamiento de errores y Resiliencia 429:** el fallo de una tarea o de un recurso solo afecta a ese recurso, que queda ausente con `estado_recursos[recurso].error_codigo`; nunca se rellena con contenido inventado.
   - **Clasificación 429:** `servicio_gemini.py` inspecciona los detalles de error `google.rpc.QuotaFailure` y `google.rpc.RetryInfo`. Si es `cuota_diaria`, el modelo se marca como agotado en memoria del proceso hasta la medianoche del Pacífico (hora de reseteo de cuota) y las llamadas subsecuentes hacen fail-fast directo al modelo de respaldo. Si es `cuota_minuto` con `retry_after_s <= 10.0` y presupuesto disponible, se espera y reintenta una sola vez; de lo contrario conmuta al respaldo.
@@ -123,13 +125,15 @@ flowchart LR
   - **Proveniencia honesta:** las advertencias de los recursos indican explícitamente si se usó el modelo de respaldo y el motivo (`cuota diaria`, `cuota por minuto` o falta de respuesta).
   - Tras `PRESUPUESTO_GENERACION_S` (240 s) las tareas pendientes se cancelan (`presupuesto_agotado`). Si ninguna tarea produce recursos, la API conmuta a la cadena colaborativa y, si esta falla, al orquestador clásico.
 - **Verificación:** `pendiente` al publicar; tras la auditoría, `auditada` (recursos cuyas afirmaciones se enviaron al auditor: resumen, flashcards, cuestionario, glosario, guion, tutorial) o `no_auditada`.
+- **Cuestionario al final (tarea C):** `temario_ensenado()` resume lo que enseñaron las estaciones 1 a 4 (conceptos, tarjetas, pasos y escenas, hasta 6000 caracteres) y `tarea_cuestionario()` lo pone en las instrucciones, así entra en la huella: si las estaciones se reutilizan, el cuestionario también. Pregunta solo por esas ideas; la respuesta y la cita salen del documento. Usa el tiempo que quede del presupuesto. Si no salió ninguna estación, no se llama (`sin_temario`) y main pasa al respaldo.
+- **Pasos de la guía:** `pasos_guia()` fija cuántos pasos pide B2 según el documento: tope por palabras (menos de 500, 3; de 1500, 4; de 3000, 5; de 6000, 6; más, 7) y, con secciones detectadas, uno por sección dentro de ese tope (mínimo 3).
 - **Narración:** no se genera aquí. La TTS es una acción bajo demanda y la microclase se reproduce en el navegador; el servidor no renderiza video.
 
 Eventos SSE adicionales (el frontend actual los ignora; además se emiten eventos `progreso` equivalentes):
 
 | `tipo` | Campos |
 |---|---|
-| `tarea` | `tarea` (`A`, `B1`, `B2`, `auditoria`), `estado` (`en_curso`, `completada`, `fallida`), `modelo`, `intentos`, `latencia_s`, `error_codigo` |
+| `tarea` | `tarea` (`A`, `B1`, `B2`, `C`, `auditoria`), `estado` (`en_curso`, `completada`, `fallida`), `modelo`, `intentos`, `latencia_s`, `error_codigo` |
 | `recurso` | `recurso`, `estado` (`EstadoRecurso`), `campos`: parche de `contenido_adaptado` listo para fusionar |
 | `auditoria` | `auditoria_ejecutada`, `anclaje_fuente_score` (null si no se ejecutó), `verificacion` por recurso |
 
@@ -137,7 +141,7 @@ Medición real (guía de swap, 7,6 K caracteres, 12-oct-2026): B1 y B2 publicaro
 
 ### Persistencia por recurso y reutilización (`generation_tasks`)
 
-Migración: `supabase/migrations/202610120001_generation_tasks.sql` (ejecutar en el SQL Editor de Supabase después de `202610080001`). Añade `documents.content_hash` (un documento por usuario y contenido) y la tabla `generation_tasks`, con una fila por (usuario, huella de tarea, recurso), RLS `own_rows` y borrado en cascada con el documento.
+Migración: `supabase/migrations/202610120001_generation_tasks.sql` (ejecutar en el SQL Editor de Supabase después de `202610080001`). Añade `documents.content_hash` (un documento por usuario y contenido) y la tabla `generation_tasks`, con una fila por (usuario, huella de tarea, recurso), RLS `own_rows` y borrado en cascada con el documento. `202610160001_tarea_cuestionario.sql` amplía la restricción de `generation_tasks.task` para admitir la tarea `C`.
 
 - **Al empezar:** el backend crea (o reutiliza) la fila de `documents` con el JWT del usuario, así que RLS impone la propiedad también en la base de datos.
 - **Huella de tarea:** `sha256(documento + perfil + nicho + nivel + tema + modelo + instrucciones + esquema + VERSION_PROCESADO)`. Si cambia el modelo o el prompt, nada se reutiliza.
