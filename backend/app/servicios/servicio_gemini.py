@@ -511,7 +511,10 @@ class ClienteGemini:
             try:
                 wav = base64.b64decode(audios[-1]["data"], validate=True)
                 with wave.open(io.BytesIO(wav)) as w:
-                    frames, hz, canales = w.getnframes(), w.getframerate(), w.getnchannels()
+                    hz, canales, ancho = w.getframerate(), w.getnchannels(), w.getsampwidth()
+                    # La duración sale de las muestras que de verdad trae el archivo, no del tamaño
+                    # que declara la cabecera: un audio en flujo puede declarar más de lo que trae.
+                    frames = len(w.readframes(w.getnframes())) // max(1, ancho * canales)
             except (ValueError, wave.Error, EOFError):
                 raise GeminiError("audio_invalido", "El audio recibido no es un WAV válido.", reintentable=True) from None
             if hz <= 0 or frames <= 0:

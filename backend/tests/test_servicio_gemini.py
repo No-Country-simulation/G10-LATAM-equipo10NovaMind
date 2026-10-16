@@ -224,6 +224,21 @@ def test_sintetizar_voz_devuelve_wav_y_duracion_medida():
     assert cuerpo["input"][0]["content"][0]["annotations"] == [{"type": "speech_metadata", "style": "pausado y claro"}]
 
 
+def test_duracion_sale_de_las_muestras_reales_y_no_de_la_cabecera():
+    # Cabecera que declara el doble de datos de los que trae (p. ej. un WAV escrito en flujo)
+    wav = bytearray(_wav(1.5))
+    datos = wav.index(b"data") + 4
+    real = int.from_bytes(wav[datos:datos + 4], "little")
+    wav[datos:datos + 4] = (real * 2).to_bytes(4, "little")
+    guion = Guion([_ok_audio(bytes(wav))])
+
+    async def run():
+        async with _cliente(guion) as c:
+            return await c.sintetizar_voz(modelo="m", texto="Hola")
+
+    assert asyncio.run(run()).duracion_s == 1.5
+
+
 def test_audio_corrupto_se_reintenta():
     corrupto = httpx.Response(200, json={"status": "completed", "steps": [{"type": "model_output", "content": [
         {"type": "audio", "data": base64.b64encode(b"no es wav").decode()}]}]})

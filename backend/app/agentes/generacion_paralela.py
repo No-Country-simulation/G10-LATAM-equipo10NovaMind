@@ -7,6 +7,9 @@ Generación paralela de recursos educativos con Gemini (modo_rag="paralelo").
     B1 · evaluación  (GEMINI_RESOURCES_MODEL)  ─┼─ concurrentes, sobre el mismo contexto
     B2 · producción  (GEMINI_RESOURCES_MODEL)  ─┘  documental (texto, páginas, secciones)
           │
+          ▼
+    C  · cuestionario (GEMINI_RESOURCES_MODEL)  después: pregunta por lo que enseñaron
+          │                                     A, B1 y B2 (el «temario»)
           │  por recurso: esquema Pydantic → comprobaciones deterministas (citas
           │  localizadas en el documento, duplicados, coherencia) → publicación
           │  inmediata con verificación "pendiente"
@@ -80,13 +83,13 @@ Almacenar = Callable[[SolicitudAdaptacion, RespuestaAdaptacion], AlmacenamientoO
 
 NOMBRES_RECURSO = {
     "resumen": "Resumen",
-    "flashcards": "Flashcards",
+    "flashcards": "Tarjetas didácticas",
     "cuestionario": "Cuestionario",
     "glosario": "Glosario",
     "objetivos": "Objetivos de aprendizaje",
     "guion": "Guion de locución",
     "diapositivas": "Diapositivas",
-    "tutorial": "Tutorial",
+    "tutorial": "Guía paso a paso",
     "diagrama": "Diagrama",
 }
 # Recursos de los que se envían afirmaciones a la auditoría de fidelidad.
@@ -158,11 +161,14 @@ class TerminoGlosario(_Salida):
 
 class SalidaEvaluacion(_Salida):
     flashcards: List[FlashcardGenerada] = Field(..., min_length=4, max_length=8)
-    cuestionario: List[PreguntaGenerada] = Field(..., min_length=4, max_length=6)
     glosario: List[TerminoGlosario] = Field(..., min_length=3, max_length=12)
     objetivos_aprendizaje: List[str] = Field(
         ..., min_length=3, max_length=5, description="Objetivos observables que empiezan con un verbo"
     )
+
+
+class SalidaCuestionario(_Salida):
+    cuestionario: List[PreguntaGenerada] = Field(..., min_length=4, max_length=6)
 
 
 class VisualGenerado(_Salida):
@@ -200,14 +206,14 @@ class DiapositivaGenerada(_Salida):
 class PasoTutorial(_Salida):
     titulo: str = Field(..., min_length=1)
     descripcion: str = Field(..., min_length=1)
-    accion: str = Field(..., min_length=1, description="Comando o acción concreta tomada del documento")
+    accion: str = Field(..., min_length=1, description="Comando exacto si el documento es técnico; si no, la idea o acción concreta del documento que se trabaja en este paso")
     verificacion: str = Field(..., min_length=1)
 
 
 class SalidaProduccion(_Salida):
     guion: List[EscenaGenerada] = Field(..., min_length=2, max_length=3)
     diapositivas: List[DiapositivaGenerada] = Field(..., min_length=3, max_length=6)
-    tutorial: List[PasoTutorial] = Field(..., min_length=3, max_length=5)
+    tutorial: List[PasoTutorial] = Field(..., min_length=3, max_length=7)
     diagrama_mermaid: str = Field(..., min_length=1, description="Diagrama Mermaid válido (flowchart TD o sequenceDiagram)")
 
 
@@ -254,14 +260,38 @@ _TAREA_A = """Eres el redactor de síntesis de NovaMind. Produce el resumen del 
 
 _TAREA_B1 = """Eres el diseñador de evaluación de NovaMind. Produce recursos de práctica:
 - flashcards: pregunta en el frente, respuesta breve en el dorso y una pista que no revele la respuesta.
-- cuestionario: preguntas de selección múltiple con exactamente 4 alternativas plausibles y distintas, una sola correcta, y una explicación por alternativa.
 - glosario: términos técnicos del documento con su definición según el documento.
 - objetivos_aprendizaje: lo que el estudiante podrá hacer al terminar, empezando con un verbo observable."""
+
+# El cuestionario es la última estación: evalúa lo que el estudiante ya vio en las anteriores.
+# Por eso no corre con A, B1 y B2 sino después, con lo que ellas enseñaron (el «temario»).
+_TAREA_C = """Eres el examinador de NovaMind. Produce el cuestionario final del recorrido:
+- cuestionario: preguntas de selección múltiple con exactamente 4 alternativas plausibles y distintas, una sola correcta, y una explicación por alternativa.
+- Pregunta SOLO por ideas del TEMARIO ENSEÑADO (lo que el estudiante ya vio en las estaciones anteriores) y reparte las preguntas entre esas estaciones. No preguntes por partes del documento que el temario no trata.
+- La respuesta correcta y la cita salen del documento: el temario indica de qué preguntar, el documento es la fuente."""
+MAX_CARACTERES_TEMARIO = 6000
+
+
+def temario_ensenado(contenido: Dict[str, Any]) -> str:
+    """Lo que enseñaron las estaciones 1 a 4 de este paquete, en texto breve para el examinador."""
+    def lineas(titulo: str, items: List[str]) -> str:
+        items = [" ".join(i.split()) for i in items if i and i.strip()]
+        return f"{titulo}:\n" + "\n".join(f"- {i}" for i in items) if items else ""
+
+    conceptos = (contenido.get("resumen_ninja") or {}).get("conceptos_clave") or []
+    bloques = [
+        lineas("ESTACIÓN 1 · RESUMEN (conceptos)", [f"{c.get('texto', '')}: {c.get('explicacion', '')}" for c in conceptos]),
+        lineas("ESTACIÓN 2 · TARJETAS", [f"{t.get('frente', '')} → {t.get('dorso', '')}" for t in contenido.get("flashcards") or []]),
+        lineas("ESTACIÓN 3 · GUÍA PASO A PASO", [f"{p.get('titulo', '')}: {p.get('descripcion', '')}" for p in contenido.get("tutorial") or []]),
+        lineas("ESTACIÓN 4 · VIDEO", [f"{e.get('titulo', '')}: {e.get('guion_locutor', '')}" for e in contenido.get("director_cut") or []]),
+    ]
+    texto = "\n\n".join(b for b in bloques if b)
+    return _recortar(texto, MAX_CARACTERES_TEMARIO) if texto else ""
 
 _TAREA_B2 = f"""Eres el productor audiovisual de NovaMind. Produce:
 - guion: las escenas de un video narrado de 60 segundos como máximo; cada escena es una diapositiva con voz. El guion_locutor completo (todas las escenas juntas) debe sumar entre {PALABRAS_GUION_MIN} y {PALABRAS_GUION_MAX} palabras, repartidas en partes similares. Es texto para leer en voz alta: sin viñetas, sin markdown, sin URLs. Narra solo hechos del documento: el sector de la audiencia aparece como mucho en UNA escena de todo el guion, en una analogía breve que va después del hecho que ilustra.
 - diapositivas: propuesta en orden didáctico, con concepto visual por diapositiva.
-- tutorial: pasos prácticos progresivos con una acción concreta tomada del documento y cómo verificarla.
+- tutorial: guía paso a paso para aprender el documento, en orden de aprendizaje: cada paso es una meta concreta tomada del documento, con su acción (un comando exacto solo si el documento es técnico) y cómo comprobar que se logró.
 - diagrama_mermaid: un diagrama Mermaid válido que modele el flujo o la arquitectura principal, sin bloque de código."""
 
 
@@ -277,10 +307,28 @@ def escenas_video(solicitud: SolicitudAdaptacion) -> int:
     return 3 if largo and seccionado else 2
 
 
+# Pasos de la guía (estación 3) según el documento: el largo fija un tope (3 a 7) y, si hay
+# secciones detectadas, se da un paso por sección dentro de ese tope. Se decide aquí y no en el modelo.
+TOPES_PASOS_GUIA = ((500, 3), (1500, 4), (3000, 5), (6000, 6))
+MAX_PASOS_GUIA = 7
+MIN_PASOS_GUIA = 3
+
+
+def pasos_guia(solicitud: SolicitudAdaptacion) -> int:
+    palabras = contar_palabras(solicitud.documento_contenido)
+    tope = next((n for limite, n in TOPES_PASOS_GUIA if palabras < limite), MAX_PASOS_GUIA)
+    if not solicitud.secciones:
+        return tope
+    return max(MIN_PASOS_GUIA, min(tope, len(solicitud.secciones)))
+
+
 def _instrucciones_produccion(solicitud: SolicitudAdaptacion) -> str:
     n = escenas_video(solicitud)
     por_escena = round((PALABRAS_GUION_MIN + PALABRAS_GUION_MAX) / 2 / n)
-    return f"ESCENAS DEL GUION: exactamente {n}, de unas {por_escena} palabras cada una."
+    return (
+        f"ESCENAS DEL GUION: exactamente {n}, de unas {por_escena} palabras cada una.\n"
+        f"PASOS DEL TUTORIAL: exactamente {pasos_guia(solicitud)}."
+    )
 
 
 def _entrada(solicitud: SolicitudAdaptacion) -> Tuple[str, bool]:
@@ -408,7 +456,7 @@ def procesar_flashcards(datos: SalidaEvaluacion, solicitud: SolicitudAdaptacion)
     )
 
 
-def procesar_cuestionario(datos: SalidaEvaluacion, solicitud: SolicitudAdaptacion) -> RecursoListo:
+def procesar_cuestionario(datos: SalidaCuestionario, solicitud: SolicitudAdaptacion) -> RecursoListo:
     preguntas, dup = _sin_duplicados(datos.cuestionario, lambda p: p.pregunta)
     validas = [p for p in preguntas if len({_clave(o) for o in p.opciones}) == 4 and all(o.strip() for o in p.opciones)]
     invalidas = len(preguntas) - len(validas)
@@ -606,7 +654,7 @@ def tareas_para(config: Config) -> List[Tarea]:
         Tarea("A", config.gemini_summary_model, _TAREA_A, SalidaResumen,
               (("resumen", procesar_resumen),), timeout_s=150.0, thinking_level="low", respaldo=respaldo_a),
         Tarea("B1", config.gemini_resources_model, _TAREA_B1, SalidaEvaluacion,
-              (("flashcards", procesar_flashcards), ("cuestionario", procesar_cuestionario),
+              (("flashcards", procesar_flashcards),
                ("glosario", procesar_glosario), ("objetivos", procesar_objetivos)),
               timeout_s=90.0, thinking_level="minimal", respaldo=respaldo_b),
         Tarea("B2", config.gemini_resources_model, _TAREA_B2, SalidaProduccion,
@@ -616,12 +664,20 @@ def tareas_para(config: Config) -> List[Tarea]:
     ]
 
 
+def tarea_cuestionario(config: Config, temario: str) -> Tarea:
+    """Tarea C: corre después de A, B1 y B2. El temario va en las instrucciones, así entra en la huella."""
+    return Tarea("C", config.gemini_resources_model, f"{_TAREA_C}\n\nTEMARIO ENSEÑADO:\n{temario}", SalidaCuestionario,
+                 (("cuestionario", procesar_cuestionario),), timeout_s=90.0, thinking_level="minimal",
+                 respaldo=_respaldo(config.gemini_resources_model, config.gemini_resources_fallback_model))
+
+
 _MENSAJES_ERROR = {
     "rate_limit": "cuota de Gemini agotada temporalmente",
     "timeout": "el modelo no respondió a tiempo",
     "presupuesto_agotado": "se agotó el tiempo máximo de generación",
     "esquema_invalido": "la respuesta del modelo no cumplía el formato",
     "sin_elementos_validos": "ningún elemento superó las comprobaciones",
+    "sin_temario": "no se generó ninguna estación de la que preguntar",
 }
 
 # Errores del modelo principal que justifican probar el de respaldo: saturación, cuota,
@@ -819,6 +875,8 @@ class GeneradorParalelo:
                 logger.warning("[paralelo] Tarea %s cancelada por presupuesto (%.0fs).", t.id, self._presupuesto_s)
                 await self._fallar(t, "presupuesto_agotado", [r for r in t.recursos if r not in ej.estados], ej)
 
+        await self._ejecutar_cuestionario(ej, self._presupuesto_s - (time.perf_counter() - t0))
+
         if not any(e.estado == "completado" for e in ej.estados.values()):
             codigos = sorted({e.error_codigo or "?" for e in ej.estados.values()})
             raise GeneracionParalelaError(f"Ninguna tarea produjo recursos válidos ({', '.join(codigos)}).")
@@ -951,6 +1009,25 @@ class GeneradorParalelo:
             ej.publicar({"tipo": "recurso", "recurso": recurso, "campos": listo.campos,
                          "estado": estado.model_dump()})
         await self._guardar([ej.filas[r] for r in pendientes if r in ej.filas])
+
+    async def _ejecutar_cuestionario(self, ej: _Ejecucion, restante_s: float) -> None:
+        """Tarea C con lo que enseñaron las demás estaciones y el tiempo que quede del presupuesto."""
+        temario = temario_ensenado(ej.contenido)
+        tarea = tarea_cuestionario(self._config, temario)
+        huella = ej.huellas[tarea.id] = huella_tarea(ej.solicitud, tarea)
+        if not temario:  # ninguna estación salió: no hay de qué examinar (y main pasa al respaldo)
+            await self._fallar(tarea, "sin_temario", tarea.recursos, ej)
+            return
+        if self._registro:
+            ej.previos.update(await self._registro.previos({tarea.id: huella}))
+        if restante_s <= 0:
+            await self._fallar(tarea, "presupuesto_agotado", tarea.recursos, ej)
+            return
+        try:
+            await asyncio.wait_for(self._ejecutar_tarea(tarea, ej), timeout=restante_s)
+        except asyncio.TimeoutError:
+            logger.warning("[paralelo] Tarea C cancelada por presupuesto (%.0fs).", self._presupuesto_s)
+            await self._fallar(tarea, "presupuesto_agotado", [r for r in tarea.recursos if r not in ej.estados], ej)
 
     async def _ajustar_guion(self, datos: SalidaProduccion, modelo: str) -> Tuple[SalidaProduccion, Optional[str]]:
         """Acorta un guion que pasa de PALABRAS_GUION_MAX con una llamada breve; si no lo logra, queda el original."""

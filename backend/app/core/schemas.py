@@ -803,6 +803,23 @@ class EscenaDirectorCut(BaseModel):
 VELOCIDAD_MAX_REPRODUCCION = 1.05
 
 
+# Silencios técnicos del video (Remotion, en el navegador): la diapositiva aparece antes de que
+# entre la voz y la última palabra no se corta al cambiar de escena. Cuentan dentro de max_duration.
+# Espejo en frontend/src/components/stations/Station4DirectorCut/video/lineaVideo.ts.
+SILENCIO_INICIO_S = 0.3
+SILENCIO_FIN_S = 0.5
+
+
+def silencios_tecnicos(escenas: int) -> float:
+    """Segundos de silencio que el video añade alrededor de la voz de `escenas` escenas."""
+    return round(escenas * (SILENCIO_INICIO_S + SILENCIO_FIN_S), 1)
+
+
+def duracion_disponible_voz(maximo_s: float, escenas: int) -> float:
+    """Lo que puede durar la voz para que el video, con sus silencios, quepa en maximo_s."""
+    return round(maximo_s - silencios_tecnicos(escenas), 1)
+
+
 def velocidad_reproduccion(total_s: float, maximo_s: float) -> Optional[float]:
     """Velocidad (≥ 1, en milésimas hacia arriba) para que total_s suene en maximo_s; None si ni así cabe."""
     if total_s <= maximo_s:
@@ -819,14 +836,15 @@ WPM_MAX_VOZ = 165
 CARACTERES_POR_PALABRA_MAX = 10
 
 
-def exceso_guion_narracion(guiones: List[str], maximo_s: float) -> Optional[str]:
-    """Motivo para no narrar un guion que no puede caber en maximo_s; None si puede."""
-    max_palabras = math.floor(maximo_s * VELOCIDAD_MAX_REPRODUCCION * WPM_MAX_VOZ / 60)
+def exceso_guion_narracion(guiones: List[str], maximo_s: float, silencios_s: float = 0.0) -> Optional[str]:
+    """Motivo para no narrar un guion que no puede caber en maximo_s (menos los silencios); None si puede."""
+    max_palabras = math.floor((maximo_s - silencios_s) * VELOCIDAD_MAX_REPRODUCCION * WPM_MAX_VOZ / 60)
     palabras = sum(contar_palabras(g) for g in guiones)
     caracteres = sum(len(g) for g in guiones)
     if palabras > max_palabras or caracteres > max_palabras * CARACTERES_POR_PALABRA_MAX:
-        return (f"El guion tiene {palabras} palabras y no cabe en {maximo_s:g} s ni con la voz más rápida "
-                f"(máximo {max_palabras}). Acórtalo antes de narrarlo: no se gastó cuota de voz.")
+        con_silencios = f" con {silencios_s:g} s de silencios entre escenas" if silencios_s else ""
+        return (f"El guion tiene {palabras} palabras y no cabe en {maximo_s:g} s{con_silencios} ni con la voz "
+                f"más rápida (máximo {max_palabras}). Acórtalo antes de narrarlo: no se gastó cuota de voz.")
     return None
 
 

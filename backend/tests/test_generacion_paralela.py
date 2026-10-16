@@ -91,18 +91,23 @@ def salida_b1() -> dict:
             {"frente": "¿Por dónde sale una subred privada?", "dorso": "NAT Gateway.", "pista_didactica": "Rutas.", "cita": C2},
             {"frente": "¿Qué hace el balanceador?", "dorso": "Reparte tráfico.", "pista_didactica": "Carga.", "cita": FALSA},
         ],
-        "cuestionario": [
-            _pregunta("¿Qué usa la subred privada?", ["Internet GW", "NAT Gateway", "DRG", "LPG"]),
-            _pregunta("¿Pregunta con opciones repetidas?", ["A", "a", "B", "C"]),
-            _pregunta("¿Qué reparte el balanceador?", ["Memoria", "Tráfico", "Discos", "Claves"], C3),
-            _pregunta("¿Qué evita la swap?", ["Reinicios", "El OOM killer", "Latencia", "Costes"], C1),
-        ],
         "glosario": [
             {"termino": "Swap", "definicion": "Memoria en disco.", "cita": C1},
             {"termino": "NAT Gateway", "definicion": "Salida a internet.", "cita": C2},
             {"termino": "Pod", "definicion": "Inventado.", "cita": FALSA},
         ],
         "objetivos_aprendizaje": ["Configurar swap", "Explicar el NAT Gateway", "configurar  swap"],
+    }
+
+
+def salida_c() -> dict:
+    return {
+        "cuestionario": [
+            _pregunta("¿Qué usa la subred privada?", ["Internet GW", "NAT Gateway", "DRG", "LPG"]),
+            _pregunta("¿Pregunta con opciones repetidas?", ["A", "a", "B", "C"]),
+            _pregunta("¿Qué reparte el balanceador?", ["Memoria", "Tráfico", "Discos", "Claves"], C3),
+            _pregunta("¿Qué evita la swap?", ["Reinicios", "El OOM killer", "Latencia", "Costes"], C1),
+        ],
     }
 
 
@@ -143,6 +148,8 @@ def tarea_de(request: httpx.Request) -> str:
         return "A"
     if instr.startswith("Eres el diseñador de evaluación"):
         return "B1"
+    if instr.startswith("Eres el examinador"):
+        return "C"
     if instr.startswith("Eres el editor de locución"):
         return "AJUSTE"
     return "B2"
@@ -152,7 +159,7 @@ class Simulador:
     """Responde por tarea; registra el orden de llegada y la simultaneidad."""
 
     def __init__(self, respuestas=None, retrasos=None):
-        self.respuestas = {"A": salida_a, "B1": salida_b1, "B2": salida_b2, **(respuestas or {})}
+        self.respuestas = {"A": salida_a, "B1": salida_b1, "B2": salida_b2, "C": salida_c, **(respuestas or {})}
         self.retrasos = retrasos or {}
         self.en_vuelo = 0
         self.max_en_vuelo = 0
@@ -206,8 +213,29 @@ def _recursos(eventos, estado="completado"):
 def test_las_tres_tareas_empiezan_a_la_vez():
     sim = Simulador(retrasos={"A": 0.2, "B1": 0.2, "B2": 0.2})
     _generar(sim)
-    assert sorted(t for t, _ in sim.peticiones) == ["A", "B1", "B2"]
+    assert sorted(t for t, _ in sim.peticiones) == ["A", "B1", "B2", "C"]
     assert sim.max_en_vuelo == 3  # B no espera a A
+    assert sim.peticiones[-1][0] == "C"  # el cuestionario, al final
+
+
+def test_el_cuestionario_pregunta_por_lo_que_ensenaron_las_otras_estaciones():
+    sim = Simulador()
+    respuesta, _ = _generar(sim)
+    instr = next(c["system_instruction"] for t, c in sim.peticiones if t == "C")
+    temario = instr.split("TEMARIO ENSEÑADO:", 1)[1]
+    assert "NAT Gateway: Salida de subredes privadas." in temario        # estación 1
+    assert "¿Por dónde sale una subred privada? → NAT Gateway." in temario  # estación 2
+    assert "Crear swap: Crea el archivo." in temario                     # estación 3
+    assert "ESTACIÓN 4 · VIDEO" in temario
+    assert respuesta.contenido_adaptado.estado_recursos["cuestionario"].tarea == "C"
+
+
+def test_sin_estaciones_previas_no_se_genera_el_cuestionario():
+    error = lambda: httpx.Response(400, json={"error": {"message": "x"}})  # noqa: E731
+    sim = Simulador(respuestas={"A": error, "B1": error, "B2": error})
+    with pytest.raises(GeneracionParalelaError):
+        _generar(sim)
+    assert "C" not in [t for t, _ in sim.peticiones]
 
 
 def test_el_primer_recurso_se_publica_sin_esperar_a_los_demas():
@@ -270,7 +298,8 @@ def test_los_modelos_salen_de_la_configuracion():
     sim = Simulador()
     _generar(sim, config=replace(CONFIG, gemini_resources_model="otro-modelo-lite"))
     modelos = {t: cuerpo["model"] for t, cuerpo in sim.peticiones}
-    assert modelos == {"A": "modelo-resumen", "B1": "otro-modelo-lite", "B2": "otro-modelo-lite"}
+    assert modelos == {"A": "modelo-resumen", "B1": "otro-modelo-lite", "B2": "otro-modelo-lite",
+                       "C": "otro-modelo-lite"}
     assert all(cuerpo["store"] is False for _, cuerpo in sim.peticiones)
 
 
