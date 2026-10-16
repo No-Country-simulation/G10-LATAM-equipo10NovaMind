@@ -7,7 +7,8 @@ Al pulsar "Generar narración":
 2. Fotos de fondo (opcionales) en bancos libres, en paralelo con la voz.
 3. Voz por escena con el primer proveedor que pueda: ElevenLabs (principal) → Gemini TTS
    (respaldo). Toda la narración usa un solo proveedor, para que las escenas no cambien de voz.
-4. La duración se MIDE del audio. Si la suma supera max_duration, se repiten las escenas
+4. La duración se MIDE del audio. La voz debe caber en max_duration menos los silencios técnicos
+   que el video pone alrededor de cada escena. Si la suma se pasa, se repiten las escenas
    más largas con ritmo ágil (una vez cada una). Si aun así se pasa por menos de un 5 %, se
    acepta y el navegador la reproduce un poco más rápido (velocidad_reproduccion): la voz ya
    se pagó. Si se pasa por más: "excede_duracion" y no se guarda nada.
@@ -36,8 +37,10 @@ from app.core.schemas import (
     RespuestaNarracion,
     SolicitudNarracion,
     VideoJobSpec,
+    duracion_disponible_voz,
     exceso_guion_narracion,
     redondear_decima,
+    silencios_tecnicos,
     velocidad_reproduccion,
 )
 from app.servicios.registro_tareas import RegistroTareas
@@ -152,7 +155,9 @@ class Narrador:
     # ------------------------------------------------------------------ API
     async def narrar(self, solicitud: SolicitudNarracion) -> RespuestaNarracion:
         spec = solicitud.video_job_spec.model_copy(deep=True)
-        exceso = exceso_guion_narracion([e.guion_locutor for e in spec.escenas], spec.max_duration)
+        silencios = silencios_tecnicos(len(spec.escenas))
+        disponible = duracion_disponible_voz(spec.max_duration, len(spec.escenas))
+        exceso = exceso_guion_narracion([e.guion_locutor for e in spec.escenas], spec.max_duration, silencios)
         if exceso:
             return RespuestaNarracion(
                 status="error", video_job_spec=spec, error_codigo="guion_largo",
@@ -182,7 +187,7 @@ class Narrador:
                 if aviso:
                     avisos.append(aviso)
                     continue
-                audios = await self._sintetizar(spec, voz, limite)
+                audios = await self._sintetizar(spec, voz, limite, disponible)
                 break
             except ErrorVoz as exc:
                 ultimo = exc
@@ -214,19 +219,20 @@ class Narrador:
 
         medidas = [a.duracion_s for a in audios]
         total = redondear_decima(sum(medidas))
-        velocidad = velocidad_reproduccion(total, spec.max_duration)
+        velocidad = velocidad_reproduccion(total, disponible)
         if velocidad is None:
             await self._registrar(huella, inicio, "fallido", codigo="excede_duracion", modelo=audios[0].modelo,
-                                  mensaje=f"La voz dura {total:.1f} s; el máximo es {spec.max_duration} s.")
+                                  mensaje=f"La voz dura {total:.1f} s; con los silencios, el máximo es {disponible:g} s.")
             return RespuestaNarracion(
                 status="excede_duracion", video_job_spec=spec, duracion_total_real_s=total,
                 duraciones_medidas_s=medidas, proveedor=proveedor, almacenamiento=self._tipo_almacen(),
-                advertencias=[f"La narración real dura {total:.1f} s y supera el máximo de {spec.max_duration} s "
-                              "incluso con ritmo ágil. Acorta el guion y vuelve a intentarlo."],
+                advertencias=[f"La narración real dura {total:.1f} s y, con {silencios:g} s de silencios entre "
+                              f"escenas, supera el máximo de {spec.max_duration} s incluso con ritmo ágil. "
+                              "Acorta el guion y vuelve a intentarlo."],
             )
         if velocidad > 1.0:
-            avisos.append(f"La voz mide {total:.1f} s: se reproduce a {velocidad:g}× para durar "
-                          f"{spec.max_duration} s.")
+            avisos.append(f"La voz mide {total:.1f} s: se reproduce a {velocidad:g}× para que el video, con sus "
+                          f"silencios, dure {spec.max_duration} s.")
 
         for escena, imagen in zip(spec.escenas, imagenes):
             if imagen is not None:
@@ -261,7 +267,8 @@ class Narrador:
         )
 
     # ------------------------------------------------------------------ voz
-    async def _sintetizar(self, spec: VideoJobSpec, voz: Sintetizador, limite: float) -> List[VozGenerada]:
+    async def _sintetizar(self, spec: VideoJobSpec, voz: Sintetizador, limite: float,
+                          disponible: float) -> List[VozGenerada]:
         # Si cada escena se cobra (ElevenLabs), la más larga va sola y primero: si los créditos no
         # alcanzan, falla ella y no se cobra nada. En paralelo, las escenas que sí cabían se cobraban
         # y se descartaban, porque el respaldo narra todas para no mezclar voces (prueba real del
@@ -278,7 +285,7 @@ class Narrador:
         # Si no cabe, se repiten con ritmo ágil las escenas más largas primero, hasta que quepa.
         # Una a una (cada repetición se paga). Si llega el plazo, se decide con la voz ya pagada.
         for i in sorted(range(len(audios)), key=lambda k: audios[k].duracion_s, reverse=True):
-            if sum(a.duracion_s for a in audios) <= spec.max_duration:
+            if sum(a.duracion_s for a in audios) <= disponible:
                 break
             try:
                 async with asyncio.timeout_at(limite):

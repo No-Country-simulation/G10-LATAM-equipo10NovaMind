@@ -24,7 +24,9 @@ from app.core.schemas import (
     SolicitudAdaptacion,
     SolicitudNarracion,
     VideoJobSpec,
+    duracion_disponible_voz,
     exceso_guion_narracion,
+    silencios_tecnicos,
     velocidad_reproduccion,
 )
 from app.main import app
@@ -142,15 +144,29 @@ def test_si_ni_con_ritmo_agil_cabe_no_se_guarda_nada(tmp_path):
 
 
 def test_si_se_pasa_por_poco_se_acepta_y_se_reproduce_mas_rapido(tmp_path):
-    voz = VozSimulada(natural=25.0, agil=20.5)  # 61.5 s tras el ritmo ágil: la voz ya se pagó
+    # 58,8 s tras el ritmo ágil; con 3 escenas la voz dispone de 60 − 2,4 s de silencios = 57,6 s
+    voz = VozSimulada(natural=25.0, agil=19.6)
     narrador = Narrador([VozGemini(voz, "tts-modelo")], almacen=AlmacenLocal(tmp_path), prefijo=prefijo_narraciones(USUARIO))
     r = _narrar(narrador)
-    assert r.status == "exito" and r.duracion_total_real_s == 61.5
-    assert r.video_job_spec.velocidad_reproduccion == 1.025
-    assert any("1.025×" in aviso for aviso in r.advertencias)
+    assert r.status == "exito" and r.duracion_total_real_s == 58.8
+    assert r.video_job_spec.velocidad_reproduccion == 1.021
+    assert any("1.021×" in aviso for aviso in r.advertencias)
     # Lo reutilizado conserva la velocidad
     r2 = _narrar(narrador)
-    assert r2.reutilizado and r2.video_job_spec.velocidad_reproduccion == 1.025
+    assert r2.reutilizado and r2.video_job_spec.velocidad_reproduccion == 1.021
+
+
+def test_los_silencios_tecnicos_cuentan_dentro_del_maximo():
+    assert silencios_tecnicos(3) == 2.4 and silencios_tecnicos(2) == 1.6
+    assert duracion_disponible_voz(60, 3) == 57.6
+    # 58 s de voz cabían antes en 60 s; con los silencios hay que acelerarla
+    voz = VozSimulada(natural=58 / 3, agil=58 / 3)
+    r = _narrar(Narrador([VozGemini(voz, "tts-modelo")]))
+    assert r.status == "exito" and r.video_job_spec.velocidad_reproduccion > 1.0
+    # El tope previo del guion también descuenta los silencios
+    assert exceso_guion_narracion(["hola " * 173], 60) is None
+    aviso = exceso_guion_narracion(["hola " * 173], 60, 2.4)
+    assert aviso is not None and "2.4 s de silencios" in aviso
 
 
 def test_si_cabe_se_reproduce_a_velocidad_normal():
@@ -204,10 +220,10 @@ def test_plazo_agotado_no_prueba_el_respaldo_y_lo_explica(monkeypatch):
 
 def test_plazo_durante_el_ritmo_agil_decide_con_la_voz_ya_pagada(monkeypatch):
     monkeypatch.setattr(servicio_narracion, "PLAZO_VOZ_S", 0.3)
-    voz = VozSimulada(natural=20.5, espera_agil=5.0)  # 61,5 s: el ritmo ágil no llega a tiempo
+    voz = VozSimulada(natural=19.6, espera_agil=5.0)  # 58,8 s: el ritmo ágil no llega a tiempo
     r = _narrar(Narrador([VozGemini(voz, "tts-modelo")]))
-    assert r.status == "exito" and r.duracion_total_real_s == 61.5
-    assert r.video_job_spec.velocidad_reproduccion == 1.025
+    assert r.status == "exito" and r.duracion_total_real_s == 58.8
+    assert r.video_job_spec.velocidad_reproduccion == 1.021
     assert voz.llamadas.count(ESTILO_AGIL) == 1
 
 
@@ -397,6 +413,18 @@ def test_el_numero_de_escenas_depende_del_documento():
     assert escenas_video(_solicitud(1500, 6)) == 3
     assert escenas_video(_solicitud(400, 6)) == 2     # breve
     assert escenas_video(_solicitud(1500, 1)) == 2    # una sola idea
+
+
+def test_el_numero_de_pasos_de_la_guia_depende_del_documento():
+    from app.agentes.generacion_paralela import _instrucciones_produccion, pasos_guia
+
+    assert pasos_guia(_solicitud(300, 0)) == 3        # breve y sin secciones
+    assert pasos_guia(_solicitud(2500, 0)) == 5       # sin secciones: lo fija el largo
+    assert pasos_guia(_solicitud(9000, 0)) == 7       # tope
+    assert pasos_guia(_solicitud(2500, 4)) == 4       # un paso por sección
+    assert pasos_guia(_solicitud(2500, 12)) == 5      # muchas secciones: manda el tope del largo
+    assert pasos_guia(_solicitud(2500, 1)) == 3       # mínimo
+    assert "PASOS DEL TUTORIAL: exactamente 4." in _instrucciones_produccion(_solicitud(2500, 4))
 
 
 def test_normalizador_conserva_la_palabra_clave_y_tolera_una_foto_mal_formada():

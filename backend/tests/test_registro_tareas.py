@@ -13,7 +13,7 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from app.agentes.generacion_paralela import NOMBRES_RECURSO, GeneradorParalelo, huella_tarea, tareas_para
+from app.agentes.generacion_paralela import NOMBRES_RECURSO, GeneradorParalelo, huella_tarea, tarea_cuestionario, tareas_para
 from app.auth import Principal
 from app.servicios.registro_tareas import COLUMNAS, RegistroMemoria, RegistroSupabase
 from app.servicios.servicio_gemini import ClienteGemini
@@ -22,7 +22,8 @@ from test_generacion_paralela import CLAVE, CONFIG, SOLICITUD, Auditor, Simulado
 
 USER = "11111111-1111-4111-8111-111111111111"
 DOC = "22222222-2222-4222-8222-222222222222"
-MIGRACION = Path(__file__).resolve().parents[2] / "supabase" / "migrations" / "202610120001_generation_tasks.sql"
+MIGRACIONES = Path(__file__).resolve().parents[2] / "supabase" / "migrations"
+MIGRACION = MIGRACIONES / "202610120001_generation_tasks.sql"
 
 
 def _tareas_llamadas(sim):
@@ -37,7 +38,7 @@ def test_cada_recurso_queda_registrado_con_su_estado_final():
     assert set(filas) == set(NOMBRES_RECURSO)
     # La primera escritura de cada tarea marca sus recursos "en_curso" antes de llamar al modelo
     primeras = [lote for lote in registro.escrituras if lote[0]["status"] == "en_curso"]
-    assert len(primeras) == 3
+    assert len(primeras) == 4  # A, B1, B2 y C
     for r, f in filas.items():
         assert f["status"] == "completado" and f["finished_at"] >= f["started_at"]
         assert f["model"] in ("modelo-resumen", "modelo-recursos") and f["attempts"] == 1
@@ -89,10 +90,10 @@ def test_cambiar_modelo_o_parametros_invalida_la_reutilizacion():
     _generar(Simulador(), registro=registro)
     sim = Simulador()
     _generar(sim, registro=registro, config=replace(CONFIG, gemini_resources_model="otro-modelo"))
-    assert _tareas_llamadas(sim) == ["B1", "B2"]
+    assert _tareas_llamadas(sim) == ["B1", "B2", "C"]
     sim = Simulador()
     _generar(sim, registro=registro, solicitud=SOLICITUD.model_copy(update={"nivel_detalle": "Profundo"}))
-    assert _tareas_llamadas(sim) == ["A", "B1", "B2"]
+    assert _tareas_llamadas(sim) == ["A", "B1", "B2", "C"]
 
 
 def test_resultado_previo_corrupto_se_regenera():
@@ -121,7 +122,7 @@ def test_dos_solicitudes_identicas_simultaneas_comparten_las_llamadas():
             return await asyncio.gather(gen().generar(SOLICITUD), gen().generar(SOLICITUD))
 
     r1, r2 = asyncio.run(run())
-    assert len(sim.peticiones) == 3  # no 6
+    assert len(sim.peticiones) == 4  # no 8
     assert r1.contenido_adaptado.quiz == r2.contenido_adaptado.quiz
 
 
@@ -136,7 +137,7 @@ def test_propietarios_distintos_no_comparten_llamadas():
             ))
 
     asyncio.run(run())
-    assert len(sim.peticiones) == 6
+    assert len(sim.peticiones) == 8
 
 
 # --- RegistroSupabase (PostgREST) ------------------------------------------------------
@@ -209,8 +210,10 @@ def test_la_migracion_admite_todos_los_recursos_y_tareas():
     sql = MIGRACION.read_text(encoding="utf-8")
     recursos = set(re.findall(r"'([a-z]+)'", re.search(r"resource in \((.*?)\)\)", sql, re.S).group(1)))
     assert set(NOMBRES_RECURSO) <= recursos and "narracion" in recursos
-    tareas = set(re.findall(r"'([A-Za-z0-9]+)'", re.search(r"task in \((.*?)\)\)", sql, re.S).group(1)))
-    assert {t.id for t in tareas_para(CONFIG)} <= tareas
+    # Las tareas admitidas son las de la última migración que redefine la restricción
+    todas = "\n".join(m.read_text(encoding="utf-8") for m in sorted(MIGRACIONES.glob("*.sql")))
+    tareas = set(re.findall(r"'([A-Za-z0-9]+)'", re.findall(r"task in \((.*?)\)\)", todas, re.S)[-1]))
+    assert {t.id for t in tareas_para(CONFIG)} | {tarea_cuestionario(CONFIG, "x").id} <= tareas
     for columna in COLUMNAS:
         assert re.search(rf"^\s+{columna} ", sql, re.M), columna
     assert "unique (user_id, content_hash, resource)" in sql
