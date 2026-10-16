@@ -58,7 +58,7 @@ export function ResumenEjecutivo({ paquete }: { paquete: AdaptedContentPackage }
       {puntos.length > 0 && <ul className={styles.lista}>{puntos.map((p) => <li key={p}>{p}</li>)}</ul>}
       {(r.por_secciones.length > 0 || r.conclusiones.length > 0) && (
         <details className={styles.detalle}>
-          <summary>Por secciones y conclusiones</summary>
+          <summary title="Pulsa para desplegar">Ver por secciones y conclusiones</summary>
           {r.por_secciones.length > 0 && (
             <>
               <h5 className={styles.subtitulo}>Por secciones</h5>

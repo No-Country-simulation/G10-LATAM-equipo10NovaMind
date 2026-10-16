@@ -1,19 +1,31 @@
 import { useState } from 'react';
-import { Terminal, Copy, Check, CheckCircle2, ShieldCheck, ArrowRight, Sparkles, Award } from 'lucide-react';
+import { Terminal, Copy, Check, CheckCircle2, ShieldCheck, ArrowRight, Sparkles, Award, Target, Lightbulb } from 'lucide-react';
 import type { TutorialStep } from '../../../types/types';
 import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
+import { esComando, tituloSinPaso } from '../../../utils/pasoGuia';
 import styles from './Station3TutorialQuest.module.css';
 
 interface Station3Props {
   steps: TutorialStep[];
+  /** Título del documento: la estación pregunta «¿cuál es la meta de leer "…"?» */
+  tituloDocumento?: string;
+  /** Objetivos de aprendizaje del paquete (tarea B1); sin ellos, la meta son los títulos de los pasos */
+  objetivos?: string[] | null;
   isCompleted: boolean;
   onCompleteStation: (xp: number) => void;
   onOpenBuilderBadge?: () => void;
   onNextStation?: () => void;
 }
 
+/**
+ * Estación 3 · Guía paso a paso. Responde «¿cuál es la meta de leer esto?»: arriba, lo que
+ * lograrás (los títulos de los pasos); debajo, cada paso con qué hacer y cómo saber que lo
+ * lograste. El terminal solo aparece cuando el paso trae un comando real (documentos técnicos).
+ */
 export const Station3TutorialQuest = ({
   steps = [],
+  tituloDocumento,
+  objetivos,
   isCompleted,
   onCompleteStation,
   onOpenBuilderBadge,
@@ -36,11 +48,11 @@ export const Station3TutorialQuest = ({
     {
       id: 'step-fallback',
       paso: 1,
-      titulo: 'Inicialización de Práctica',
-      descripcion: 'Sigue las instrucciones del paso para completar la validación pedagógica.',
-      cli_command: 'echo "Laboratorio de aplicación didáctica listo"',
+      titulo: 'Repasar el documento',
+      descripcion: 'Lee el documento con calma e identifica sus ideas principales.',
+      cli_command: '',
       completado: false,
-      verificacion: 'Verifica la comprensión práctica del concepto abordado.'
+      verificacion: 'Puedes explicar con tus palabras de qué trata el documento.'
     }
   ];
 
@@ -49,6 +61,8 @@ export const Station3TutorialQuest = ({
   const minRequired = Math.max(1, totalSteps);
   const currentStep = safeSteps[activeStepIndex] || safeSteps[0];
   const stepId = currentStep.id || `step-${activeStepIndex}`;
+  const clave = (currentStep.cli_command || '').trim();
+  const claveEsComando = esComando(clave);
 
   const handleCopyCli = (text: string, index: number) => {
     if (!text) return;
@@ -81,6 +95,8 @@ export const Station3TutorialQuest = ({
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
   const isCurrentStepCompleted = !!completedSteps[stepId];
   const isPassed = completedCount >= minRequired;
+  const metas = (objetivos ?? []).map((o) => o.trim()).filter(Boolean);
+  const titulo = tituloDocumento?.trim();
 
   return (
     <div className={styles.stationWrapper}>
@@ -89,8 +105,8 @@ export const Station3TutorialQuest = ({
         <div className={styles.headerInfo}>
           <div className={styles.badgeRow}>
             <span className={styles.stationTag}>
-              <Terminal size={12} color="var(--color-emerald-400)" />
-              Estación 03 · Laboratorio Práctico Paso a Paso
+              <Target size={12} color="var(--color-emerald-400)" />
+              Estación 03 · Guía paso a paso
             </span>
             {isCompleted && (
               <span className={styles.completedTag}>
@@ -99,10 +115,10 @@ export const Station3TutorialQuest = ({
             )}
           </div>
           <h3 className={styles.stationTitle}>
-            Laboratorio de Ejecución Técnica
+            ¿Cuál es la meta de leer {titulo ? `«${titulo}»` : 'esto'}?
           </h3>
           <p className={styles.stationSubtitle}>
-            Valida los checkpoints prácticos. Para aprobar, valida los {totalSteps} pasos.
+            Sigue los pasos en orden y marca cada uno cuando lo logres.
           </p>
         </div>
 
@@ -119,13 +135,36 @@ export const Station3TutorialQuest = ({
           )}
 
           <div className={styles.progressStats}>
-            <div className={styles.progressLabel}>Validados (Mín: {minRequired})</div>
+            <div className={styles.progressLabel}>Pasos logrados</div>
             <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
               {completedCount} / {totalSteps}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Meta: lo que podrás hacer al terminar */}
+      <section className={styles.metaBox} aria-label="Meta de la guía">
+        <span className={styles.metaEtiqueta}>
+          <Target size={14} /> Al terminar esta guía podrás
+        </span>
+        <ol className={styles.metaLista}>
+          {metas.length > 0 ? metas.map((meta, idx) => (
+            <li key={meta} className={`${styles.metaItem} ${isPassed ? styles.metaItemHecho : ''}`}>
+              <span className={styles.metaNumero}>{isPassed ? '✓' : idx + 1}</span>
+              <span>{meta}</span>
+            </li>
+          )) : safeSteps.map((st, idx) => {
+            const hecho = !!completedSteps[st.id || `step-${idx}`];
+            return (
+              <li key={st.id || `meta-${idx}`} className={`${styles.metaItem} ${hecho ? styles.metaItemHecho : ''}`}>
+                <span className={styles.metaNumero}>{hecho ? '✓' : idx + 1}</span>
+                <span>{tituloSinPaso(st.titulo)}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
 
       {/* Navegación Secuencial de Pasos */}
       <div className={styles.stepsNavbar}>
@@ -149,7 +188,7 @@ export const Station3TutorialQuest = ({
             >
               <div className={styles.stepNavInfo}>
                 <span className={styles.stepNavNumber}>Paso 0{idx + 1}</span>
-                <span className={styles.stepNavTitle}>{st.titulo}</span>
+                <span className={styles.stepNavTitle}>{tituloSinPaso(st.titulo)}</span>
               </div>
 
               <div>
@@ -170,73 +209,81 @@ export const Station3TutorialQuest = ({
         })}
       </div>
 
-      {/* Espacio de Ejecución del Paso Activo */}
+      {/* Paso activo */}
       <div className={styles.workspaceCard}>
         <div className={styles.workspaceHeader}>
           <div>
             <div className={styles.stepExecutionTag}>
-              Ejecución Paso 0{activeStepIndex + 1}
+              Paso {activeStepIndex + 1} de {totalSteps}
             </div>
             <h4 className={styles.stepActiveTitle}>
-              {currentStep.titulo}
+              {tituloSinPaso(currentStep.titulo)}
             </h4>
           </div>
-          <span className={styles.stepActiveDescription}>
-            {currentStep.descripcion}
-          </span>
         </div>
 
-        {/* Caja de Terminal Interactiva */}
-        <div className={styles.terminalBox}>
-          <div className={styles.terminalBar}>
-            <div className={styles.terminalControls}>
-              <div className={styles.dotRed} />
-              <div className={styles.dotYellow} />
-              <div className={styles.dotGreen} />
-              <span className={styles.terminalTitle}>
-                sandbox-terminal · interactive shell
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleCopyCli(currentStep.cli_command, activeStepIndex)}
-              className={styles.copyButton}
-            >
-              {copiedIndex === activeStepIndex ? (
-                <>
-                  <Check size={14} color="var(--color-emerald-400)" />
-                  <span style={{ color: 'var(--color-emerald-300)' }}>¡Copiado!</span>
-                </>
-              ) : (
-                <>
-                  <Copy size={14} />
-                  <span>Copiar Sintaxis</span>
-                </>
-              )}
-            </button>
+        {currentStep.descripcion && (
+          <div>
+            <div className={styles.bloqueEtiqueta}>Qué vas a hacer</div>
+            <p className={styles.queHaras}>{currentStep.descripcion}</p>
           </div>
+        )}
 
-          <div className={styles.terminalContent}>
-            <div className={styles.terminalComment}>
-              # Comando para validación práctica:
+        {clave && (claveEsComando ? (
+          <div className={styles.terminalBox}>
+            <div className={styles.terminalBar}>
+              <div className={styles.terminalControls}>
+                <div className={styles.dotRed} />
+                <div className={styles.dotYellow} />
+                <div className={styles.dotGreen} />
+                <span className={styles.terminalTitle}>
+                  <Terminal size={12} /> Comando de este paso
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleCopyCli(clave, activeStepIndex)}
+                className={styles.copyButton}
+              >
+                {copiedIndex === activeStepIndex ? (
+                  <>
+                    <Check size={14} color="var(--color-emerald-400)" />
+                    <span style={{ color: 'var(--color-emerald-300)' }}>¡Copiado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} />
+                    <span>Copiar</span>
+                  </>
+                )}
+              </button>
             </div>
-            <div className={styles.terminalLine}>
-              <span className={styles.terminalPrompt}>$</span>
-              <pre className={styles.terminalCommand}>
-                {currentStep.cli_command || 'echo "Validación de comando lista"'}
-              </pre>
+
+            <div className={styles.terminalContent}>
+              <div className={styles.terminalLine}>
+                <span className={styles.terminalPrompt}>$</span>
+                <pre className={styles.terminalCommand}>{clave}</pre>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className={styles.claveBox}>
+            <Lightbulb size={18} className={styles.claveIcono} />
+            <div>
+              <div className={styles.bloqueEtiqueta}>Clave del paso</div>
+              <p className={styles.claveTexto}>{clave}</p>
+            </div>
+          </div>
+        ))}
 
-        {/* Condición de Verificación y CTA */}
+        {/* Cómo saber que lo lograste y CTA */}
         <div className={styles.verificationBar}>
           <div className={styles.verificationInfo}>
             <ShieldCheck size={20} className={styles.verificationIcon} />
             <div>
               <div className={styles.verificationLabel}>
-                Condición de Verificación
+                ¿Cómo sé que lo logré?
               </div>
               <p className={styles.verificationText}>
                 {currentStep.verificacion}
@@ -254,12 +301,12 @@ export const Station3TutorialQuest = ({
             {isCurrentStepCompleted ? (
               <>
                 <CheckCircle2 size={16} color="#fff" />
-                <span>Paso 0{activeStepIndex + 1} Validado ✓</span>
+                <span>Paso {activeStepIndex + 1} logrado ✓</span>
               </>
             ) : (
               <>
                 <Sparkles size={16} color="#a7f3d0" />
-                <span>Validar Checkpoint</span>
+                <span>Lo logré</span>
                 <ArrowRight size={14} />
               </>
             )}
@@ -287,11 +334,11 @@ export const Station3TutorialQuest = ({
               transition: 'all 0.2s ease',
             }}
           >
-            <span>Siguiente Estación: Director Cut</span>
+            <span>Siguiente Estación: Contenido Audiovisual</span>
             <ArrowRight size={16} />
           </button>
         </div>
       )}
     </div>
   );
-};
+};

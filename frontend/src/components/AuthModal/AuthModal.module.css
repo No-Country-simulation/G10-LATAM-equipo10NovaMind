@@ -107,29 +107,6 @@
   border-color: var(--border-strong);
 }
 
-.guestButton {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0.625rem;
-  padding: 0.625rem 1rem;
-  border-radius: var(--radius-md);
-  background: rgba(34, 211, 238, 0.06);
-  border: 1px dashed var(--color-cyan-border, rgba(34, 211, 238, 0.4));
-  color: var(--color-cyan-300, #67e8f9);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.guestButton:hover {
-  background: rgba(34, 211, 238, 0.15);
-  border-color: var(--color-cyan-400, #22d3ee);
-  color: #ffffff;
-}
-
 .divider {
   display: flex;
   align-items: center;
@@ -161,8 +138,7 @@
   text-align: center;
 }
 .submitBtn:disabled,
-.googleButton:disabled,
-.guestButton:disabled {
+.googleButton:disabled {
   opacity: 0.6;
   cursor: wait;
 }

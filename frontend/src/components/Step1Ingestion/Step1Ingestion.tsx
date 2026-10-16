@@ -4,10 +4,12 @@ import {
   Dices, SlidersHorizontal, FileText, X, ChevronRight,
 } from 'lucide-react';
 import type {
-  RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset, OrigenContenido,
+  RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset, OrigenContenido, MuestraPregenerada,
 } from '../../types/types';
 import { REAL_DOCUMENTS_CATALOG } from '../../data/mockScenarios';
 import { extraerDocumento, textoDocumentoEjemplo } from '../../services/api';
+import { HeroAnimacion } from './HeroAnimacion';
+import { MiniAnimacionRecursos } from './MiniAnimacionRecursos';
 import styles from './Step1Ingestion.module.css';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -100,12 +102,27 @@ interface Step1Props {
     rawFile?: File | null,
     origenContenido?: OrigenContenido
   ) => void;
+  /** Documentos de ejemplo con paquete y video pregenerados, por id del catálogo */
+  muestras: Record<string, MuestraPregenerada>;
+  onAbrirMuestra: (documento: string) => void;
+  /** Sin sesión (o como invitado) solo se abren las muestras de la biblioteca, con sus ajustes fijos */
+  sesionIniciada: boolean;
+  onIniciarSesion: () => void;
   isProcessing: boolean;
   processingStage: string;
 }
 
+type DocumentoCargado = { archivo: File; texto: string };
+
+/** La carga en curso es la de una muestra (sus etapas lo dicen): no hay modelos trabajando. */
+const esEtapaDeMuestra = (etapa: string) => /^(Muestra|Abriendo la muestra)/.test(etapa);
+
 export const Step1Ingestion = ({
   onStartPipeline,
+  muestras,
+  onAbrirMuestra,
+  sesionIniciada,
+  onIniciarSesion,
   isProcessing,
   processingStage,
 }: Step1Props) => {
@@ -113,11 +130,12 @@ export const Step1Ingestion = ({
   const [isLoadingPreset, setIsLoadingPreset] = useState<boolean>(false);
   const [docTitle, setDocTitle] = useState<string>('');
   const [docContent, setDocContent] = useState<string>('');
-  // Se empieza en Sorpréndeme: la primera combinación ya viene sorteada
-  const [profile, setProfile] = useState<RecipientProfile>(() => alAzar(PERFILES));
+  // Se empieza en Personalizado (decisión del usuario, 16/10) con valores de partida fijos;
+  // Sorpréndeme sortea al elegirlo
+  const [profile, setProfile] = useState<RecipientProfile>('Principiante');
   const [format, setFormat] = useState<OutputFormat>('Paquete Educativo Completo (5 Estaciones)');
-  const [niche, setNiche] = useState<IndustryNiche>(() => alAzar(NICHOS));
-  const [detail, setDetail] = useState<DetailLevel>(() => alAzar(NIVELES));
+  const [niche, setNiche] = useState<IndustryNiche>('General');
+  const [detail, setDetail] = useState<DetailLevel>('Didáctico');
   const [fileName, setFileName] = useState<string | null>(null);
   const [rawFile, setRawFile] = useState<File | null>(null);
   // rawFile queda vacío mientras se extrae o si el texto es una transcripción: el tamaño se guarda aparte
@@ -131,7 +149,7 @@ export const Step1Ingestion = ({
   // Sin documento todavía, la zona de carga se destaca como el punto de partida
   const sinDocumento = !fileName && !docContent && !isLoadingPreset;
   const documentoElegido = REAL_DOCUMENTS_CATALOG.find((d) => d.id === selectedDocId);
-  const [modo, setModo] = useState<'personalizado' | 'sorpresa'>('sorpresa');
+  const [modo, setModo] = useState<'personalizado' | 'sorpresa'>('personalizado');
 
   // Sorteo visible: lo que se muestra es exactamente lo que se envía. Nunca repite la combinación actual.
   const sortear = () => {
@@ -160,15 +178,18 @@ export const Step1Ingestion = ({
     setAvisosFuente([]);
   };
 
-  const handleSelectRealDocument = async (doc: RealDocumentPreset) => {
+  /** Carga un documento de la biblioteca; devuelve el archivo y su texto, o null si falló o se reemplazó */
+  const handleSelectRealDocument = async (doc: RealDocumentPreset): Promise<DocumentoCargado | null> => {
     reiniciarFuente();
     const turno = turnoSubida.current;
     setSelectedDocId(doc.id);
     setIsLoadingPreset(true);
     setDocTitle(doc.titulo);
-    if (modo === 'personalizado') {  // en Sorpréndeme se respeta el sorteo que el usuario ya ve
+    // El invitado usa los ajustes fijos del documento; en Sorpréndeme se respeta el sorteo que se ve
+    if (modo === 'personalizado' || !sesionIniciada) {
       setNiche(doc.nicho);
       setProfile(doc.perfil);
+      setDetail(doc.detalle);
     }
     setFormat(doc.formato_sugerido);
     setFileName(doc.nombre_archivo);
@@ -182,41 +203,61 @@ export const Step1Ingestion = ({
       if (!res.ok) throw new Error(`No se pudo descargar «${doc.titulo}» (HTTP ${res.status}).`);
       const blob = await res.blob();
       const mimeType = doc.tipo === 'pdf' ? 'application/pdf' : 'text/markdown';
-      if (turno !== turnoSubida.current) return;
-      setRawFile(new File([blob], doc.nombre_archivo, { type: mimeType }));
+      if (turno !== turnoSubida.current) return null;
+      const archivo = new File([blob], doc.nombre_archivo, { type: mimeType });
+      setRawFile(archivo);
       setBytesArchivo(blob.size);
       if (doc.tipo === 'markdown') {
-        setDocContent(await blob.text());
+        const texto = await blob.text();
+        setDocContent(texto);
         setExtraccion({ estado: 'inactiva' });
-        return;
+        return { archivo, texto };
       }
       // El PDF ya se puede enviar; su texto (el ENISA tarda ~15 s la primera vez) solo es vista previa
       setExtraccion({ estado: 'cargando', bloquea: false,
         mensaje: 'Extrayendo el texto para la vista previa… ya puedes generar.' });
       try {
         const { texto } = await textoDocumentoEjemplo(doc.nombre_archivo);
-        if (turno !== turnoSubida.current) return;
+        if (turno !== turnoSubida.current) return null;
         setDocContent(texto);
         setExtraccion({ estado: 'inactiva' });
+        return { archivo, texto };
       } catch (err) {
-        if (turno !== turnoSubida.current) return;
+        if (turno !== turnoSubida.current) return null;
         setExtraccion({ estado: 'error', bloquea: false, mensaje:
           `No se pudo previsualizar el texto (${err instanceof Error ? err.message : String(err)}); el PDF se procesará igualmente.` });
+        return { archivo, texto: '' };
       }
     } catch (err) {
       // Sin el documento no se genera nada: nunca a partir de la descripción del catálogo
-      if (turno !== turnoSubida.current) return;
+      if (turno !== turnoSubida.current) return null;
       setFileName(null);
       setSelectedDocId(null);
       setExtraccion({ estado: 'error', mensaje: err instanceof Error ? err.message : String(err) });
+      return null;
     } finally {
       setIsLoadingPreset(false);
     }
   };
 
-  const handleLoadDemoScenario = () => {
-    handleSelectRealDocument(REAL_DOCUMENTS_CATALOG[0]);
+  // La demo siempre termina en el recorrido (paso 2): con muestra, sin gastar cuota; sin muestra,
+  // y solo con sesión, se genera con los ajustes fijos del documento.
+  const demo = REAL_DOCUMENTS_CATALOG[0];
+  const demoConMuestra = Boolean(muestras[demo.id]);
+  const demoDisponible = demoConMuestra || sesionIniciada;
+  const handleLoadDemoScenario = async () => {
+    if (demoConMuestra) {
+      onAbrirMuestra(demo.id);
+      return;
+    }
+    if (!sesionIniciada) return;
+    const cargado = await handleSelectRealDocument(demo);
+    if (cargado) {
+      onStartPipeline(demo.titulo, cargado.texto, demo.perfil, demo.formato_sugerido, demo.nicho, demo.detalle,
+        demo.id, cargado.archivo, 'documento');
+    }
   };
+  const muestraElegida = selectedDocId ? muestras[selectedDocId] : undefined;
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -304,12 +345,16 @@ export const Step1Ingestion = ({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (extrayendo) return;
+    if (!sesionIniciada) {  // el invitado no genera: abre la muestra del documento elegido
+      if (selectedDocId && muestras[selectedDocId]) onAbrirMuestra(selectedDocId);
+      return;
+    }
     if (!docContent.trim() && !rawFile) {
       alert('Por favor selecciona un documento de la biblioteca o sube un archivo antes de iniciar el pipeline.');
       return;
     }
     onStartPipeline(
-      docTitle,
+      docTitle.trim() || 'Documento sin título',  // ya no hay campo para escribirlo
       docContent,
       profile,
       format,
@@ -325,6 +370,7 @@ export const Step1Ingestion = ({
     <div className={styles.container}>
       {/* Top Hero / Context Banner */}
       <div className={styles.heroBanner}>
+        <HeroAnimacion />
         <div className={styles.heroContent}>
           <div className={styles.tagRow}>
             <span className={styles.pipelineTag}>
@@ -337,11 +383,13 @@ export const Step1Ingestion = ({
           </div>
 
           <h2 className={styles.heroTitle}>
-            Ingesta de Documentación Técnica OCI & Adaptación Cognitiva
+            Convierte documentos en rutas de aprendizaje
           </h2>
 
+          {/* Sin «sin alucinaciones»: las citas se verifican contra el documento, pero no se
+              promete lo que no se puede garantizar (regla 1, procedencia honesta) */}
           <p className={styles.heroText}>
-            Convierte manuales y especificaciones densas en rutas de aprendizaje gamificadas sin alucinaciones, persistidas en <strong className={styles.highlightOci}>OCI Object Storage Always Free</strong>.
+            Resumen, tarjetas, diagrama, video y quiz a partir de tu documento, con citas comprobadas.
           </p>
         </div>
       </div>
@@ -351,39 +399,59 @@ export const Step1Ingestion = ({
         <div className={styles.demoBannerRow}>
           <div className={styles.demoBannerText}>
             <div className={styles.demoBannerTitle}>
-              <Zap size={18} color="#fbbf24" />
+              <Zap size={22} color="#fbbf24" />
               ¿Quieres probar la plataforma en 1 solo clic?
-            </div>
-            <div className={styles.demoBannerDesc}>
-              Presiona el botón demo para precargar de inmediato nuestra <strong>Guía Técnica Oficial OCI (Swap 4 GB & Memoria en VM.Standard.E2.1.Micro)</strong>, o sube tu propio archivo PDF/MD/TXT en el formulario inferior.
             </div>
           </div>
           <button
             type="button"
-            onClick={handleLoadDemoScenario}
+            onClick={() => void handleLoadDemoScenario()}
             className={styles.demoButton}
-            disabled={isLoadingPreset}
+            disabled={isLoadingPreset || isProcessing || !demoDisponible}
+            title={demoConMuestra
+              ? 'Abre el recorrido ya generado de la Guía OCI Swap: no gasta cuota'
+              : demoDisponible ? undefined : 'La muestra de la demo aún no está generada'}
           >
             <Zap size={16} />
-            {isLoadingPreset ? '⏳ Descargando documento...' : '⚡ Cargar Guía OCI Swap (Documento Real)'}
+            {isLoadingPreset
+              ? '⏳ Descargando documento...'
+              : demoConMuestra
+                ? 'Prueba rápida 😊'
+                : sesionIniciada
+                  ? '⚡ Generar demo: Guía OCI Swap (gasta cuota)'
+                  : 'Demo en preparación'}
           </button>
         </div>
       </div>
 
-      {/* Biblioteca de Documentos Reales Selector */}
+      {/* Biblioteca: para quien llega sin sesión es el punto de partida, y se dice en claro */}
       <div className={styles.scenariosSection}>
+        <h2 className={styles.tituloRuta}>Aquí empieza tu ruta de aprendizaje</h2>
         <div className={styles.scenariosHeader}>
-          <h3 className={styles.scenariosLabel}>
+          <h3 className={`${styles.scenariosLabel} ${styles.scenariosLabelPaso}`}>
             <Database size={16} color="var(--color-violet-400)" />
-            Biblioteca de Documentos Reales (data/documents/)
+            Elige un documento de ejemplo…
           </h3>
           <span className={styles.scenariosHelp}>
             {isLoadingPreset
-              ? '⏳ Descargando archivo de prueba real...'
-              : 'Selecciona un documento oficial de prueba para cargarlo y procesarlo con el pipeline RAG real'}
+              ? '⏳ Cargando el documento…'
+              : sesionIniciada
+                ? 'Documentos reales listos para probar, o sube el tuyo en el formulario de abajo'
+                : 'Documentos reales con su paquete y su video ya generados'}
           </span>
         </div>
 
+        {/* Qué va a pasar, en tres pasos: para quien entra por primera vez */}
+        {!sesionIniciada && !selectedDocId && (
+          <ol className={styles.guiaPasos}>
+            <li><span className={styles.guiaNumero}>1</span> Elige un documento en la lista</li>
+            <li><span className={styles.guiaNumero}>2</span> Pulsa «Iniciar Aprendizaje»</li>
+            <li><span className={styles.guiaNumero}>3</span> Recorre 5 estaciones: resumen, tarjetas, tutorial, video narrado y quiz</li>
+          </ol>
+        )}
+
+        <div className={`${styles.selectorBiblioteca} ${!sesionIniciada && !selectedDocId ? styles.selectorInvitacion : ''}`}>
+          {!sesionIniciada && !selectedDocId && <span className={styles.pasoBadge}>Empieza aquí</span>}
         <select
           value={selectedDocId ?? ''}
           onChange={(e) => {
@@ -394,13 +462,16 @@ export const Step1Ingestion = ({
           className={styles.selectInput}
           aria-label="Documento de la biblioteca"
         >
-          <option value="" disabled>Elige un documento de prueba…</option>
+          <option value="" disabled>
+            👉 Haz clic aquí y elige un documento: Don Quijote, Apache Kafka, Guía OCI…
+          </option>
           {REAL_DOCUMENTS_CATALOG.map((doc) => (
             <option key={doc.id} value={doc.id}>
               {doc.titulo} · {doc.tipo === 'pdf' ? 'PDF' : 'MD'} {doc.tamano_formato.split(' ').slice(0, 2).join(' ')}
             </option>
           ))}
         </select>
+        </div>
 
         {documentoElegido && (
           <div className={`${styles.scenarioCard} ${styles.scenarioCardSelected}`}>
@@ -420,6 +491,11 @@ export const Step1Ingestion = ({
 
       {/* Formulario Principal */}
       <form onSubmit={handleSubmit} className={styles.container}>
+        {/* Alternativa al documento de ejemplo: mismo formato que «Elige un documento de ejemplo…» */}
+        <h3 className={`${styles.scenariosLabel} ${styles.scenariosLabelPaso} ${styles.tituloCarga}`}>
+          <UploadCloud size={16} color="var(--color-violet-400)" />
+          o carga tu propio documento
+        </h3>
         <div className={styles.formCard}>
           {/* File Dropzone & Document Title */}
           <div className={styles.inputGrid}>
@@ -427,6 +503,15 @@ export const Step1Ingestion = ({
               <label className={styles.fieldLabel}>
                 Carga de Archivo (PDF, MD, TXT o imagen)
               </label>
+              {!sesionIniciada ? (
+                <div className={styles.cargaBloqueada}>
+                  <Lock size={16} aria-hidden="true" />
+                  <span>Para subir tu propio documento y elegir perfil, sector y nivel, inicia sesión. Sin sesión, usa los documentos de la biblioteca.</span>
+                  <button type="button" onClick={onIniciarSesion} className={styles.botonSecundario}>
+                    Iniciar sesión
+                  </button>
+                </div>
+              ) : (
               <label
                 className={[
                   styles.fileDropzone,
@@ -463,6 +548,7 @@ export const Step1Ingestion = ({
                   style={{ display: 'none' }}
                 />
               </label>
+              )}
               {fileName && (() => {
                 const tipo = tipoArchivo(fileName);
                 return (
@@ -486,26 +572,13 @@ export const Step1Ingestion = ({
                 );
               })()}
             </div>
-
-            <div className={`${styles.fieldGroup} ${styles.fieldGroupAncho}`}>
-              <label className={styles.fieldLabel}>
-                Título del Documento Técnico
-              </label>
-              <input
-                type="text"
-                value={docTitle}
-                onChange={(e) => setDocTitle(e.target.value)}
-                placeholder="ej.: Arquitectura de Redes VCN en OCI"
-                className={styles.textInput}
-                required
-              />
-            </div>
           </div>
 
-          {/* Previsualización del Documento Técnico (Solo Lectura) */}
+          {/* Sin campo de título (decisión del usuario, 16/10): se toma del catálogo o del nombre del archivo */}
+          {/* Previsualización del documento (solo lectura) */}
           <div className={styles.fieldGroup}>
             <div className={styles.fieldLabelRow}>
-              <span className={styles.fieldLabel}>Previsualización del Documento Técnico</span>
+              <span className={styles.fieldLabel}>Previsualización del Documento</span>
               <div className={styles.previewBadgesRow}>
                 {esTranscripcion ? (
                   <span className={styles.transcriptionBadge}>
@@ -566,19 +639,23 @@ export const Step1Ingestion = ({
             )}
           </div>
 
-          {/* Parámetros pedagógicos: dos formas de empezar */}
+          {/* Parámetros pedagógicos: el invitado ve los fijos del documento; con sesión, dos formas de empezar */}
+          {!sesionIniciada ? (
+            <div className={styles.sorteo} aria-live="polite">
+              {documentoElegido ? (
+                <>
+                  <span className={styles.sorteoTitulo}>Ajustes de este documento:</span>
+                  <span className={styles.sorteoChip}><strong>Perfil:</strong> {etiqueta(PERFILES, documentoElegido.perfil)}</span>
+                  <span className={styles.sorteoChip}><strong>Sector:</strong> {etiqueta(NICHOS, documentoElegido.nicho)}</span>
+                  <span className={styles.sorteoChip}><strong>Nivel:</strong> {etiqueta(NIVELES, documentoElegido.detalle)}</span>
+                </>
+              ) : (
+                <span className={styles.sorteoTitulo}>Elige un documento de la biblioteca: cada uno trae su perfil, sector y nivel</span>
+              )}
+            </div>
+          ) : (<>
+          <h3 className={styles.tituloPerfil}>Antes de empezar 👀 selecciona tu perfil</h3>
           <div className={styles.modoSelector} role="radiogroup" aria-label="Cómo quieres adaptar el documento">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={modo === 'sorpresa'}
-              onClick={() => elegirModo('sorpresa')}
-              className={`${styles.modoOpcion} ${modo === 'sorpresa' ? styles.modoOpcionActiva : ''}`}
-            >
-              <Sparkles size={18} color="#fde047" />
-              <span className={styles.modoTitulo}>Sorpréndeme</span>
-              <span className={styles.modoDesc}>Sorteamos perfil, sector y nivel por ti</span>
-            </button>
             <button
               type="button"
               role="radio"
@@ -589,6 +666,18 @@ export const Step1Ingestion = ({
               <SlidersHorizontal size={18} color="var(--color-violet-400)" />
               <span className={styles.modoTitulo}>Personalizado</span>
               <span className={styles.modoDesc}>Tú eliges cada parámetro</span>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={modo === 'sorpresa'}
+              onClick={() => elegirModo('sorpresa')}
+              className={`${styles.modoOpcion} ${styles.modoSorpresa} ${modo === 'sorpresa' ? styles.modoOpcionActiva : ''}`}
+              title="Sorteamos perfil, sector y nivel por ti"
+            >
+              <Sparkles size={18} color="#fde047" className={styles.destello} />
+              <span className={styles.modoTitulo}>Sorpréndeme</span>
+              <span className={styles.modoDesc}>Perfil al azar</span>
             </button>
           </div>
 
@@ -639,6 +728,7 @@ export const Step1Ingestion = ({
               </div>
             </div>
           )}
+          </>)}
 
           {/* Plegado por defecto: está para quien quiera saber qué se le pide a la IA */}
           <details className={styles.promptPaquete}>
@@ -663,25 +753,59 @@ export const Step1Ingestion = ({
                 <div className={styles.progressBarFill} />
               </div>
               <div className={styles.processingMeta}>
-                Recursive Chunking · Vector Search · Faithfulness Verification · OCI Bucket Sync
+                {esEtapaDeMuestra(processingStage)
+                  ? 'Muestra pregenerada: no se llama a ningún modelo ni se gasta cuota'
+                  : 'Recursive Chunking · Vector Search · Faithfulness Verification · OCI Bucket Sync'}
               </div>
             </div>
           ) : (
             <div className={styles.submitBar}>
-              <div className={styles.storageNote}>
-                <Database size={16} color="var(--color-cyan-400)" />
-                <span>Salida estructurada compatible con <strong>OCI Object Storage</strong></span>
-              </div>
+              {/* En vez del texto de OCI (decisión del usuario, 16/10): la hoja que se convierte en recursos */}
+              <MiniAnimacionRecursos />
 
-              <button
-                type="submit"
-                className={styles.submitButton}
-                disabled={extrayendo}
-              >
-                <Sparkles size={16} color="#fde047" />
-                <span>Generar Adaptación Pedagógica RAG</span>
-                <ArrowRight size={16} />
-              </button>
+              {!sesionIniciada ? (
+                <div className={styles.accionesMuestra}>
+                  <span className={styles.notaInvitado}>
+                    {muestraElegida
+                      ? `Sin sesión se abre la muestra generada el ${muestraElegida.generado_el} con estos ajustes: no gasta cuota.`
+                      : selectedDocId
+                        ? 'Este documento aún no tiene su muestra generada. Inicia sesión para generarlo.'
+                        : 'Elige un documento de la biblioteca o prueba la demo.'}
+                  </span>
+                  <button type="submit" className={styles.submitButton} disabled={!muestraElegida || isLoadingPreset}>
+                    <Sparkles size={16} color="#fde047" />
+                    <span>Iniciar Aprendizaje</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              ) : muestraElegida && selectedDocId ? (
+                <div className={styles.accionesMuestra}>
+                  <button
+                    type="button"
+                    className={styles.submitButton}
+                    onClick={() => onAbrirMuestra(selectedDocId)}
+                    title={`Paquete y video generados el ${muestraElegida.generado_el} (${muestraElegida.ajustes.perfil}, ${muestraElegida.ajustes.detalle})`}
+                  >
+                    <Zap size={16} color="#fde047" />
+                    <span>Ver recorrido de muestra (sin gastar cuota)</span>
+                    <ArrowRight size={16} />
+                  </button>
+                  <button type="submit" className={styles.botonSecundario} disabled={extrayendo}>
+                    <Sparkles size={14} aria-hidden="true" />
+                    <span>Generar con mis ajustes (gasta cuota)</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  className={styles.submitButton}
+                  disabled={extrayendo}
+                >
+                  <Sparkles size={16} color="#fde047" />
+                  <span>Iniciar Aprendizaje</span>
+                  <ArrowRight size={16} />
+                </button>
+              )}
             </div>
           )}
         </div>

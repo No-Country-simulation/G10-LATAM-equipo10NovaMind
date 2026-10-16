@@ -1,0 +1,1156 @@
+{
+ "status": "exito_con_advertencias",
+ "metadatos": {
+  "perfil_aplicado": "Líder Técnico / Arquitecto",
+  "formato_generado": "Paquete Educativo Completo (5 Estaciones)",
+  "nicho_aplicado": "General",
+  "tiempo_estimado_estudio_minutos": 9,
+  "conceptos_clave": [
+   "ClickFix",
+   "Phishing-as-a-Service (PaaS)",
+   "Operational Relay Boxes (ORBs)",
+   "Foreign Information Manipulation & Interference (FIMI)"
+  ],
+  "prerrequisitos": []
+ },
+ "contenido_adaptado": {
+  "titulo": "ENISA Threat Landscape: Ciberamenazas y Resiliencia Digital",
+  "introduccion_contextualizada": "El informe de ENISA analiza el panorama de ciberamenazas en la Unión Europea, examinando incidentes, vectores de ataque y tendencias globales que afectan a infraestructuras críticas y organizaciones. Proporciona una visión integral sobre el impacto sectorial y las tácticas de ciberdelincuentes, grupos patrocinados por estados y hacktivistas, sirviendo como base para la toma de decisiones arquitectónicas y estratégicas en seguridad.",
+  "items": [
+   {
+    "id": "fc-1",
+    "frente": "¿Qué porcentaje de los incidentes registrados en la Unión Europea correspondieron a ataques de denegación de servicio (DDoS)?",
+    "dorso": "El 51.3% de los incidentes registrados.",
+    "pista_didactica": "Piense en la categoría principal de incidentes de baja intensidad que dominan las estadísticas de ENISA.",
+    "fuente": {
+     "texto": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+     "pagina": 7,
+     "verificada": true,
+     "contexto": {
+      "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+      "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+      "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Cuál fue el sector más impactado y objetivo principal de los incidentes registrados en la Unión Europea según el análisis sectorial?",
+    "dorso": "La administración pública, representando el 31.8% de los eventos.",
+    "pista_didactica": "Es un sector altamente crítico expuesto frecuentemente a ataques de denegación de servicio impulsados por ideología.",
+    "fuente": {
+     "texto": "The top five targeted sectors in the EU include public administration (31.8%), business services (8.5%), transport (8%), manufacturing (6.9%) and finance/ banking (5.6%)",
+     "pagina": 14,
+     "verificada": true,
+     "contexto": {
+      "antes": "threats \nchapter). Another illustration is the leveraging of cybercrime tradecraft or toolsets  such as \nransomware and infostealers  by State -nexus intrusion sets , as seen with Moonstone Sleet’s use of \nthe Qilin ransomware  23 24 25 (see State -nexus threats chapter).  \n \n",
+      "fragmento": "The top five targeted sectors  in the EU include public administration (31 .8%), business services \n(8.5%), transport (8%), manufacturing (6.9%) and finance/ banking (5.6",
+      "despues": "%), with essential entities \nrepresenting 72.9% of the total number of recorded incidents. As in the previous ETL report, public \nadministration remains the most targeted sector, with the thre at picture largely impacted by \nideology -driven DDoS attacks  (see sectoral and",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Qué técnica de ingeniería social emergente engaña a los usuarios para que ejecuten comandos maliciosos simulando la resolución de un problema técnico?",
+    "dorso": "La técnica ClickFix.",
+    "pista_didactica": "Involucra al usuario en 'arreglar' un problema imitando ventanas de verificación.",
+    "fuente": {
+     "texto": "An increasing use of the ClickFix technique, abusing victim into ‘fixing’ an issue, ultimately leading to the execution of malicious code",
+     "pagina": 11,
+     "verificada": true,
+     "contexto": {
+      "antes": "analysis of the ENISA dataset, DDoS remain the primary incident type (51.3%) , \nfollowed by unauthorised access (39.5%). Among social engineering techniques, phishing remains a \nprevale nt intrusion vector  (77.8%), followed by malicious spam (malspam), accounting for 13%.  \n \n",
+      "fragmento": "An increasing use of the ClickFix technique , abusing victim into ‘fixing’ an issue, ultimately \nleading to the execution of malicious code",
+      "despues": "3 4, was prevalent in 2025. ENISA also observed the \npopularisation of phishing kits and Phishing -as-a-Service ( PhaaS ) platforms to further enable \nfinancially motivated cyber activities (see cybercrime threats chapter)5 6. \n \n \nFigure 1 - Social engineering techniques",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Cuál es el vector de intrusión más frecuente identificado en los incidentes de acceso no autorizado cuando se conoce el vector?",
+    "dorso": "La explotación de vulnerabilidades (N-day y 0-day), presente en el 60.4% de los casos analizados.",
+    "pista_didactica": "Involucra fallas de software conocidas o desconocidas previamente por los fabricantes.",
+    "fuente": {
+     "texto": "Exploitation of N-day and 0-day vulnerabilities remains a prevalent intrusion vector. Across incidents of unauthorised access for which ENISA was able to identify an intrusion vector (5.2%), 60.4% were seen leveraging a vulnerability",
+     "pagina": 11,
+     "verificada": true,
+     "contexto": {
+      "antes": "\npopularisation of phishing kits and Phishing -as-a-Service ( PhaaS ) platforms to further enable \nfinancially motivated cyber activities (see cybercrime threats chapter)5 6. \n \n \nFigure 1 - Social engineering techniques leveraged in identified incidents targeting the EU  \n \n",
+      "fragmento": "Exploitation of N -day and 0 -day vulnerabilities  remains a prevalent intrusion vector. Across \nincidents of unauthorised access for which ENISA was able to identify an intru sion vector \n(5.2%), 60.4% were seen leveraging a vulnerability",
+      "despues": ", while  misconfiguration and accidental \nexposure  remain a concern (20.7%). Unauthorised access by insider threats contributed an \nincreased share  compared to the previous ETL, likely due to the t hreat posed by Famous \nChollima, an intrusion set associated to the Democratic",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "resumen_ninja": {
+   "titulo": "Síntesis Conceptual",
+   "analogia_central": "Gestionar la seguridad en el panorama actual de amenazas es similar a operar una red de centros logísticos globales donde las puertas de acceso (vulnerabilidades) y los credenciales de los empleados son constantemente asediados por competidores desleales y sabotajes externos; si un solo proveedor de software intermediario es vulnerado, toda la cadena de distribución puede sufrir un colapso en cascada, haciendo indispensable contar con redundancias estrictas y un control riguroso de identidades.",
+   "conceptos_clave": [
+    {
+     "id": "c1",
+     "texto": "ClickFix",
+     "explicacion": "Técnica de ingeniería social que engaña a los usuarios haciéndoles creer que deben solucionar un problema técnico, induciéndoles a ejecutar comandos maliciosos en sus equipos.",
+     "verificado": true,
+     "fuente": {
+      "texto": "An increasing use of the ClickFix technique, abusing victim into ‘fixing’ an issue, ultimately leading to the execution of malicious code",
+      "pagina": 11,
+      "verificada": true,
+      "contexto": {
+       "antes": "analysis of the ENISA dataset, DDoS remain the primary incident type (51.3%) , \nfollowed by unauthorised access (39.5%). Among social engineering techniques, phishing remains a \nprevale nt intrusion vector  (77.8%), followed by malicious spam (malspam), accounting for 13%.  \n \n",
+       "fragmento": "An increasing use of the ClickFix technique , abusing victim into ‘fixing’ an issue, ultimately \nleading to the execution of malicious code",
+       "despues": "3 4, was prevalent in 2025. ENISA also observed the \npopularisation of phishing kits and Phishing -as-a-Service ( PhaaS ) platforms to further enable \nfinancially motivated cyber activities (see cybercrime threats chapter)5 6. \n \n \nFigure 1 - Social engineering techniques",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c2",
+     "texto": "Phishing-as-a-Service (PaaS)",
+     "explicacion": "Ecosistemas basados en servicios que comercializan kits de phishing e infraestructura automatizada, facilitando el acceso a atacantes con menor habilidad técnica.",
+     "verificado": false,
+     "fuente": {
+      "texto": "ENISA also observed the popularisation of phishing kits and Phishing-as-a-Service (PaaS) platforms to further enable financially motivated cyber activities",
+      "pagina": null,
+      "verificada": false
+     }
+    },
+    {
+     "id": "c3",
+     "texto": "Operational Relay Boxes (ORBs)",
+     "explicacion": "Infraestructuras de retransmisión formadas mediante la explotación de dispositivos perimetrales para ocultar el origen real de las actividades maliciosas estatales.",
+     "verificado": true,
+     "fuente": {
+      "texto": "They also continued their leveraging of vulnerabilities to constitute Operational Relay Boxes (ORBs), including in the EU",
+      "pagina": 61,
+      "verificada": true,
+      "contexto": {
+       "antes": "gy sector \nassociated to DragonFly, notably involving the use of a wiper333. \n \nChina -nexus intrusion sets continued targeting the EU in 2025, with a consistent focus on \ntelecommunications, maritime, semiconductors, manufacturing and public administration \norga nisations . ",
+       "fragmento": "They also continued their leveraging of vulnerabilities to constitute Operational Relay \nBoxes (ORBs), including in the EU",
+       "despues": "334. Of particular interest is the leveraging of European victims to \nlaunch follow -up activities against additional European organisations, as well as against targets in \nAfrica and Southeast Asia335. \nIn terms of targeting, open -source reports confirmed that Salt Typhoon’s ",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c4",
+     "texto": "Foreign Information Manipulation & Interference (FIMI)",
+     "explicacion": "Amenaza híbrida centrada en la manipulación deliberada del entorno informativo mediante campañas coordinadas para influir en la opinión pública y desestabilizar procesos democráticos.",
+     "verificado": true,
+     "fuente": {
+      "texto": "FIMI is deliberate and pursues clear strategic objectives on a broader scale. The recurring patterns and the TTPs observed reveal how Information Manipulation Sets (IMS) keep weaponising information",
+      "pagina": 74,
+      "verificada": true,
+      "contexto": {
+       "antes": "such as elections, and shaped by the targeting of specific \nsocio -demographic groups  and individuals. Besides the information environment itself, FIMI aims \nat shaping perceptions and influencing behaviour towards very concrete events, actions or \nindividuals.  \n \nOverall, ",
+       "fragmento": "FIMI is deliberate and pursues clear strategic objectives on a broader scale. The recurring \npatterns and the TTPs observed reveal how Information Manipulation Sets (IMS) keep \nweaponising information",
+       "despues": " as a key component of their wider hybrid arsenal . The choice of targets \n- whether countries, key events or specific individuals - is a sign of deliberate and structural planning. \n \n548",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ]
+  },
+  "flashcards": [
+   {
+    "id": "fc-1",
+    "frente": "¿Qué porcentaje de los incidentes registrados en la Unión Europea correspondieron a ataques de denegación de servicio (DDoS)?",
+    "dorso": "El 51.3% de los incidentes registrados.",
+    "pista_didactica": "Piense en la categoría principal de incidentes de baja intensidad que dominan las estadísticas de ENISA.",
+    "fuente": {
+     "texto": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+     "pagina": 7,
+     "verificada": true,
+     "contexto": {
+      "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+      "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+      "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Cuál fue el sector más impactado y objetivo principal de los incidentes registrados en la Unión Europea según el análisis sectorial?",
+    "dorso": "La administración pública, representando el 31.8% de los eventos.",
+    "pista_didactica": "Es un sector altamente crítico expuesto frecuentemente a ataques de denegación de servicio impulsados por ideología.",
+    "fuente": {
+     "texto": "The top five targeted sectors in the EU include public administration (31.8%), business services (8.5%), transport (8%), manufacturing (6.9%) and finance/ banking (5.6%)",
+     "pagina": 14,
+     "verificada": true,
+     "contexto": {
+      "antes": "threats \nchapter). Another illustration is the leveraging of cybercrime tradecraft or toolsets  such as \nransomware and infostealers  by State -nexus intrusion sets , as seen with Moonstone Sleet’s use of \nthe Qilin ransomware  23 24 25 (see State -nexus threats chapter).  \n \n",
+      "fragmento": "The top five targeted sectors  in the EU include public administration (31 .8%), business services \n(8.5%), transport (8%), manufacturing (6.9%) and finance/ banking (5.6",
+      "despues": "%), with essential entities \nrepresenting 72.9% of the total number of recorded incidents. As in the previous ETL report, public \nadministration remains the most targeted sector, with the thre at picture largely impacted by \nideology -driven DDoS attacks  (see sectoral and",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Qué técnica de ingeniería social emergente engaña a los usuarios para que ejecuten comandos maliciosos simulando la resolución de un problema técnico?",
+    "dorso": "La técnica ClickFix.",
+    "pista_didactica": "Involucra al usuario en 'arreglar' un problema imitando ventanas de verificación.",
+    "fuente": {
+     "texto": "An increasing use of the ClickFix technique, abusing victim into ‘fixing’ an issue, ultimately leading to the execution of malicious code",
+     "pagina": 11,
+     "verificada": true,
+     "contexto": {
+      "antes": "analysis of the ENISA dataset, DDoS remain the primary incident type (51.3%) , \nfollowed by unauthorised access (39.5%). Among social engineering techniques, phishing remains a \nprevale nt intrusion vector  (77.8%), followed by malicious spam (malspam), accounting for 13%.  \n \n",
+      "fragmento": "An increasing use of the ClickFix technique , abusing victim into ‘fixing’ an issue, ultimately \nleading to the execution of malicious code",
+      "despues": "3 4, was prevalent in 2025. ENISA also observed the \npopularisation of phishing kits and Phishing -as-a-Service ( PhaaS ) platforms to further enable \nfinancially motivated cyber activities (see cybercrime threats chapter)5 6. \n \n \nFigure 1 - Social engineering techniques",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Cuál es el vector de intrusión más frecuente identificado en los incidentes de acceso no autorizado cuando se conoce el vector?",
+    "dorso": "La explotación de vulnerabilidades (N-day y 0-day), presente en el 60.4% de los casos analizados.",
+    "pista_didactica": "Involucra fallas de software conocidas o desconocidas previamente por los fabricantes.",
+    "fuente": {
+     "texto": "Exploitation of N-day and 0-day vulnerabilities remains a prevalent intrusion vector. Across incidents of unauthorised access for which ENISA was able to identify an intrusion vector (5.2%), 60.4% were seen leveraging a vulnerability",
+     "pagina": 11,
+     "verificada": true,
+     "contexto": {
+      "antes": "\npopularisation of phishing kits and Phishing -as-a-Service ( PhaaS ) platforms to further enable \nfinancially motivated cyber activities (see cybercrime threats chapter)5 6. \n \n \nFigure 1 - Social engineering techniques leveraged in identified incidents targeting the EU  \n \n",
+      "fragmento": "Exploitation of N -day and 0 -day vulnerabilities  remains a prevalent intrusion vector. Across \nincidents of unauthorised access for which ENISA was able to identify an intru sion vector \n(5.2%), 60.4% were seen leveraging a vulnerability",
+      "despues": ", while  misconfiguration and accidental \nexposure  remain a concern (20.7%). Unauthorised access by insider threats contributed an \nincreased share  compared to the previous ETL, likely due to the t hreat posed by Famous \nChollima, an intrusion set associated to the Democratic",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "tutorial": [
+   {
+    "id": "t-1",
+    "paso": 1,
+    "titulo": "Identificación de Vectores de Intrusión",
+    "descripcion": "Analizar los registros de acceso para detectar patrones de explotación de vulnerabilidades o técnicas de ingeniería social según la tipología del documento.",
+    "cli_command": "Revisar los registros de seguridad en búsqueda de actividad asociada a accesos no autorizados y vectores basados en vulnerabilidades N-day o 0-day.",
+    "completado": false,
+    "verificacion": "Confirmar que el porcentaje de incidentes por acceso no autorizado se alinee con las métricas reportadas del 39.5 por ciento."
+   },
+   {
+    "id": "t-2",
+    "paso": 2,
+    "titulo": "Evaluación de Impacto Sectorial",
+    "descripcion": "Clasificar los incidentes de la organización según los sectores definidos en el marco de análisis para determinar la exposición relativa.",
+    "cli_command": "Mapear los activos críticos de la infraestructura frente a los sectores de alta criticidad como administración pública o servicios esenciales.",
+    "completado": false,
+    "verificacion": "Verificar la correcta categorización de entidades esenciales y su alineación con los umbrales de notificación de incidentes."
+   },
+   {
+    "id": "t-3",
+    "paso": 3,
+    "titulo": "Revisión de Vulnerabilidades y CVE",
+    "descripcion": "Auditar los componentes de software y dependencias utilizando bases de datos de vulnerabilidades estandarizadas.",
+    "cli_command": "Cruzar los inventarios de software con los identificadores CVE publicados y las listas de explotadas conocidas de CISA.",
+    "completado": false,
+    "verificacion": "Comprobar que no existan componentes expuestos a vectores de red con puntuaciones CVSS críticas o altas sin mitigar."
+   }
+  ],
+  "diagrama_mermaid": "flowchart TD\n    A[Ecosistema Digital] --> B[Vectores de Intrusión]\n    B --> C[DDoS 51.3%]\n    B --> D[Acceso No Autorizado 39.5%]\n    D --> E[Explotación de Vulnerabilidades]\n    D --> F[Ingeniería Social y Phishing]\n    A --> G[Impacto Sectorial]\n    G --> H[Administración Pública 31.8%]\n    G --> I[Servicios Empresariales y Transporte]\n    A --> J[Gestión de Amenazas]\n    J --> K[Ransomware y Extorsión]\n    J --> L[Vulnerabilidades CVE y CWE]",
+  "director_cut": [
+   {
+    "id": "sc-1",
+    "escena": 1,
+    "tiempo": "00:00 - 00:15",
+    "duracion_segundos": 15.2,
+    "titulo": "Panorama de Amenazas y Vectores de Intrusión",
+    "guion_locutor": "Los ataques de denegación de servicio y el acceso no autorizado dominan Europa. Imagine una red corporativa como una fortaleza donde los atacantes explotan vulnerabilidades críticas o usan ingeniería social para evadir las defensas perimetrales.",
+    "estimacion_palabras": 35,
+    "storyboard_visual": "Esquema mostrando vectores de ataque como DDoS y brechas de acceso inicial.",
+    "consejo_pedagogico": "Relacionar los datos estadísticos con la superficie de ataque que gestiona un arquitecto.",
+    "objetivo_pedagogico": "Comprender los vectores de intrusión más frecuentes y su impacto en la infraestructura.",
+    "visual": {
+     "tipo": "diagrama_bloques",
+     "titulo": "Vectores de Intrusión Principales",
+     "puntos_clave": [
+      "DDoS representa el 51.3 por ciento de los incidentes",
+      "Acceso no autorizado alcanza el 39.5 por ciento",
+      "La explotación de vulnerabilidades facilita el acceso"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-1-1",
+      "pagina": 7,
+      "texto_fuente": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+       "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+       "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "server rack",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   },
+   {
+    "id": "sc-2",
+    "escena": 2,
+    "tiempo": "00:15 - 00:30",
+    "duracion_segundos": 14.8,
+    "titulo": "Impacto Sectorial y Operaciones Financieras",
+    "guion_locutor": "La administración pública encabeza los sectores más afectados, seguida por servicios y transporte. Las actividades con motivación financiera y el despliegue de códigos de cifrado alteran gravemente la continuidad operativa en la Unión Europea.",
+    "estimacion_palabras": 34,
+    "storyboard_visual": "Gráfica de sectores afectados destacando la administración pública y el transporte.",
+    "consejo_pedagogico": "Enfatizar que la criticidad sectorial define la prioridad en el diseño de planes de contingencia.",
+    "objetivo_pedagogico": "Identificar los sectores de mayor riesgo y las consecuencias operativas del cibercrimen.",
+    "visual": {
+     "tipo": "ppt_concepto",
+     "titulo": "Sectores Críticos y Cibercrimen",
+     "puntos_clave": [
+      "Administración pública es el sector más afectado",
+      "El ransomware genera el mayor impacto a corto plazo",
+      "Exfiltración de datos mediante portales y nubes"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-2-1",
+      "pagina": 7,
+      "texto_fuente": "Public administration remained the most impacted sector (31.8%), followed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking (5.6%).",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "interest in the transport sector including maritime related entities. A \nresurgence in State -nexus financially motivated campaigns was observed.  \n2025 confirmed the continued exposure of sectors to cyber threats , including sectors  of high \ncriticality  according to NIS2 . ",
+       "fragmento": "Public administration remained the most impacted sector (31.8%), \nfollowed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking \n(5.6",
+       "despues": "%). Sectoral analysis further highlighted differences in targeting patterns, threat groups and \noperational impact across sectors, notably showing the criticality of digital dependencies, sensitive \ndata holdings and operational maturity in shaping exposure to cyber threats.  ",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "modern office",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   },
+   {
+    "id": "sc-3",
+    "escena": 3,
+    "tiempo": "00:30 - 00:44",
+    "duracion_segundos": 14.3,
+    "titulo": "Vulnerabilidades y Gestión Estratégica",
+    "guion_locutor": "La publicación masiva de vulnerabilidades exige un rigoroso enfoque en la gestión de parches. Los adversarios reducen el tiempo de vectorización, obligando a priorizar la visibilidad y mitigación proactiva frente a amenazas persistentes.",
+    "estimacion_palabras": 33,
+    "storyboard_visual": "Panel de control mostrando métricas de vulnerabilidades y CVEs registrados.",
+    "consejo_pedagogico": "Vincular la gestión de vulnerabilidades con la estrategia defensiva a largo plazo.",
+    "objetivo_pedagogico": "Evaluar la criticidad de las vulnerabilidades y la necesidad de una postura de seguridad proactiva.",
+    "visual": {
+     "tipo": "palabras_clave",
+     "titulo": "Gestión de Vulnerabilidades",
+     "puntos_clave": [
+      "Incremento anual en registros de vulnerabilidades CVE",
+      "Prevalencia de vectores de ataque basados en red",
+      "Necesidad de control estricto en la cadena de suministro"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-3-1",
+      "pagina": 90,
+      "texto_fuente": "Overall, more than 48 thousand new vulnerabilities were published in 2025 with assigned Common Vulnerability and Exposure (CVE) Identifiers",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "2025 ENISA has expanded \nits role in vulnerability management by becoming a Root CVE \nthus becoming a cen tral point of contact within the CVE \nprogramme for national and EU authorities, EU CSIRTs \nnetwork members and cooperative partners falling under \nENISA’s mandate.   \n \n \n",
+       "fragmento": "Overall, more than 48 thousand new vulnerabilities  were published in 2025 with assigned Common \nVulnerability and Exposure (CVE) Identifiers",
+       "despues": ", a programme with the purpose of identifying, defining \nand cataloguing publicly disclosed cybersecurity vulnerabilities — a 22% increase  from the previous \nyear.  \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n627 https://www.vulnerability -lookup.org/2026/05/11/vulnerability -report -2025/ ",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "digital security lock",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   }
+  ],
+  "quiz": [
+   {
+    "id": "q-1",
+    "pregunta": "Según el informe de ENISA, ¿cuál fue el tipo de incidente predominante en el panorama general de ciberamenazas en la Unión Europea durante el periodo analizado?",
+    "opciones": [
+     "Ataques de denegación de servicio (DDoS)",
+     "Despliegues masivos de ransomware",
+     "Campañas de ingeniería social por vishing",
+     "Ataques avanzados a la cadena de suministro"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto: Los ataques DDoS representaron el 51.3% de los incidentes registrados, constituyendo el tipo de incidente principal.",
+    "explicaciones_opciones": [
+     "Correcto: Los ataques DDoS representaron el 51.3% de los incidentes registrados, constituyendo el tipo de incidente principal.",
+     "Incorrecto: Aunque el ransomware es altamente impactante a corto plazo, no es el incidente cuantitativamente más frecuente.",
+     "Incorrecto: El vishing es una variante relevante de ingeniería social, pero no encabeza el volumen total de incidentes registrados frente a los DDoS.",
+     "Incorrecto: Los incidentes de cadena de suministro son muy críticos, pero representan una proporción menor en el conteo total comparado con los DDoS."
+    ],
+    "cita_fuente": "Based on the analysis of the ENISA dataset, DDoS remain the primary incident type (51.3%), followed by unauthorised access (39.5%).",
+    "fuente": {
+     "texto": "Based on the analysis of the ENISA dataset, DDoS remain the primary incident type (51.3%), followed by unauthorised access (39.5%).",
+     "pagina": 11,
+     "verificada": true,
+     "contexto": {
+      "antes": "ENISA  Threat Landscape 2026  \nTLP:CLEAR  | September  2026  \n \n11 \n \n1. Overview & Trends  \n",
+      "fragmento": "Based on the analysis of the ENISA dataset, DDoS remain the primary incident type (51.3%) , \nfollowed by unauthorised access (39.5",
+      "despues": "%). Among social engineering techniques, phishing remains a \nprevale nt intrusion vector  (77.8%), followed by malicious spam (malspam), accounting for 13%.  \n \nAn increasing use of the ClickFix technique , abusing victim into ‘fixing’ an issue, ultimately \nleading to the",
+      "recortado_inicio": false,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-2",
+    "pregunta": "En el análisis de las motivaciones y objetivos de los ciberataques dirigidos a la Unión Europea, ¿qué categoría representó la mayor proporción de incidentes observados?",
+    "opciones": [
+     "Operaciones motivadas financieramente",
+     "Campañas de ciberespionaje estatal",
+     "Incidentes impulsados por ideología",
+     "Manipulación de interferencia de información extranjera (FIMI)"
+    ],
+    "respuesta_correcta": 2,
+    "justificacion_rag": "Correcto: Los incidentes impulsados por ideología representaron el 57.3% de los objetivos evaluados, impulsados mayoritariamente por grupos hacktivistas.",
+    "explicaciones_opciones": [
+     "Incorrecto: Las actividades motivadas financieramente representaron el 29.2% de los incidentes.",
+     "Incorrecto: El ciberespionaje representó un porcentaje menor, estimado en el 6.3% de los objetivos evaluados.",
+     "Correcto: Los incidentes impulsados por ideología representaron el 57.3% de los objetivos evaluados, impulsados mayoritariamente por grupos hacktivistas.",
+     "Incorrecto: FIMI corresponde a otra categoría de análisis analizada de forma específica en el informe, no siendo la métrica principal de este desglose."
+    ],
+    "cita_fuente": "Based on assessed objectives, cyber activities targeting or impacting the EU mostly pertained to ideology-driven incidents (57.3%), followed by financially motivated operations (29.2%).",
+    "fuente": {
+     "texto": "Based on assessed objectives, cyber activities targeting or impacting the EU mostly pertained to ideology-driven incidents (57.3%), followed by financially motivated operations (29.2%).",
+     "pagina": 13,
+     "verificada": true,
+     "contexto": {
+      "antes": "(OT)  (see hacktivist threats \nchapter). Unauthorised access follow with 39.5%, dominated by financially motivated activities \n(63.9%), followed by ideology driven claims (1 5.3%), and cyberespionage (13.6%).  \n \n \nFigure 3 - Breakdown of incident types impacting the EU  \n",
+      "fragmento": "Based on assessed objectives, cyber activities targeting or impacting the EU mostly pertained to  \nideology -driven incidents  (57.3%), followed by financially motivated operations (29.2",
+      "despues": "%). \nCyberespionage campaigns accounted for 6.3%. As mentioned, despite representing most incidents, \nideology -driven claims did not result in large -scale or significant impact. Though accounting for  lower \nnumbers, financially motivated activities remain the most impactful",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-3",
+    "pregunta": "Dentro de las vulnerabilidades y debilidades de software analizadas mediante el marco CWE (Common Weakness Enumeration) para 2025, ¿qué categoría ocupó el primer lugar en relevancia y puntuación?",
+    "opciones": [
+     "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+     "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+     "CWE-352: Cross-Site Request Forgery (CSRF)",
+     "CWE-787: Out-of-bounds Write"
+    ],
+    "respuesta_correcta": 1,
+    "justificacion_rag": "Correcto: CWE-79 ('Cross-site Scripting') ocupó el primer puesto con la puntuación más alta en el ranking de las CWEs analizadas.",
+    "explicaciones_opciones": [
+     "Incorrecto: La inyección SQL (CWE-89) ocupó la segunda posición en el ranking de las 25 CWEs principales.",
+     "Correcto: CWE-79 ('Cross-site Scripting') ocupó el primer puesto con la puntuación más alta en el ranking de las CWEs analizadas.",
+     "Incorrecto: CWE-352 ocupó la tercera posición en la lista de CWEs de 2025.",
+     "Incorrecto: CWE-787 ocupó la quinta posición en el ranking de debilidades de hardware y software."
+    ],
+    "cita_fuente": "1 CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting') 60.38 7 0",
+    "fuente": {
+     "texto": "1 CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting') 60.38 7 0",
+     "pagina": 92,
+     "verificada": true,
+     "contexto": {
+      "antes": "which weaknesses are common, have \ncaused significant harm and could consequently have security ramifications. Building upon it, the top \n25 m ost relevant weaknesses in hardware and software were the following:  \n \nRank  ID Name  Score  CVEs in \nKEV Rank Change \nvs 2024  \n",
+      "fragmento": "1 CWE -79  Improper Neutralization of Input During Web Page \nGeneration ('Cross -site Scripting')  60.38  7 0",
+      "despues": " \n2 CWE -89  Improper Neutralization of Special Elements used in an \nSQL Command ('SQL Injection')  28.72  4 +1 \n3 CWE -352  Cross -Site Request Forgery (CSRF)  13.64  0 +1 \n4 CWE -862  Missing Authorisation  13.28  0 +5 \n5 CWE -787  Out-of-bounds Write  12.68  12 -3 \n6 CWE -22 ",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-4",
+    "pregunta": "¿Qué organismo de la Unión Europea publica el informe sobre el panorama de ciberamenazas (ENISA Threat Landscape) utilizado como base técnica para este análisis?",
+    "opciones": [
+     "La Agencia de Ciberseguridad de la Unión Europea (ENISA)",
+     "El Centro Europeo de Ciberdelincuencia de Europol (EC3)",
+     "El Servicio Europeo de Acción Exterior (EEAS)",
+     "El Grupo de Cooperación NIS de la Comisión Europea"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto: ENISA es la agencia de la Unión dedicada a lograr un alto nivel común de ciberseguridad y redacta este informe anual.",
+    "explicaciones_opciones": [
+     "Correcto: ENISA es la agencia de la Unión dedicada a lograr un alto nivel común de ciberseguridad y redacta este informe anual.",
+     "Incorrecto: Europol aporta datos e información de operaciones policiales, pero no es la agencia autora del documento ENISA Threat Landscape.",
+     "Incorrecto: El EEAS elabora el informe FIMI, el cual se integra como un capítulo dentro de este documento, pero no es el autor principal de todo el estudio.",
+     "Incorrecto: La Comisión Europea impulsa las directivas NIS, pero el informe es una producción oficial específica de la agencia ENISA."
+    ],
+    "cita_fuente": "The European Union Agency for Cybersecurity, ENISA, is the Union’s agency dedicated to achieving a high common level of cybersecurity across Europe.",
+    "fuente": {
+     "texto": "The European Union Agency for Cybersecurity, ENISA, is the Union’s agency dedicated to achieving a high common level of cybersecurity across Europe.",
+     "pagina": 2,
+     "verificada": true,
+     "contexto": {
+      "antes": "ENISA  Threat Landscape 2026  \nTLP:CLEAR  | September  2026  \n \n2 \n \n About ENISA  \n \n",
+      "fragmento": "The European Union Agency for Cybersecurity, ENISA, is the Union’s agency dedicated to achieving a \nhigh common level of cybersecurity across Europe",
+      "despues": ". Established in 2004 and strengthened by the EU \nCybersecurity Act, the European Union Agency for Cybersecuri ty contributes to EU cyber policy, \nenhances the trustworthiness of ICT products, services and processes with cybersecurity certification \nschemes, cooperates with",
+      "recortado_inicio": false,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "video_job_spec": {
+   "video_job_id": "vjob-doc-3bf4a63430dd0b05",
+   "document_id": "doc-3bf4a63430dd0b05",
+   "target_duration": 50,
+   "max_duration": 60,
+   "aspect_ratio": "9:16",
+   "idioma": "es",
+   "estado": "contract_ready",
+   "escenas": [
+    {
+     "id": "sc-1",
+     "escena": 1,
+     "tiempo": "00:00 - 00:15",
+     "duracion_segundos": 15.2,
+     "titulo": "Panorama de Amenazas y Vectores de Intrusión",
+     "guion_locutor": "Los ataques de denegación de servicio y el acceso no autorizado dominan Europa. Imagine una red corporativa como una fortaleza donde los atacantes explotan vulnerabilidades críticas o usan ingeniería social para evadir las defensas perimetrales.",
+     "estimacion_palabras": 35,
+     "storyboard_visual": "Esquema mostrando vectores de ataque como DDoS y brechas de acceso inicial.",
+     "consejo_pedagogico": "Relacionar los datos estadísticos con la superficie de ataque que gestiona un arquitecto.",
+     "objetivo_pedagogico": "Comprender los vectores de intrusión más frecuentes y su impacto en la infraestructura.",
+     "visual": {
+      "tipo": "diagrama_bloques",
+      "titulo": "Vectores de Intrusión Principales",
+      "puntos_clave": [
+       "DDoS representa el 51.3 por ciento de los incidentes",
+       "Acceso no autorizado alcanza el 39.5 por ciento",
+       "La explotación de vulnerabilidades facilita el acceso"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-1-1",
+       "pagina": 7,
+       "texto_fuente": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+        "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+        "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "server rack",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    },
+    {
+     "id": "sc-2",
+     "escena": 2,
+     "tiempo": "00:15 - 00:30",
+     "duracion_segundos": 14.8,
+     "titulo": "Impacto Sectorial y Operaciones Financieras",
+     "guion_locutor": "La administración pública encabeza los sectores más afectados, seguida por servicios y transporte. Las actividades con motivación financiera y el despliegue de códigos de cifrado alteran gravemente la continuidad operativa en la Unión Europea.",
+     "estimacion_palabras": 34,
+     "storyboard_visual": "Gráfica de sectores afectados destacando la administración pública y el transporte.",
+     "consejo_pedagogico": "Enfatizar que la criticidad sectorial define la prioridad en el diseño de planes de contingencia.",
+     "objetivo_pedagogico": "Identificar los sectores de mayor riesgo y las consecuencias operativas del cibercrimen.",
+     "visual": {
+      "tipo": "ppt_concepto",
+      "titulo": "Sectores Críticos y Cibercrimen",
+      "puntos_clave": [
+       "Administración pública es el sector más afectado",
+       "El ransomware genera el mayor impacto a corto plazo",
+       "Exfiltración de datos mediante portales y nubes"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-2-1",
+       "pagina": 7,
+       "texto_fuente": "Public administration remained the most impacted sector (31.8%), followed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking (5.6%).",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "interest in the transport sector including maritime related entities. A \nresurgence in State -nexus financially motivated campaigns was observed.  \n2025 confirmed the continued exposure of sectors to cyber threats , including sectors  of high \ncriticality  according to NIS2 . ",
+        "fragmento": "Public administration remained the most impacted sector (31.8%), \nfollowed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking \n(5.6",
+        "despues": "%). Sectoral analysis further highlighted differences in targeting patterns, threat groups and \noperational impact across sectors, notably showing the criticality of digital dependencies, sensitive \ndata holdings and operational maturity in shaping exposure to cyber threats.  ",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "modern office",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    },
+    {
+     "id": "sc-3",
+     "escena": 3,
+     "tiempo": "00:30 - 00:44",
+     "duracion_segundos": 14.3,
+     "titulo": "Vulnerabilidades y Gestión Estratégica",
+     "guion_locutor": "La publicación masiva de vulnerabilidades exige un rigoroso enfoque en la gestión de parches. Los adversarios reducen el tiempo de vectorización, obligando a priorizar la visibilidad y mitigación proactiva frente a amenazas persistentes.",
+     "estimacion_palabras": 33,
+     "storyboard_visual": "Panel de control mostrando métricas de vulnerabilidades y CVEs registrados.",
+     "consejo_pedagogico": "Vincular la gestión de vulnerabilidades con la estrategia defensiva a largo plazo.",
+     "objetivo_pedagogico": "Evaluar la criticidad de las vulnerabilidades y la necesidad de una postura de seguridad proactiva.",
+     "visual": {
+      "tipo": "palabras_clave",
+      "titulo": "Gestión de Vulnerabilidades",
+      "puntos_clave": [
+       "Incremento anual en registros de vulnerabilidades CVE",
+       "Prevalencia de vectores de ataque basados en red",
+       "Necesidad de control estricto en la cadena de suministro"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-3-1",
+       "pagina": 90,
+       "texto_fuente": "Overall, more than 48 thousand new vulnerabilities were published in 2025 with assigned Common Vulnerability and Exposure (CVE) Identifiers",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "2025 ENISA has expanded \nits role in vulnerability management by becoming a Root CVE \nthus becoming a cen tral point of contact within the CVE \nprogramme for national and EU authorities, EU CSIRTs \nnetwork members and cooperative partners falling under \nENISA’s mandate.   \n \n \n",
+        "fragmento": "Overall, more than 48 thousand new vulnerabilities  were published in 2025 with assigned Common \nVulnerability and Exposure (CVE) Identifiers",
+        "despues": ", a programme with the purpose of identifying, defining \nand cataloguing publicly disclosed cybersecurity vulnerabilities — a 22% increase  from the previous \nyear.  \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n627 https://www.vulnerability -lookup.org/2026/05/11/vulnerability -report -2025/ ",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "digital security lock",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    }
+   ],
+   "total_palabras": 102,
+   "duracion_total_estimada": 44.3,
+   "wpm": 138,
+   "degradaciones": [],
+   "manifiesto_url_oci": null,
+   "video_url_oci": null,
+   "duracion_total_real": null,
+   "velocidad_reproduccion": 1.0
+  },
+  "resumen_ejecutivo": {
+   "texto": "Durante 2025, el panorama de ciberamenazas en la UE estuvo dominado por ataques DDoS masivos y accesos no autorizados impulsados por vulnerabilidades y técnicas de ingeniería social como phishing y ClickFix. Las actividades con motivación financiera, en particular el ransomware y la filtración de datos, continuaron generando las mayores disrupciones en la continuidad operativa. Paralelamente, los grupos patrocinados por estados mantuvieron campañas persistentes de ciberespionaje, mientras que el hacktivism impulsado por tensiones geopolíticas incrementó el volumen de alertas públicas. La convergencia de tácticas y el uso creciente de inteligencia artificial por parte de los atacantes subrayan la necesidad de fortalecer la resiliencia en arquitecturas y cadenas de suministro.",
+   "por_secciones": [
+    {
+     "seccion": "1. Overview & Trends",
+     "resumen": "Se detalla el predominio de ataques DDoS y accesos no autorizados, destacando el uso de técnicas como ClickFix, la explotación de vulnerabilidades y la creciente dependencia de cadenas de suministro de software.",
+     "fuente": {
+      "texto": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+      "pagina": 7,
+      "verificada": true,
+      "contexto": {
+       "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+       "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+       "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "2. Sectoral Analysis",
+     "resumen": "Analiza el impacto de los incidentes en sectores clave cubiertos por la directiva NIS2, identificando a la administración pública como el sector más afectado, seguido por servicios empresariales y transporte.",
+     "fuente": {
+      "texto": "The top five targeted sectors in the EU include public administration (31.8%), business services (8.5%), transport (8%), manufacturing (6.9%) and finance/ banking (5.6%).",
+      "pagina": 14,
+      "verificada": true,
+      "contexto": {
+       "antes": "threats \nchapter). Another illustration is the leveraging of cybercrime tradecraft or toolsets  such as \nransomware and infostealers  by State -nexus intrusion sets , as seen with Moonstone Sleet’s use of \nthe Qilin ransomware  23 24 25 (see State -nexus threats chapter).  \n \n",
+       "fragmento": "The top five targeted sectors  in the EU include public administration (31 .8%), business services \n(8.5%), transport (8%), manufacturing (6.9%) and finance/ banking (5.6",
+       "despues": "%), with essential entities \nrepresenting 72.9% of the total number of recorded incidents. As in the previous ETL report, public \nadministration remains the most targeted sector, with the thre at picture largely impacted by \nideology -driven DDoS attacks  (see sectoral and",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "3. Cybercrime Threats",
+     "resumen": "Examina las amenazas motivadas financieramente, enfocándose en fraudes, brechas de datos publicadas en foros y despliegues de ransomware que afectan la continuidad de los negocios.",
+     "fuente": {
+      "texto": "Financially motivated activities (29.3% of all recorded incidents), particularly ransomware, remained the most impactful incidents in the short-term.",
+      "pagina": 7,
+      "verificada": true,
+      "contexto": {
+       "antes": "also remained a prevalent intrusion vector \nto enable unauthorised access (60.4%). At the same time, the targeting of supply chains, third -party \nproviders, cloud environments and other cyber dependencies  continued resulting in impactful and \nlarge -scale incidents.  \n",
+       "fragmento": "Financially motivated activities (29.3% of all recorded incidents), particularly  ransomware, \nremained the most  impactful incidents in the short -term",
+       "despues": " . Ransomware, data breaches, phishing \nand fraud impacted a broad range of sectors, reflecting the continuing adaptability of the cybercrime \necosystem. Manufacturing, business services and public administration were amo ng the sectors most \naffected by cybercrime -related",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "4. State -Nexus Threats",
+     "resumen": "Revisa las campañas de ciberespionaje y recolección de inteligencia estratégica perpetradas por actores estatales, con énfasis en la explotación rápida de vulnerabilidades en dispositivos perimetrales.",
+     "fuente": {
+      "texto": "Over the reporting period, the activities of State-nexus intrusion sets targeting EU MSs remained primarily focused on cyberespionage, strategic intelligence collection and, possibly, intellectual property theft",
+      "pagina": 60,
+      "verificada": true,
+      "contexto": {
+       "antes": "ENISA  Threat Landscape 2026  \nTLP:CLEAR  | September  2026  \n \n60 \n \n4. State -Nexus Threats  \n",
+       "fragmento": "Over the reporting period, the activities of State -nexus intrusion sets targeting EU MSs remained \nprimarily focused on cyberespionage, strategic intelligence collection and, possibly, \nintellectual property theft",
+       "despues": " , notably through the compromise of digital infrastructure and the targeting \nof public administrations. State -nexus operational activity throughout 2025 was characterised by \nsustained exploitation of edge infrastructure , the rapid weaponisation of newly disclosed ",
+       "recortado_inicio": false,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "5. Foreign Information Manipulation & Interference (FIMI)",
+     "resumen": "Aborda las operaciones de manipulación de información e injerencia extranjera detectadas, destacando el uso de inteligencia artificial para escalar la desinformación y erosionar la confianza institucional.",
+     "fuente": {
+      "texto": "Between 1 January and 31 December 2025, the EEAS, the European External Action Service, detected and analysed 540 FIMI incidents.",
+      "pagina": 74,
+      "verificada": true,
+      "contexto": {
+       "antes": "Landscape 2026  \nTLP:CLEAR  | September  2026  \n \n74 \n \n5. Foreign Information Manipulation & \nInterference (FIMI)  \nThis section was directly drawn from the EEAS 4th report on Foreign Information Manipulation \nand Interference, published in March 2026548. \n5.1 Key threats  \n",
+       "fragmento": "Between 1 January and 31 December 2025, the EEAS, the European External Action Service, \ndetected and analysed 540 FIMI incidents",
+       "despues": " . Of these, 65% were unattributed , 29% attributed to \nRussia  and 6% connected to China , with some instances in which Russian and Chinese FIMI \ninfrastructures were jointly active in opportunistic amplification of one another.  \nA total of 10 500 unique channels were involved",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "6. Hacktivist Threats",
+     "resumen": "Evalúa las actividades de hacktivismo impulsadas por ideologías y eventos geopolíticos, señalando el predominio de ataques DDoS y el surgimiento de modelos de DDoS como servicio.",
+     "fuente": {
+      "texto": "ENISA recorded 4 709 hacktivist claims against EU MSs during the year, of which more than 89% involved DDoS.",
+      "pagina": 83,
+      "verificada": true,
+      "contexto": {
+       "antes": "gro ups was notable not only in regard to  the volume of \nincidents but for the concentration of such activities among a finite number of groups. There was also \na continuous  correlation between geopolitical events in 2025, and the victims targeted by DDoS in thi s \nperiod. ",
+       "fragmento": "ENISA recorded 4 709 hacktivist claims against EU MSs  during the year, of which more \nthan 89% involved DDoS",
+       "despues": " . Activities were driven by several groups, particularly pro -Russia \nNoName057(16), and were organised under operation -labelled campaigns (e.g. #Op Country X). Most \nof these campaigns were aligned with political developments, including elections, protests, geopolitical ",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "7. Vulnerabilities",
+     "resumen": "Analiza el crecimiento en la divulgación de vulnerabilidades y debilidades de software (CWE), destacando el rol central de ENISA como autoridad CNA y Root CVE para la gestión coordinada.",
+     "fuente": {
+      "texto": "Overall, more than 48 thousand new vulnerabilities were published in 2025 with assigned Common Vulnerability and Exposure (CVE) Identifiers",
+      "pagina": 90,
+      "verificada": true,
+      "contexto": {
+       "antes": "2025 ENISA has expanded \nits role in vulnerability management by becoming a Root CVE \nthus becoming a cen tral point of contact within the CVE \nprogramme for national and EU authorities, EU CSIRTs \nnetwork members and cooperative partners falling under \nENISA’s mandate.   \n \n \n",
+       "fragmento": "Overall, more than 48 thousand new vulnerabilities  were published in 2025 with assigned Common \nVulnerability and Exposure (CVE) Identifiers",
+       "despues": ", a programme with the purpose of identifying, defining \nand cataloguing publicly disclosed cybersecurity vulnerabilities — a 22% increase  from the previous \nyear.  \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n627 https://www.vulnerability -lookup.org/2026/05/11/vulnerability -report -2025/ ",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ],
+   "conclusiones": [
+    "La convergencia operativa entre ciberdelincuentes, hacktivistas y actores estatales utilizando vectores y herramientas similares complica la atribución precisa de los incidentes.",
+    "Las dependencias digitales y los proveedores de servicios gestionados representan puntos críticos de fallo que amplifican el impacto de la cadena de suministro.",
+    "El ransomware y la extorsión basada en exfiltración de datos continúan evolucionando mediante la automatización y el uso de técnicas de evasión de defensas EDR.",
+    "La integración de inteligencia artificial por parte de los atacantes incrementa la velocidad y escala de las operaciones, requiriendo una evolución simétrica en las arquitecturas de mitigación."
+   ]
+  },
+  "glosario": [
+   {
+    "termino": "DDoS",
+    "definicion": "Ataques de denegación de servicio distribuido que constituyen el tipo de incidente primario registrado en el informe de ENISA.",
+    "fuente": {
+     "texto": "DDoS remain the primary incident type (51.3%), followed by unauthorised access (39.5%).",
+     "pagina": 11,
+     "verificada": true,
+     "contexto": {
+      "antes": "ENISA  Threat Landscape 2026  \nTLP:CLEAR  | September  2026  \n \n11 \n \n1. Overview & Trends  \nBased on the analysis of the ENISA dataset, ",
+      "fragmento": "DDoS remain the primary incident type (51.3%) , \nfollowed by unauthorised access (39.5",
+      "despues": "%). Among social engineering techniques, phishing remains a \nprevale nt intrusion vector  (77.8%), followed by malicious spam (malspam), accounting for 13%.  \n \nAn increasing use of the ClickFix technique , abusing victim into ‘fixing’ an issue, ultimately \nleading to the",
+      "recortado_inicio": false,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "FIMI",
+    "definicion": "Manipulación e Interferencia de Información Extranjera (Foreign Information Manipulation & Interference), área analizada a partir de los datos del Servicio Europeo de Acción Exterior.",
+    "fuente": {
+     "texto": "Foreign Information Manipulation & Interference (FIMI)",
+     "pagina": 5,
+     "verificada": true,
+     "contexto": {
+      "antes": "3.1.2 Data breaches  42 \n3.1.3 Ransomware deployments  46 \n3.2 Sectoral impact  54 \n3.3 Geographical impact  54 \n3.4 Key trends  55 \n3.5 Tackling cybercrime in the EU  59 \n4. State -Nexus Threats  60 \n4.1 Key threats  60 \n4.2 Sectoral impact  67 \n4.3 Key TTPs and trends  69 \n5. ",
+      "fragmento": "Foreign Information Manipulation & Interference \n(FIMI",
+      "despues": ")  74 \n5.1 Key threats  74 \n6. Hacktivist Threats  83 \n6.1 Key threats  83 \n",
+      "recortado_inicio": true,
+      "recortado_fin": false
+     }
+    }
+   },
+   {
+    "termino": "RaaS",
+    "definicion": "Modelo de Ransomware-as-a-Service utilizado por grupos criminales para comercializar y operar herramientas de cifrado y extorsión.",
+    "fuente": {
+     "texto": "Ransomware-As-A-Service (RaaS) panel",
+     "pagina": 17,
+     "verificada": true,
+     "contexto": {
+      "antes": "while cybercriminal forums continued discussing genera tive AI for phishing, fraud and \nmalware development59. Analysis of the Gentlemen ransomware group, particularly active in the EU, \nalso documented how their operators used AI coding assistants to develop the group's ",
+      "fragmento": "Ransomware -\nAs-A-Service (RaaS) panel",
+      "despues": "60. Of particular interest is the potential for AI to increase the speed and \nscale of cyber malicious operations . An AI -assisted cloud intrusion reportedly achieved \nadministrative access within 8 minutes61. AI-assisted discovery and living -off-the-land activity  has also ",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "CWE",
+    "definicion": "Common Weakness Enumeration, sistema de categorización de debilidades de hardware y software desarrollado por la comunidad analizado en el informe.",
+    "fuente": {
+     "texto": "Common Weakness Enumeration (CWE) list, a community-developed category system for hardware and software weaknesses and vulnerabilities",
+     "pagina": 91,
+     "verificada": true,
+     "contexto": {
+      "antes": "\nthe attack vector , in accordance with the definition of the CVSS Attack vector metric633. This \nunderscores the potential risk of remote exploitation, especially for internet -facing systems.  \n \nFigure 58 - Attack vectors of vulnerabilities identified in 2025  \nBased on the ",
+      "fragmento": "Common Weakness Enumeration (CWE) list, a community -developed cate gory system \nfor hardware and software weaknesses and vulnerabilities",
+      "despues": "  calculated by analy sing public vulnerability \n \n632 Covering all versions used in reporting.  \n633 https://www.first.org/cvss/specification -document   \n                             \n             \n         \n   \n         \n                                        \n           \n",
+      "recortado_inicio": true,
+      "recortado_fin": false
+     }
+    }
+   }
+  ],
+  "objetivos_aprendizaje": [
+   "Analizar el panorama general de ciberamenazas y tendencias descritas por ENISA para la Unión Europea.",
+   "Evaluar el impacto sectorial de los incidentes de ciberseguridad en sectores críticos cubiertos por la Directiva NIS2.",
+   "Comparar las motivaciones técnicas y estratégicas detrás de las actividades de ciberdelincuencia, hacktivismo y amenazas auspiciadas por estados.",
+   "Interpretar las métricas de vulnerabilidades y los vectores de ataque predominantes en las infraestructuras de tecnología de la información."
+  ],
+  "diapositivas": [
+   {
+    "orden": 1,
+    "titulo": "Panorama General y Vectores de Ataque",
+    "puntos_clave": [
+     "Los ataques DDoS representan el 51.3 por ciento de los registros.",
+     "El acceso no autorizado alcanza el 39.5 por ciento de los incidentes.",
+     "La ingeniería social y el phishing continúan siendo vectores de entrada masivos."
+    ],
+    "concepto_visual": "Infografía dividida mostrando porcentajes de incidentes por tipo.",
+    "fuente": {
+     "texto": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+     "pagina": 7,
+     "verificada": true,
+     "contexto": {
+      "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+      "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+      "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 2,
+    "titulo": "Análisis Sectorial y de Riesgo",
+    "puntos_clave": [
+     "La administración pública concentra el 31.8 por ciento de los eventos.",
+     "El sector de servicios empresariales y transporte presentan alta exposición.",
+     "El ransomware y las brechas de datos encabezan las amenazas financieras."
+    ],
+    "concepto_visual": "Gráfico de barras indicando la distribución de incidentes por sector crítico.",
+    "fuente": {
+     "texto": "Public administration remained the most impacted sector (31.8%), followed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking (5.6%).",
+     "pagina": 7,
+     "verificada": true,
+     "contexto": {
+      "antes": "interest in the transport sector including maritime related entities. A \nresurgence in State -nexus financially motivated campaigns was observed.  \n2025 confirmed the continued exposure of sectors to cyber threats , including sectors  of high \ncriticality  according to NIS2 . ",
+      "fragmento": "Public administration remained the most impacted sector (31.8%), \nfollowed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking \n(5.6",
+      "despues": "%). Sectoral analysis further highlighted differences in targeting patterns, threat groups and \noperational impact across sectors, notably showing the criticality of digital dependencies, sensitive \ndata holdings and operational maturity in shaping exposure to cyber threats.  ",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 3,
+    "titulo": "Vulnerabilidades y Debilidades de Software",
+    "puntos_clave": [
+     "Más de 48 mil nuevas vulnerabilidades con identificador CVE publicadas en 2025.",
+     "El 71 por ciento de las vulnerabilidades presentan la red como vector de ataque.",
+     "Predominio de debilidades relacionadas con inyección y control de entradas."
+    ],
+    "concepto_visual": "Esquema jerárquico de las debilidades CWE más relevantes y vectores CVSS.",
+    "fuente": {
+     "texto": "Overall, more than 48 thousand new vulnerabilities were published in 2025 with assigned Common Vulnerability and Exposure (CVE) Identifiers",
+     "pagina": 90,
+     "verificada": true,
+     "contexto": {
+      "antes": "2025 ENISA has expanded \nits role in vulnerability management by becoming a Root CVE \nthus becoming a cen tral point of contact within the CVE \nprogramme for national and EU authorities, EU CSIRTs \nnetwork members and cooperative partners falling under \nENISA’s mandate.   \n \n \n",
+      "fragmento": "Overall, more than 48 thousand new vulnerabilities  were published in 2025 with assigned Common \nVulnerability and Exposure (CVE) Identifiers",
+      "despues": ", a programme with the purpose of identifying, defining \nand cataloguing publicly disclosed cybersecurity vulnerabilities — a 22% increase  from the previous \nyear.  \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n627 https://www.vulnerability -lookup.org/2026/05/11/vulnerability -report -2025/ ",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "estado_recursos": {
+   "resumen": {
+    "recurso": "resumen",
+    "tarea": "A",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 9.777,
+    "citas_totales": 11,
+    "citas_verificadas": 10,
+    "avisos": [
+     "1 de 11 citas no aparecen literalmente en el documento"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "flashcards": {
+    "recurso": "flashcards",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 9.546,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "cuestionario": {
+    "recurso": "cuestionario",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 9.546,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "glosario": {
+    "recurso": "glosario",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 9.546,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "objetivos": {
+    "recurso": "objetivos",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 9.546,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "guion": {
+    "recurso": "guion",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.415,
+    "citas_totales": 3,
+    "citas_verificadas": 3,
+    "avisos": [
+     "el guion tiene 102 palabras (objetivo 110-125)",
+     "guion acortado por IA de 144 a 102 palabras (gemini-3.5-flash-lite) para caber en 60 s"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diapositivas": {
+    "recurso": "diapositivas",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.415,
+    "citas_totales": 3,
+    "citas_verificadas": 3,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "tutorial": {
+    "recurso": "tutorial",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.415,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diagrama": {
+    "recurso": "diagrama",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.415,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   }
+  }
+ },
+ "fuentes_utilizadas": [],
+ "evaluacion_calidad": {
+  "anclaje_fuente_score": 0.92,
+  "auditoria_ejecutada": true,
+  "claridad_pedagogica": "Alta",
+  "observaciones": "La mayoría de las afirmaciones coinciden con datos del informe ENISA 2026 (DDoS 51.3%, sector público 31.8%, CWE‑79 top, definiciones de DDoS, FIMI, ClickFix, PaaS, ORBs). Solo la afirmación sobre motivación ideológica al 57.3% no se encuentra en el texto fuente.",
+  "afirmaciones": [],
+  "sugerencias_correccion": []
+ },
+ "almacenamiento_oci": {
+  "bucket": null,
+  "objeto_id": null,
+  "status_upload": "omitido"
+ },
+ "advertencias": [
+  "Resumen: 1 de 11 citas no aparecen literalmente en el documento.",
+  "Guion de locución: el guion tiene 102 palabras (objetivo 110-125).",
+  "Guion de locución: guion acortado por IA de 144 a 102 palabras (gemini-3.5-flash-lite) para caber en 60 s.",
+  "La auditoría contrastó los fragmentos del documento más relacionados con el contenido (22,757 de 254,540 caracteres)."
+ ],
+ "error": null,
+ "orquestacion": {
+  "intentos_redaccion": 1,
+  "scores_por_intento": [
+   0.92
+  ],
+  "umbral_anclaje": 0.75,
+  "max_reintentos": 0,
+  "duracion_segundos": 14.86,
+  "documento_id": "doc-3bf4a63430dd0b05",
+  "chunks_recuperados": 0
+ }
+}

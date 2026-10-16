@@ -5,6 +5,8 @@ import styles from './Header.module.css';
 
 interface HeaderProps {
   currentStep: 1 | 2 | 3;
+  /** Hay un paquete cargado: sin él, los pasos 2 y 3 no se pueden abrir */
+  pasosAbiertos: boolean;
   onSelectStep: (step: 1 | 2 | 3) => void;
   user?: AuthUser | null;
   onOpenAuth?: () => void;
@@ -13,6 +15,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   currentStep,
+  pasosAbiertos,
   onSelectStep,
   user = null,
   onOpenAuth,
@@ -20,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const steps = [
     { num: 1, id: '01', title: 'Configuración e Ingesta' },
-    { num: 2, id: '02', title: 'Visualizar Resultados RAG' },
+    { num: 2, id: '02', title: 'Visualizar Resultados' },
     { num: 3, id: '03', title: 'Métricas & OCI Cloud' },
   ];
 
@@ -52,6 +55,8 @@ export const Header: React.FC<HeaderProps> = ({
           {steps.map((s, index) => {
             const isActive = currentStep === s.num;
             const isPassed = currentStep > s.num;
+            // Para avanzar hay que cargar un documento o la demo en el paso 1
+            const bloqueado = s.num > 1 && !pasosAbiertos;
 
             let buttonClass = styles.stepButton;
             if (isActive) buttonClass += ` ${styles.stepButtonActive}`;
@@ -67,6 +72,8 @@ export const Header: React.FC<HeaderProps> = ({
                   type="button"
                   onClick={() => onSelectStep(s.num as 1 | 2 | 3)}
                   className={buttonClass}
+                  disabled={bloqueado}
+                  title={bloqueado ? 'Carga un documento o la demo en el paso 1 para continuar' : undefined}
                 >
                   <span className={badgeClass}>
                     {isPassed ? <Check size={10} strokeWidth={3.5} /> : s.num}

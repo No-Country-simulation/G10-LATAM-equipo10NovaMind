@@ -292,7 +292,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
             onClick={onNextStation}
             className={styles.nextStationBtn}
           >
-            <span>Siguiente Estación: Flashcard Quest</span>
+            <span>Siguiente Estación: Tarjetas didácticas</span>
             <ArrowRight size={16} />
           </button>
         </div>

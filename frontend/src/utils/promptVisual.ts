@@ -8,7 +8,7 @@
  */
 import type { DirectorScene } from '../types/types';
 
-/** La diapositiva se dibuja en 16:9 (SlideNarrada.module.css). */
+/** La diapositiva se dibuja en 16:9 (video/MicroclaseVideo.tsx, 1280×720). */
 export const PROPORCION_DIAPOSITIVA = '16:9';
 
 const limpio = (texto: string | undefined | null) => (texto ?? '').replace(/\s+/g, ' ').trim();

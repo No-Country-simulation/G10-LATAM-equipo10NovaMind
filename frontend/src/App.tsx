@@ -23,12 +23,25 @@ import type {
   IndustryNiche,
   DetailLevel,
   Achievement,
+  MuestraPregenerada,
   OrigenContenido,
 } from "./types/types";
 import { triggerLevelUpConfetti, triggerSmallConfetti } from "./utils/confetti";
 import { solicitarAdaptacion } from "./services/api";
+import { cargarMuestra, indiceMuestras } from "./services/muestras";
 import { estacionesResueltas } from "./utils/paqueteIncremental";
 import styles from "./App.module.css";
+
+/** Etapas de la carga de una muestra: las de una generación, dichas como lo que son. */
+const ETAPAS_MUESTRA = [
+  "Abriendo la muestra pregenerada (sin gastar cuota)…",
+  "Muestra · Estación 1: Resumen",
+  "Muestra · Estación 2: Tarjetas didácticas",
+  "Muestra · Estación 3: Guía paso a paso",
+  "Muestra · Estación 4: Contenido AudioVisual",
+  "Muestra · Estación 5: Cuestionario",
+];
+const PAUSA_ETAPA_MUESTRA_MS = 550;
 
 export default function App() {
   // Autenticación
@@ -76,6 +89,20 @@ export default function App() {
   // Identidad del recorrido montado en el Paso 2. Se fija al abrir un paquete o al empezar a
   // recibir recursos, y no cambia cuando llega el paquete final: así la estación en uso no se reinicia.
   const [questKey, setQuestKey] = useState<string>('demo');
+  // Los pasos 2 y 3 solo se abren con un paquete real: generado (documento o demo) o restaurado.
+  // Antes de eso, el paquete de ejemplo no se muestra como si fuera un resultado (15/10).
+  const [paqueteListo, setPaqueteListo] = useState(false);
+  // Documentos de ejemplo con su paquete y su video ya generados (no gastan cuota al abrirlos)
+  const [muestras, setMuestras] = useState<Record<string, MuestraPregenerada>>({});
+  useEffect(() => {
+    let vivo = true;
+    void indiceMuestras().then((indice) => {
+      if (vivo) setMuestras(indice);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
   // Sin Supabase no hay sesión que comprobar: se arranca listo y en modo local.
   const [ready, setReady] = useState(!supabase);
   const [quizState, setQuizState] = useState<QuizState>(EMPTY_QUIZ);
@@ -90,10 +117,16 @@ export default function App() {
     latestState.current = { currentStep, activeStationIndex, completedStations, cognitiveShields, xp, achievements, quizState };
   });
 
+  // Al cambiar de paso o de estación se empieza por arriba: el botón que lleva ahí suele estar al
+  // final de la página y, sin esto, el recorrido se abría a media altura (en el diagrama).
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [currentStep, activeStationIndex]);
+
   const restorePackage = async (row: PackageRow, version: number) => {
     const { progress, state } = await readState(row.id);
     if (version !== accountVersion.current) return;
-    setCurrentPackage(row.payload); setPackageId(row.id); setQuestKey(row.id);
+    setCurrentPackage(row.payload); setPackageId(row.id); setQuestKey(row.id); setPaqueteListo(true);
     setCurrentStep(progress?.current_step || 2);
     setActiveStationIndex(progress?.active_station_index || 0);
     setCompletedStations(progress?.completed_stations || {});
@@ -116,7 +149,7 @@ export default function App() {
         if (nextOwner === currentOwner) return;
         currentOwner = nextOwner;
         const version = ++accountVersion.current;
-        setReady(false); setUser(null); setHistory([]); setPackageId(null);
+        setReady(false); setUser(null); setHistory([]); setPackageId(null); setPaqueteListo(false);
         setCurrentPackage(SCENARIOS[0].data); setCurrentStep(1); setActiveStationIndex(0);
         setCompletedStations({}); setCognitiveShields(3); setXp(0);
         setQuizState(EMPTY_QUIZ);
@@ -242,6 +275,48 @@ export default function App() {
     }
   };
 
+  /**
+   * Abre la muestra pregenerada de un documento de ejemplo: no llama a ningún modelo. La carga
+   * recorre las mismas etapas que una generación, pero dice que es una muestra (regla 1).
+   */
+  const handleAbrirMuestra = async (documento: string) => {
+    const muestra = muestras[documento];
+    if (!muestra || isProcessing) return;
+    const version = accountVersion.current;
+    setIsProcessing(true);
+    setIsGenerating(true);
+    try {
+      const paquete = await cargarMuestra(muestra);
+      for (const etapa of ETAPAS_MUESTRA) {
+        if (version !== accountVersion.current) return;
+        setProcessingStage(etapa);
+        setGeneratingMessage(etapa);
+        await new Promise((r) => setTimeout(r, PAUSA_ETAPA_MUESTRA_MS));
+      }
+      if (version !== accountVersion.current) return;
+      setCompletedStations({});
+      setActiveStationIndex(0);
+      setQuizState(EMPTY_QUIZ);
+      setCurrentPackage(paquete);
+      setPackageId(null);
+      setQuestKey(`muestra-${documento}-${Date.now()}`);
+      setUnlockedStations([0, 1, 2, 3, 4]);
+      setPaqueteListo(true);
+      setCurrentStep(2);
+      triggerSmallConfetti();
+    } catch (err: unknown) {
+      if (version !== accountVersion.current) return;
+      alert(`⚠️ ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      if (version === accountVersion.current) {
+        setIsGenerating(false);
+        setIsProcessing(false);
+        setProcessingStage("");
+        setGeneratingMessage("");
+      }
+    }
+  };
+
   const handleStartPipeline = async (
     title: string,
     content: string,
@@ -257,7 +332,7 @@ export default function App() {
     const version = accountVersion.current;
     const startingOwner = user?.id || '00000000-0000-0000-0000-000000000000';
     const priorState = { ...latestState.current };
-    const prior = { pkg: currentPackage, packageId, questKey };
+    const prior = { pkg: currentPackage, packageId, questKey, paqueteListo };
     let recorridoAbierto = false; // ¿ya se mostró algún recurso parcial?
     setReady(false);
     setIsProcessing(true);
@@ -297,6 +372,7 @@ export default function App() {
             recorridoAbierto = true;
             setPackageId(null);
             setQuestKey(`gen-${Date.now()}`);
+            setPaqueteListo(true);
             setCurrentStep(2);
           }
         }
@@ -319,6 +395,7 @@ export default function App() {
       if (!recorridoAbierto) setQuestKey(saved.id);
       setCurrentPackage(adaptedPkg);
       setUnlockedStations([0, 1, 2, 3, 4]);
+      setPaqueteListo(true);
       setCurrentStep(2);
       triggerSmallConfetti();
     } catch (err: unknown) {
@@ -328,6 +405,7 @@ export default function App() {
       if (recorridoAbierto) {
         // Se mostraron recursos parciales de una generación que no terminó: volver a lo anterior
         setCurrentPackage(prior.pkg); setPackageId(prior.packageId); setQuestKey(prior.questKey);
+        setPaqueteListo(prior.paqueteListo);
       }
       console.error("Error en el pipeline de NuevaMente:", err);
       const errMsg = err instanceof Error ? err.message : String(err);
@@ -420,7 +498,10 @@ export default function App() {
       {/* 1. Global Stepper Workflow Header */}
       <Header
         currentStep={currentStep}
-        onSelectStep={(step) => setCurrentStep(step)}
+        pasosAbiertos={paqueteListo}
+        onSelectStep={(step) => {
+          if (step === 1 || paqueteListo) setCurrentStep(step);
+        }}
         user={user}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => void logout()}
@@ -466,6 +547,10 @@ export default function App() {
           <Step1Ingestion
             key={user?.id || 'guest'}
             onStartPipeline={handleStartPipeline}
+            muestras={muestras}
+            onAbrirMuestra={(documento) => void handleAbrirMuestra(documento)}
+            sesionIniciada={user !== null && user.id !== '00000000-0000-0000-0000-000000000000'}
+            onIniciarSesion={() => setIsAuthOpen(true)}
             isProcessing={isProcessing}
             processingStage={processingStage}
           />

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Zap,
   BookOpen,
-  Terminal,
+  Target,
   Clapperboard,
   Award,
   Lock,
@@ -108,40 +108,40 @@ export const Step2KnowledgeQuest = ({
   const stationsMeta = [
     {
       index: 0,
-      title: 'Resumen Ninja',
-      subtitle: 'Intuición Inicial (TL;DR)',
+      title: 'Resumen',
+      subtitle: '',
       icon: Zap,
       xp: '+50 XP',
       isLocked: false,
     },
     {
       index: 1,
-      title: 'Flashcard Quest',
-      subtitle: 'Active Recall 3D',
+      title: 'Tarjetas didácticas',
+      subtitle: '',
       icon: BookOpen,
       xp: '+50 XP',
       isLocked: false,
     },
     {
       index: 2,
-      title: 'Tutorial Quest',
-      subtitle: 'Laboratorio Práctico',
-      icon: Terminal,
+      title: 'Guía paso a paso',
+      subtitle: '',
+      icon: Target,
       xp: '+75 XP',
       isLocked: false,
     },
     {
       index: 3,
-      title: 'Director Cut',
-      subtitle: 'Guion Didáctico / Storyboard',
+      title: 'Contenido Audiovisual',
+      subtitle: '',
       icon: Clapperboard,
       xp: '+50 XP',
       isLocked: false,
     },
     {
       index: 4,
-      title: 'The Final Trial',
-      subtitle: 'Quiz Capstone RAG',
+      title: 'Cuestionario',
+      subtitle: '',
       icon: Award,
       xp: '+100 XP',
       isLocked: !isFinalTrialUnlocked,
@@ -151,7 +151,7 @@ export const Step2KnowledgeQuest = ({
   const handleSelectStation = (index: number) => {
     if (index === 4 && !isFinalTrialUnlocked && !isGenerating) {
       setLockedWarning(
-        `Protocolo de Evaluación: Completa al menos 2 estaciones previas (${completedStationsCount}/2 completadas) para desbloquear The Final Trial.`
+        `Protocolo de Evaluación: Completa al menos 2 estaciones previas (${completedStationsCount}/2 completadas) para desbloquear el Cuestionario.`
       );
       return;
     }
@@ -370,6 +370,8 @@ export const Step2KnowledgeQuest = ({
                 steps={
                   listaDe(contentPackage.contenido_adaptado.tutorial, 'pasos', 'steps')
                 }
+                tituloDocumento={contenido.titulo}
+                objetivos={contenido.objetivos_aprendizaje}
                 isCompleted={!!completedStations[2]}
                 onCompleteStation={(xp) => onCompleteStation(2, xp)}
                 onOpenBuilderBadge={onOpenBuilderBadge}
@@ -386,6 +388,7 @@ export const Step2KnowledgeQuest = ({
                 }
                 degradaciones={contentPackage.contenido_adaptado.video_job_spec?.degradaciones}
                 videoJobSpec={contentPackage.contenido_adaptado.video_job_spec}
+                muestra={contentPackage.muestra}
                 scenes={
                   listaDe(contentPackage.contenido_adaptado.director_cut, 'escenas', 'scenes')
                 }

@@ -156,9 +156,15 @@ filter: drop-shadow(0 0 15px rgba(0, 220, 180, 0.6))
   transition: all var(--transition-fast);
 }
 
-.stepButton:hover {
+.stepButton:hover:not(:disabled) {
   color: var(--color-text-secondary);
   background: var(--color-card-hover);
+}
+
+/* Sin paquete cargado: los pasos 2 y 3 se ven, pero no se pueden abrir */
+.stepButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 /* Active Step */
