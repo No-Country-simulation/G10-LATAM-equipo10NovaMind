@@ -2,6 +2,27 @@
 
 Todas las modificaciones notables del proyecto NuevaMente se registran en este documento.
 
+## [2.8.0] - 2026-10-16
+
+Trabajo del worktree `../NovaMind-remotion` (rama `claude/remotion-prueba`), sin commit todavía.
+
+### Generación
+- **Cuestionario al final (tarea C):** sale de B1 y corre después de A, B1 y B2 con el temario que enseñaron. Antes se generaba en paralelo y podía preguntar por temas que ninguna estación trataba (en Kafka, dos de cuatro preguntas). Una llamada más a Gemini por paquete. Migración `202610160001_tarea_cuestionario.sql`.
+- **Pasos de la guía según el documento:** `pasos_guia()` pide de 3 a 7 pasos según el largo y las secciones; antes el modelo daba siempre 3 a 5. La instrucción del tutorial habla de guía de aprendizaje: un comando solo si el documento es técnico.
+
+### Interfaz
+- **Nombres en español llano:** Resumen, Tarjetas didácticas, Guía paso a paso, Contenido AudioVisual y Cuestionario (antes Resumen Ninja, Flashcard Quest, Tutorial Quest, Director Cut y The Final Trial). Sin subtítulos técnicos en las tarjetas del recorrido. La pestaña 2 se llama «Visualizar Resultados».
+- **Estación 3 reestructurada:** «¿Cuál es la meta de leer "‹título›"?», objetivos de aprendizaje del paquete, «Qué vas a hacer», terminal solo para comandos reales (`utils/pasoGuia.ts`) y «¿Cómo sé que lo logré?».
+- **Estación 4:** video con Remotion Player debajo del estudio, botón destacado «Generar video narrado» / «Ver la microclase» (que lo reproduce), pantalla completa al reproducir, subtítulos que se ocultan con el botón CC o la tecla C, y audio corregido desde la escena 2 (las voces van en `Sequence` de primer nivel). Se quitan los puntos clave de la pizarra, la barra de palabras y tiempo y la ficha técnica de la escena.
+- **Paso 1:** hero «Convierte documentos en rutas de aprendizaje» con animación, «Aquí empieza tu ruta de aprendizaje», guía de tres pasos, desplegable legible (`color-scheme: dark`) y «o carga tu propio documento». Sin sesión solo se usan documentos de la biblioteca con ajustes fijos y se abre su muestra; con sesión se sube un archivo y se elige el perfil («Antes de empezar 👀 selecciona tu perfil», Personalizado por defecto, «Sorpréndeme» con animación).
+- **Biblioteca:** sale «El caballero de la armadura oxidada» (derechos de autor); entran Don Quijote I y II como documentos separados, con el resumen de Wikipedia (CC BY-SA 4.0, atribución en la cabecera) y ajustes fijos Principiante · Educación y Academia · Didáctico.
+- **Muestras pregeneradas** en `frontend/public/ejemplos/` (6 documentos): la Guía OCI y el Quijote con voz Diego de ElevenLabs; Kafka, ENISA y Snowflake con Kore de Gemini. Abrirlas no gasta cuota.
+
+### Correcciones de la revisión del 16/10
+- **Guía paso a paso:** una frase con negritas de Markdown, «->» o «a=b» se mostraba como comando en el terminal; ahora una frase capitalizada de 6 palabras o más es texto (`utils/pasoGuia.ts`, con test). Comprobado con las 6 muestras: solo la Guía OCI y Snowflake llevan terminal.
+- **Nombres viejos que quedaban:** las etapas al abrir una muestra (`App.tsx`) y los nombres de recurso de los avisos y del progreso (`NOMBRES_RECURSO` en el backend, `NOMBRE_RECURSO` en el frontend) dicen «Tarjetas didácticas» y «Guía paso a paso».
+- **Demo sin conexión** (`api.ts`): decía «Generando Estación…» al cargar un ejemplo fijo; ahora dice «Demo sin conexión · …» y que no hay auditoría ni guardado.
+
 ## [2.7.0] - 2026-10-14
 
 ### Procedencia honesta: visor de fuente, nicho acotado y Estación 3 sin datos inventados

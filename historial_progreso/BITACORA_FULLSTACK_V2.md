@@ -1360,3 +1360,413 @@ Decisiones del usuario:
 **Verificación:** 18 tests nuevos en `test_espejo_oracle.py`, 350 en total. Incluyen una guarda que compara las columnas de las migraciones de Supabase, la especificación (`tablas.py`) y el DDL de Oracle. **Sin probar contra una ADB real todavía** (el `MERGE` con CLOB y el wallet): queda para cuando exista la base.
 
 **Pendiente (usuario):** crear la ADB Always Free y el usuario `ESPEJO`, ejecutar el DDL, descargar el wallet, poner la clave secreta de Supabase en el `.env` de VM1 y activar los timers.
+
+## 15 oct 2026 · Prueba de Remotion Player para la Estación 04 (rama `claude/remotion-prueba`)
+
+**Pedido:** ver cómo funciona Remotion y qué mejora en el video narrado. La descarga del video queda aparte por decisión del usuario.
+
+**Dónde:** worktree `../NovaMind-remotion`, rama `claude/remotion-prueba`, creada desde `feature/espejo-oracle-audiovisual` (`5e38113`). La Estación 04 no se tocó: la prueba es una página aparte, `frontend/prueba-remotion.html`.
+
+**Qué se hizo:**
+- `remotion` y `@remotion/player` 4.0.530, fijados (versión del 29/09). La licencia es gratuita para personas, equipos de hasta 3 personas y organizaciones sin ánimo de lucro.
+- `src/pruebaRemotion/linea.ts`: el guion (`VideoJobSpec`) pasa a fotogramas a 30 fps. Con audio, la duración es la medida, a la `velocidad_reproduccion` del backend. Sin audio, se usa la estimación de `microclassTiming`. La palabra activa usa `tiempos_palabras` (ElevenLabs) cuando existen y, si no, las mismas fronteras que la Estación 04.
+- `MicroclaseVideo.tsx`: una composición con `Series` (una secuencia por escena) y el mismo contenido que `SlideNarrada`: título, puntos, cita solo si está verificada, foto con su crédito CC dentro del video y subtítulos. Las animaciones (fundido, puntos escalonados, zoom lento de la foto) se pueden desactivar para comparar.
+- `PruebaRemotion.tsx`: un guion de ejemplo escrito a mano (sin citas ni fotos, para no presentar nada como del documento). Carga un `VideoJobSpec` o la respuesta de `/narracion/generar`; la de un invitado trae los audios en base64. También admite audios por escena cargados a mano.
+- `vite.config.ts`: la build incluye la segunda página, para que la app principal no cargue Remotion.
+
+**Hallazgos:**
+- La voz del navegador no encaja: Remotion necesita cada duración de antemano y `speechSynthesis` no la da. Adoptarlo significa tener dos motores, o dejar la voz del navegador fuera del video.
+- El paquete de la página de prueba pesa 325 kB (102 kB con gzip), React incluido.
+
+**Verificación:** 5 tests nuevos en `tests/pruebaRemotion.test.ts`, 38 en total; `tsc` sin errores; `eslint` limpio en los archivos nuevos; `npm run build` correcto. Servidor de la prueba: `npx vite --port 5175` y abrir `/prueba-remotion.html`. **Falta la revisión visual en el navegador por parte del usuario.**
+
+**Ajuste (mismo día, pedido del usuario):**
+- **Silencios técnicos** configurables en la página: 0,3 s antes de la voz y 0,5 s después, solo en las escenas con audio. La escena se alarga y su audio entra unos fotogramas más tarde (`Sequence from`); el WAV no se toca. Si con ellos el video pasa de `max_duration`, la página lo avisa. El backend todavía no los descuenta al calcular la velocidad: habría que hacerlo si se adopta.
+- **Sin subtítulos estimados:** solo se muestran con los tiempos reales por palabra de ElevenLabs. Con Gemini o sin voz no hay subtítulos.
+- Verificación: 39 tests, `tsc`, `eslint` y build correctos.
+
+## 15 oct 2026 · Estación 04 con Remotion: integración (rama `claude/remotion-prueba`)
+
+**Decisiones del usuario:** la prueba quedó aprobada. Camino A: el video siempre usa la voz del servidor (ElevenLabs y, si no, Gemini), y la voz del navegador queda solo para el teleprompter. Primera versión con portada, cierre, transiciones, diagrama paso a paso, código animado y logo.
+
+**Backend:**
+- `schemas.py`: `SILENCIO_INICIO_S = 0.3`, `SILENCIO_FIN_S = 0.5`, `silencios_tecnicos(n)` y `duracion_disponible_voz(max, n)`. Los silencios **cuentan dentro de los 60 s**: con 3 escenas, la voz dispone de 57,6 s.
+- `servicio_narracion.py`: la velocidad de reproducción, el umbral del ritmo ágil y el tope previo del guion (`exceso_guion_narracion`, con el nuevo parámetro `silencios_s`) usan esa duración disponible. Los avisos explican los silencios.
+- **Decisión técnica:** la portada (2,5 s) y el cierre (4 s) quedan **fuera** del límite, como cortinillas. Si contaran, los guiones normales (110–125 palabras) quedarían al borde del máximo y forzarían regenerar la voz pagando de nuevo.
+- `VERSION_NARRACION` no cambia, para no gastar cuota otra vez. Las narraciones ya guardadas conservan la velocidad antigua, y con los silencios su video puede pasar hasta 2,4 s de los 60 s.
+
+**Frontend:**
+- `Station4DirectorCut/video/lineaVideo.ts`: línea de tiempo pura (portada, escenas, cierre y transiciones de 9 fotogramas, que es lo mismo que el silencio inicial). Incluye la escena en cada fotograma, el salto a una escena, los subtítulos solo con tiempos reales (ElevenLabs) y el avance de las animaciones.
+- `video/MicroclaseVideo.tsx`: la composición.
+  - **Portada:** «Microclase» y el índice de escenas. No hay título del documento en la estación 4, así que no se inventa ninguno.
+  - **Escenas:** foto con zoom lento y crédito CC; puntos que entran escalonados; diagrama de bloques que aparece bloque a bloque con su flecha; código (`codigo_o_estructura`) que se escribe solo; cita solo si está verificada.
+  - **Cierre:** «Lo que aprendiste», con el título y el primer punto de cada escena tal como vienen en el guion.
+  - **Logo:** marca de agua (`IsotipoMonocromo.svg`).
+  - **Sin voz:** el guion completo de la escena, fijo y sin resaltar palabras.
+  - El diagrama y el código siguen un ritmo visual, no la voz palabra a palabra.
+- `video/ModoCineVideo.tsx`: Modo Cine con `<Player>`.
+  - Teclas: Espacio para pausar o reanudar, flechas para cambiar de escena y Esc para cerrar.
+  - El crédito de la foto, con enlaces, va debajo del Player.
+  - Cada cambio de escena marca la escena como vista (`marcarVista`, con un ref), así que la medalla y la experiencia siguen funcionando.
+  - Se carga con `lazy`: Remotion (unos 104 kB con gzip) solo se descarga al abrir el video.
+- `Station4DirectorCut.tsx`:
+  - Se quitaron el motor por fotograma, el `<audio>`, la voz del navegador en el video, el selector de acento del botón de video y la fase `navegador`.
+  - La barra de presupuesto muestra el total del video, con los silencios.
+  - Se borró `SlideNarrada.{tsx,module.css}`, que ya no usaba nadie. `SelectorAcento` se queda en el teleprompter.
+- Se retiraron la página de prueba (`prueba-remotion.html`, `src/pruebaRemotion/`) y su entrada en `vite.config.ts`. Dependencias fijadas: `remotion`, `@remotion/player` y `@remotion/transitions` 4.0.530.
+
+**Verificación:** backend con 351 tests (2 actualizados a la nueva disponibilidad y 1 nuevo). Frontend con 40 tests (7 nuevos en `tests/lineaVideo.test.ts`, incluido uno que compara los silencios con `schemas.py`), `tsc` sin errores, `eslint` limpio en los archivos tocados y `npm run build` correcto. **Falta la prueba visual del usuario en la app** (`http://localhost:5175`, con el backend de prueba en el 8003 solo con Gemini). **Falta también el build para OCI**: se hará cuando se apruebe y Gemini haga el commit.
+
+## 15 oct 2026 · Estación 04 en una sola pantalla y duración real del audio (rama `claude/remotion-prueba`)
+
+**Problema que vio el usuario:** el video duraba 1 minuto y el audio, 30 s. La línea de tiempo usa `duracion_real_s`, y el backend la sacaba de la **cabecera** del WAV de Gemini (`getnframes()`). Que el video durara exactamente el doble apunta a una cabecera que declara más datos de los que trae (habitual en un WAV escrito en flujo). **Hipótesis no confirmada**: el registro no guarda las duraciones y no se gastó cuota para comprobarlo. La corrección vale sea cual sea la causa:
+- `servicio_gemini.py`: la duración sale de las muestras que trae el archivo (`readframes`), no de la cabecera. Test nuevo con una cabecera que declara el doble.
+- Frontend `video/medirAudio.ts`: el navegador mide cada audio al cargarlo (`loadedmetadata`, con un plazo de 5 s) y `lineaVideo` usa esa duración antes que la del servidor. La barra de presupuesto también usa la suma medida.
+
+**Una sola pantalla (decisiones del usuario):** la estación es el video. Se aprueba al **verlo hasta el cierre**, y saltar con la barra hasta el final también cuenta. El estudio por escena queda **plegado debajo**.
+- `video/VideoMicroclase.tsx` sustituye a `ModoCineVideo` y va dentro de la página, sin portal. Arranca solo al generarse; con el foco en él, las flechas cambian de escena. Al terminar (`ended`) avisa del cierre aunque el Player no emita el último fotograma.
+- `Station4DirectorCut.tsx`:
+  - Cuando no hay video, se ve un recuadro 16:9 con «Generar video», o el progreso mientras se genera.
+  - Debajo, `<details>` «Guion y herramientas del docente», con las pestañas, el teleprompter, la pizarra y las citas.
+  - Se quitaron las escenas vistas (`viewedScenes`, `marcarVista`), el Modo Cine y los atajos globales con flechas.
+  - La cabecera muestra «Microclase: Vista / Pendiente».
+
+**Cuota de voz al día, según lo medido:**
+- Gemini `3.8-flash-lite-tts`: 10 peticiones al día, una por escena; unos 3 videos de 3 escenas.
+- `3.8-flash-tts`: sin medir.
+- ElevenLabs: unos 375 créditos por video, sobre 10 000 al mes; unos 26 al mes. Con el tope de 500 de la clave, 1 video.
+- Las pruebas del 15/10 ya gastaron 6 peticiones de `flash-lite-tts`.
+
+**Otros de esta sesión:**
+- `docs/flujo-nuevamente.svg`: animación del proceso para el README (SVG con CSS, sin scripts; respeta `prefers-reduced-motion`). No menciona Remotion porque `main` aún no lo tiene.
+- Revisión del README que reescribió Gemini en su worktree: numera mal las estaciones y omite el tutorial; atribuye a Groq `llama-3.3-70b-versatile` como respaldo de la generación, aunque no existe en el código y Groq solo audita; dice «cero alucinaciones», que contradice la regla 1; pide Node 20+ cuando los tests necesitan Node ≥ 23.6. Se avisó al usuario y no se tocó su carpeta.
+
+**Verificación:** backend con 352 tests; frontend con 41 tests, `tsc`, `eslint` en los archivos tocados y `npm run build` correctos. **Pendiente: la prueba visual del usuario** (`http://localhost:5175`, backend 8003 solo con Gemini).
+
+## 15 oct 2026 · Pasos bloqueados sin paquete y muestras pregeneradas (rama `claude/remotion-prueba`)
+
+**Pasos 2 y 3 bloqueados (pedido del usuario):** sin un paquete cargado, las pestañas «Visualizar Resultados RAG» y «Métricas & OCI Cloud» se ven atenuadas y no se abren. Antes mostraban el paquete de ejemplo escrito a mano como si fuera un resultado.
+- `App.tsx`: estado `paqueteListo`. Se activa al abrirse el recorrido de una generación, al terminarla, al restaurar un paquete y al abrir una muestra. Se desactiva al cambiar de cuenta y vuelve al valor anterior si la generación falla.
+- `Header.tsx` recibe la prop `pasosAbiertos`: botones `disabled`, con un `title` que explica cómo avanzar.
+
+**Muestras pregeneradas (para probar sin gastar cuota).** Decisiones del usuario: voz Isabela (ElevenLabs), y al elegir un ejemplo se abre la muestra con un botón aparte para «Generar con mis ajustes».
+- Archivos estáticos en `frontend/public/ejemplos/<documento>/` (`paquete.json`, `narracion.json` y `escena-N.mp3`), con un índice en `indice.json`. Los sirve la VM2 sin backend.
+- `services/muestras.ts` lee el índice y la muestra. Si no hay índice, la app funciona como antes. Nuevo tipo `MuestraPregenerada` (solo frontend) en `AdaptedContentPackage.muestra`.
+- `App.tsx` → `handleAbrirMuestra`: carga simulada de unos 3 s con etapas que dicen «Muestra · …» (no «Generando»). El paso 1 explica que no se llama a ningún modelo.
+- Paso 1:
+  - La demo abre la muestra de la guía Swap directamente.
+  - Con un ejemplo que tiene muestra aparecen «Ver recorrido de muestra (sin gastar cuota)» y «Generar con mis ajustes (gasta cuota)».
+- Paso 2: etiqueta «Muestra pregenerada · fecha» (procedencia, regla 1).
+- Estación 4: con muestra, el video sale de los audios estáticos (sin `/narracion/generar`) y no arranca solo.
+- `deploy/pregenerar_muestras.py` (no versionado, gasta cuota): hace las mismas peticiones que la app como invitado (`/adaptar/stream` y `/narracion/generar`) para los 4 documentos que existen en `data/documents`. «El caballero de la armadura oxidada» está en el catálogo pero no en `data/`. Lo que ya existe no se vuelve a pedir.
+- **Pendiente:** subir el tope de créditos de la clave de ElevenLabs (unos 1500 para 4 videos; hoy 500) y ejecutar el script con un backend que tenga ElevenLabs.
+
+**Verificación:** `tsc`, `eslint` en todos los archivos tocados y 41 tests del frontend; el script compila. **Sin probar en el navegador:** la captura con Edge sin interfaz se quedó colgada.
+
+## 15 oct 2026 · Modo invitado solo con la biblioteca y el Quijote en lugar de «La armadura oxidada» (rama `claude/remotion-prueba`)
+
+**Pedido del usuario:** la demo y «Generar Adaptación Pedagógica RAG» llevan a la pestaña 2. Sin sesión (o como invitado), solo se usan los documentos de la biblioteca, con sus ajustes fijos. Subir un documento y elegir los ajustes exige iniciar sesión. Se quita «El caballero de la armadura oxidada» por derechos de autor y se agregan las dos partes del Quijote como documentos aparte.
+
+- **Quijote:** el texto completo (unos 1,1 millones de caracteres por parte; el gist que propuso el usuario es la Primera Parte entera) no cabe en `MAX_CARACTERES_DOCUMENTO` (400 000). Por eso se usan los resúmenes del argumento de Wikipedia en español: las secciones «Primera parte» y «Segunda parte» del artículo «Don Quijote de la Mancha», revisión 175822854, con licencia CC BY-SA 4.0. Quedan en `data/documents/quijote_{primera,segunda}_parte_resumen.md` (unos 15 KB cada uno), con una cabecera de atribución (fuente, revisión, autores, licencia y cambios hechos) y sin notas al pie. Ajustes: Principiante · Educación y Academia · Didáctico.
+- **Catálogo:** se actualiza en `main.py` (`CATALOGO_DOCUMENTOS`), en `mockScenarios.ts` y en `deploy/pregenerar_muestras.py`. `RealDocumentPreset` gana el campo `detalle`.
+- **`Step1Ingestion`:** nuevas props `sesionIniciada` y `onIniciarSesion`. El invitado (sin sesión o con el id de invitado) tiene:
+  - la carga de archivos bloqueada, con un botón «Iniciar sesión», y el título en solo lectura;
+  - los ajustes del documento como etiquetas fijas, sin las opciones Sorpréndeme ni Personalizado;
+  - un botón «Generar» que abre la muestra pregenerada, o queda deshabilitado con su explicación si el documento aún no tiene muestra.
+- **Demo:** con muestra, la abre directamente. Sin muestra, si hay sesión, carga la guía y genera con sus ajustes fijos (gasta cuota). Si no hay sesión, aparece «Demo en preparación».
+- **Pendiente:**
+  - Generar las muestras de los 6 documentos (unos 2250 créditos de ElevenLabs).
+  - El backend sigue aceptando `guest-demo-token` en `/adaptar`. El bloqueo es solo de la interfaz y no impide gastar cuota llamando a la API directamente.
+  - Los nichos de Kafka no coinciden: «Fintech» en el backend y «Finanzas y Contabilidad» en el frontend.
+  - Los dos archivos nuevos de `data/documents` están en `.gitignore`: hay que añadirlos con `git add -f`.
+
+**Verificación:** `tsc` y ESLint pasan sin errores en los archivos tocados; pasan los 41 tests del frontend y los 352 del backend; el script compila. Falta probarlo en el navegador.
+
+## 15 oct 2026 · Muestras pregeneradas de los 6 documentos (rama `claude/remotion-prueba`)
+
+- **Guía Swap, Kafka, ENISA y Snowflake:** paquete y video de 3 escenas con la voz Kore de Gemini TTS. El backend del puerto 8003 no tenía ElevenLabs. El primer video usó `3.8-flash-lite-tts` y los otros 3 `3.8-flash-tts`, porque el principal agotó su cuota diaria. Son audios WAV de unos 2,5 MB por muestra.
+- **Quijote I y II:** primero se generó el paquete con `--sin-video`; luego, el video de 2 escenas con Isabela en ElevenLabs, en MP3 de unos 70 KB por escena y con los tiempos por palabra para los subtítulos.
+- **El 402 de ElevenLabs no era falta de créditos:** la API devolvía `paid_plan_required` («Free users cannot use library voices via the API»). Isabela es una voz de la Voice Library, y en el plan gratuito solo funcionan las 21 voces prediseñadas. El usuario contrató el plan Starter (38 059 caracteres al mes) y desde entonces funciona.
+- **Pendiente (el usuario decidió dejarlo por ahora):** `servicio_voz.py` muestra el 402 como «Se agotaron los créditos». Debería distinguir el código `paid_plan_required`.
+- **Todos los paquetes salen con `exito_con_advertencias`**, sobre todo por citas que no coinciden literalmente con el documento. La app las muestra tal cual (regla 1).
+- **Pendiente:** pasar los WAV a MP3 en la máquina local (el total es de 11 MB). Hay que añadir `frontend/public/ejemplos/` al commit.
+
+## 15 oct 2026 · Subtítulos que se pueden ocultar y voz Athena para el Quijote
+
+- **Subtítulos (pedido del usuario: tapaban la cita y la diapositiva):**
+  - `MicroclaseVideo` recibe la prop `subtitulos`; con `false` no dibuja ni los subtítulos ni el guion fijo.
+  - `VideoMicroclase` añade debajo del video un botón «CC · Subtítulos activados/ocultos» (`aria-pressed`), que también responde a la tecla C con el foco en el video.
+  - La preferencia se guarda en `localStorage` (`nuevamente.video.subtitulos`), dentro de try/catch, y por defecto los subtítulos están activados.
+- **Voz:** al usuario no le gustó Isabela. Los dos Quijote se regeneraron con Athena (ElevenLabs `lU5yLpewxvOqG75Vc6Jr`, «Epic, Deep, & Resonant», español latinoamericano), que es una voz de la biblioteca y funciona con el plan Starter. Se generó con `ELEVENLABS_VOICE_ID` y `ELEVENLABS_VOICE_NAME` pasados solo a ese proceso: el `.env` sigue con Isabela hasta que el usuario decida.
+
+**Verificación:** `tsc` y ESLint pasan sin errores en `video/`; pasan los 41 tests del frontend.
+
+## 15 oct 2026 · El video quedaba mudo desde la escena 2 (Remotion + TransitionSeries)
+
+**Síntoma (lo informó el usuario):** la escena 1 sonaba, pero desde la escena 2 no se oía nada; los subtítulos seguían avanzando.
+
+**Diagnóstico medido, no supuesto:** se lanzó Edge sin interfaz con depuración remota y se controló con un script de Node que habla CDP con el `WebSocket` nativo, sin dependencias nuevas. El script vive en el scratchpad de la sesión, fuera del repositorio. Elige el documento como invitado, abre la muestra, entra en la Estación 4, pulsa «Play video» y registra cada `play`, `pause`, `emptied` y `ended` de los elementos de audio. Resultado:
+- El Player usa 5 etiquetas de audio compartidas (`numberOfSharedAudioTags`, 5 por defecto). En la escena 1, una de ellas recibía `escena-1.mp3` y sonaba entera.
+- En la escena 2 la etiqueta se reproducía, pero se quedaba con el MP3 silencioso de relleno: nunca recibía `escena-2.mp3`, y aun así avanzaba hasta 14,70 s, la duración de esa voz.
+- La causa: el `<Audio>` estaba dentro de `TransitionSeries.Sequence`. La transición vuelve a montar la escena, y la nueva instancia pierde su `src` en la etiqueta compartida.
+
+**Corrección (`MicroclaseVideo.tsx`):**
+- Las voces salen de `TransitionSeries` y pasan a `Sequence` de primer nivel en fotogramas absolutos: `from = desde + inicioVoz` y duración `frames - inicioVoz`. La escena ya no contiene audio.
+- `premountFor` de 30 fotogramas: la voz se monta 1 s antes de sonar. Sin eso, la escena 2 empezaba en 0,67 s porque el audio tardaba en cargar. `premountFor` exige el layout por defecto, así que esa `Sequence` queda como una capa vacía.
+
+**Verificación en Edge:** Quijote I (2 escenas, MP3, Athena) y Kafka (3 escenas, WAV, Gemini) suenan completas, cada una desde t=0 hasta su final (16,72 y 14,54 s; 17,00, 15,44 y 14,36 s). `tsc` y ESLint pasan sin errores, pasan los 41 tests y el build funciona.
+
+**Voz Lia (`mI5bQZCXgtkg41Whq2sd`, «Warm, Deep, & Mystical», latinoamericana):** el usuario pidió solo la escena 1 del primer libro para compararla. Está en `deploy/voces_prueba/quijote1-escena1-Lia.mp3`, junto a la de Athena. Athena sigue siendo la voz de la muestra (el usuario pidió no borrarla).
+
+## 15 oct 2026 · Voz de Diego para los dos Quijote
+
+- **Voces probadas** (todas de la Voice Library de ElevenLabs, que funcionan con el plan Starter): Athena, Lia, Sofía (Argentina), Daniela, Rosa, Cristian Cornejo (Chile) y Diego. De cada una se generó solo la escena 1 del primer libro, y las pruebas quedan en `deploy/voces_prueba/`.
+- **Elegida por el usuario:** Diego («Neutral & Conversacional», ElevenLabs `hLWSpwRIXvafYWP2GPET`), para el Quijote I y II. Se regeneraron las dos narraciones: 14,6 + 12,9 s y 17,5 + 14,0 s, sin avisos. Las versiones con Athena se guardaron en `deploy/voces_prueba/athena/`.
+- La voz se pasó solo al backend del puerto 8004 (con `ELEVENLABS_VOICE_ID` y `ELEVENLABS_VOICE_NAME`). El `.env` sigue con Isabela como voz por defecto de la app.
+- **Saludo para el equipo**, con la voz de Diego: `deploy/voces_prueba/saludo-equipo-Diego.mp3`.
+
+## 15 oct 2026 · La demo (guía Swap) se oía en inglés
+
+- **Síntoma (lo informó el usuario):** el video de la guía Swap se oía en inglés.
+- **Causa:** el guion está en español y el estilo que se envía también lo pide («Narrador educativo en español neutro…»). Aun así, `gemini-3.8-flash-lite-tts` lo leyó en inglés. Es la única muestra hecha con ese modelo; Kafka, ENISA y Snowflake salieron con `gemini-3.8-flash-tts`.
+- **Arreglo de la muestra:** se regeneró con Diego en ElevenLabs, con escenas de 14,6, 14,5 y 13,2 s en MP3. La versión con Gemini Lite se guardó en `deploy/voces_prueba/gemini-lite/guia-swap-oci/`. El paso de WAV a MP3 reduce esta muestra de unos 2,6 MB a unos 200 KB.
+- **Pendiente:** `gemini-3.8-flash-lite-tts` es el modelo principal de la cadena de respaldo de Gemini TTS (`GEMINI_TTS_MODEL`). Cuando ElevenLabs falle, la generación en vivo puede volver a salir en inglés. Hay que decidir si se quita de la cadena o se deja como último respaldo.
+
+## 15 oct 2026 · Estación 4: primero el guion y el video debajo del teleprompter
+
+- **Pedido del usuario:** quitar «Puntos Clave Didácticos & Visuales» y poner el video debajo de «Teleprompter · Guion Docente».
+- **`Station4DirectorCut.tsx`:**
+  - Se quita el `<details>` «Guion y herramientas del docente»: la tira de escenas y el estudio se ven desde el principio.
+  - La sección del video (con el reproductor, el botón «Generar video» y el estado) pasa a la columna izquierda del estudio, dentro de la nueva `.columnaGuion`, debajo del teleprompter.
+  - Se borran del CSS `.estudioPlegable` y `.estudioResumen`, que ya no se usan.
+- **`PizarraDidactica.tsx`:** se quita la lista de puntos clave y el import de `CheckCircle2`.
+- **Verificación:**
+  - `tsc` y ESLint pasan sin errores y pasan los 41 tests.
+  - Captura en Edge sin interfaz con la muestra de la guía Swap: a la izquierda, el teleprompter y debajo el video con «CC»; a la derecha, la pizarra.
+  - La captura se hace con `cdp_captura.mjs`, un script del scratchpad que no se versiona.
+
+**Corrección del mismo día (pedido del usuario: «el video esté ubicado por debajo»):** el video no va en la columna del teleprompter, sino debajo de todo el estudio, a lo ancho y antes de «Siguiente Estación». Se quitó `.columnaGuion`. Además, `VideoMicroclase` arranca con `initialFrame = 42`: antes del primer play se ve la portada completa (título e índice) en lugar del fotograma 0 en negro. **Verificado:** `tsc` y ESLint pasan sin errores; captura en Edge con el Quijote I.
+
+## 15 oct 2026 · El recorrido se abría a media página
+
+- **Síntoma (lo informó el usuario):** al abrir el paso 2 desde «Generar», la página aparecía a la altura del diagrama y no al principio. El scroll de la pestaña 1 se conservaba, porque el botón está al final del formulario.
+- **Corrección (`App.tsx`):** un `useLayoutEffect` con dependencias `[currentStep, activeStationIndex]` ejecuta `window.scrollTo({ top: 0, behavior: 'instant' })`. Lo mismo pasaba con «Avanzar a Estación», que también está al final.
+- **Verificado en Edge (script CDP):** en el paso 1, tras bajar al botón, el scroll estaba en 867 px; al abrirse el paso 2 queda en 0 y arriba se ve «Ruta Cognitiva · Guía Técnica OCI…». Tras bajar a «Avanzar a Estación» estaba en 1971 px, y la estación 2 abre en 0. `tsc` y ESLint pasan sin errores y pasan los 41 tests.
+
+## 15 oct 2026 · Botón destacado del video junto a las escenas
+
+- **Pedido del usuario:** usar el hueco a la derecha de la tira de escenas para un botón llamativo que genere el video. Responde a la duda de cómo sabe el usuario que puede generarlo.
+- **`Station4DirectorCut.tsx`:**
+  - La tira de escenas y el botón comparten la fila `.filaEscenas`.
+  - El botón cambia según el estado:
+    - sin video: «Generar video narrado», en violeta y latiendo;
+    - generando: «Generando video…», deshabilitado;
+    - si falló: «Reintentar video»;
+    - con video listo: «Ver la microclase», en cian y sin latir.
+  - Al pulsarlo genera el video si falta (`handleVideo`) y baja con scroll suave hasta el reproductor (`videoRef`).
+- **`EstudioDirector.module.css`:** desde 1024 px, la tira usa `repeat(auto-fit, minmax(11rem, 1fr))` en lugar de 4 columnas fijas, así que no queda una columna vacía con 2 o 3 escenas. En móvil, el botón pasa debajo, a lo ancho.
+- **Verificación:**
+  - `tsc` y ESLint pasan sin errores y pasan los 41 tests.
+  - Capturas en Edge de los dos estados. El estado sin video se mostró interceptando `indice.json` con CDP (`Fetch.fulfillRequest`, `voz: null`), sin tocar archivos ni gastar cuota.
+
+## 16 oct 2026 · Pantalla completa al dar play y CC junto al tiempo
+
+- **Pedido del usuario:** que al dar play el video pase solo a pantalla completa, y que el botón de subtítulos esté junto al tiempo.
+- **`VideoMicroclase.tsx`:**
+  - **Pantalla completa:** en el evento `play`, si no está ya en pantalla completa, se llama a `player.requestFullscreen()`.
+    - Solo se hace si hay un gesto del usuario (`navigator.userActivation.isActive`). El autoplay que sigue a «Generar» no lo tiene y el navegador lo rechazaría, así que en ese caso no se pide.
+    - Va dentro de try/catch: sin permiso, el video sigue en la página.
+  - **CC:** pasa a la barra del Player con `renderCustomControls`, y así también se ve en pantalla completa. Remotion lo coloca tras un separador `flex: 1`; el hueco `.huecoControles` usa `flex: 1000 1 0%` para quedarse con casi todo el espacio libre, y el botón, alineado a la izquierda, queda pegado al tiempo.
+  - El botón tiene el aspecto de los controles del Player: «CC» blanco con borde, relleno cuando los subtítulos están activados. La tecla C sigue funcionando.
+  - El botón de fuera del video se quitó; el crédito de la foto sigue debajo.
+- **Verificación en Edge** (clic real con `Input.dispatchMouseEvent`, porque un `click()` desde JavaScript no cuenta como gesto del usuario):
+  - el tiempo termina en x=296 y el CC empieza en x=309;
+  - tras el clic en play, `document.fullscreenElement` existe y contiene el CC;
+  - la captura en pantalla completa muestra «0:02 / 0:49 [CC]».
+- `tsc` y ESLint pasan sin errores y pasan los 41 tests.
+
+**16 oct 2026 · Texto del botón de la demo:** a pedido del usuario, «⚡ Ver demo: Guía OCI Swap (sin gastar cuota)» pasa a «Prueba rápida 😊». Lo que dejó de decir el texto (que abre la guía Swap ya generada y que no gasta cuota) va en el atributo `title` del botón. `tsc` y ESLint pasan sin errores.
+
+## 16 oct 2026 · Paso 1 más claro para quien llega por primera vez
+
+- **Pedido del usuario:** destacar que desde la biblioteca se cargan los documentos, porque alguien nuevo no entiende para qué sirve cada parte.
+- **`Step1Ingestion.tsx`:**
+  - El título técnico «Biblioteca de Documentos Reales (data/documents/)» cambia según haya sesión o no:
+    - sin sesión: «Paso 1 · Elige un documento para empezar», en tamaño mayor y sin mayúsculas;
+    - con sesión: «O elige un documento de ejemplo».
+  - El texto de ayuda dice para qué sirve cada documento.
+  - Sin sesión y sin documento elegido aparece una guía de 3 pasos: elige un documento → pulsa «Generar Adaptación Pedagógica RAG» → recorre las 5 estaciones.
+  - El selector recibe la misma invitación animada que la zona de carga (borde violeta, pulso y la etiqueta «Empieza aquí»), con su variante para `prefers-reduced-motion`. Su texto inicial: «👉 Haz clic aquí y elige un documento: Don Quijote, Apache Kafka, Guía OCI…».
+  - El banner dice «Presiona «Prueba rápida»» en vez de «el botón demo».
+- **Verificación:** `tsc` y ESLint pasan sin errores; pasan los 41 tests. Captura en Edge como invitado.
+
+**16 oct 2026 · La lista de la biblioteca no se leía:** al desplegarla, las opciones salían con el texto blanco sobre el fondo claro que pinta el sistema. Se agravó con el fondo violeta translúcido del selector resaltado.
+- **Corrección:** `.selectInput` declara `color-scheme: dark`, y sus `option` tienen fondo `#0b0f19` y texto blanco (las deshabilitadas, en gris). El selector resaltado usa ahora un fondo opaco, `#17132b`.
+- **Verificación en Edge** (estilos computados; la lista desplegable no sale en una captura sin interfaz): el selector tiene `colorScheme: dark` y fondo `rgb(23, 19, 43)`; las opciones, fondo `rgb(11, 15, 25)` y texto `rgb(255, 255, 255)`. ESLint pasa sin errores y el build funciona.
+
+## 16 oct 2026 · Banner del paso 1: nuevo título y animación PDF → recursos
+
+- **Pedido del usuario:** el título dice «Convierte manuales en rutas de aprendizaje» y, detrás, un PDF se convierte en los recursos.
+- **Texto:** el título técnico («Ingesta de Documentación Técnica OCI & Adaptación Cognitiva») pasa a «Convierte manuales en rutas de aprendizaje». El párrafo deja de repetir el título y dice qué se recibe: resumen, tarjetas, tutorial con diagrama, video narrado y quiz, «con cada cita comprobada en el documento». Se quita «sin alucinaciones», que prometía algo que no se puede garantizar (regla 1).
+- **Animación nueva (`HeroAnimacion.tsx` y `HeroAnimacion.module.css`):** un SVG con animaciones CSS, sin librerías y oculto a los lectores de pantalla (`aria-hidden`). Ciclo de 8 s:
+  - una franja recorre el PDF como si lo leyera;
+  - por cuatro caminos con puntos en movimiento salen, cada 0,8 s, las tarjetas Video narrado (con una barra de progreso), Diagrama, Resumen («con citas verificadas») y Quiz (con casillas);
+  - las tarjetas se quedan y se desvanecen antes de reiniciar el ciclo.
+- **Disposición:** en escritorio, la animación ocupa la mitad derecha, fundida por la izquierda, y el texto se queda en el 52 % izquierdo. Por debajo de 900 px queda como fondo tenue (opacidad 0,18). Con `prefers-reduced-motion` se ve quieta, con los cuatro recursos.
+- **Verificación en Edge:**
+  - Edge sin interfaz informa `prefers-reduced-motion: reduce`, así que primero se vio la versión quieta.
+  - Con `Emulation.setEmulatedMedia` en `no-preference`, la opacidad medida de las tarjetas sigue el ciclo previsto: 0 0 0 0, luego 1 0 0 0, luego 1 1 1 0, luego 1 1 1 1, y se desvanecen en orden.
+  - Hay capturas en escritorio y móvil.
+  - `tsc` y ESLint pasan sin errores; pasan los 41 tests y el build funciona.
+
+**16 oct 2026 · Banner más corto:** a pedido del usuario se quita «y guardados en OCI Object Storage Always Free» y se acorta el texto: «Resumen, tarjetas, diagrama, video y quiz a partir de tu documento, con citas comprobadas.». Se borra la clase `.highlightOci`, que quedó sin uso. `tsc` y ESLint pasan sin errores.
+
+**16 oct 2026 · La animación del banner se veía quieta y cortada:** el equipo del usuario informa `prefers-reduced-motion: reduce` (Windows con los efectos de animación desactivados), y con esa preferencia la animación quedaba congelada.
+- **Con «reducir movimiento»:** ahora los recursos aparecen y se desvanecen por turnos (`@keyframes fundido`, solo opacidad), y los caminos se encienden a la vez que su tarjeta. Siguen quietos el escáner, el flujo de puntos, las escalas y los desplazamientos.
+- **Tamaño:** el SVG tiene `height: 90%` del banner y `max-width: 48%`. Antes se calculaba por el ancho, y con banners bajos se cortaba la tarjeta de arriba.
+- **Verificado en Edge con `reduce` emulado:** la opacidad medida cada segundo sigue el ciclo (0 0 0 0, luego 1 1 0 0, luego 1 1 1 1, y se desvanecen en orden). A 1200 px el SVG ocupa de 130 a 426 px dentro del banner (113–443 px), así que entra completo. El build funciona.
+
+**16 oct 2026 · Título del banner:** a pedido del usuario pasa a «Convierte documentos en rutas de aprendizaje» (antes decía «manuales»).
+
+**16 oct 2026 · Banner de la prueba rápida:** a pedido del usuario queda solo el título «¿Quieres probar la plataforma en 1 solo clic?», más grande (de 1,1 a 1,4 rem, con un icono de 22 px), junto al botón «Prueba rápida 😊». Se borran el párrafo explicativo y la clase `.demoBannerDesc`. Qué abre el botón y que no gasta cuota sigue en su `title`. `tsc` y ESLint pasan sin errores.
+
+**16 oct 2026 · Título de la sección de inicio:** a pedido del usuario, encima del paso 1 de la biblioteca aparece «Aquí empieza tu ruta de aprendizaje» (`h2.tituloRuta`, 1,4 rem, la misma tipografía que el título de la prueba rápida). `tsc` y ESLint pasan sin errores.
+
+**16 oct 2026 · Ejemplo o documento propio:** a pedido del usuario, el título del selector pasa a «Elige un documento de ejemplo…», con el mismo estilo con o sin sesión. Antes de «Carga de archivo» se añade el separador «o carga tu propio documento» (`.separadorCarga`: texto centrado con una línea a cada lado). `tsc` y ESLint pasan sin errores; hay captura en Edge.
+
+**16 oct 2026 · «o carga tu propio documento», fuera del cuadro:** a pedido del usuario deja de ser un separador dentro del formulario. Ahora es un título entre la lista desplegable y el cuadro, con el mismo formato que «Elige un documento de ejemplo…» (`scenariosLabel` + `scenariosLabelPaso` y un icono de nube de subida). `.tituloCarga` compensa el espacio de 2 rem del formulario para que el título quede a 0,75 rem de su cuadro. Se borró `.separadorCarga`. `tsc` y ESLint pasan sin errores; hay captura en Edge.
+
+**16 oct 2026 · Sin campo de título en el paso 1:** a pedido del usuario se borra «Título del documento técnico». El título se sigue enviando: sale del catálogo (ejemplo elegido) o del nombre del archivo (subido), con «Documento sin título» si quedara vacío. La etiqueta de la vista previa pasa a «Previsualización del Documento». Se borran los estilos `.textInput`, que quedaron sin uso. `tsc` y ESLint pasan sin errores; pasan los 41 tests.
+
+## 16 oct 2026 · Ajustes del paso 1: título, Personalizado por defecto y Sorpréndeme animado
+
+- **Pedido del usuario:**
+  - el título «Antes de empezar 👀 selecciona tu perfil»;
+  - Personalizado abierto por defecto;
+  - una pequeña animación en Sorpréndeme.
+- **`Step1Ingestion.tsx`:**
+  - El estado `modo` empieza en `'personalizado'`. Perfil, sector y nivel arrancan en Principiante · General · Didáctico, en vez de sorteados. `sortear()` se sigue ejecutando al elegir Sorpréndeme.
+  - El título `h3.tituloPerfil` aparece encima de las dos opciones solo con sesión iniciada, porque el invitado no elige. Se queda con el separador superior que antes tenía `.modoSelector`.
+- **Animación de Sorpréndeme (CSS):**
+  - el icono de destellos titila (`titilar`: escala y giro leves);
+  - un brillo amarillo cruza la tarjeta cada 3,2 s (`.modoSorpresa::after`, `brillo`);
+  - con `prefers-reduced-motion`, sin giros ni brillo: el icono solo late en opacidad (`latir`).
+- **Verificación:** `tsc` y ESLint pasan sin errores; pasan los 41 tests y el build funciona. **Sin captura:** el bloque solo se ve con una sesión real (no con el modo invitado).
+
+**16 oct 2026 · Orden de las opciones:** a pedido del usuario, Personalizado (la opción por defecto) pasa a la izquierda y Sorpréndeme a la derecha. Sorpréndeme muestra solo su título y la descripción «Sorteamos perfil, sector y nivel por ti» queda en el `title` del botón. `tsc` y ESLint pasan sin errores.
+
+**16 oct 2026 · Descripción de Sorpréndeme:** a pedido del usuario, bajo el título dice «Perfil al azar». `tsc` y ESLint pasan sin errores.
+
+## 16 oct 2026 · Junto a «Generar»: una hoja que se convierte en recursos
+
+- **Pedido del usuario:** quitar el texto «Salida estructurada compatible con OCI Object Storage» y poner en su lugar una animación de una hoja que se convierte en los recursos pedagógicos.
+- **Componente nuevo (`MiniAnimacionRecursos.tsx` y `MiniAnimacionRecursos.module.css`):** SVG de 280×48, con animaciones CSS y oculto a los lectores de pantalla (`aria-hidden`).
+  - Una hoja que late y una flecha punteada que avanza.
+  - Los cuatro recursos (video, diagrama, resumen y quiz, con los colores del banner) aparecen cada 0,5 s con un pequeño rebote y se desvanecen juntos; ciclo de 6 s.
+  - Con `prefers-reduced-motion`: la hoja y el flujo quedan quietos, y los recursos aparecen y se van solo con un fundido.
+  - Se borró `.storageNote`.
+- **Verificación en Edge:** la opacidad medida cada 0,7 s sigue el ciclo en los dos modos (0 0 0 0, luego 1 0 0 0, luego 1 1 1 0, luego 1 1 1 1). Hay captura con la barra del botón. `tsc` y ESLint pasan sin errores y el build funciona.
+
+**16 oct 2026 · Botón principal del paso 1:** a pedido del usuario, «Generar Adaptación Pedagógica RAG» pasa a «Iniciar Aprendizaje», tanto en el botón del invitado como en el de quien tiene sesión, y en el paso 2 de la guía («Pulsa «Iniciar Aprendizaje»»). Los scripts CDP del scratchpad que buscaban el texto anterior quedan desactualizados; no se versionan.
+
+**16 oct 2026 · Sin «Continuar como invitado (Modo Demo)»:** a pedido del usuario se borra ese botón de la ventana de inicio de sesión, con sus estilos `.guestButton`. Para usar la app sin cuenta basta con cerrar la ventana: el modo sin sesión (biblioteca, muestras y prueba rápida) sigue igual. En `App.tsx` queda la comprobación del id de invitado (`00000000-…`): ya nadie la activa, pero no estorba. `tsc` y ESLint pasan sin errores.
+
+**16 oct 2026 · Etiqueta de la muestra sin fecha:** a pedido del usuario, la etiqueta del paso 2 dice solo «Muestra pregenerada», sin «· 15/10/2026». La etiqueta se mantiene porque avisa de la procedencia (regla 1). La fecha y la voz siguen en su `title`, al pasar el ratón.
+
+**16 oct 2026 · Pestaña 2:** a pedido del usuario, «Visualizar Resultados RAG» pasa a «Visualizar Resultados» (`Header.tsx`).
+
+**16 oct 2026 · Sin la etiqueta «Muestra pregenerada» en el paso 2:** el usuario pidió quitarla del todo. Se borró de `Step2KnowledgeQuest.tsx`. La procedencia se sigue avisando en dos sitios: durante la carga, las etapas dicen «Muestra · …» y la tarjeta de proceso dice «Muestra pregenerada: no se llama a ningún modelo ni se gasta cuota»; y el título del botón «Prueba rápida» dice que abre el recorrido ya generado. El paquete en sí es una salida real del pipeline, no un relleno. `tsc` y ESLint pasan sin errores.
+
+### Desplegable «Por secciones y conclusiones» visible
+
+El `<summary>` del resumen (RecursosApoyo) pasaba por texto plano. Ahora es un botón tipo píldora violeta con chevron que gira al abrirse, hover y foco visibles; texto «Ver por secciones y conclusiones». `tsc` y ESLint pasan.
+
+### Nombres de las estaciones en español llano
+
+Tarjetas del paso 2: Resumen · Tarjetas didácticas · Comandos · Contenido Audiovisual · Cuestionario (antes Resumen Ninja, Flashcard Quest, Tutorial Quest, Director Cut, The Final Trial). También se renombraron los botones «Siguiente Estación» y el aviso de bloqueo del cuestionario; los subtítulos de las tarjetas no se tocaron. Problema: `sed -i` en Git Bash pasó a LF cuatro archivos CRLF; se restauró con perl y el diff quedó en las líneas cambiadas. `tsc`, ESLint y los tests del frontend pasan.
+
+### Subtítulos de las estaciones
+
+Se borraron los subtítulos de las cuatro primeras tarjetas (se mantiene «Quiz Capstone RAG» en Cuestionario) y la estación 3 pasa a «Comandos (Laboratorio)». Los estados «Redactando…» y «Requiere 2 completadas» siguen usando esa línea. `tsc` y ESLint pasan.
+
+### Etiqueta de la estación 2
+
+«Estación 02 · Active Recall & Memorización» pasa a «Estación 02 · Memorización».
+
+### Título de la estación 2
+
+«Flashcard Quest Interactivo» pasa a «Tarjetas didácticas interactivas» y se borra el párrafo de debajo («Pon a prueba tu memoria activa…»). El contador de progreso sigue mostrando cuántas tarjetas faltan. `tsc` y ESLint pasan.
+
+### Estación 2 sin «Active Recall Simulator»
+
+Se borra la leyenda del pie de la tarjeta; queda un hueco vacío para que «Girar tarjeta» siga a la derecha. `tsc` y ESLint pasan.
+
+### Estación 2 sin «Fidelidad Pedagógica»
+
+Se borra también la leyenda del reverso de la tarjeta, con el mismo hueco vacío para el botón. `tsc` pasa.
+
+### Botón «Concepto dominado»
+
+En la estación 2, «Dominar Concepto» pasa a «Concepto dominado».
+
+### Estación 3 reestructurada como «Guía paso a paso»
+
+El usuario: la estación 3 no es de comandos, es una guía de cómo aprender, y debe responder «¿cuál es la meta de leer esto?». Cambios: tarjeta y botón siguiente «Guía paso a paso» (icono Target); cabecera «¿Cuál es la meta de leer esto?» con el bloque «Al terminar esta guía podrás» (los títulos de los pasos, tachados al lograrlos); cada paso muestra «Qué vas a hacer», luego el comando en terminal **solo si es un comando real** o, si es prosa (Quijote, Kafka, ENISA), un bloque «Clave del paso»; «¿Cómo sé que lo logré?» y botón «Lo logré». Nuevo `utils/pasoGuia.ts` (`esComando`, `tituloSinPaso`, que quita el «Paso N:» repetido) con `tests/pasoGuia.test.ts`. No se añadió un campo «meta» al esquema: habría que cambiar backend y prompt y regenerar las muestras (cuota). Verificación: `tsc`, ESLint, 45/45 tests; capturas headless de la Guía OCI (terminal) y del Quijote I (clave en texto).
+
+### Estaciones 3 y 4: meta del documento, pasos según el documento, cabecera de videos y reproducción con un clic
+
+- **Estación 3:** título «¿Cuál es la meta de leer «‹título›»?»; el bloque «Al terminar esta guía podrás» usa `objetivos_aprendizaje` del paquete (tarea B1, ya presentes en las 6 muestras) y, si faltan, los títulos de los pasos.
+- **Pasos según el documento (backend):** `pasos_guia()` en `generacion_paralela.py` decide 3 a 7 pasos (tope por palabras: <500→3, <1500→4, <3000→5, <6000→6, más→7; con secciones, uno por sección dentro del tope) y se pide en las instrucciones de producción («PASOS DEL TUTORIAL: exactamente N»). El esquema admite hasta 7 y la instrucción del tutorial ahora habla de guía de aprendizaje (comando solo si el documento es técnico). Test nuevo en `test_narracion.py`. Las muestras pregeneradas siguen con 3 pasos hasta regenerarlas.
+- **Estación 4:** etiqueta «Estación 04 · Videos», título «Contenido AudioVisual», sin subtítulo; se borran la barra de palabras/tiempo de la microclase y la ficha de la escena (tramo, palabras, diapositiva, citas), con su CSS y variables sin uso.
+- **«Ver la microclase»** ahora reproduce el video (prop `pedidoReproducir` en `VideoMicroclase`); como hay gesto, pasa a pantalla completa. Verificado en Edge headless con clic real por CDP: fullscreen activo y audio de la escena 1 sonando.
+
+Verificación: backend 353 tests; frontend `tsc`, ESLint de los archivos tocados, 45/45 tests y build.
+
+### Título de la estación 5
+
+«Examen Interactivo con Justificación RAG» pasa a «Examen final».
+
+### Tarjeta del cuestionario sin subtítulo
+
+Se borra «Quiz Capstone RAG» bajo «Cuestionario»; la línea sigue mostrando «Requiere 2 completadas» mientras está bloqueada.
+
+### Cabecera de la estación 5
+
+Etiqueta «Estación 05 · Examen final» (también en la pantalla de bloqueo, antes «The Final Trial · Examen Capstone») y título «Cuestionario».
+
+También se borra el texto bajo el título («Cada respuesta se contrasta con el material de origen…»). `tsc` pasa.
+
+### El cuestionario pregunta por lo que enseñaron las otras estaciones (tarea C)
+
+Pregunta del usuario: ¿las preguntas son de temas tocados en las otras estaciones? No del todo: el cuestionario salía de B1, en paralelo con A y B2, sin ver lo que enseñaban. En la muestra de Kafka, la pregunta de publicar/almacenar/procesar y la de agregaciones de Streams no se trataban en ninguna estación.
+
+Cambio (`generacion_paralela.py`): el cuestionario sale de B1 (`SalidaEvaluacion` sin `cuestionario`) y pasa a la **tarea C** (`SalidaCuestionario`, `_TAREA_C`, `tarea_cuestionario`), que corre después de A, B1 y B2 con el tiempo restante del presupuesto. Recibe el **temario enseñado** (`temario_ensenado`: conceptos del resumen, tarjetas, pasos de la guía y escenas del video, recortado a 6000 caracteres) y solo pregunta por esas ideas; la respuesta y la cita siguen saliendo del documento. El temario va en las instrucciones, así entra en la huella: si cambian las estaciones, el cuestionario se regenera; si se reutilizan, también se reutiliza. Si no salió ninguna estación, C no se llama (`sin_temario`) y main pasa al respaldo como antes. Coste: una llamada más a Gemini por paquete.
+
+**Base de datos:** nueva migración `supabase/migrations/202610160001_tarea_cuestionario.sql` que amplía la restricción `generation_tasks.task` a `A, B1, B2, C, tts`. Hay que aplicarla en Supabase; sin ella, las filas de C no se registran (aviso «No se pudo registrar el estado…») pero la generación funciona. Tests: 2 nuevos (temario en las instrucciones de C; sin estaciones no se llama a C) y el de la migración lee la última restricción; backend 355 pasan. Las muestras pregeneradas siguen con el cuestionario anterior hasta regenerarlas.
+
+### Documentación al día (16/10)
+
+Pedido del usuario: actualizar todos los .md, incluidas las directivas de Gemini, y el README general.
+
+- **README.md:** nueva sección «Estado actual — 16 de octubre de 2026» (recorrido, estaciones, generación A/B1/B2 → C, voz, migraciones y enlaces); cifras de pruebas a 355 backend y 45 frontend. Las secciones históricas se conservan.
+- **backend/docs:** ARCHITECTURE (paso 1, estaciones, diagrama con C, tarea C, `pasos_guia`, migración), API (tarea C, Estación 4), DATABASE (migración 3) y CHANGELOG (versión 2.8.0).
+- **frontend/README.md:** paso 1 con y sin sesión, estaciones y tabla de componentes con los nombres nuevos.
+- **historial_progreso:** PENDIENTES (bloque «Al retomar · 16/10», ramas) y README (fase 22).
+- **Directivas locales (no versionadas):** CLAUDE.md (carpeta principal y este worktree: tarea C, video Remotion, worktree `NovaMind-remotion`, rama real de Gemini) y GEMINI.md y AGENTS.md (carpeta principal y `NovaMind-gemini`: rama `feature/espejo-oracle-audiovisual`, carpetas y puertos de Claude, cómo hacer el commit del trabajo de Claude). No se tocaron los .md versionados del worktree de Gemini, que tiene cambios propios sin commit en otra rama.
+
+Mensaje de commit propuesto para todo el trabajo del worktree: `feat(estaciones,generacion): recorrido en español llano, guia paso a paso con meta, video con Remotion, cuestionario con el temario de las estaciones (tarea C) y documentacion al dia`.
+
+README: añadida la tabla de los tres modos de generación (`paralelo`, `vectorless`, `clasico`) y el relevo paralelo → cadena → clásico, a partir de la revisión de Gemini (decía que el README principal no nombraba el modo paralelo). Comprobado en el código: el frontend envía `paralelo` por defecto (`VITE_MODO_RAG`) y el formulario de la API tiene `vectorless` como valor por defecto.
+
+### Revisión de bugs del worktree (16/10)
+
+Revisados los cambios sin commit (backend: tarea C, pasos, silencios del video, catálogo; frontend: paso 1, estaciones, video Remotion, muestras). Corregido: (1) `esComando` tomaba por comando frases con `**`, `->` o `=`, regla nueva de frase capitalizada y test; (2) nombres viejos en `ETAPAS_MUESTRA`, `NOMBRES_RECURSO` y `NOMBRE_RECURSO`; (3) la demo sin conexión decía «Generando…». Revisado sin hallazgos: espejo de silencios Python/TS, tipos de `tarea` (string), plazo del SSE (300 s) frente al presupuesto paralelo (240 s, C incluida), reproducción por `pedidoReproducir`, huella y reutilización de C. Para decidir: `acknowledgeRemotionLicense` (la licencia gratuita de Remotion cubre a particulares y empresas de hasta 3 personas), 7,9 MB de muestras (los WAV) y `docs/flujo-nuevamente.svg`, sin seguimiento y de origen desconocido. Verificación: backend 355, frontend 46, `tsc` y build.
+
+### Muestras en MP3 y diagrama del README (16/10)
+
+Decisiones del usuario: la licencia gratuita de Remotion sirve; pasar las muestras a MP3; el SVG `docs/flujo-nuevamente.svg` era para el README de GitHub.
+
+- **MP3:** las 9 voces WAV de Kafka, ENISA y Snowflake (Gemini TTS, Kore) se codificaron a MP3 de 48 kbps con `lameenc` en local (el ffmpeg de chocolatey está roto: su acceso directo apunta a un ejecutable que no existe). `narracion.json` apunta a los `.mp3` con `audio/mpeg`. `frontend/public/ejemplos` pasa de 7,9 MB a 1,8 MB. Los WAV originales se movieron a `deploy/voces_prueba/wav-gemini/`. Comprobado en Edge headless: el video de Kafka reproduce `escena-1.mp3` en pantalla completa.
+- **SVG:** actualizado (tarea C en la generación, estaciones Resumen, Tarjetas, Guía, AudioVisual y Cuestionario, video con Remotion) y validado como XML; se ve completo en Edge. Insertado en `README.md` bajo la cabecera.
+
+HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md: añadidos los problemas 56 a 70 de los días 15 y 16/10 (diagnóstico, causa y solución), con los pendientes del 57 y el 58 marcados; tabla de totales actualizada y nota de ampliación.

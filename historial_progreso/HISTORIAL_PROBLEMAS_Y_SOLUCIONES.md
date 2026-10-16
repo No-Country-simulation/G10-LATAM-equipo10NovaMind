@@ -585,6 +585,111 @@ El desarrollo de **NuevaMente** enfrentó una serie de desafíos arquitectónico
 
 ---
 
+### Problema 56: El Quijote completo no cabía en el límite de documento
+- **Diagnóstico:** el texto íntegro de las dos partes del Quijote tiene unos 1,06 millones de caracteres; el backend acepta 400 000.
+- **Causa raíz:** `MAX_CARACTERES_DOCUMENTO = 400_000`, pensado para manuales técnicos.
+- **Solución:** se usaron las secciones «Primera parte» y «Segunda parte» de Wikipedia en español (unos 15 KB cada una) como dos documentos separados, con la atribución CC BY-SA 4.0 en la cabecera (`data/documents/quijote_*_resumen.md`). «El caballero de la armadura oxidada» salió de la biblioteca por derechos de autor.
+
+---
+
+### Problema 57: ElevenLabs respondía 402 con una voz de la biblioteca
+- **Diagnóstico:** las voces de la Voice Library (Isabela, Athena, Diego…) devolvían `402 paid_plan_required` y la interfaz decía «sin créditos».
+- **Causa raíz:** el plan gratuito de ElevenLabs no permite usar voces de la biblioteca por la API; no era falta de créditos. El backend interpreta todo 402 como créditos agotados.
+- **Solución:** el usuario contrató el plan Starter (decisión explícita, 15/10). La voz elegida para el Quijote y la Guía OCI es Diego. **Pendiente:** que el 402 de plan se informe con su motivo real (el usuario pidió no tocarlo por ahora).
+
+---
+
+### Problema 58: Gemini TTS «flash-lite» leía el guion en inglés
+- **Diagnóstico:** el video de la Guía OCI sonaba con acento y pronunciación inglesa.
+- **Causa raíz:** `gemini-3.8-flash-lite-tts`, primer modelo de la cadena de respaldo, no respetó el idioma del texto; `gemini-3.8-flash-tts` sí.
+- **Solución:** la muestra se regeneró con Diego (ElevenLabs) y las de Kafka, ENISA y Snowflake con `3.8-flash-tts`. **Pendiente:** decidir si el modelo lite sale de la cadena o va al final.
+
+---
+
+### Problema 59: El video se quedaba mudo desde la escena 2
+- **Diagnóstico:** la escena 1 sonaba y las siguientes no. Registrando los eventos de medios por CDP se vio que la etiqueta de audio de la escena 2 perdía su `src`.
+- **Causa raíz:** en Remotion, un `<Audio>` dentro de `TransitionSeries.Sequence` se vuelve a montar con la transición y pierde la fuente.
+- **Solución:** el audio de cada escena va en un `Sequence` de primer nivel, en su fotograma absoluto (`desde + inicioVoz`), con `premountFor` para precargarlo (`video/MicroclaseVideo.tsx`). `premountFor` exige el diseño por defecto del Player, así que se quitó `layout="none"`.
+
+---
+
+### Problema 60: La pantalla completa fallaba al reproducir solo
+- **Diagnóstico:** al arrancar el video tras «Generar», la consola mostraba que el navegador rechazaba `requestFullscreen`.
+- **Causa raíz:** el navegador solo permite pantalla completa durante un gesto del usuario; el autoplay no lo es.
+- **Solución:** al reproducirse, se pide pantalla completa solo si `navigator.userActivation.isActive`; con un clic real (botón «Ver la microclase» o play) sí entra.
+
+---
+
+### Problema 61: Las opciones del desplegable de documentos no se leían
+- **Diagnóstico:** el texto de las opciones salía blanco sobre fondo claro.
+- **Causa raíz:** la lista nativa del `<select>` usa los colores del sistema operativo, no los del tema oscuro de la página.
+- **Solución:** `color-scheme: dark` en el selector, fondo opaco y estilos para `option` (`Step1Ingestion.module.css`).
+
+---
+
+### Problema 62: Las animaciones no se movían en el equipo del usuario
+- **Diagnóstico:** el hero y la miniatura de recursos se veían estáticos en Windows y en Edge headless.
+- **Causa raíz:** Windows tenía desactivados los efectos de animación, lo que activa `prefers-reduced-motion: reduce`; Edge headless también lo reporta por defecto.
+- **Solución:** con movimiento reducido se usan versiones solo con fundido (sin desplazamientos), y las capturas de verificación emulan `no-preference` por CDP.
+
+---
+
+### Problema 63: El recorrido se abría a media página
+- **Diagnóstico:** al pasar al paso 2 o cambiar de estación, la página quedaba a la altura del diagrama.
+- **Causa raíz:** el botón que lleva a la siguiente vista está al final de la página y el desplazamiento se conservaba.
+- **Solución:** `useLayoutEffect` en `App.tsx` que vuelve arriba al cambiar de paso o de estación.
+
+---
+
+### Problema 64: El cuestionario preguntaba por temas que ninguna estación enseñaba
+- **Diagnóstico:** en la muestra de Kafka, dos de las cuatro preguntas (publicar/almacenar/procesar y agregaciones de Streams) no se trataban en el resumen, las tarjetas, la guía ni el video.
+- **Causa raíz:** el cuestionario se generaba en la tarea B1, en paralelo con A y B2, sin ver lo que ellas enseñaban.
+- **Solución:** tarea C en `generacion_paralela.py`, que corre después con el «temario enseñado» y solo pregunta por esas ideas; la respuesta y la cita siguen saliendo del documento. Migración `202610160001_tarea_cuestionario.sql` para admitir `C` en `generation_tasks`.
+
+---
+
+### Problema 65: La guía mostraba pasajes de novela dentro de un terminal
+- **Diagnóstico:** en el Quijote, el campo «comando» de cada paso traía una frase del libro y se pintaba como `$ comando` en una terminal.
+- **Causa raíz:** el esquema pide `cli_command` para todos los documentos, técnicos o no. La primera versión del detector, además, tomaba por comando cualquier frase con `**`, `->` o `=`.
+- **Solución:** `utils/pasoGuia.ts` (`esComando`): una frase capitalizada de 6 palabras o más es texto y va en «Clave del paso»; solo los comandos reales van al terminal. Con tests; comprobado con las 6 muestras. El prompt del tutorial ahora pide un comando solo si el documento es técnico.
+
+---
+
+### Problema 66: `sed -i` en Git Bash convirtió archivos CRLF a LF
+- **Diagnóstico:** tras un reemplazo de textos, `git diff` marcaba archivos enteros como cambiados.
+- **Causa raíz:** `sed -i` de Git Bash reescribe los finales de línea; el repositorio mezcla CRLF y LF (`core.autocrlf=true`).
+- **Solución:** se restauró CRLF con perl y se comprobó que el diff quedaba en las líneas cambiadas. Desde entonces las ediciones se hacen con la herramienta de edición o con scripts que conservan el final de línea de cada archivo.
+
+---
+
+### Problema 67: `python -I` ignoraba `PYTHONIOENCODING` y ElevenLabs respondía 400
+- **Diagnóstico:** el script de prueba de voces fallaba con 400 al enviar el guion.
+- **Causa raíz:** en modo aislado (`-I`) Python ignora las variables `PYTHON*`, y el JSON salía con la codificación de la consola.
+- **Solución:** el script escribe el cuerpo JSON en UTF-8 de forma explícita.
+
+---
+
+### Problema 68: Nombres viejos de estaciones en mensajes y avisos
+- **Diagnóstico:** tras renombrar las estaciones, seguían apareciendo «Flashcards», «Tutorial», «Director's Cut» o «Quiz final» al abrir una muestra y en los avisos de recursos; la demo sin conexión decía «Generando…» al cargar un ejemplo fijo.
+- **Causa raíz:** los nombres estaban repetidos en `App.tsx`, `api.ts`, `NOMBRES_RECURSO` (backend) y `NOMBRE_RECURSO` (frontend).
+- **Solución:** se unificaron a Tarjetas didácticas, Guía paso a paso, Contenido AudioVisual y Cuestionario; la demo sin conexión dice que es un ejemplo, sin auditoría ni guardado.
+
+---
+
+### Problema 69: ffmpeg no funcionaba para pasar las muestras a MP3
+- **Diagnóstico:** `ffmpeg` y `ffprobe` fallaban con «Cannot find file at ...\ffmpeg-full\tools\ffmpeg\bin\ffmpeg.exe».
+- **Causa raíz:** el acceso directo de chocolatey apunta a una instalación que ya no existe.
+- **Solución:** se codificó con `lameenc` (instalado en una carpeta temporal, sin tocar el entorno del proyecto): 9 voces WAV a MP3 de 48 kbps, `narracion.json` actualizado y muestras de 7,9 MB a 1,8 MB. Los WAV originales quedan en `deploy/voces_prueba/wav-gemini/`. Nunca se usa ffmpeg en el servidor (regla 3).
+
+---
+
+### Problema 70: Documentación con errores de hecho entre agentes
+- **Diagnóstico:** el README del worktree de Gemini numeraba la ingesta como «Estación 1» (y omitía la Guía/Tutorial), ponía a Groq como respaldo de generación, prometía «cero alucinaciones», daba «~15–25 s» sin medición y 332 pruebas cuando su corrida dio 350.
+- **Causa raíz:** documentación escrita sin contrastar con el código y con las mediciones registradas.
+- **Solución:** auditoría contra el código de su rama y directiva de corrección para Gemini (ver la bitácora del 16/10). El README de `NovaMind-remotion` describe los tres modos de generación (`paralelo`, `vectorless`, `clasico`) y el relevo entre ellos, comprobados en `main.py`.
+
+---
+
 ## 📊 Resumen Cuantitativo del Estado Actual
 
 | Métrica / Dimensión | Estado Inicial | Estado Actual Integrado en Producción |
@@ -600,7 +705,7 @@ El desarrollo de **NuevaMente** enfrentó una serie de desafíos arquitectónico
 | **Persistencia OCI Object Storage** | Fallback a disco local | **Validada E2E en Bucket privado (`nuevamente-contenidos-educativos`) con prefijos de usuario** |
 | **Seguridad de Secretos y Git** | .gitignore básico | **Secretos 100% en backend; .gitignore blindado; 0 API keys en el bundle frontend** |
 | **Convergencia Multirama** | Ramas desalineadas e historias inconexas | **Topografía forense resuelta: Fast-Forward de `backend` e `integracion` con 0 conflictos** |
-| **Problemas Totales Resueltos** | 0 documentados | **55 problemas diagnosticados, resueltos y auditados** |
+| **Problemas Totales Resueltos** | 0 documentados | **70 problemas documentados (56–70 añadidos el 16/10; el 57 y el 58 con un pendiente)** |
 
 ---
 
@@ -613,4 +718,4 @@ Este documento certifica que los **55 problemas descritos** han sido diagnostica
 *Arquitectura de Soluciones Cloud OCI, DevOps Senior & Integración Full-Stack*  
 *Fecha: 13 de Octubre de 2026*
 
-
+*Ampliado el 16 de octubre de 2026 por Claude (Opus 5.5) con los problemas 56 a 70, del worktree `NovaMind-remotion`. Las cifras de pruebas de la tabla son las del 13/10; al 16/10 son 355 en el backend y 46 en el frontend.*

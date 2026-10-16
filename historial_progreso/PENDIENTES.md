@@ -2,6 +2,21 @@
 
 Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las que el agente debe hacer al retomar el trabajo. El detalle técnico está en `deploy/auditoria/PROXIMOS_PASOS.md` (no versionado) y la historia, en `BITACORA_FULLSTACK_V2.md` (las últimas entradas cuentan la jornada del 14/10, incluido el despliegue).
 
+## Al retomar · 16/10 (worktree `../NovaMind-remotion`)
+
+- **Dónde:** `../NovaMind-remotion`, rama `claude/remotion-prueba` (desde `5e38113`), servidores 8003 (backend) y 5175 (front). **Todo sin commit.** Detalle en las entradas del 15 y 16/10 de la bitácora.
+- **Esperando al usuario:**
+  1. **Aplicar en Supabase** `supabase/migrations/202610160001_tarea_cuestionario.sql` (admite la tarea `C`). Sin ella, el cuestionario se genera pero no se guarda en la caché.
+  2. **Commit (lo hace Gemini):** incluir `frontend/public/ejemplos/` y, con `git add -f` porque `data/documents/` está ignorado, `data/documents/quijote_primera_parte_resumen.md` y `quijote_segunda_parte_resumen.md`.
+  3. **¿Regenerar las 6 muestras?** Siguen con 3 pasos y el cuestionario anterior. Gasta cuota: Diego (ElevenLabs) para el Quijote y la Guía OCI; Kore (Gemini) para Kafka, ENISA y Snowflake.
+- **Preguntas abiertas:**
+  - ¿Quitar «RAG» del mensaje «Orquestando Agentes RAG & OCI…» que se ve al generar?
+  - `gemini-3.8-flash-lite-tts` leyó un guion en inglés: ¿sacarlo de la cadena de TTS o ponerlo al final?
+  - ¿Diego como voz por defecto en `.env`? Sigue Isabela.
+  - ¿Pasar a MP3 los WAV de Kafka, ENISA y Snowflake (~2,5 MB cada uno)?
+  - Limpieza: comprobaciones del id de invitado que quedaron en `App.tsx`; el backend aún acepta el token de invitado en `/adaptar`; un 402 de ElevenLabs se informa como «sin créditos» (el usuario pidió no tocarlo por ahora).
+- **ElevenLabs:** plan Starter contratado por el usuario el 15/10 (38 059 caracteres al mes); voz elegida para el Quijote: **Diego** (`hLWSpwRIXvafYWP2GPET`). La versión con Athena se guardó en `deploy/voces_prueba/athena/`.
+
 ## Al retomar (leer primero)
 
 - **Quién hace qué:** Claude trabaja en esta carpeta y deja los cambios verificados **sin commit**, con el mensaje propuesto. **Los commits y el push los hace Gemini** o el usuario. Gemini trabaja en `../NovaMind-gemini` (rama `gemini/pruebas`) y a veces lanza scripts en `../pruebas_nichos/`: revisar `git status` y `git log -1` antes de editar.
@@ -29,7 +44,8 @@ Corte: **14 de octubre de 2026, noche**. Las preguntas de la sección 1 son las 
 | Rama | Commit | Situación |
 |---|---|---|
 | `feature/fullstack-nuevamente-v2` (local y `origin`) | `3de44c4` | Rama de trabajo y la que se despliega en la VM 1 |
-| `gemini/pruebas` (worktree `../NovaMind-gemini`) | `3de44c4` o posterior | Rama de Gemini, que hace los commits |
+| `feature/espejo-oracle-audiovisual` (worktree `../NovaMind-gemini`, antes `gemini/pruebas`) | `5e38113` o posterior | Rama actual de Gemini, que hace los commits |
+| `claude/remotion-prueba` (worktree `../NovaMind-remotion`) | `5e38113` + cambios sin commit | Video con Remotion, recorrido renombrado y tarea C (16/10) |
 | `backend` e `integracion` (local y remoto) | `394d19c` | Muy por detrás: falta un fast-forward a la rama de trabajo (lo decide el usuario) |
 | `origin/frontEnd` | — | Absorbida el 14/10. Se deja sin tocar |
 | `origin/feature/newmind-edtech-oci` | — | Absorbido o descartado con motivo todo lo aprovechable |

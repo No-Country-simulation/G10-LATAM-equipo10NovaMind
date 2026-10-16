@@ -46,6 +46,7 @@ Esta carpeta centraliza todos los informes de avance, bitácoras de cambios, esp
 * **Fase 19 — Robustecimiento y Auditoría E2E de Producción:** Cobertura escalada a 255 pruebas backend y 17 frontend, con 0 errores de tipado TypeScript y build de producción optimizado en Vite.
 * **Fase 20 — Análisis Forense Multirama y Convergencia a Main:** Mapeo de historias inconexas de Git, verificación de absorción completa de `backend` e `integracion` (+42 y +25 commits adelante) y roadmap de fast-forward limpio hacia `main`.
 * **Fase 21 — Resiliencia 429 Gemini, Semáforos por Modelo y Benchmark:** Clasificación de errores 429 (`cuota_diaria` vs `cuota_minuto`) vía `google.rpc`, memoria en proceso hasta medianoche del Pacífico, semáforos por modelo (`GEMINI_CONCURRENCIA_POR_MODELO=2`), jitter aleatorio en fallback, proveniencia honesta en advertencias de recursos y comparador `deploy/comparar_modelos.py`. Cobertura escalada a 275 pruebas backend (100% pasando).
+* **Fase 22 — Recorrido en español llano, video Remotion y cuestionario coherente (16/10, worktree `NovaMind-remotion`):** estaciones renombradas (Resumen, Tarjetas didácticas, Guía paso a paso, Contenido AudioVisual, Cuestionario), Estación 3 como guía con meta y objetivos, microclase con Remotion Player, biblioteca con Don Quijote I y II y muestras pregeneradas sin cuota, pasos de la guía según el documento y cuestionario generado al final con el temario de las otras estaciones (tarea C, migración `202610160001`). 355 pruebas backend y 45 frontend.
 
 ---
 

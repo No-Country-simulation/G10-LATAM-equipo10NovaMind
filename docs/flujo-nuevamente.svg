@@ -1,0 +1,189 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="titulo desc">
+  <title id="titulo">NuevaMente: del documento a la microclase</title>
+  <desc id="desc">Flujo animado: el documento se ingiere (con transcripción por IA si es imagen o PDF escaneado), Gemini genera en paralelo el resumen, las tarjetas y la producción, y después el cuestionario con lo que enseñaron; se verifican las citas y se audita la fidelidad, el paquete llega por SSE a las 5 estaciones y se guarda en Supabase y OCI; el video narrado de la Estación 4 se genera bajo demanda y se dibuja en el navegador con Remotion.</desc>
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; fill: #e5e7eb; }
+    .mono { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; }
+    .t { font-size: 15px; font-weight: 700; }
+    .s { font-size: 12px; fill: #9ca3af; }
+    .xs { font-size: 11px; fill: #9ca3af; }
+    .etq { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; }
+    .card { fill: #141a2e; stroke-width: 1.6; }
+    .flecha { fill: none; stroke: #6b7280; stroke-width: 2; stroke-dasharray: 160; stroke-dashoffset: 160; }
+
+    /* Un ciclo de 14 s: cada paso aparece a su tiempo, todo se queda y al final se desvanece */
+    .p { opacity: 0; animation: 14s ease-out infinite; }
+    .f { animation: 14s ease-out infinite; }
+    .p1 { animation-name: p1; } .p2 { animation-name: p2; } .p3 { animation-name: p3; }
+    .p4 { animation-name: p4; } .p5 { animation-name: p5; } .p6 { animation-name: p6; }
+    .e1 { animation-name: e1; } .e2 { animation-name: e2; } .e3 { animation-name: e3; }
+    .e4 { animation-name: e4; } .e5 { animation-name: e5; } .p7 { animation-name: p7; }
+    .f1 { animation-name: f1; } .f2 { animation-name: f2; } .f3 { animation-name: f3; }
+    .f4 { animation-name: f4; } .f5 { animation-name: f5; } .f6 { animation-name: f6; } .f7 { animation-name: f7; }
+    .pulso { animation: pulso 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+    @keyframes p1 { 0%, 2% { opacity: 0; transform: translateY(8px); } 7%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes p2 { 0%, 11% { opacity: 0; transform: translateY(8px); } 16%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes p3 { 0%, 21% { opacity: 0; transform: translateY(8px); } 26%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes p4 { 0%, 35% { opacity: 0; transform: translateY(8px); } 40%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes p5 { 0%, 45% { opacity: 0; transform: translateY(8px); } 50%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes p6 { 0%, 52% { opacity: 0; transform: translateY(8px); } 57%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes e1 { 0%, 57% { opacity: 0; transform: translateY(8px); } 61%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes e2 { 0%, 60% { opacity: 0; transform: translateY(8px); } 64%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes e3 { 0%, 63% { opacity: 0; transform: translateY(8px); } 67%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes e4 { 0%, 66% { opacity: 0; transform: translateY(8px); } 70%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes e5 { 0%, 69% { opacity: 0; transform: translateY(8px); } 73%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes p7 { 0%, 78% { opacity: 0; transform: translateY(8px); } 83%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+    @keyframes f1 { 0%, 7% { stroke-dashoffset: 160; } 11%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    @keyframes f2 { 0%, 16% { stroke-dashoffset: 160; } 21%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    @keyframes f3 { 0%, 30% { stroke-dashoffset: 160; } 35%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    @keyframes f4 { 0%, 40% { stroke-dashoffset: 160; } 45%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    @keyframes f5 { 0%, 50% { stroke-dashoffset: 160; } 53%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    @keyframes f6 { 0%, 50% { stroke-dashoffset: 160; } 55%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    @keyframes f7 { 0%, 74% { stroke-dashoffset: 160; } 78%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+    @keyframes pulso { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+    /* Sin animaciones si el sistema las desactiva: se ve el flujo completo */
+    @media (prefers-reduced-motion: reduce) {
+      .p, .f, .pulso { animation: none !important; opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; }
+    }
+  </style>
+
+  <defs>
+    <marker id="punta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6b7280"/>
+    </marker>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#151032"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="560" rx="18" fill="url(#fondo)"/>
+  <text x="30" y="42" style="font-size:20px;font-weight:800">NuevaMente · del documento a la microclase</text>
+  <text x="30" y="62" class="s">Un documento técnico se convierte en un paquete educativo de 5 estaciones</text>
+
+  <!-- 1 · Documento -->
+  <g class="p p1">
+    <rect class="card" x="30" y="92" width="150" height="112" rx="12" stroke="#22d3ee"/>
+    <text x="46" y="114" class="etq" fill="#22d3ee" style="fill:#22d3ee">ENTRADA</text>
+    <text x="46" y="138" class="t">Documento</text>
+    <text x="46" y="158" class="s">PDF · MD · TXT</text>
+    <text x="46" y="176" class="s">imagen o PDF</text>
+    <text x="46" y="192" class="s">escaneado</text>
+  </g>
+  <path class="flecha f f1" d="M184 148 H214" marker-end="url(#punta)"/>
+
+  <!-- 2 · Ingesta -->
+  <g class="p p2">
+    <rect class="card" x="220" y="92" width="176" height="112" rx="12" stroke="#38bdf8"/>
+    <text x="236" y="114" class="etq" style="fill:#38bdf8">INGESTA</text>
+    <text x="236" y="138" class="t">Texto con páginas</text>
+    <text x="236" y="158" class="s">extracción por página;</text>
+    <text x="236" y="176" class="s">si es imagen, la transcribe</text>
+    <text x="236" y="192" class="s">Gemini y se avisa</text>
+  </g>
+  <path class="flecha f f2" d="M400 148 H430" marker-end="url(#punta)"/>
+
+  <!-- 3 · Generación paralela -->
+  <g class="p p3">
+    <rect class="card" x="436" y="76" width="250" height="176" rx="12" stroke="#a78bfa"/>
+    <text x="452" y="98" class="etq" style="fill:#a78bfa">GENERACIÓN PARALELA · GEMINI</text>
+    <g class="pulso">
+      <rect x="452" y="108" width="218" height="30" rx="8" fill="#a78bfa" fill-opacity=".14"/>
+      <text x="462" y="128" style="font-size:12.5px"><tspan font-weight="700">A</tspan> · resumen y conceptos</text>
+    </g>
+    <g class="pulso" style="animation-delay:.2s">
+      <rect x="452" y="142" width="218" height="30" rx="8" fill="#a78bfa" fill-opacity=".14"/>
+      <text x="462" y="162" style="font-size:12.5px"><tspan font-weight="700">B1</tspan> · tarjetas, glosario, objetivos</text>
+    </g>
+    <g class="pulso" style="animation-delay:.4s">
+      <rect x="452" y="176" width="218" height="30" rx="8" fill="#a78bfa" fill-opacity=".14"/>
+      <text x="462" y="196" style="font-size:12.5px"><tspan font-weight="700">B2</tspan> · guion, guía, diagrama</text>
+    </g>
+    <g class="pulso" style="animation-delay:.6s">
+      <rect x="452" y="212" width="218" height="30" rx="8" fill="#e879f9" fill-opacity=".16"/>
+      <text x="462" y="232" style="font-size:12.5px"><tspan font-weight="700">C</tspan> · cuestionario, con lo enseñado</text>
+    </g>
+  </g>
+  <text class="p p3 xs" x="436" y="268">A, B1 y B2 a la vez; C al final · caché · respaldo</text>
+  <path class="flecha f f3" d="M690 148 H720" marker-end="url(#punta)"/>
+
+  <!-- 4 · Verificación -->
+  <g class="p p4">
+    <rect class="card" x="726" y="92" width="204" height="112" rx="12" stroke="#fbbf24"/>
+    <text x="742" y="114" class="etq" style="fill:#fbbf24">PROCEDENCIA</text>
+    <text x="742" y="138" class="t">Citas verificadas</text>
+    <text x="742" y="158" class="s">cada cita se busca en el</text>
+    <text x="742" y="176" class="s">documento (página real);</text>
+    <text x="742" y="192" class="s">auditoría de fidelidad (Groq)</text>
+  </g>
+  <path class="flecha f f4" d="M828 208 V256" marker-end="url(#punta)"/>
+
+  <!-- 5 · Entrega por SSE -->
+  <g class="p p5">
+    <rect class="card" x="726" y="262" width="204" height="88" rx="12" stroke="#34d399"/>
+    <text x="742" y="284" class="etq" style="fill:#34d399">ENTREGA</text>
+    <text x="742" y="308" class="t">Paquete por SSE</text>
+    <text x="742" y="328" class="s">cada recurso llega en cuanto</text>
+    <text x="742" y="344" class="s">está listo (heartbeats)</text>
+  </g>
+  <path class="flecha f f5" d="M722 306 H690" marker-end="url(#punta)"/>
+  <path class="flecha f f6" d="M828 354 V398" marker-end="url(#punta)"/>
+
+  <!-- 6 · Persistencia -->
+  <g class="p p5">
+    <rect class="card" x="726" y="404" width="204" height="84" rx="12" stroke="#34d399" stroke-dasharray="5 4"/>
+    <text x="742" y="426" class="etq" style="fill:#34d399">PERSISTENCIA</text>
+    <text x="742" y="448" class="s"><tspan font-weight="700" fill="#e5e7eb">Supabase</tspan> · cuenta, paquetes,</text>
+    <text x="742" y="464" class="s">progreso (RLS por usuario)</text>
+    <text x="742" y="480" class="s"><tspan font-weight="700" fill="#e5e7eb">OCI</tspan> · archivos y audio</text>
+  </g>
+
+  <!-- 7 · Las 5 estaciones -->
+  <g class="p p6">
+    <text x="30" y="270" class="etq" style="fill:#e879f9">LAS 5 ESTACIONES</text>
+  </g>
+  <g class="p e1">
+    <rect class="card" x="30" y="282" width="124" height="66" rx="10" stroke="#e879f9"/>
+    <text x="42" y="304" class="mono xs" style="fill:#f0abfc">01</text>
+    <text x="42" y="324" class="t" style="font-size:14px">Resumen</text>
+    <text x="42" y="340" class="xs">intuición inicial</text>
+  </g>
+  <g class="p e2">
+    <rect class="card" x="162" y="282" width="124" height="66" rx="10" stroke="#e879f9"/>
+    <text x="174" y="304" class="mono xs" style="fill:#f0abfc">02</text>
+    <text x="174" y="324" class="t" style="font-size:14px">Tarjetas</text>
+    <text x="174" y="340" class="xs">didácticas</text>
+  </g>
+  <g class="p e3">
+    <rect class="card" x="294" y="282" width="124" height="66" rx="10" stroke="#e879f9"/>
+    <text x="306" y="304" class="mono xs" style="fill:#f0abfc">03</text>
+    <text x="306" y="324" class="t" style="font-size:14px">Guía</text>
+    <text x="306" y="340" class="xs">paso a paso y meta</text>
+  </g>
+  <g class="p e4">
+    <rect class="card" x="426" y="282" width="124" height="66" rx="10" stroke="#e879f9" stroke-width="2.4"/>
+    <text x="438" y="304" class="mono xs" style="fill:#f0abfc">04</text>
+    <text x="438" y="324" class="t" style="font-size:14px">AudioVisual</text>
+    <text x="438" y="340" class="xs">microclase narrada</text>
+  </g>
+  <g class="p e5">
+    <rect class="card" x="558" y="282" width="124" height="66" rx="10" stroke="#e879f9"/>
+    <text x="570" y="304" class="mono xs" style="fill:#f0abfc">05</text>
+    <text x="570" y="324" class="t" style="font-size:14px">Cuestionario</text>
+    <text x="570" y="340" class="xs">sobre lo enseñado</text>
+  </g>
+  <path class="flecha f f7" d="M488 352 V398" marker-end="url(#punta)"/>
+
+  <!-- 8 · Video bajo demanda -->
+  <g class="p p7">
+    <rect class="card" x="294" y="404" width="388" height="84" rx="12" stroke="#e879f9" stroke-dasharray="5 4"/>
+    <text x="310" y="426" class="etq" style="fill:#e879f9">BAJO DEMANDA · SOLO SI SE PIDE</text>
+    <text x="310" y="448" class="t" style="font-size:14px">Video narrado de ≤ 60 s</text>
+    <text x="310" y="466" class="s">voz ElevenLabs → Gemini TTS · fotos libres con crédito</text>
+    <text x="310" y="482" class="s">(Openverse, Wikimedia) · video Remotion en el navegador</text>
+  </g>
+
+  <text x="30" y="530" class="xs">Si un recurso falla, se muestra el fallo: nunca se rellena con contenido inventado. Solo cuota gratuita.</text>
+</svg>

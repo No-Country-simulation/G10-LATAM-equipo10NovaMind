@@ -118,7 +118,7 @@ Diseñado específicamente para evitar el **Error 524 (Timeout de 100 segundos)*
 
 ### Eventos emitidos en el stream (`modo_rag=paralelo`):
 1. `event: inicio\ndata: {"status": "iniciando", "titulo": "..."}\n\n`: Metadatos iniciales del documento.
-2. `event: tarea\ndata: {"tarea": "B1", "estado": "en_curso", "modelo": "gemini-3.5-flash-lite"}\n\n`: Estado de avance de las subtareas (`A`, `B1`, `B2`, `auditoria`).
+2. `event: tarea\ndata: {"tarea": "B1", "estado": "en_curso", "modelo": "gemini-3.5-flash-lite"}\n\n`: Estado de avance de las subtareas (`A`, `B1`, `B2`, `C` —el cuestionario, que empieza cuando terminan las otras tres— y `auditoria`).
 3. `event: recurso\ndata: {"recurso": "resumen", "estado": {"estado": "completado"}, "campos": {...}}\n\n`: Publicación inmediata de cada recurso en cuanto está listo (~7-8s para flashcards/tutorial), desbloqueando las estaciones pedagógicas progresivamente sin esperar al paquete completo.
 4. `event: auditoria\ndata: {"auditoria_ejecutada": true, "anclaje_fuente_score": 0.95, "verificacion": {...}}\n\n`: Veredicto de auditoría fáctica cruzada de citas y afirmaciones (Groq).
 5. `event: error\ndata: {"recurso": "guion", "error_codigo": "timeout"}\n\n`: Aislamiento de fallo: un recurso fallido se notifica sin derribar el resto del paquete ni usar contenido inventado.
@@ -140,7 +140,7 @@ curl -N -X POST http://localhost:8000/api/v1/adaptar/stream \
 **Content-Type:** `application/json`.
 **Cabecera opcional:** `Authorization: Bearer <supabase_jwt>` (si se omite, opera en modo invitado sin persistencia OCI).
 
-Genera la locución de la microclase audiovisual (Estación 4 · Director's Cut) mediante síntesis de voz bajo demanda con ElevenLabs o Gemini TTS, vinculando opcionalmente imágenes legales de Wikimedia/Openverse.
+Genera la locución de la microclase audiovisual (Estación 4 · Contenido AudioVisual) mediante síntesis de voz bajo demanda con ElevenLabs o Gemini TTS, vinculando opcionalmente imágenes legales de Wikimedia/Openverse.
 
 ### Parámetros de entrada (`SolicitudNarracion`):
 ```json

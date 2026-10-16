@@ -19,6 +19,7 @@ Se aplican en orden desde el SQL Editor, como `postgres`. Cada una va dentro de 
 
 1. `202610080001_auth_and_persistence.sql`: tablas `profiles`, `documents`, `learning_packages`, `learning_progress` y `user_state`; trigger que crea el perfil y el estado al registrarse un usuario; bucket de Storage privado `documents` (opcional: hoy los originales van a OCI).
 2. `202610120001_generation_tasks.sql`: columna `documents.content_hash` (un documento por usuario y contenido) y tabla `generation_tasks`.
+3. `202610160001_tarea_cuestionario.sql`: la restricción `generation_tasks_task_check` admite la tarea `C` (el cuestionario, que ahora corre después de A, B1 y B2). Sin ella, las filas de C no se guardan y el paquete avisa «No se pudo registrar el estado de algunas tareas», pero la generación sigue.
 
 ### Tablas
 
