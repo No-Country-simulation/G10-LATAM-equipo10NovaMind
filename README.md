@@ -48,7 +48,7 @@ Si un modo no da resultado, se pasa al siguiente y el paquete lo advierte: **par
 
 **Base de datos (Supabase).** Las migraciones de `supabase/migrations/` se aplican en orden; la última, `202610160001_tarea_cuestionario.sql`, admite la tarea `C` en `generation_tasks`. El detalle está en [backend/docs/DATABASE.md](backend/docs/DATABASE.md).
 
-**Documentación por área:** arquitectura en [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md), API en [backend/docs/API.md](backend/docs/API.md), cambios en [backend/docs/CHANGELOG.md](backend/docs/CHANGELOG.md), frontend en [frontend/README.md](frontend/README.md) y pendientes en [historial_progreso/PENDIENTES.md](historial_progreso/PENDIENTES.md).
+**Documentación por área:** arquitectura en [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md), API en [backend/docs/API.md](backend/docs/API.md) y frontend en [frontend/README.md](frontend/README.md). Las bitácoras y el historial de cambios se llevan en local y no se publican.
 
 ---
 
@@ -230,14 +230,10 @@ graph LR
 
     ROOT["📁 G10-LATAM-equipo10NovaMind"]:::root
 
-    %% HISTORIAL Y LEGADO
-    ROOT --> HP_DIR["📁 historial_progreso/<br/><i>(Ramas: integracion + project-manager)</i><br/>• Bitácoras, reportes OCI/React y problemas"]:::dir
-    ROOT --> LEG_DIR["📁 legado/<br/><i>(Rama: integracion)</i><br/>• Artefactos preliminares y bocetos históricos"]:::dir
-
     %% BACKEND
     ROOT --> B_DIR["📁 backend/<br/><i>(Ramas: backend + feature/agents-langgraph)</i>"]:::dir
     B_DIR --> B_APP["📁 app/ (main.py, orquestador.py, agentes, core, storage)"]:::dir
-    B_DIR --> B_DOCS["📁 docs/ (9 docs de arquitectura, API y auditoría)"]:::dir
+    B_DIR --> B_DOCS["📁 docs/ (arquitectura, API, base de datos, despliegue, operación, seguridad y pruebas)"]:::dir
     B_DIR --> B_TESTS["📁 tests/ (pruebas unitarias e integrales, sin cuota)"]:::dir
     B_DIR --> B_DATA["📁 data/ (chroma/, outputs/, documents/)"]:::dir
     B_DIR --> B_REQ["📄 requirements.txt"]:::file
@@ -272,37 +268,15 @@ G10-LATAM-equipo10NovaMind/
 ├── reestablecer_local.bat             # Script de restablecimiento y limpieza de entorno local
 ├── setup.bat                          # Asistente de verificación e instalación de dependencias
 │
-├── historial_progreso/                # 📚 BITÁCORAS, REPORTES DE INTEGRACIÓN Y ARQUITECTURA
-│   ├── README.md                      # Índice descriptivo del contenido de la carpeta
-│   ├── CAMBIOS.md                     # Bitácora detallada de versiones y cambios del proyecto
-│   ├── ESQUEMA_INTEGRACION_FULLSTACK.md # Especificación técnica y diagramas Backend + Frontend + OCI
-│   ├── HISTORIAL_PROBLEMAS_Y_SOLUCIONES.md # Base de conocimiento con 21 incidencias resueltas
-│   ├── INFORME_INTEGRACION_OCI_FASE3.md # Informe de arquitectura y persistencia híbrida en OCI
-│   ├── INFORME_INTEGRACION_FRONTEND_REACT.md # Informe de conexión de la UI React con FastAPI
-│   ├── INSTRUCCIONES_INSTALACION_PRUEBAS.txt # Guía rápida en texto plano para instalación y tests
-│   ├── PROMPT_CONTEXTO_AGENTE.md      # Contexto técnico para asistencia con modelos de IA
-│   └── PROMPT_DESPLIEGUE_OCI_PRIVADO.md # Guía paso a paso para despliegue en instancias de Oracle Cloud
-│
-├── legado/                            # 🏛️ ARTEFACTOS PRELIMINARES Y PROPUESTAS HISTÓRICAS
-│   ├── README.md                      # Explicación histórica de archivos preservados
-│   ├── requirements_LegacyAlejandro.txt # Dependencias del prototipo inicial (Alejandro)
-│   ├── requirements_LegacyPedro.txt   # Dependencias de la propuesta previa (Pedro)
-│   ├── pedro_squema1.png              # Primer boceto de arquitectura propuesto por Pedro
-│   ├── esquema_integracion_A_P.md     # Mapeo comparativo preliminar Alejandro vs. Pedro
-│   ├── esquema_integracion_A_P.png    # Diagrama gráfico de la propuesta preliminar
-│   └── esquema_integracion_A_P.svg    # Diagrama vectorial preliminar
-│
 ├── backend/                           # MICROSERVICIO BACKEND (FastAPI + LangGraph + Agentes)
 │   ├── requirements.txt               # Dependencias limpias fijadas para Python 3.12.7
 │   ├── pytest.ini                     # Configuración de pytest (testpaths = tests)
 │   ├── docs/                          # Paquete de documentación técnica y auditoría
 │   │   ├── API.md                     # Referencia exhaustiva de endpoints REST y contratos
 │   │   ├── ARCHITECTURE.md            # Diagramas de secuencia y flujo Mermaid del backend
-│   │   ├── CHANGELOG.md               # Registro de versiones técnicas del backend
 │   │   ├── DATABASE.md                # Persistencia (ChromaDB vectorial, Local y OCI)
 │   │   ├── DEPLOYMENT.md              # Manual de configuración, variables y despliegue
 │   │   ├── OPERATIONS.md              # Observabilidad, logs, healthcheck y diagnóstico
-│   │   ├── PROJECT_AUDIT.md           # Informe de auditoría estática y matriz de prioridades
 │   │   ├── SECURITY.md                # Evaluación de controles y seguridad preventiva
 │   │   └── TESTING.md                 # Estrategia de testing y pruebas unitarias/integrales
 │   ├── tests/                         # Suite de pruebas deterministas (ver docs/TESTING.md)
@@ -632,8 +606,8 @@ Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben t
 
 ### 9. Organización Limpia del Repositorio
 * La raíz del repositorio se mantiene minimalista con los archivos esenciales de configuración y ejecución.
-* Toda la documentación de avance, bitácoras de incidentes y especificaciones técnicas se encuentra en [historial_progreso/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/historial_progreso).
-* Todos los bocetos preliminares y requisitos de prototipado se conservan para trazabilidad en [legado/](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovaMind/legado).
+* En GitHub solo se publica lo necesario para ejecutar, probar y entender el proyecto: código, pruebas, migraciones, muestras y documentación técnica vigente.
+* Las bitácoras de avance, el historial de problemas, el registro de versiones y los bocetos preliminares (`historial_progreso/`, `legado/`, `backend/docs/CHANGELOG.md` y `backend/docs/PROJECT_AUDIT.md`) se conservan en local y están en `.gitignore`.
 
 ---
 

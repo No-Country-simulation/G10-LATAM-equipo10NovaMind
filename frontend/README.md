@@ -169,6 +169,5 @@ Idea original de la rama `frontEnd` (guía de arranque para el equipo de backend
 ## 📚 6. Documentación Relacionada del Proyecto
 
 Para más detalles sobre la arquitectura integral y la evolución del sistema, consultar:
-* [guia_optimizacion_swap_oci.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/data/documents/guia_optimizacion_swap_oci.md): Documentación oficial del benchmark y guía técnica de memoria Swap OCI.
-* [CAMBIOS.md](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/historial_progreso/CAMBIOS.md): Bitácora cronológica de versiones y cambios del proyecto.
-* [README.md Maestro](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/README.md): Manual general y arquitectura unificada de NuevaMente.
+* [guia_optimizacion_swap_oci.md](../data/documents/guia_optimizacion_swap_oci.md): Documentación oficial del benchmark y guía técnica de memoria Swap OCI.
+* [README.md Maestro](../README.md): Manual general y arquitectura unificada de NuevaMente.
