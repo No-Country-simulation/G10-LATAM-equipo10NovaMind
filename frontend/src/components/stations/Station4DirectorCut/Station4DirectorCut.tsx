@@ -1,6 +1,7 @@
 import {
+  Suspense,
+  lazy,
   useEffect,
-  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -11,74 +12,60 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Eye,
   Award,
   Download,
   BookOpen,
-  Timer,
   Mic,
   LoaderCircle,
   Play,
   TriangleAlert as AlertTriangle,
 } from 'lucide-react';
-import type { DirectorScene, RespuestaNarracion, VideoJobSpec } from '../../../types/types';
+import type { DirectorScene, MuestraPregenerada, RespuestaNarracion, VideoJobSpec } from '../../../types/types';
 import { ampliarEscena, solicitarNarracion, urlsDeAudio } from '../../../services/api';
+import { urlsDeMuestra } from '../../../services/muestras';
 import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
 import {
   BASE_WPM,
   MAX_MICROCLASS_SECONDS,
-  TARGET_WORDS_MAX,
-  TARGET_WORDS_MIN,
   microclassTiming,
-  playbackSeconds,
-  sceneSeconds,
-  splitWords,
-  wordIndexAtChar,
 } from '../../../utils/microclassTiming';
-import {
-  cargarVocesNavegador,
-  elegirVozNavegador,
-  regionDeVoz,
-  vocesEnEspanol,
-} from '../../../utils/vozNavegador';
+import { cargarVocesNavegador, elegirVozNavegador, vocesEnEspanol } from '../../../utils/vozNavegador';
 import { promptVisualEscena } from '../../../utils/promptVisual';
-import { SlideNarrada } from './SlideNarrada';
 import { PizarraDidactica } from './PizarraDidactica';
 import { TeleprompterEstudio } from './TeleprompterEstudio';
-import { SelectorAcento } from './SelectorAcento';
 import { VELOCIDADES_LOCUCION, type EstadoAmpliacion, type VelocidadLocucion } from './estudioTipos';
+import { duracionesDeAudio } from './video/medirAudio';
 import { FuenteChip } from '../../RecursoEstado/RecursoEstado';
 import styles from './Station4DirectorCut.module.css';
 import estudio from './EstudioDirector.module.css';
 
-const MAX_FRAME_DELTA_SECONDS = 0.25; // evita saltos al volver de una pestaña en segundo plano
+// Remotion solo se descarga al abrir el video: la carga inicial de la app no crece
+const VideoMicroclase = lazy(() => import('./video/VideoMicroclase'));
+
 const COMPLETION_XP = 50;
-// Si la voz del navegador no empieza a hablar en este tiempo, se pasa a la voz del servidor
-const ESPERA_INICIO_VOZ_MS = 3000;
 
 /**
- * El video se genera solo si se pide. Orden de voces (decisión del equipo, 14/10):
- * 1. 'navegador': la voz del navegador con el acento elegido; el servidor solo pone las fotos.
- * 2. 'lista': si el navegador no tiene voz o falla, la voz del servidor (ElevenLabs y, si no, Gemini).
+ * El video se genera solo si se pide y siempre con la voz del servidor (decisión del usuario,
+ * 15/10): ElevenLabs y, si no, Gemini. Remotion necesita conocer la duración de cada escena, y
+ * la voz del navegador no la da: esa queda para el teleprompter.
  */
 type EstadoNarracion =
   | { fase: 'inactiva' }
   | { fase: 'generando'; mensaje: string }
-  | { fase: 'lista'; respuesta: RespuestaNarracion; urls: Record<number, string>; motivo?: string }
+  | {
+      fase: 'lista';
+      respuesta: RespuestaNarracion;
+      urls: Record<number, string>;
+      /** Duración de cada audio medida por el navegador: manda sobre la del servidor */
+      duraciones: Record<number, number>;
+      motivo?: string;
+    }
   | { fase: 'error'; mensaje: string }
-  | { fase: 'navegador'; voz: string; lang: string; respuesta: RespuestaNarracion | null; aviso?: string }
-  // Ninguna voz funcionó: el video se ve sin voz, con subtítulos, al ritmo estimado
+  // Ninguna voz funcionó: el video se ve sin voz, con el guion en pantalla, al ritmo estimado
   | { fase: 'mudo'; respuesta: RespuestaNarracion | null; motivo: string };
 
 /** Oculto por decisión del usuario (14/10): el recuadro de estado del video (voz, fallos y avisos). */
 const MOSTRAR_ESTADO_VIDEO = false;
-
-/** Lo que la voz del navegador informa mientras lee una escena. */
-interface HablaNavegador {
-  terminada: boolean;
-  /** Palabra que suena según los eventos `boundary`; null si el navegador no los emite. */
-  palabra: number | null;
-}
 
 const hayVozNavegador = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
@@ -110,23 +97,6 @@ const FALLBACK_SCENES: DirectorScene[] = [
   },
 ];
 
-/**
- * Fronteras acumuladas (0..1) del final de cada palabra. Pondera por longitud y
- * agrega pausa tras signos de puntuación, para que el resaltado siga la voz real.
- */
-const buildWordBoundaries = (words: string[]) => {
-  const weights = words.map((w) => w.length + 1 + (/[.,;:!?…]$/.test(w) ? 4 : 0));
-  const total = weights.reduce((a, b) => a + b, 0) || 1;
-  let acc = 0;
-  return weights.map((w) => (acc += w) / total);
-};
-
-const wordIndexAt = (boundaries: number[], progress: number) => {
-  if (progress <= 0) return -1;
-  const idx = boundaries.findIndex((b) => progress < b);
-  return idx === -1 ? boundaries.length : idx;
-};
-
 const formatSeconds = (s: number) => `${s.toFixed(1)}s`;
 
 /** Pasajes literales del documento de una escena: solo de citas verificadas. */
@@ -151,6 +121,8 @@ interface Station4Props {
   degradaciones?: string[];
   /** Guion del video tal como lo entregó el backend (lleva la palabra clave de cada imagen) */
   videoJobSpec?: VideoJobSpec | null;
+  /** Muestra pregenerada: su video ya existe como archivos estáticos y no se pide al servidor */
+  muestra?: MuestraPregenerada | null;
 }
 
 /**
@@ -171,24 +143,40 @@ const DirectorStudio = ({
   documentId,
   degradaciones = [],
   videoJobSpec,
+  muestra,
 }: Station4Props) => {
   const hasRealScenes = Array.isArray(scenes) && scenes.length > 0;
+  const narracionMuestra = muestra?.narracion?.status === 'exito' ? muestra.narracion : null;
   const safeScenes = hasRealScenes ? scenes : FALLBACK_SCENES;
   const totalScenes = safeScenes.length;
-  // Aprobar exige el 100 % (decisión del usuario, 14/10; antes el 60 %)
-  const minRequired = Math.max(1, totalScenes);
   const wpm = BASE_WPM;
 
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
-  const [viewedScenes, setViewedScenes] = useState<Record<number, boolean>>({ 0: true });
+  // Se aprueba al ver el video hasta el cierre (decisión del usuario, 15/10)
+  const [videoVisto, setVideoVisto] = useState(false);
+  // Lo informa el video: mientras suena, el teleprompter no habla
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
-  const [activeWord, setActiveWord] = useState(-1);
   const [promptCopyState, setPromptCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   // Plegada por defecto (decisión del usuario, 14/10): se abre con "Mostrar"
   const [showRagDetails, setShowRagDetails] = useState(false);
-  const [narracion, setNarracion] = useState<EstadoNarracion>({ fase: 'inactiva' });
-  const [isTheater, setIsTheater] = useState(false);
+  const [narracion, setNarracion] = useState<EstadoNarracion>(() =>
+    narracionMuestra ? { fase: 'generando', mensaje: 'Cargando el video de la muestra…' } : { fase: 'inactiva' },
+  );
+  // Solo un video recién generado arranca solo; el de una muestra espera a que se pulse
+  const [reproducirAlAbrir, setReproducirAlAbrir] = useState(false);
+
+  // Muestra pregenerada: los audios son archivos estáticos; se mide su duración y listo (0 cuota)
+  useEffect(() => {
+    if (!muestra || !narracionMuestra) return;
+    let vivo = true;
+    const urls = urlsDeMuestra(muestra);
+    void duracionesDeAudio(urls).then((duraciones) => {
+      if (vivo) setNarracion({ fase: 'lista', respuesta: narracionMuestra, urls, duraciones });
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [muestra, narracionMuestra]);
 
   // Teleprompter: voz del navegador escena a escena, acento y velocidad
   const [vocesES, setVocesES] = useState<SpeechSynthesisVoice[]>([]);
@@ -205,8 +193,6 @@ const DirectorStudio = ({
   const [verOriginal, setVerOriginal] = useState<Record<string, boolean>>({});
   const [estadosAmpliacion, setEstadosAmpliacion] = useState<Record<string, EstadoAmpliacion>>({});
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const hablaRef = useRef<HablaNavegador | null>(null);
   const urlsRef = useRef<Record<number, string>>({});
   const vivoRef = useRef(true);
   useEffect(() => {
@@ -241,55 +227,29 @@ const DirectorStudio = ({
     return () => window.speechSynthesis.removeEventListener('voiceschanged', alCambiar);
   }, []);
 
-  // Progreso 0..1 de la escena: vive en un ref para no re-renderizar en cada frame
-  const progressRef = useRef(0);
   const completionFiredRef = useRef(false);
   const promptTimeoutRef = useRef<number | undefined>(undefined);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const currentScene = safeScenes[currentSceneIndex] ?? safeScenes[0];
-  const scriptWords = useMemo(() => splitWords(currentScene.guion_locutor), [currentScene.guion_locutor]);
-  const wordBoundaries = useMemo(() => buildWordBoundaries(scriptWords), [scriptWords]);
-  // Modelo de tiempo único (mismo que VideoJobSpec en el backend): palabras reales del guion,
-  // nunca estimacion_palabras ni duracion_segundos declarados por el LLM.
-  const wordCount = scriptWords.length;
 
   // Con video listo, la escena trae su foto (y su audio si la voz es del servidor)
-  const respuestaVideo =
-    narracion.fase === 'lista' || narracion.fase === 'navegador' || narracion.fase === 'mudo'
-      ? narracion.respuesta
-      : null;
+  const respuestaVideo = narracion.fase === 'lista' || narracion.fase === 'mudo' ? narracion.respuesta : null;
   const narrada = respuestaVideo?.video_job_spec.escenas[currentSceneIndex];
   const viewScene = narrada ?? currentScene;
+  // El teleprompter reutiliza el audio del video de la escena (sin gastar cuota)
   const audioUrl = narracion.fase === 'lista' && narrada?.audio ? narracion.urls[narrada.escena] : undefined;
-  const audioMode = Boolean(audioUrl);
-  const browserMode = narracion.fase === 'navegador';
-  const videoListo = narracion.fase === 'lista' || narracion.fase === 'navegador' || narracion.fase === 'mudo';
-  const tiemposPalabras =
-    audioMode && narrada?.audio?.tiempos_palabras?.length === scriptWords.length
-      ? narrada.audio.tiempos_palabras
-      : null;
-  // Si la voz medida pasa un poco de 60 s, el backend pide reproducirla algo más rápido
-  const velocidad = narracion.fase === 'lista' ? (narracion.respuesta.video_job_spec.velocidad_reproduccion ?? 1) : 1;
-  // Lo que dura el audio en sí (reloj del <audio>) y lo que se escucha a esa velocidad
-  const audioDurationSec = audioMode && narrada?.audio ? narrada.audio.duracion_real_s : null;
-  const sceneDurationSec =
-    audioDurationSec !== null ? playbackSeconds(audioDurationSec, velocidad) : sceneSeconds(wordCount, wpm);
+  const videoListo = narracion.fase === 'lista' || narracion.fase === 'mudo';
 
+  // Modelo de tiempo único (mismo que VideoJobSpec en el backend): palabras reales del guion,
+  // nunca estimacion_palabras ni duracion_segundos declarados por el LLM.
   const microclass = useMemo(
     () => microclassTiming(safeScenes.map((sc) => sc.guion_locutor), wpm),
     [safeScenes, wpm],
   );
-  const measuredTotalSec =
-    narracion.fase === 'lista' ? (narracion.respuesta.duracion_total_real_s ?? null) : null;
-  const realTotalSec = measuredTotalSec === null ? null : playbackSeconds(measuredTotalSec, velocidad);
-  const isOverTime = (realTotalSec ?? microclass.totalSeconds) > MAX_MICROCLASS_SECONDS;
-  const isWordBudgetOk =
-    microclass.totalWords >= TARGET_WORDS_MIN && microclass.totalWords <= TARGET_WORDS_MAX;
   const templateScenes = hasRealScenes ? safeScenes.filter((sc) => sc.origen === 'plantilla').length : 0;
 
-  const viewedCount = Object.values(viewedScenes).filter(Boolean).length;
-  const isPassed = viewedCount >= minRequired;
+  const isPassed = isCompleted || videoVisto;
 
   useEffect(() => () => window.clearTimeout(promptTimeoutRef.current), []);
 
@@ -306,189 +266,33 @@ const DirectorStudio = ({
     setHablandoTele(false);
   };
 
-  const resetPlayback = () => {
-    progressRef.current = 0;
-    // Lo que informó la voz del navegador es de la escena anterior: un "terminada" viejo
-    // haría saltar la siguiente antes de que el efecto la empiece a leer
-    hablaRef.current = null;
-    if (audioRef.current) audioRef.current.currentTime = 0;
-    setActiveWord(-1);
-    setIsFinished(false);
+  /** El video llegó al cierre: la estación se aprueba una sola vez. */
+  const aprobarVideo = () => {
+    setVideoVisto(true);
+    if (!hasRealScenes || isCompleted || completionFiredRef.current) return;
+    completionFiredRef.current = true;
+    triggerSmallConfetti();
+    triggerLevelUpConfetti();
+    onCompleteStation(COMPLETION_XP);
+    onOpenDirectorBadge();
   };
 
-  const goToScene = (index: number, { keepPlaying = false } = {}) => {
+  const goToScene = (index: number) => {
     if (index < 0 || index >= totalScenes || index === currentSceneIndex) return;
-
     callarTeleprompter();
-    resetPlayback();
-    if (!keepPlaying) setIsPlaying(false);
     setCurrentSceneIndex(index);
-
-    const nextViewed = viewedScenes[index] ? viewedScenes : { ...viewedScenes, [index]: true };
-    setViewedScenes(nextViewed);
-
-    const nextViewedCount = Object.values(nextViewed).filter(Boolean).length;
-    if (
-      hasRealScenes &&
-      !isCompleted &&
-      !completionFiredRef.current &&
-      nextViewedCount >= minRequired
-    ) {
-      completionFiredRef.current = true;
-      triggerSmallConfetti();
-      triggerLevelUpConfetti();
-      onCompleteStation(COMPLETION_XP);
-      onOpenDirectorBadge();
-    }
   };
 
-  const togglePlay = () => {
-    if (isPlaying) {
-      setIsPlaying(false);
-      return;
-    }
-    callarTeleprompter();
-    if (isFinished) {
-      resetPlayback();
-      // Al terminar el video, reproducir de nuevo empieza por la primera escena
-      if (currentSceneIndex !== 0) setCurrentSceneIndex(0);
-    }
-    setIsPlaying(true);
+  /** El video avisa de lo que se ve (-1 portada, totalScenes cierre): el guion de abajo lo sigue. */
+  const alCambiarEscenaVideo = (index: number) => {
+    if (index >= totalScenes) aprobarVideo();
+    else if (index >= 0) setCurrentSceneIndex(index);
   };
 
-  // Motor del video: un paso por frame. Con voz del servidor, el reloj es el audio;
-  // con la voz del navegador, sus eventos; sin voz, el delta real de tiempo al ritmo base.
-  const onFrame = useEffectEvent((dtSeconds: number) => {
-    if (progressRef.current >= 1) return; // ya resuelto; espera el commit del cambio de escena
-
-    const habla = browserMode ? hablaRef.current : null;
-    const audio = audioMode ? audioRef.current : null;
-    let next: number;
-    let word: number;
-    if (habla) {
-      // La voz del navegador no informa su duración: la escena acaba cuando ella acaba.
-      // Hasta entonces el progreso sigue a la palabra que suena (eventos `boundary`), o al
-      // ritmo base si el navegador no los emite, sin llegar nunca a 1.
-      if (habla.terminada) {
-        next = 1;
-        word = scriptWords.length;
-      } else if (habla.palabra !== null) {
-        word = habla.palabra;
-        next = Math.min(0.99, word > 0 ? wordBoundaries[word - 1] : 0);
-      } else {
-        next = Math.min(0.99, progressRef.current + dtSeconds / sceneDurationSec);
-        word = wordIndexAt(wordBoundaries, next);
-      }
-    } else if (audio) {
-      const audioSec =
-        Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : (audioDurationSec ?? sceneDurationSec);
-      next = audio.ended ? 1 : Math.min(1, audio.currentTime / audioSec);
-      // Con tiempos reales (ElevenLabs) la palabra activa es la que suena; si no, se estima
-      if (tiemposPalabras) {
-        const idx = tiemposPalabras.findIndex((fin) => audio.currentTime < fin);
-        word = idx === -1 ? tiemposPalabras.length : idx;
-      } else {
-        word = wordIndexAt(wordBoundaries, next);
-      }
-    } else {
-      next = Math.min(1, progressRef.current + dtSeconds / sceneDurationSec);
-      word = wordIndexAt(wordBoundaries, next);
-    }
-    progressRef.current = next;
-    setActiveWord(word); // React descarta el set si el índice no cambió
-
-    if (next >= 1) {
-      if (currentSceneIndex < totalScenes - 1) {
-        goToScene(currentSceneIndex + 1, { keepPlaying: true });
-      } else {
-        setIsPlaying(false);
-        setIsFinished(true);
-      }
-    }
-  });
-
-  useEffect(() => {
-    if (!isPlaying) return;
-    let rafId = 0;
-    let last = performance.now();
-    const tick = (now: number) => {
-      const dt = Math.min(MAX_FRAME_DELTA_SECONDS, (now - last) / 1000);
-      last = now;
-      onFrame(dt);
-      rafId = requestAnimationFrame(tick);
-    };
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [isPlaying]);
-
-  // Cambiar `src` restablece playbackRate a defaultPlaybackRate: se fijan ambos
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.defaultPlaybackRate = velocidad;
-    audio.playbackRate = velocidad;
-  }, [audioUrl, velocidad]);
-
-  // Si la voz del navegador falla en pleno video, se pasa a la voz del servidor
-  const onFalloVozNavegador = useEffectEvent((detalle: string) => {
-    setIsPlaying(false);
-    void generarConVozServidor(`La voz del navegador falló (${detalle}): se usa la voz del servidor.`);
-  });
-
-  // Voz del navegador en el video: cada escena es un enunciado nuevo. Pausar lo cancela
-  // (pause/resume falla en Chrome) y reanudar relee la escena desde el principio.
-  const guionActual = currentScene.guion_locutor ?? '';
-  const vozNavegador = narracion.fase === 'navegador' ? narracion : null;
-  useEffect(() => {
-    if (!vozNavegador || !isPlaying) return;
-    const synth = window.speechSynthesis;
-    const habla: HablaNavegador = { terminada: false, palabra: null };
-    hablaRef.current = habla;
-    progressRef.current = 0;
-    let empezo = false;
-    const enunciado = new SpeechSynthesisUtterance(guionActual);
-    const voz = synth.getVoices().find((v) => v.name === vozNavegador.voz);
-    if (voz) enunciado.voice = voz;
-    enunciado.lang = voz?.lang ?? vozNavegador.lang;
-    enunciado.onstart = () => {
-      empezo = true;
-    };
-    enunciado.onboundary = (e) => {
-      empezo = true;
-      if (e.name !== 'sentence') habla.palabra = wordIndexAtChar(guionActual, e.charIndex);
-    };
-    enunciado.onend = () => {
-      habla.terminada = true;
-    };
-    enunciado.onerror = (e) => {
-      // 'interrupted' y 'canceled' son nuestros (pausa o cambio de escena), no un fallo
-      if (e.error === 'interrupted' || e.error === 'canceled') return;
-      habla.terminada = true;
-      onFalloVozNavegador(e.error);
-    };
-    synth.cancel();
-    synth.speak(enunciado);
-    const vigilante = window.setTimeout(() => {
-      if (!empezo && !habla.terminada) onFalloVozNavegador('no empezó a hablar');
-    }, ESPERA_INICIO_VOZ_MS);
-    return () => {
-      window.clearTimeout(vigilante);
-      enunciado.onstart = enunciado.onboundary = enunciado.onend = enunciado.onerror = null;
-      synth.cancel();
-    };
-  }, [vozNavegador, isPlaying, guionActual]);
-
-  // El audio sigue al estado de reproducción; al cambiar de escena cambia su `src` y,
-  // si se estaba reproduciendo (auto-avance), arranca la voz de la nueva escena.
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (isPlaying) {
-      audio.play().catch(() => setIsPlaying(false)); // p. ej. el navegador bloquea el autoplay
-    } else {
-      audio.pause();
-    }
-  }, [isPlaying, audioUrl]);
+  const alReproducirVideo = (reproduciendo: boolean) => {
+    if (reproduciendo) callarTeleprompter(); // una sola voz a la vez
+    setIsPlaying(reproduciendo);
+  };
 
   const contratoActual = (): VideoJobSpec => ({
     video_job_id: videoJobSpec?.video_job_id || `vjob-${documentId || 'doc-novamind'}`,
@@ -514,15 +318,6 @@ const DirectorStudio = ({
     degradaciones,
   });
 
-  /** Video listo: Modo Cine desde la primera escena y reproducción automática. */
-  const abrirVideo = () => {
-    callarTeleprompter();
-    resetPlayback();
-    if (currentSceneIndex !== 0) setCurrentSceneIndex(0);
-    setIsTheater(true);
-    setIsPlaying(true);
-  };
-
   /** Diapositivas con sus fotos, sin voz del servidor (no gasta ElevenLabs ni Gemini TTS). */
   const diapositivasConFotos = async (): Promise<{ respuesta: RespuestaNarracion | null; aviso?: string }> => {
     try {
@@ -538,21 +333,19 @@ const DirectorStudio = ({
   };
 
   /**
-   * Último recurso, cuando ninguna voz funciona: el video sin voz, con fotos y subtítulos,
-   * avanzando al ritmo estimado.
+   * Último recurso, cuando ninguna voz funciona: el video sin voz, con fotos y el guion en
+   * pantalla, avanzando al ritmo estimado.
    */
   const videoSinVoz = async (motivo: string) => {
     setNarracion({ fase: 'generando', mensaje: 'Preparando el video sin voz…' });
     const { respuesta, aviso } = await diapositivasConFotos();
     if (!vivoRef.current) return;
     setNarracion({ fase: 'mudo', respuesta, motivo: aviso ? `${motivo} ${aviso}` : motivo });
-    abrirVideo();
   };
 
-  /** Respaldo: voz del servidor (ElevenLabs y, si no puede, Gemini); si tampoco, el video sin voz. */
-  const generarConVozServidor = async (motivo?: string) => {
+  /** Voz del servidor (ElevenLabs y, si no puede, Gemini); si tampoco, el video sin voz. */
+  const generarConVozServidor = async () => {
     setIsPlaying(false);
-    setIsTheater(false);
     setNarracion({ fase: 'generando', mensaje: 'Generando la voz en el servidor (ElevenLabs y, si no, Gemini)…' });
     try {
       const respuesta = await solicitarNarracion({ ...contratoActual(), wpm: BASE_WPM });
@@ -561,88 +354,37 @@ const DirectorStudio = ({
         return;
       }
       const urls = await urlsDeAudio(respuesta);
+      const duraciones = await duracionesDeAudio(urls);
       if (!vivoRef.current) {
         liberarUrls(urls);
         return;
       }
       liberarUrls(urlsRef.current);
       urlsRef.current = urls;
-      setNarracion({ fase: 'lista', respuesta, urls, motivo });
-      abrirVideo();
+      setNarracion({ fase: 'lista', respuesta, urls, duraciones });
     } catch (err) {
       const detalle = err instanceof Error ? err.message : String(err);
       await videoSinVoz(`No se pudo generar la voz: ${detalle}`);
     }
   };
 
-  /** Botón flotante: primero la voz del navegador con el acento elegido; si no hay, la del servidor. */
+  /** Botón «Generar video»: el video aparece en la página y arranca solo. */
   const handleVideo = async () => {
-    if (!hasRealScenes || narracion.fase === 'generando') return;
-    if (narracion.fase === 'lista' || narracion.fase === 'mudo') {
-      abrirVideo();
-      return;
-    }
+    if (!hasRealScenes || narracion.fase === 'generando' || videoListo) return;
     callarTeleprompter();
-    setIsPlaying(false);
-    const voces = hayVozNavegador ? vocesEnEspanol(await cargarVocesNavegador()) : [];
-    if (!vivoRef.current) return;
-    const voz = voces.find((v) => v.name === vozElegida) ?? elegirVozNavegador(voces);
-    if (!voz) {
-      await generarConVozServidor('Este navegador no tiene voces en español: se usa la voz del servidor.');
-      return;
-    }
-    if (narracion.fase === 'navegador') {
-      // Ya hay diapositivas: solo se actualiza el acento por si el usuario lo cambió
-      setNarracion({ ...narracion, voz: voz.name, lang: voz.lang });
-      abrirVideo();
-      return;
-    }
-    setNarracion({ fase: 'generando', mensaje: 'Preparando las diapositivas y sus fotos…' });
-    const { respuesta, aviso } = await diapositivasConFotos();
-    if (!vivoRef.current) return;
-    setNarracion({ fase: 'navegador', voz: voz.name, lang: voz.lang, respuesta, aviso });
-    abrirVideo();
+    setReproducirAlAbrir(true);
+    await generarConVozServidor();
   };
 
-  const toggleTheater = () => {
-    if (isTheater) {
-      setIsPlaying(false); // cerrar el cine pausa el video
-      setIsTheater(false);
-    } else {
-      setIsTheater(true);
-    }
+  // Botón destacado junto a las escenas: genera el video si falta y lleva al reproductor
+  // y, si ya está listo, lo reproduce
+  const videoRef = useRef<HTMLElement>(null);
+  const [pedidoReproducir, setPedidoReproducir] = useState(0);
+  const accionVideoDestacada = () => {
+    if (!videoListo) void handleVideo();
+    else setPedidoReproducir((n) => n + 1);
+    videoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
-
-  // Atajos globales: Espacio (Play/Pausa del video en Modo Cine), Flechas (escena).
-  const onGlobalKeyDown = useEffectEvent((e: KeyboardEvent) => {
-    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-    const target = e.target instanceof HTMLElement ? e.target : null;
-    if (
-      target?.closest(
-        'input, textarea, select, [contenteditable="true"], [role="dialog"], [role="tablist"]',
-      )
-    ) {
-      return;
-    }
-
-    if (e.code === 'Space') {
-      if (!isTheater || target?.closest('button, a, summary')) return; // activación nativa del control
-      e.preventDefault();
-      togglePlay();
-    } else if (e.code === 'ArrowRight') {
-      e.preventDefault();
-      goToScene(currentSceneIndex + 1, { keepPlaying: isTheater && isPlaying });
-    } else if (e.code === 'ArrowLeft') {
-      e.preventDefault();
-      goToScene(currentSceneIndex - 1, { keepPlaying: isTheater && isPlaying });
-    }
-  });
-
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => onGlobalKeyDown(e);
-    window.addEventListener('keydown', listener);
-    return () => window.removeEventListener('keydown', listener);
-  }, []);
 
   // Patrón WAI-ARIA Tabs: flechas/Home/End mueven foco y selección
   const handleTablistKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -815,7 +557,7 @@ const DirectorStudio = ({
       {/* Anuncios para lectores de pantalla: solo cambios significativos, nunca el reloj */}
       <div className={styles.srOnly} role="status" aria-live="polite" aria-atomic="true">
         {`${sceneLabel(currentSceneIndex)} de ${totalScenes}: ${currentScene.titulo}. ${
-          isPlaying ? 'Video en reproducción.' : isFinished ? 'Video finalizado.' : ''
+          isPlaying ? 'Video en reproducción.' : ''
         }`}
       </div>
 
@@ -825,7 +567,7 @@ const DirectorStudio = ({
           <div className={estudio.badgeRow}>
             <span className={estudio.stationTag}>
               <Clapperboard size={13} color="#f0abfc" aria-hidden="true" />
-              Estación 04 · Storyboard & Guion Docente
+              Estación 04 · Videos
             </span>
             {isCompleted && (
               <span className={estudio.completedTag}>
@@ -833,11 +575,7 @@ const DirectorStudio = ({
               </span>
             )}
           </div>
-          <h3 className={estudio.stationTitle}>Director Cut: Narrativa Pedagógica & Storyboard</h3>
-          <p className={estudio.stationSubtitle}>
-            Estudio interactivo de locución y storyboard para microclases de 60 segundos. Explora las {totalScenes}{' '}
-            escenas para aprobar.
-          </p>
+          <h3 className={estudio.stationTitle}>Contenido AudioVisual</h3>
         </div>
 
         <div className={estudio.headerActions}>
@@ -859,35 +597,12 @@ const DirectorStudio = ({
           )}
 
           <div className={estudio.progressStats}>
-            <div className={estudio.progressLabel}>Escenas Exploradas (Requerido: {minRequired})</div>
+            <div className={estudio.progressLabel}>Microclase (verla hasta el cierre)</div>
             <div className={`${estudio.progressRatio} ${isPassed ? estudio.progressRatioPassed : ''}`}>
-              {viewedCount} / {totalScenes}
+              {isPassed ? 'Vista' : 'Pendiente'}
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Presupuesto global de la microclase */}
-      <div
-        className={`${styles.budgetBar} ${isOverTime || !isWordBudgetOk ? styles.budgetBarWarn : ''}`}
-      >
-        <Timer size={14} aria-hidden="true" />
-        <span>
-          Microclase: <strong>{microclass.totalWords} palabras</strong> (meta {TARGET_WORDS_MIN}–{TARGET_WORDS_MAX})
-        </span>
-        <span aria-hidden="true">·</span>
-        {realTotalSec !== null ? (
-          <span>
-            Voz real: <strong>{formatSeconds(realTotalSec)}</strong> / {MAX_MICROCLASS_SECONDS}s (medido del audio
-            {velocidad > 1 ? `, a ${velocidad}×` : ''})
-          </span>
-        ) : (
-          <span>
-            <strong>{formatSeconds(microclass.totalSeconds)}</strong> / {MAX_MICROCLASS_SECONDS}s estimados a{' '}
-            {Math.round(wpm)} palabras por minuto
-          </span>
-        )}
-        {isOverTime && <span className={styles.budgetWarnText}>Excede el máximo de 60 s</span>}
       </div>
 
       {/* Procedencia: el docente debe saber qué generó el sistema y qué no está verificado */}
@@ -906,7 +621,9 @@ const DirectorStudio = ({
         </div>
       )}
 
-      {/* Tira de Escenas / Strip de Navegación */}
+      {/* Primero el guion escena a escena; el video va debajo, a lo ancho (decisión del usuario, 15/10) */}
+      {/* Tira de Escenas / Strip de Navegación, con el botón del video a la derecha */}
+      <div className={styles.filaEscenas}>
       <div
         className={estudio.sceneStrip}
         role="tablist"
@@ -915,7 +632,6 @@ const DirectorStudio = ({
       >
         {safeScenes.map((sc, idx) => {
           const isCurrent = currentSceneIndex === idx;
-          const isViewed = !!viewedScenes[idx];
 
           return (
             <button
@@ -930,9 +646,7 @@ const DirectorStudio = ({
               aria-controls="s4-studio-panel"
               tabIndex={isCurrent ? 0 : -1}
               onClick={() => goToScene(idx)}
-              className={`${estudio.sceneButton} ${
-                isCurrent ? estudio.sceneButtonActive : isViewed ? estudio.sceneButtonViewed : ''
-              }`}
+              className={`${estudio.sceneButton} ${isCurrent ? estudio.sceneButtonActive : ''}`}
             >
               <span className={estudio.sceneMeta}>
                 <span className={estudio.sceneTag}>
@@ -940,17 +654,36 @@ const DirectorStudio = ({
                 </span>
                 <span className={estudio.sceneTitleText}>{sc.titulo}</span>
               </span>
-              <span className={estudio.sceneIconBox}>
-                {isViewed ? (
-                  <CheckCircle2 size={18} color="var(--color-emerald-400)" aria-hidden="true" />
-                ) : (
-                  <Eye size={18} color="var(--color-text-subtle)" aria-hidden="true" />
-                )}
-                <span className={styles.srOnly}>{isViewed ? '(vista)' : '(pendiente)'}</span>
-              </span>
             </button>
           );
         })}
+      </div>
+      {hasRealScenes && (
+        <button
+          type="button"
+          onClick={accionVideoDestacada}
+          disabled={narracion.fase === 'generando'}
+          className={`${estudio.videoBtn} ${styles.botonVideoDestacado} ${videoListo ? styles.botonVideoListo : ''}`}
+          title={videoListo ? 'Ir al video de la microclase' : 'Genera el video narrado con la voz del servidor'}
+        >
+          {narracion.fase === 'generando' ? (
+            <LoaderCircle size={18} className={styles.spin} aria-hidden="true" />
+          ) : videoListo ? (
+            <Play size={18} fill="currentColor" aria-hidden="true" />
+          ) : (
+            <Clapperboard size={18} aria-hidden="true" />
+          )}
+          <span>
+            {narracion.fase === 'generando'
+              ? 'Generando video…'
+              : videoListo
+                ? 'Ver la microclase'
+                : narracion.fase === 'error'
+                  ? 'Reintentar video'
+                  : 'Generar video narrado'}
+          </span>
+        </button>
+      )}
       </div>
 
       {/* Estudio Principal (Doble Panel: Teleprompter + Pizarra Didáctica) */}
@@ -1051,48 +784,7 @@ const DirectorStudio = ({
           promptDisponible={Boolean(promptVisual)}
           promptCopyState={promptCopyState}
           onCopyPrompt={() => void handleCopyPrompt()}
-          accionVideo={
-            hasRealScenes && (
-              <div className={estudio.videoActions}>
-                {hayVozNavegador && (
-                  <SelectorAcento voces={vocesES} vozElegida={vozElegida} onVoz={cambiarVoz} cargando={cargandoVoces} />
-                )}
-                <button
-                  type="button"
-                  onClick={() => void handleVideo()}
-                  disabled={narracion.fase === 'generando'}
-                  className={`${estudio.videoBtn} ${narracion.fase === 'error' ? estudio.videoBtnError : ''}`}
-                  aria-label={
-                    videoListo
-                      ? 'Ver el video en Modo Cine'
-                      : narracion.fase === 'error'
-                        ? 'Reintentar el video'
-                        : 'Generar el video narrado'
-                  }
-                >
-                  {narracion.fase === 'generando' ? (
-                    <LoaderCircle size={16} className={styles.spin} aria-hidden="true" />
-                  ) : videoListo ? (
-                    <Play size={16} fill="currentColor" aria-hidden="true" />
-                  ) : (
-                    <Clapperboard size={16} aria-hidden="true" />
-                  )}
-                  <span>
-                    {narracion.fase === 'generando'
-                      ? 'Generando…'
-                      : videoListo
-                        ? 'Ver video'
-                        : narracion.fase === 'error'
-                          ? 'Reintentar video'
-                          : 'Generar video'}
-                  </span>
-                </button>
-              </div>
-            )
-          }
         >
-          {MOSTRAR_ESTADO_VIDEO && hasRealScenes && <EstadoVideo estado={narracion} />}
-
           {/* Barra de Navegación de Escenas */}
           <div className={estudio.playbackNav}>
             <button
@@ -1124,24 +816,73 @@ const DirectorStudio = ({
         </PizarraDidactica>
       </div>
 
-      {/* El video solo se ve en el Modo Cine */}
-      <SlideNarrada
-        scene={viewScene}
-        span={currentSpan}
-        isPlaying={isPlaying}
-        onTogglePlay={togglePlay}
-        isTheater={isTheater}
-        onToggleTheater={toggleTheater}
-        soloCine
-        subtitulo={{ palabras: scriptWords, activa: activeWord }}
-        sinVoz={narracion.fase === 'mudo'}
-      />
-      {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" />}
+      {/* La estación es el video, debajo del estudio: se aprueba al verlo hasta el cierre */}
+      <section ref={videoRef} className={styles.videoSeccion} aria-label="Microclase audiovisual">
+        {videoListo ? (
+          <Suspense
+            fallback={
+              <div className={styles.videoEspera}>
+                <LoaderCircle size={22} className={styles.spin} aria-hidden="true" />
+                <p className={styles.videoEsperaTexto}>Cargando el reproductor…</p>
+              </div>
+            }
+          >
+            <VideoMicroclase
+              spec={narracion.respuesta?.video_job_spec ?? contratoActual()}
+              urls={narracion.fase === 'lista' ? narracion.urls : {}}
+              duraciones={narracion.fase === 'lista' ? narracion.duraciones : {}}
+              onEscena={alCambiarEscenaVideo}
+              onReproduciendo={alReproducirVideo}
+              autoPlay={reproducirAlAbrir}
+              pedidoReproducir={pedidoReproducir}
+            />
+          </Suspense>
+        ) : (
+          <div className={styles.videoEspera}>
+            {narracion.fase === 'generando' ? (
+              <LoaderCircle size={28} className={styles.spin} aria-hidden="true" />
+            ) : (
+              <Clapperboard size={28} color="#f0abfc" aria-hidden="true" />
+            )}
+            <p className={styles.videoEsperaTexto} role="status" aria-live="polite">
+              {narracion.fase === 'generando'
+                ? narracion.mensaje
+                : narracion.fase === 'error'
+                  ? narracion.mensaje
+                  : hasRealScenes
+                    ? 'La microclase se genera cuando la pides: la voz usa la cuota gratuita del día.'
+                    : 'Genera un paquete para ver su microclase.'}
+            </p>
+            {hasRealScenes && (
+              <button
+                type="button"
+                onClick={() => void handleVideo()}
+                disabled={narracion.fase === 'generando'}
+                className={`${estudio.videoBtn} ${narracion.fase === 'error' ? estudio.videoBtnError : ''}`}
+              >
+                {narracion.fase === 'generando' ? (
+                  <LoaderCircle size={16} className={styles.spin} aria-hidden="true" />
+                ) : (
+                  <Play size={16} fill="currentColor" aria-hidden="true" />
+                )}
+                <span>
+                  {narracion.fase === 'generando'
+                    ? 'Generando…'
+                    : narracion.fase === 'error'
+                      ? 'Reintentar video'
+                      : 'Generar video'}
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+        {MOSTRAR_ESTADO_VIDEO && hasRealScenes && <EstadoVideo estado={narracion} />}
+      </section>
 
       {onNextStation && (
         <div className={styles.nextStationContainer}>
           <button type="button" onClick={onNextStation} className={styles.nextStationBtn}>
-            <span>Siguiente Estación: The Final Trial (Quiz Capstone)</span>
+            <span>Siguiente Estación: Cuestionario</span>
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>
@@ -1156,11 +897,9 @@ const EstadoVideo = ({ estado }: { estado: EstadoNarracion }) => {
   const avisos =
     estado.fase === 'lista'
       ? [estado.motivo, ...estado.respuesta.advertencias]
-      : estado.fase === 'navegador'
-        ? [estado.aviso, ...(estado.respuesta?.advertencias ?? [])]
-        : estado.fase === 'mudo'
-          ? [estado.motivo, ...(estado.respuesta?.advertencias ?? [])]
-          : [];
+      : estado.fase === 'mudo'
+        ? [estado.motivo, ...(estado.respuesta?.advertencias ?? [])]
+        : [];
   const resumen =
     estado.fase === 'generando'
       ? estado.mensaje
@@ -1172,13 +911,11 @@ const EstadoVideo = ({ estado }: { estado: EstadoNarracion }) => {
               ? ` · se reproduce a ${lista.video_job_spec.velocidad_reproduccion}×`
               : ''
           }${lista.reutilizado ? ' · recuperada sin gastar cuota' : ''}`
-        : estado.fase === 'navegador'
-          ? `Voz del navegador: ${regionDeVoz(estado.lang)} · ${estado.voz}`
-          : estado.fase === 'mudo'
-            ? 'Sin voz: el video avanza con subtítulos al ritmo estimado.'
+        : estado.fase === 'mudo'
+          ? 'Sin voz: el video avanza al ritmo estimado, con el guion de cada escena en pantalla.'
           : estado.fase === 'error'
             ? estado.mensaje
-            : 'Pulsa «Generar video» para ver las diapositivas narradas con la voz y el acento elegidos.';
+            : 'Pulsa «Generar video» para ver las diapositivas narradas con la voz del servidor.';
 
   return (
     <div className={`${estudio.videoStatus} ${estado.fase === 'error' ? estudio.videoStatusError : ''}`}>

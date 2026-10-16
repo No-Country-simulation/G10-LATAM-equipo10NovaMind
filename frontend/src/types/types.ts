@@ -299,7 +299,28 @@ export interface EstadoRecurso {
   reutilizado?: boolean;
 }
 
+/**
+ * Solo frontend (no existe en schemas.py): un documento de ejemplo con su paquete y su video ya
+ * generados una vez y servidos como archivos estáticos (frontend/public/ejemplos/), para probar
+ * sin gastar cuota. Se muestra siempre como muestra pregenerada, con su fecha.
+ */
+export interface MuestraPregenerada {
+  /** id del documento en REAL_DOCUMENTS_CATALOG */
+  documento: string;
+  generado_el: string;
+  /** Ajustes con los que se generó (perfil, nicho, formato y nivel) */
+  ajustes: { perfil: RecipientProfile; nicho: IndustryNiche; formato: OutputFormat; detalle: DetailLevel };
+  /** Voz de la narración, p. ej. «Isabela (ElevenLabs)»; null si no hay video */
+  voz: string | null;
+  /** Carpeta pública de la muestra, p. ej. "/ejemplos/guia-swap-oci/" */
+  base: string;
+  /** Respuesta de /narracion/generar; las rutas de audio son relativas a `base` */
+  narracion?: RespuestaNarracion | null;
+}
+
 export interface AdaptedContentPackage {
+  /** Solo en las muestras pregeneradas de los documentos de ejemplo */
+  muestra?: MuestraPregenerada | null;
   persistencia?: { proveedor: string; package_id: string };
   status: 'exito' | 'exito_con_advertencias' | 'error';
   advertencias?: string[];
@@ -358,6 +379,8 @@ export interface RealDocumentPreset {
   titulo: string;
   nicho: IndustryNiche;
   perfil: RecipientProfile;
+  /** Con perfil y nicho, los ajustes fijos del documento: los de su muestra y los únicos del invitado */
+  detalle: DetailLevel;
   formato_sugerido: OutputFormat;
   tipo: 'markdown' | 'pdf';
   tamano_formato: string;

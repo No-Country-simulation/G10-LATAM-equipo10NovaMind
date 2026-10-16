@@ -197,22 +197,22 @@ export async function solicitarAdaptacion(
 
   const matchedScenario = SCENARIOS.find((s) => s.id === selectedScenarioId) || SCENARIOS[0];
 
-  onProgress?.('⚡ [1/5] Generando Estación 1: Resumen Ninja (TL;DR)...', undefined, 0);
+  onProgress?.('⚡ [1/5] Demo sin conexión (ejemplo fijo) · Estación 1: Resumen...', undefined, 0);
   await new Promise((r) => setTimeout(r, 600));
 
-  onProgress?.('📇 [2/5] Generando Estación 2: Flashcards 3D...', undefined, 1);
+  onProgress?.('📇 [2/5] Demo sin conexión · Estación 2: Tarjetas didácticas...', undefined, 1);
   await new Promise((r) => setTimeout(r, 700));
 
-  onProgress?.('🛠️ [3/5] Generando Estación 3: Tutorial Quest (Laboratorio CLI)...', undefined, 2);
+  onProgress?.('🛠️ [3/5] Demo sin conexión · Estación 3: Guía paso a paso...', undefined, 2);
   await new Promise((r) => setTimeout(r, 700));
 
-  onProgress?.('🎬 [4/5] Generando Estación 4: Director Cut (Storyboard)...', undefined, 3);
+  onProgress?.('🎬 [4/5] Demo sin conexión · Estación 4: Contenido AudioVisual...', undefined, 3);
   await new Promise((r) => setTimeout(r, 700));
 
-  onProgress?.('📝 [5/5] Generando Estación 5: The Final Trial (Quiz con Escudos)...', undefined, 4);
+  onProgress?.('📝 [5/5] Demo sin conexión · Estación 5: Cuestionario...', undefined, 4);
   await new Promise((r) => setTimeout(r, 800));
 
-  onProgress?.('🛡️ [6/6] Auditoría de Anclaje RAG & Persistencia OCI...', undefined, 4);
+  onProgress?.('🛡️ Demo sin conexión: sin auditoría ni guardado en OCI...', undefined, 4);
   await new Promise((r) => setTimeout(r, 400));
 
   const demoPackage: AdaptedContentPackage = JSON.parse(JSON.stringify(matchedScenario.data));

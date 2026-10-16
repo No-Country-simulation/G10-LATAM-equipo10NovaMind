@@ -188,7 +188,7 @@ export const Station2FlashcardQuest = ({
           <div className={styles.badgeRow}>
             <span className={styles.stationTag}>
               <BookOpen size={12} color="var(--color-cyan-400)" />
-              Estación 02 · Active Recall & Memorización
+              Estación 02 · Memorización
             </span>
             {isCompleted && (
               <span className={styles.completedTag}>
@@ -197,11 +197,8 @@ export const Station2FlashcardQuest = ({
             )}
           </div>
           <h3 className={styles.stationTitle}>
-            Flashcard Quest Interactivo
+            Tarjetas didácticas interactivas
           </h3>
-          <p className={styles.stationSubtitle}>
-            Pon a prueba tu memoria activa con tarjetas 3D. Para aprobar, domina las {totalCards} tarjetas.
-          </p>
         </div>
 
         {/* Progress Tracker */}
@@ -280,7 +277,8 @@ export const Station2FlashcardQuest = ({
             </div>
 
             <div className={styles.cardBottomRow}>
-              <span>Active Recall Simulator</span>
+              {/* Hueco vacío: mantiene el botón a la derecha (space-between) */}
+              <span />
               <button
                 type="button"
                 onClick={(e) => {
@@ -313,7 +311,7 @@ export const Station2FlashcardQuest = ({
             </div>
 
             <div className={styles.cardBottomRow}>
-              <span>Fidelidad Pedagógica</span>
+              <span />
               <button
                 type="button"
                 onClick={(e) => {
@@ -388,7 +386,7 @@ export const Station2FlashcardQuest = ({
               ) : (
                 <>
                   <Sparkles size={16} color="var(--color-cyan-300)" />
-                  <span>Dominar Concepto</span>
+                  <span>Concepto dominado</span>
                 </>
               )}
             </button>
@@ -416,7 +414,7 @@ export const Station2FlashcardQuest = ({
               transition: 'all 0.2s ease',
             }}
           >
-            <span>Siguiente Estación: Tutorial Quest</span>
+            <span>Siguiente Estación: Guía paso a paso</span>
             <ChevronRight size={16} />
           </button>
         </div>

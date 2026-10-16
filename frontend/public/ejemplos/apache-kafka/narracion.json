@@ -1,0 +1,216 @@
+{
+  "status": "exito",
+  "video_job_spec": {
+    "video_job_id": "vjob-doc-a184bfa55112c5c4",
+    "document_id": "doc-a184bfa55112c5c4",
+    "target_duration": 50,
+    "max_duration": 60,
+    "aspect_ratio": "9:16",
+    "idioma": "es",
+    "estado": "completed",
+    "escenas": [
+      {
+        "id": "sc-1",
+        "escena": 1,
+        "tiempo": "00:00 - 00:16",
+        "duracion_segundos": 16.5,
+        "titulo": "Escena 1: Introduccion a Event Streaming",
+        "guion_locutor": "El flujo continuo de eventos permite capturar datos en tiempo real desde bases de datos o servicios en la nube para procesarlos al instante. Esto facilita calcular rentabilidades o auditar transacciones financieras de forma automatizada y sin demoras.",
+        "estimacion_palabras": 38,
+        "storyboard_visual": "Animacion mostrando nodos conectados transmitiendo paquetes de datos en tiempo real.",
+        "consejo_pedagogico": "Comprende la analogia del sistema nervioso central para visualizar el flujo continuo de datos.",
+        "objetivo_pedagogico": "Entender el concepto fundamental de event streaming y su proposito.",
+        "visual": {
+          "tipo": "ppt_concepto",
+          "titulo": "Event Streaming Fundamentals",
+          "puntos_clave": [
+            "Captura de datos en tiempo real",
+            "Almacenamiento duradero de eventos",
+            "Procesamiento y enrutamiento inmediato"
+          ],
+          "codigo_o_estructura": null,
+          "prompt_grafico": null
+        },
+        "fuentes": [
+          {
+            "chunk_id": "cita-1-1",
+            "pagina": null,
+            "texto_fuente": "Event streaming is the digital equivalent of the human body's central nervous system.",
+            "origen": "llm",
+            "verificada": true,
+            "contexto": {
+              "antes": " distributed under the License is distributed on an \"AS IS\" BASIS,\n WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n See the License for the specific language governing permissions and\n limitations under the License.\n-->\n\n\n## What is event streaming?\n\n",
+              "fragmento": "Event streaming is the digital equivalent of the human body's central nervous system",
+              "despues": ". It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software. \n\nTechnically speaking, event streaming is the practice of capturing data in real-time from event",
+              "recortado_inicio": true,
+              "recortado_fin": true
+            }
+          }
+        ],
+        "origen": "llm",
+        "imagen": {
+          "tipo": "foto",
+          "palabra_clave": "neural network",
+          "url": "https://api.openverse.org/v1/images/8233ae01-f6ec-4d87-b09b-92490eb3ea1b/thumb/",
+          "alt": "Escena 1: Introduccion a Event Streaming",
+          "autor": "fdecomite",
+          "licencia": "CC BY 2.0",
+          "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+          "fuente_url": "https://www.flickr.com/photos/21649179@N00/3237928173",
+          "proveedor": "openverse"
+        },
+        "audio": {
+          "ruta": "escena-1.mp3",
+          "duracion_real_s": 17.0,
+          "voz": "Kore",
+          "modelo": "gemini-3.8-flash-tts",
+          "proveedor": "gemini",
+          "mime_type": "audio/mpeg",
+          "tiempos_palabras": null
+        }
+      },
+      {
+        "id": "sc-2",
+        "escena": 2,
+        "tiempo": "00:16 - 00:32",
+        "duracion_segundos": 15.7,
+        "titulo": "Escena 2: Arquitectura y Servidores Kafka",
+        "guion_locutor": "Apache Kafka opera como un sistema distribuido de servidores y clientes mediante un protocolo TCP. Los servidores brokers forman la capa de almacenamiento tolerante a fallos, mientras Kafka Connect integra bases de datos de forma escalable.",
+        "estimacion_palabras": 36,
+        "storyboard_visual": "Diagrama de bloques destacando servidores brokers y clientes interconectados.",
+        "consejo_pedagogico": "Distingue claramente entre las tareas de los servidores y las aplicaciones cliente.",
+        "objetivo_pedagogico": "Conocer la arquitectura base de servidores y clientes en Kafka.",
+        "visual": {
+          "tipo": "diagrama_bloques",
+          "titulo": "Kafka Cluster Architecture",
+          "puntos_clave": [
+            "Servidores brokers para almacenamiento",
+            "Kafka Connect para integracion",
+            "Clientes para procesamiento paralelo"
+          ],
+          "codigo_o_estructura": null,
+          "prompt_grafico": null
+        },
+        "fuentes": [
+          {
+            "chunk_id": "cita-2-1",
+            "pagina": null,
+            "texto_fuente": "Kafka is a distributed system consisting of servers and clients that communicate via a high-performance TCP network protocol.",
+            "origen": "llm",
+            "verificada": true,
+            "contexto": {
+              "antes": "be deployed on bare-metal hardware, virtual machines, and containers, and on-premises as well as in the cloud. You can choose between self-managing your Kafka environments and using fully managed services offered by a variety of vendors. \n\n## How does Kafka work in a nutshell?\n\n",
+              "fragmento": "Kafka is a distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol",
+              "despues": "](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments. \n\n**Servers** : Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions. Some of these servers",
+              "recortado_inicio": true,
+              "recortado_fin": true
+            }
+          }
+        ],
+        "origen": "llm",
+        "imagen": {
+          "tipo": "foto",
+          "palabra_clave": "server rack",
+          "url": "https://api.openverse.org/v1/images/c28b5999-ea14-4b83-ace1-aa2e496803a7/thumb/",
+          "alt": "Escena 2: Arquitectura y Servidores Kafka",
+          "autor": "zdw",
+          "licencia": "CC BY-SA 2.0",
+          "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+          "fuente_url": "https://www.flickr.com/photos/75783104@N00/65675213",
+          "proveedor": "openverse"
+        },
+        "audio": {
+          "ruta": "escena-2.mp3",
+          "duracion_real_s": 15.44,
+          "voz": "Kore",
+          "modelo": "gemini-3.8-flash-tts",
+          "proveedor": "gemini",
+          "mime_type": "audio/mpeg",
+          "tiempos_palabras": null
+        }
+      },
+      {
+        "id": "sc-3",
+        "escena": 3,
+        "tiempo": "00:32 - 00:45",
+        "duracion_segundos": 13.0,
+        "titulo": "Escena 3: Topics y Particiones",
+        "guion_locutor": "Los eventos se organizan en topics divididos en particiones sobre multiples brokers. Con una replicacion configurable, garantizamos la alta disponibilidad y la lectura ordenada de registros clave en aplicaciones distribuidas.",
+        "estimacion_palabras": 30,
+        "storyboard_visual": "Esquema de un topic con cuatro particiones distribuidas y multiples productores.",
+        "consejo_pedagogico": "Recuerda que las particiones permiten distribuir la carga entre varios brokers para escalar.",
+        "objetivo_pedagogico": "Comprender la estructura de topics, particiones y replicacion en Kafka.",
+        "visual": {
+          "tipo": "palabras_clave",
+          "titulo": "Topics and Partitions",
+          "puntos_clave": [
+            "Topics multi-productor y multi-consumidor",
+            "Particiones distribuidas en brokers",
+            "Replicacion para alta disponibilidad"
+          ],
+          "codigo_o_estructura": null,
+          "prompt_grafico": null
+        },
+        "fuentes": [
+          {
+            "chunk_id": "cita-3-1",
+            "pagina": null,
+            "texto_fuente": "Topics are partitioned , meaning a topic is spread over a number of \"buckets\" located on different Kafka brokers.",
+            "origen": "llm",
+            "verificada": true,
+            "contexto": {
+              "antes": "Instead, you define for how long Kafka should retain your events through a per-topic configuration setting, after which old events will be discarded. Kafka's performance is effectively constant with respect to data size, so storing data for a long time is perfectly fine. \n\n",
+              "fragmento": "Topics are **partitioned** , meaning a topic is spread over a number of \"buckets\" located on different Kafka brokers",
+              "despues": ". This distributed placement of your data is very important for scalability because it allows client applications to both read and write the data from/to many brokers at the same time. When a new event is published to a topic, it is actually appended to one of the topic's",
+              "recortado_inicio": true,
+              "recortado_fin": true
+            }
+          }
+        ],
+        "origen": "llm",
+        "imagen": {
+          "tipo": "foto",
+          "palabra_clave": "database servers",
+          "url": "https://api.openverse.org/v1/images/75f85d4a-7c25-4ed3-a429-3b47e18b9ece/thumb/",
+          "alt": "Escena 3: Topics y Particiones",
+          "autor": "Oracle PR",
+          "licencia": "CC BY 2.0",
+          "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+          "fuente_url": "https://www.flickr.com/photos/49034885@N05/8044949769",
+          "proveedor": "openverse"
+        },
+        "audio": {
+          "ruta": "escena-3.mp3",
+          "duracion_real_s": 14.36,
+          "voz": "Kore",
+          "modelo": "gemini-3.8-flash-tts",
+          "proveedor": "gemini",
+          "mime_type": "audio/mpeg",
+          "tiempos_palabras": null
+        }
+      }
+    ],
+    "total_palabras": 104,
+    "duracion_total_estimada": 45.2,
+    "wpm": 138,
+    "degradaciones": [],
+    "manifiesto_url_oci": null,
+    "video_url_oci": null,
+    "duracion_total_real": 46.8,
+    "velocidad_reproduccion": 1.0
+  },
+  "duracion_total_real_s": 46.8,
+  "duraciones_medidas_s": [
+    17.0,
+    15.44,
+    14.36
+  ],
+  "reutilizado": false,
+  "proveedor": "gemini",
+  "almacenamiento": "en_linea",
+  "advertencias": [
+    "Gemini (Kore, gemini-3.8-flash-lite-tts) no estuvo disponible (La cuota gratuita de voz está agotada por ahora. Prueba de nuevo en unos minutos.)."
+  ],
+  "error_codigo": null,
+  "audios_en_linea": {}
+}

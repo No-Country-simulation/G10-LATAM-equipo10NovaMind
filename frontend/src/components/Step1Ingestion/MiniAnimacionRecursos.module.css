@@ -1,0 +1,90 @@
+/*
+ * Ciclo de 6 s: la hoja late, el flujo avanza y los cuatro recursos aparecen uno tras otro
+ * (0,5 s entre cada uno), se quedan y se desvanecen juntos antes de reiniciar.
+ */
+.lienzo {
+  width: 15rem;
+  max-width: 100%;
+  height: auto;
+  flex: none;
+}
+
+.pregunta {
+  font: 800 16px var(--font-heading);
+  fill: #fde68a;
+}
+
+.hoja {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: latidoHoja 6s ease-in-out infinite;
+}
+
+.flujo {
+  stroke-dasharray: 3 6;
+  animation: avanzar 0.9s linear infinite;
+}
+
+.flecha {
+  animation: parpadeoFlecha 1.8s ease-in-out infinite;
+}
+
+.recurso {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: surgir 6s cubic-bezier(0.2, 0.9, 0.3, 1.25) infinite;
+}
+
+.r1 { animation-delay: 0.6s; }
+.r2 { animation-delay: 1.1s; }
+.r3 { animation-delay: 1.6s; }
+.r4 { animation-delay: 2.1s; }
+
+@keyframes latidoHoja {
+  0%, 100% { transform: scale(1); }
+  8% { transform: scale(1.08); }
+  16% { transform: scale(1); }
+}
+
+@keyframes avanzar {
+  to { stroke-dashoffset: -18; }
+}
+
+@keyframes parpadeoFlecha {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes surgir {
+  0% { opacity: 0; transform: translateX(-14px) scale(0.7); }
+  10% { opacity: 1; transform: translateX(0) scale(1); }
+  70% { opacity: 1; transform: translateX(0) scale(1); }
+  85%, 100% { opacity: 0; transform: scale(0.9); }
+}
+
+@keyframes fundidoRecurso {
+  0% { opacity: 0; }
+  10%, 70% { opacity: 1; }
+  85%, 100% { opacity: 0; }
+}
+
+/* Con «reducir movimiento»: sin desplazamientos ni flujo; los recursos solo aparecen y se van */
+@media (prefers-reduced-motion: reduce) {
+  .hoja,
+  .flujo {
+    animation: none;
+  }
+
+  .recurso {
+    animation-name: fundidoRecurso;
+    animation-timing-function: ease-in-out;
+  }
+}
+
+/* En móvil el botón ocupa el ancho: la animación se queda centrada encima */
+@media (max-width: 639px) {
+  .lienzo {
+    width: 13rem;
+  }
+}

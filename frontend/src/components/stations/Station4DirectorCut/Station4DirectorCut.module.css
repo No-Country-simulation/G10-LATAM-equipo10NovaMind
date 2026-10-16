@@ -196,40 +196,6 @@
   color: var(--color-emerald-400);
 }
 
-/* Presupuesto global de la microclase */
-.budgetBar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.375rem 0.625rem;
-  padding: 0.5rem 0.875rem;
-  border-radius: var(--radius-md);
-  background: var(--color-cyan-bg);
-  border: 1px solid var(--color-cyan-border);
-  font-size: 0.75rem;
-  font-family: var(--font-code);
-  color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.budgetBar strong {
-  color: var(--color-cyan-300);
-}
-
-.budgetBarWarn {
-  background: var(--color-amber-bg);
-  border-color: var(--color-amber-border);
-}
-
-.budgetBarWarn strong {
-  color: var(--color-amber-300);
-}
-
-.budgetWarnText {
-  color: var(--color-amber-300);
-  font-weight: 700;
-}
-
 /* Aviso de procedencia (contenido generado por el sistema / sin verificar) */
 .provenanceNotice {
   display: flex;
@@ -1350,4 +1316,77 @@
   .spin {
     animation: none;
   }
+}
+
+/* -------------------------------------------------------------------------
+ * Una sola pantalla (15/10): el video es la estación y el estudio va plegado
+ * ------------------------------------------------------------------------- */
+.videoSeccion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.videoEspera {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgb(217 70 239 / 40%);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgb(217 70 239 / 14%), transparent 60%),
+    var(--color-bg-elevated);
+  text-align: center;
+}
+
+.videoEsperaTexto {
+  margin: 0;
+  max-width: 34rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Escenas y, a su derecha, el botón destacado del video (en móvil pasa debajo, a lo ancho) */
+.filaEscenas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.filaEscenas > [role='tablist'] {
+  flex: 1 1 32rem;
+  min-width: 0;
+}
+
+.botonVideoDestacado {
+  flex: 1 1 14rem;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1.5rem;
+  font-size: 0.95rem;
+}
+
+@media (min-width: 1024px) {
+  .botonVideoDestacado {
+    flex: 0 0 auto;
+    min-width: 15rem;
+  }
+}
+
+/* Con el video listo deja de latir: ya no es una tarea pendiente, solo lleva al reproductor */
+.botonVideoListo {
+  animation: none;
+  background: linear-gradient(135deg, #0891b2 0%, #8b5cf6 100%);
+  border-color: rgb(103 232 249 / 55%);
+  box-shadow: 0 10px 30px rgb(6 182 212 / 30%);
 }

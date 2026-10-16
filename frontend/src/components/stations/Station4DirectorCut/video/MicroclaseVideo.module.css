@@ -1,0 +1,232 @@
+/*
+ * Composición de Remotion a 1280×720. Remotion la escala entera con transform, así que
+ * aquí se mide en px fijos. Paleta de la Estación 04 (fucsia).
+ */
+.fondo {
+  --s4-accent: #e879f9;
+  --s4-accent-soft: #f0abfc;
+  --s4-accent-bg: rgb(217 70 239 / 12%);
+  --s4-accent-border: rgb(217 70 239 / 35%);
+  --s4-accent-glow: rgb(217 70 239 / 18%);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+.foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* La foto queda detrás de un velo oscuro: el texto del documento siempre manda */
+.veloFoto {
+  background: linear-gradient(
+    90deg,
+    oklch(0.1398 0.0117 265.76 / 94%) 0%,
+    oklch(0.1398 0.0117 265.76 / 80%) 55%,
+    oklch(0.1398 0.0117 265.76 / 40%) 100%
+  );
+}
+
+.veloLiso {
+  background:
+    radial-gradient(120% 90% at 100% 0%, var(--s4-accent-glow), transparent 60%),
+    linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-base) 100%);
+}
+
+.marcaAgua {
+  position: absolute;
+  right: 28px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.contenido,
+.cortinilla {
+  position: absolute;
+  inset: 0;
+  padding: 70px 77px 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.cortinilla {
+  justify-content: center;
+  padding-bottom: 70px;
+}
+
+.meta {
+  margin: 0;
+  font: 600 30px/1.2 var(--font-code);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--s4-accent-soft);
+}
+
+.titulo,
+.tituloPortada {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 66px;
+  font-weight: 800;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.tituloPortada {
+  font-size: 92px;
+}
+
+.indice,
+.resumen {
+  margin: 0;
+  padding-left: 46px;
+  display: grid;
+  gap: 14px;
+  font-size: 36px;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+}
+
+.resumen strong {
+  color: var(--color-text-primary);
+}
+
+.dosColumnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+.puntos {
+  margin: 0;
+  padding-left: 46px;
+  display: grid;
+  gap: 12px;
+  font-size: 38px;
+  line-height: 1.3;
+  color: var(--color-text-secondary);
+}
+
+.dosColumnas .puntos {
+  font-size: 32px;
+}
+
+/* Diagrama de bloques: cada bloque entra a su turno; la flecha aparece al entrar el siguiente */
+.flujo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 34px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.25;
+}
+
+.flujo li {
+  flex: 1;
+  position: relative;
+  padding: 22px 18px;
+  border: 3px solid var(--s4-accent-border);
+  border-radius: 18px;
+  background: var(--s4-accent-bg);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.flujo li.conFlecha::after {
+  content: '→';
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--s4-accent);
+}
+
+.codigo {
+  margin: 0;
+  padding: 22px 26px;
+  border-radius: 16px;
+  border: 2px solid var(--s4-accent-border);
+  background: rgb(3 7 18 / 82%);
+  font: 22px/1.45 var(--font-code);
+  color: #e5e7eb;
+  white-space: pre-wrap;
+  overflow: hidden;
+  max-height: 380px;
+}
+
+.cursor {
+  color: var(--s4-accent);
+}
+
+.cita {
+  margin: auto 0 0;
+  padding-left: 28px;
+  border-left: 6px solid var(--s4-accent);
+  font-size: 28px;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.citaTexto {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cita cite {
+  display: block;
+  margin-top: 8px;
+  font: normal 22px var(--font-code);
+  color: var(--color-text-muted);
+}
+
+.credito {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  margin: 0;
+  font-size: 18px;
+  color: var(--color-text-muted);
+}
+
+.subtitulos {
+  position: absolute;
+  left: 60px;
+  right: 110px;
+  bottom: 26px;
+  margin: 0;
+  padding: 14px 24px;
+  border-radius: 14px;
+  background: rgb(3 7 18 / 78%);
+  color: var(--color-text-secondary);
+  font-size: 30px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* Video sin voz: el guion entero, fijo, sin resaltar palabras (no hay tiempos reales) */
+.guionFijo {
+  font-size: 22px;
+  line-height: 1.4;
+  text-align: left;
+  max-height: 128px;
+  overflow: hidden;
+}
+
+.activa {
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgb(217 70 239 / 60%);
+}

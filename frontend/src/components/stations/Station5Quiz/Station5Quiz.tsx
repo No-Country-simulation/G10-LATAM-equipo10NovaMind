@@ -94,7 +94,7 @@ export const Station5FinalTrial = ({
 
           <div>
             <span className={styles.lockedTag}>
-              The Final Trial · Examen Capstone
+              Estación 05 · Examen final
             </span>
             <h3 className={styles.lockedTitle}>Estación 05 Bloqueada</h3>
             <p className={styles.lockedDesc}>
@@ -385,7 +385,7 @@ export const Station5FinalTrial = ({
           >
             <span className={styles.examTitleTag}>
               <Award size={12} color="var(--color-amber-400)" />
-              Estación 05 · The Final Trial (Quiz Capstone)
+              Estación 05 · Examen final
             </span>
             <span className={styles.examApprovalPill}>
               Aprobación: {minRequiredToPass}/{totalQuestions} (100 %)
@@ -395,17 +395,8 @@ export const Station5FinalTrial = ({
             className={styles.lockedTitle}
             style={{ fontSize: "1.5rem", textAlign: "left" }}
           >
-            Examen Interactivo con Justificación RAG
+            Cuestionario
           </h3>
-          <p
-            style={{
-              color: "var(--color-text-secondary)",
-              fontSize: "0.875rem",
-            }}
-          >
-            Cada respuesta se contrasta con el material de origen para verificar
-            la comprensión sin alucinaciones.
-          </p>
         </div>
 
         <div style={{ textAlign: "right" }}>

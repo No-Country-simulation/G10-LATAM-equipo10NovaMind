@@ -1,0 +1,216 @@
+{
+  "status": "exito",
+  "video_job_spec": {
+    "video_job_id": "vjob-doc-3bf4a63430dd0b05",
+    "document_id": "doc-3bf4a63430dd0b05",
+    "target_duration": 50,
+    "max_duration": 60,
+    "aspect_ratio": "9:16",
+    "idioma": "es",
+    "estado": "completed",
+    "escenas": [
+      {
+        "id": "sc-1",
+        "escena": 1,
+        "tiempo": "00:00 - 00:15",
+        "duracion_segundos": 15.2,
+        "titulo": "Panorama de Amenazas y Vectores de Intrusión",
+        "guion_locutor": "Los ataques de denegación de servicio y el acceso no autorizado dominan Europa. Imagine una red corporativa como una fortaleza donde los atacantes explotan vulnerabilidades críticas o usan ingeniería social para evadir las defensas perimetrales.",
+        "estimacion_palabras": 35,
+        "storyboard_visual": "Esquema mostrando vectores de ataque como DDoS y brechas de acceso inicial.",
+        "consejo_pedagogico": "Relacionar los datos estadísticos con la superficie de ataque que gestiona un arquitecto.",
+        "objetivo_pedagogico": "Comprender los vectores de intrusión más frecuentes y su impacto en la infraestructura.",
+        "visual": {
+          "tipo": "diagrama_bloques",
+          "titulo": "Vectores de Intrusión Principales",
+          "puntos_clave": [
+            "DDoS representa el 51.3 por ciento de los incidentes",
+            "Acceso no autorizado alcanza el 39.5 por ciento",
+            "La explotación de vulnerabilidades facilita el acceso"
+          ],
+          "codigo_o_estructura": null,
+          "prompt_grafico": null
+        },
+        "fuentes": [
+          {
+            "chunk_id": "cita-1-1",
+            "pagina": 7,
+            "texto_fuente": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+            "origen": "llm",
+            "verificada": true,
+            "contexto": {
+              "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+              "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+              "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+              "recortado_inicio": true,
+              "recortado_fin": true
+            }
+          }
+        ],
+        "origen": "llm",
+        "imagen": {
+          "tipo": "foto",
+          "palabra_clave": "server rack",
+          "url": "https://api.openverse.org/v1/images/c28b5999-ea14-4b83-ace1-aa2e496803a7/thumb/",
+          "alt": "Panorama de Amenazas y Vectores de Intrusión",
+          "autor": "zdw",
+          "licencia": "CC BY-SA 2.0",
+          "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+          "fuente_url": "https://www.flickr.com/photos/75783104@N00/65675213",
+          "proveedor": "openverse"
+        },
+        "audio": {
+          "ruta": "escena-1.mp3",
+          "duracion_real_s": 16.56,
+          "voz": "Kore",
+          "modelo": "gemini-3.8-flash-tts",
+          "proveedor": "gemini",
+          "mime_type": "audio/mpeg",
+          "tiempos_palabras": null
+        }
+      },
+      {
+        "id": "sc-2",
+        "escena": 2,
+        "tiempo": "00:15 - 00:30",
+        "duracion_segundos": 14.8,
+        "titulo": "Impacto Sectorial y Operaciones Financieras",
+        "guion_locutor": "La administración pública encabeza los sectores más afectados, seguida por servicios y transporte. Las actividades con motivación financiera y el despliegue de códigos de cifrado alteran gravemente la continuidad operativa en la Unión Europea.",
+        "estimacion_palabras": 34,
+        "storyboard_visual": "Gráfica de sectores afectados destacando la administración pública y el transporte.",
+        "consejo_pedagogico": "Enfatizar que la criticidad sectorial define la prioridad en el diseño de planes de contingencia.",
+        "objetivo_pedagogico": "Identificar los sectores de mayor riesgo y las consecuencias operativas del cibercrimen.",
+        "visual": {
+          "tipo": "ppt_concepto",
+          "titulo": "Sectores Críticos y Cibercrimen",
+          "puntos_clave": [
+            "Administración pública es el sector más afectado",
+            "El ransomware genera el mayor impacto a corto plazo",
+            "Exfiltración de datos mediante portales y nubes"
+          ],
+          "codigo_o_estructura": null,
+          "prompt_grafico": null
+        },
+        "fuentes": [
+          {
+            "chunk_id": "cita-2-1",
+            "pagina": 7,
+            "texto_fuente": "Public administration remained the most impacted sector (31.8%), followed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking (5.6%).",
+            "origen": "llm",
+            "verificada": true,
+            "contexto": {
+              "antes": "interest in the transport sector including maritime related entities. A \nresurgence in State -nexus financially motivated campaigns was observed.  \n2025 confirmed the continued exposure of sectors to cyber threats , including sectors  of high \ncriticality  according to NIS2 . ",
+              "fragmento": "Public administration remained the most impacted sector (31.8%), \nfollowed by business services (8.5%), transport (8%), manufacturing (6.9%) and finance / banking \n(5.6",
+              "despues": "%). Sectoral analysis further highlighted differences in targeting patterns, threat groups and \noperational impact across sectors, notably showing the criticality of digital dependencies, sensitive \ndata holdings and operational maturity in shaping exposure to cyber threats.  ",
+              "recortado_inicio": true,
+              "recortado_fin": true
+            }
+          }
+        ],
+        "origen": "llm",
+        "imagen": {
+          "tipo": "foto",
+          "palabra_clave": "modern office",
+          "url": "https://api.openverse.org/v1/images/aecd84e9-3e3f-4674-8be0-76c11541f643/thumb/",
+          "alt": "Impacto Sectorial y Operaciones Financieras",
+          "autor": "tec_estromberg",
+          "licencia": "CC BY 2.0",
+          "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+          "fuente_url": "https://www.flickr.com/photos/92334668@N07/11368395403",
+          "proveedor": "openverse"
+        },
+        "audio": {
+          "ruta": "escena-2.mp3",
+          "duracion_real_s": 16.44,
+          "voz": "Kore",
+          "modelo": "gemini-3.8-flash-tts",
+          "proveedor": "gemini",
+          "mime_type": "audio/mpeg",
+          "tiempos_palabras": null
+        }
+      },
+      {
+        "id": "sc-3",
+        "escena": 3,
+        "tiempo": "00:30 - 00:44",
+        "duracion_segundos": 14.3,
+        "titulo": "Vulnerabilidades y Gestión Estratégica",
+        "guion_locutor": "La publicación masiva de vulnerabilidades exige un rigoroso enfoque en la gestión de parches. Los adversarios reducen el tiempo de vectorización, obligando a priorizar la visibilidad y mitigación proactiva frente a amenazas persistentes.",
+        "estimacion_palabras": 33,
+        "storyboard_visual": "Panel de control mostrando métricas de vulnerabilidades y CVEs registrados.",
+        "consejo_pedagogico": "Vincular la gestión de vulnerabilidades con la estrategia defensiva a largo plazo.",
+        "objetivo_pedagogico": "Evaluar la criticidad de las vulnerabilidades y la necesidad de una postura de seguridad proactiva.",
+        "visual": {
+          "tipo": "palabras_clave",
+          "titulo": "Gestión de Vulnerabilidades",
+          "puntos_clave": [
+            "Incremento anual en registros de vulnerabilidades CVE",
+            "Prevalencia de vectores de ataque basados en red",
+            "Necesidad de control estricto en la cadena de suministro"
+          ],
+          "codigo_o_estructura": null,
+          "prompt_grafico": null
+        },
+        "fuentes": [
+          {
+            "chunk_id": "cita-3-1",
+            "pagina": 90,
+            "texto_fuente": "Overall, more than 48 thousand new vulnerabilities were published in 2025 with assigned Common Vulnerability and Exposure (CVE) Identifiers",
+            "origen": "llm",
+            "verificada": true,
+            "contexto": {
+              "antes": "2025 ENISA has expanded \nits role in vulnerability management by becoming a Root CVE \nthus becoming a cen tral point of contact within the CVE \nprogramme for national and EU authorities, EU CSIRTs \nnetwork members and cooperative partners falling under \nENISA’s mandate.   \n \n \n",
+              "fragmento": "Overall, more than 48 thousand new vulnerabilities  were published in 2025 with assigned Common \nVulnerability and Exposure (CVE) Identifiers",
+              "despues": ", a programme with the purpose of identifying, defining \nand cataloguing publicly disclosed cybersecurity vulnerabilities — a 22% increase  from the previous \nyear.  \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n627 https://www.vulnerability -lookup.org/2026/05/11/vulnerability -report -2025/ ",
+              "recortado_inicio": true,
+              "recortado_fin": true
+            }
+          }
+        ],
+        "origen": "llm",
+        "imagen": {
+          "tipo": "foto",
+          "palabra_clave": "digital security lock",
+          "url": "https://api.openverse.org/v1/images/18fdc28e-0875-489d-bea7-1bb476a1ee4f/thumb/",
+          "alt": "Vulnerabilidades y Gestión Estratégica",
+          "autor": "Yu. Samoilov",
+          "licencia": "CC BY 2.0",
+          "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+          "fuente_url": "https://www.flickr.com/photos/110751683@N02/13334048894",
+          "proveedor": "openverse"
+        },
+        "audio": {
+          "ruta": "escena-3.mp3",
+          "duracion_real_s": 14.56,
+          "voz": "Kore",
+          "modelo": "gemini-3.8-flash-tts",
+          "proveedor": "gemini",
+          "mime_type": "audio/mpeg",
+          "tiempos_palabras": null
+        }
+      }
+    ],
+    "total_palabras": 102,
+    "duracion_total_estimada": 44.3,
+    "wpm": 138,
+    "degradaciones": [],
+    "manifiesto_url_oci": null,
+    "video_url_oci": null,
+    "duracion_total_real": 47.6,
+    "velocidad_reproduccion": 1.0
+  },
+  "duracion_total_real_s": 47.6,
+  "duraciones_medidas_s": [
+    16.56,
+    16.44,
+    14.56
+  ],
+  "reutilizado": false,
+  "proveedor": "gemini",
+  "almacenamiento": "en_linea",
+  "advertencias": [
+    "Gemini (Kore, gemini-3.8-flash-lite-tts) no estuvo disponible (La cuota gratuita de voz está agotada por ahora. Prueba de nuevo en unos minutos.)."
+  ],
+  "error_codigo": null,
+  "audios_en_linea": {}
+}

@@ -25,13 +25,13 @@ export const RECURSOS_DE_APOYO: Readonly<Record<number, readonly RecursoId[]>> =
 
 export const NOMBRE_RECURSO: Readonly<Record<RecursoId, string>> = {
   resumen: 'Resumen',
-  flashcards: 'Flashcards',
+  flashcards: 'Tarjetas didácticas',
   cuestionario: 'Cuestionario',
   glosario: 'Glosario',
   objetivos: 'Objetivos de aprendizaje',
   guion: 'Guion de locución',
   diapositivas: 'Diapositivas',
-  tutorial: 'Tutorial',
+  tutorial: 'Guía paso a paso',
   diagrama: 'Diagrama',
 };
 

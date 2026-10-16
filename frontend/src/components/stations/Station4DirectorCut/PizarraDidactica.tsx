@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Camera, Check, CheckCircle2, Copy, Eye, Film, ImageIcon, Layers, Sparkles } from 'lucide-react';
+import { Camera, Check, Copy, Eye, Film, ImageIcon, Layers, Sparkles } from 'lucide-react';
 import type { DirectorScene } from '../../../types/types';
 import { datosVisor } from '../../../utils/datosVisor';
 import type { EstadoAmpliacion } from './estudioTipos';
@@ -165,40 +165,6 @@ export const PizarraDidactica = ({
             </div>
           </div>
         </div>
-
-        {/* Ficha técnica: todo medido o contado de la escena */}
-        <div className={styles.techMetricsGrid}>
-          <div className={styles.techMetricItem}>
-            <span className={styles.techMetricLabel}>Tramo</span>
-            <span className={styles.techMetricValue}>{datos.tramo}</span>
-          </div>
-          <div className={styles.techMetricItem}>
-            <span className={styles.techMetricLabel}>Palabras</span>
-            <span className={styles.techMetricValue}>{datos.palabras}</span>
-          </div>
-          <div className={styles.techMetricItem}>
-            <span className={styles.techMetricLabel}>Diapositiva</span>
-            <span className={styles.techMetricValue}>{datos.formato}</span>
-          </div>
-          <div className={styles.techMetricItem}>
-            <span className={styles.techMetricLabel}>Citas verificadas</span>
-            <span className={styles.techMetricValue}>{datos.citas}</span>
-          </div>
-        </div>
-
-        {datos.puntos.length > 0 && (
-          <div className={styles.verifiedPointsContainer}>
-            <span className={styles.verifiedPointsTitle}>Puntos Clave Didácticos & Visuales:</span>
-            <ul className={styles.verifiedPointsList}>
-              {datos.puntos.map((punto, i) => (
-                <li key={i} className={styles.verifiedPointItem}>
-                  <CheckCircle2 size={13} color="var(--color-cyan-400)" className={styles.pointCheckIcon} aria-hidden="true" />
-                  <span>{punto}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
 
       {children}

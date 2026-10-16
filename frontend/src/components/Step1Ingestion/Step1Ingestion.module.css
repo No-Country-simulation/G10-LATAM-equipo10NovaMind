@@ -33,18 +33,12 @@
 
 .demoBannerTitle {
   font-family: var(--font-heading);
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--color-text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.demoBannerDesc {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
 }
 
 .demoButton {
@@ -88,10 +82,24 @@
 }
 
 .heroContent {
+  /* Por encima de la animación de fondo (HeroAnimacion) */
+  position: relative;
+  z-index: 1;
   max-width: 48rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+/* Con la animación a la derecha, el texto se queda en la mitad izquierda */
+@media (min-width: 901px) {
+  .heroBanner {
+    min-height: 15rem;
+  }
+
+  .heroContent {
+    max-width: 52%;
+  }
 }
 
 .tagRow {
@@ -146,9 +154,14 @@
   }
 }
 
-.highlightOci {
-  color: var(--color-cyan-300);
-  font-weight: 500;
+/* Título de la sección de inicio: anuncia dónde empieza el recorrido */
+.tituloRuta {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-primary);
 }
 
 /* Selector de Escenarios Predefinidos */
@@ -178,6 +191,79 @@
 .scenariosHelp {
   font-size: 0.6875rem;
   color: var(--color-text-subtle);
+}
+
+/* Sin sesión, la biblioteca es el paso 1: el título se lee como una instrucción */
+.scenariosLabelPaso {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* «o carga tu propio documento»: el form separa sus bloques 2 rem; así queda a 0,75 rem
+   del cuadro, como «Elige un documento de ejemplo…» de su lista */
+.tituloCarga {
+  margin: 0 0 -1.25rem;
+}
+
+/* Guía de tres pasos para quien entra por primera vez */
+.guiaPasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.guiaPasos li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.guiaNumero {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: var(--radius-full);
+  background: var(--color-violet-600);
+  color: var(--color-text-primary);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* El selector con la misma invitación animada que la zona de carga */
+.selectorBiblioteca {
+  position: relative;
+}
+
+.selectorInvitacion {
+  margin-top: 0.5rem;
+  border-radius: var(--radius-md);
+  animation: invitacion 2.4s ease-in-out infinite;
+}
+
+.selectorInvitacion .selectInput {
+  border-width: 2px;
+  border-color: var(--color-violet-border);
+  /* Opaco: un fondo translúcido también se heredaba, mal, en la lista desplegable */
+  background-color: #17132b;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selectorInvitacion {
+    animation: none;
+  }
 }
 
 /* Ficha del documento elegido en el menú de la biblioteca */
@@ -285,29 +371,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.textInput {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  background-color: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--border-default);
-  font-size: 0.875rem;
-  color: #fff;
-  transition: all var(--transition-fast);
-  font-family: var(--font-body);
-
-}
-
-.textInput::placeholder {
-  color: var(--color-text-subtle);
-}
-
-.textInput:focus {
-  outline: none;
-  border-color: var(--color-violet-500);
-  box-shadow: 0 0 0 1px var(--color-violet-500);
 }
 
 .fileDropzone {
@@ -650,12 +713,69 @@
 
 /* Grilla de 4 Parámetros Pedagógicos */
 /* Dos formas de empezar: Sorpréndeme o Personalizado */
+/* «Antes de empezar 👀 selecciona tu perfil»: abre la sección de ajustes (lleva su separador) */
+.tituloPerfil {
+  margin: 0 0 -0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
 .modoSelector {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-subtle);
+}
+
+/* Sorpréndeme invita a probarlo: el destello titila y un brillo cruza la tarjeta */
+.modoSorpresa {
+  position: relative;
+  overflow: hidden;
+}
+
+.modoSorpresa::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgb(253 224 71 / 10%) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: brillo 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.destello {
+  animation: titilar 1.6s ease-in-out infinite;
+}
+
+@keyframes titilar {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  40% { transform: scale(1.25) rotate(-12deg); opacity: 0.75; }
+  60% { transform: scale(0.95) rotate(8deg); opacity: 1; }
+}
+
+@keyframes brillo {
+  0% { background-position: 120% 0; }
+  60%, 100% { background-position: -120% 0; }
+}
+
+@keyframes latir {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Con «reducir movimiento»: sin giros ni brillo que se desplaza; el destello solo late */
+@media (prefers-reduced-motion: reduce) {
+  .modoSorpresa::after {
+    animation: none;
+    background: none;
+  }
+
+  .destello {
+    animation: latir 1.6s ease-in-out infinite;
+  }
 }
 
 .modoOpcion {
@@ -832,6 +952,18 @@ details[open] .promptChevron {
   color: #fff;
   transition: border-color var(--transition-fast);
   font-family: var(--font-body);
+  /* La lista desplegable la pinta el sistema: sin esto salía con fondo claro y texto blanco */
+  color-scheme: dark;
+}
+
+.selectInput option {
+  background-color: #0b0f19;
+  color: #fff;
+  font-weight: 500;
+}
+
+.selectInput option:disabled {
+  color: var(--color-text-muted);
 }
 
 .selectInput:focus {
@@ -926,14 +1058,6 @@ details[open] .promptChevron {
   }
 }
 
-.storageNote {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
 .submitButton {
   width: 100%;
   padding: 0.875rem 2rem;
@@ -967,4 +1091,63 @@ details[open] .promptChevron {
 
 .submitButton:active {
   transform: scale(0.99);
+}
+
+/* Documento de ejemplo con muestra pregenerada: abrirla (0 cuota) o generar con los ajustes */
+.accionesMuestra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.botonSecundario {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-violet-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.botonSecundario:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: var(--color-violet-bg);
+}
+
+.botonSecundario:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modo invitado: la carga de archivos y los ajustes se abren al iniciar sesión */
+.cargaBloqueada {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--color-card-subtle);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.cargaBloqueada span {
+  flex: 1 1 16rem;
+}
+
+.notaInvitado {
+  flex: 1 1 18rem;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
 }

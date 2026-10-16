@@ -64,22 +64,6 @@ export function AuthModal({ isOpen, onClose, onLoginSuccess }: Props) {
         </svg>
         <span>Continuar con Google</span>
       </button>
-      <button
-        type="button"
-        disabled={busy}
-        className={styles.guestButton}
-        onClick={() => {
-          onLoginSuccess({
-            id: '00000000-0000-0000-0000-000000000000',
-            name: 'Invitado Demo',
-            email: 'invitado@nuevamente.local',
-            provider: 'local',
-          });
-          onClose();
-        }}
-      >
-        Continuar como invitado (Modo Demo)
-      </button>
 
       <div className={styles.divider}><span>o con correo</span></div>
 

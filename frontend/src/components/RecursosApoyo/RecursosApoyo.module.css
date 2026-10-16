@@ -61,10 +61,41 @@
 .frase { margin: 0 0 0.625rem; font-size: 0.9375rem; }
 
 .detalle { margin-top: 0.875rem; }
+/* El desplegable se presenta como botón con chevron que gira al abrirse, para que se note */
 .detalle > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  border-radius: 999px;
+  background: rgba(167, 139, 250, 0.1);
   cursor: pointer;
   font-size: 0.8125rem;
-  color: var(--color-text-secondary);
+  font-weight: 600;
+  color: #ddd6fe;
+  list-style: none;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+.detalle > summary::-webkit-details-marker { display: none; }
+.detalle > summary::after {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.2s;
+}
+.detalle[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+.detalle > summary:hover {
+  background: rgba(167, 139, 250, 0.2);
+  border-color: rgba(167, 139, 250, 0.8);
+}
+.detalle > summary:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
 }
 
 .subtitulo {

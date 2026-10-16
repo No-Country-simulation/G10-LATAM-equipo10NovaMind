@@ -11,12 +11,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@remotion/player": "4.0.530",
+    "@remotion/transitions": "4.0.530",
     "@supabase/supabase-js": "2.117.3",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.48.0",
     "mermaid": "^12.1.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "remotion": "4.0.530"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
