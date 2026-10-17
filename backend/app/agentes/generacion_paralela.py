@@ -268,22 +268,27 @@ _TAREA_B1 = """Eres el diseñador de evaluación de NovaMind. Produce recursos d
 _TAREA_C = """Eres el examinador de NovaMind. Produce el cuestionario final del recorrido:
 - cuestionario: preguntas de selección múltiple con exactamente 4 alternativas plausibles y distintas, una sola correcta, y una explicación por alternativa.
 - Pregunta SOLO por ideas del TEMARIO ENSEÑADO (lo que el estudiante ya vio en las estaciones anteriores) y reparte las preguntas entre esas estaciones. No preguntes por partes del documento que el temario no trata.
-- La respuesta correcta y la cita salen del documento: el temario indica de qué preguntar, el documento es la fuente."""
+- La respuesta correcta y la cita salen del documento: el temario indica de qué preguntar, el documento es la fuente.
+- La cita se copia LITERAL del DOCUMENTO, palabra por palabra. Nunca copies frases del temario: es un resumen hecho por IA y no sirve como cita."""
 MAX_CARACTERES_TEMARIO = 6000
 
 
 def temario_ensenado(contenido: Dict[str, Any]) -> str:
-    """Lo que enseñaron las estaciones 1 a 4 de este paquete, en texto breve para el examinador."""
+    """Los temas que enseñaron las estaciones 1 a 4 de este paquete, para el examinador.
+
+    Solo los temas, sin las explicaciones: con ellas el modelo copiaba frases del temario como
+    cita en lugar del documento (Guía OCI, 16/10: 5 de 5 citas inventadas).
+    """
     def lineas(titulo: str, items: List[str]) -> str:
         items = [" ".join(i.split()) for i in items if i and i.strip()]
         return f"{titulo}:\n" + "\n".join(f"- {i}" for i in items) if items else ""
 
     conceptos = (contenido.get("resumen_ninja") or {}).get("conceptos_clave") or []
     bloques = [
-        lineas("ESTACIÓN 1 · RESUMEN (conceptos)", [f"{c.get('texto', '')}: {c.get('explicacion', '')}" for c in conceptos]),
-        lineas("ESTACIÓN 2 · TARJETAS", [f"{t.get('frente', '')} → {t.get('dorso', '')}" for t in contenido.get("flashcards") or []]),
-        lineas("ESTACIÓN 3 · GUÍA PASO A PASO", [f"{p.get('titulo', '')}: {p.get('descripcion', '')}" for p in contenido.get("tutorial") or []]),
-        lineas("ESTACIÓN 4 · VIDEO", [f"{e.get('titulo', '')}: {e.get('guion_locutor', '')}" for e in contenido.get("director_cut") or []]),
+        lineas("ESTACIÓN 1 · RESUMEN (conceptos)", [c.get("texto", "") for c in conceptos]),
+        lineas("ESTACIÓN 2 · TARJETAS (preguntas)", [t.get("frente", "") for t in contenido.get("flashcards") or []]),
+        lineas("ESTACIÓN 3 · GUÍA PASO A PASO (pasos)", [p.get("titulo", "") for p in contenido.get("tutorial") or []]),
+        lineas("ESTACIÓN 4 · VIDEO (escenas)", [e.get("titulo", "") for e in contenido.get("director_cut") or []]),
     ]
     texto = "\n\n".join(b for b in bloques if b)
     return _recortar(texto, MAX_CARACTERES_TEMARIO) if texto else ""
