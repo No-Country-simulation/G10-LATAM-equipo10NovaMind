@@ -1,0 +1,976 @@
+{
+ "status": "exito_con_advertencias",
+ "metadatos": {
+  "perfil_aplicado": "Principiante / Transición de Carrera",
+  "formato_generado": "Paquete Educativo Completo (5 Estaciones)",
+  "nicho_aplicado": "Marketing y Ventas",
+  "tiempo_estimado_estudio_minutos": 8,
+  "conceptos_clave": [
+   "Tercera salida",
+   "Ínsula Barataria",
+   "Caballero de la Blanca Luna"
+  ],
+  "prerrequisitos": []
+ },
+ "contenido_adaptado": {
+  "titulo": "Don Quijote de la Mancha · Segunda Parte (1615)",
+  "introduccion_contextualizada": "Este documento explica los acontecimientos principales, personajes y el desenlace de la segunda parte de la famosa novela publicada en 1615. A través de su lectura, los seguidores de historias clásicas y cualquier persona interesada en comprender la evolución de una narrativa y sus estrategias argumentales podrán conocer cómo se desarrolla esta trama y cómo interactúan sus protagonistas con el público de su época.",
+  "items": [
+   {
+    "id": "fc-1",
+    "frente": "¿Cómo se titula oficialmente la segunda parte de la obra de Cervantes?",
+    "dorso": "El ingenioso caballero don Quijote de la Mancha.",
+    "pista_didactica": "Piensa en el nombre completo que recibe esta segunda entrega de la novela dentro del mercado literario.",
+    "fuente": {
+     "texto": "El título de esta fue El ingenioso caballero don Quijote de la Mancha y consta de 74 capítulos.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+      "fragmento": "El título de esta fue El ingenioso caballero don Quijote de la Mancha y consta de 74 capítulos",
+      "despues": ". En el prólogo, Cervantes se defiende irónicamente de las acusaciones del lopista Avellaneda y se lamenta de la dificultad del arte de novelar: la fantasía se vuelve tan insaciable como un perro hambriento. En la novela se juega con diversos planos de la realidad al incluir,",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Quién es en realidad el Caballero de los Espejos que desafía a don Quijote?",
+    "dorso": "El bachiller Sansón Carrasco disfrazado.",
+    "pista_didactica": "Recuerda al personaje de la aldea que, junto al cura y el barbero, intenta idear planes para que don Quijote regrese a casa.",
+    "fuente": {
+     "texto": "un supuesto caballero andante que se autodenomina el Caballero de los Espejos —quien es ni más ni menos que el bachiller Sansón Carrasco disfrazado— junto a su escudero, un vecino llamado Tomé Cecial.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "será uno de los motivos de esta segunda parte. Apesadumbrado, don Quijote continúa su camino; pronto se topa con unos actores que van en un carro a representar el acto Las Cortes de la Muerte, quienes les toman el pelo y enfurecen a don Quijote. Una noche se encuentra con ",
+      "fragmento": "un supuesto caballero andante que se autodenomina el Caballero de los Espejos —quien es ni más ni menos que el bachiller Sansón Carrasco disfrazado— junto a su escudero, un vecino llamado Tomé Cecial",
+      "despues": ". El caballero de los Espejos presume de haber derrotado a don Quijote en una batalla anterior, lo que provoca el desafío de este. El de los Espejos acepta e impone como condición de que si vence don Quijote se retirará a su aldea. Se disponen a luchar, pero con tan mala suerte",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Qué condición impone el mago Merlín para lograr el desencantamiento de Dulcinea?",
+    "dorso": "Que Sancho se dé 3000 azotes en sus posaderas.",
+    "pista_didactica": "Imagina la negociación de una campaña o tarea difícil que el fiel compañero debe realizar en su propio cuerpo para alcanzar la meta.",
+    "fuente": {
+     "texto": "la sorpresiva aparición del mago Merlín, que declara que Dulcinea solo podrá ser desencantada si Sancho se da 3000 azotes en sus posaderas",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "que ponen en ridículo a los dos protagonistas quienes, pese a todo, confían hasta el final en sus anfitriones. Solo el capellán del castillo rechaza de plano la opereta e increpa violentamente a don Quijote su falta de cordura.\n\nSe suceden los siguientes episodios de chanza: ",
+      "fragmento": "la sorpresiva aparición del mago Merlín, que declara que Dulcinea solo podrá ser desencantada si Sancho se da 3000 azotes en sus posaderas",
+      "despues": "; esto no le parece nada bien al escudero y de ahí en adelante habrá una permanente tensión entre amo y mozo por causa de esta penitencia. Enseguida, convencen a don Quijote de que vaya volando en un caballo de madera llamado Clavileño a rescatar a una princesa y a su padre del",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Cómo se llama la ínsula de la cual Sancho Panza es nombrado gobernador por los duques?",
+    "dorso": "Barataria.",
+    "pista_didactica": "Asócialo con el nombre de esa ínsula inventada para poner a prueba las habilidades de gestión del escudero.",
+    "fuente": {
+     "texto": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques interesados en burlarse del escudero.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "de madera llamado Clavileño a rescatar a una princesa y a su padre del encantamiento que les ha echado un gigante; don Quijote y Sancho caen con naturalidad en la burla. Una de las farsas más memorables es la obtención y gobierno por Sancho de la ínsula prometida: en efecto, ",
+      "fragmento": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques interesados en burlarse del escudero",
+      "despues": ". Sancho, no obstante, demuestra tanto su inteligencia como su carácter pacífico y sencillo en el gobierno de la dependencia. Así, pronto renunciará a un puesto en el que se ve acosado por todo tipo de peligros y por un médico, Pedro Recio de Tirteafuera, que no le deja probar",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "resumen_ninja": {
+   "titulo": "Síntesis Conceptual",
+   "analogia_central": "Seguir la trayectoria de don Quijote en esta segunda parte es similar a relanzar una campaña de marketing corporativo con una marca ya posicionada: los clientes y consumidores del mercado (en este caso, los lectores y personajes de la novela) ya conocen el producto anterior, tienen expectativas creadas y reaccionan activamente ante cada nueva estrategia o interacción comercial.",
+   "conceptos_clave": [
+    {
+     "id": "c1",
+     "texto": "Tercera salida",
+     "explicacion": "Es el nuevo viaje que emprenden el protagonista y su fiel escudero tras superar la resistencia inicial de sus allegados y planificar su partida.",
+     "verificado": true,
+     "fuente": {
+      "texto": "Con conocimiento de sus convecinos don Quijote y Sancho inician su tercera salida.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "en su aldea. Por su parte, don Quijote renueva los ofrecimientos a Sancho prometiéndole la ansiada ínsula a cambio de su compañía. Sancho reacciona obsesionándose con la idea de ser gobernador y cambiar de estatus social, lo que provoca la burla de su esposa Teresa Panza. ",
+       "fragmento": "Con conocimiento de sus convecinos don Quijote y Sancho inician su tercera salida",
+       "despues": ".\n\nAmbos se dirigen al Toboso con objeto de visitar a Dulcinea, lo que pone en un duro aprieto a Sancho, temeroso de que su mentira anterior salga a luz. En uno de los episodios más logrados de la novela Sancho logra engañar a su señor haciéndole creer que Dulcinea ha sido",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c2",
+     "texto": "Ínsula Barataria",
+     "explicacion": "Es el territorio que los duques le conceden gobernar a Sancho Panza como parte de una elaborada broma para poner a prueba su inteligencia.",
+     "verificado": true,
+     "fuente": {
+      "texto": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques interesados en burlarse del escudero.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "de madera llamado Clavileño a rescatar a una princesa y a su padre del encantamiento que les ha echado un gigante; don Quijote y Sancho caen con naturalidad en la burla. Una de las farsas más memorables es la obtención y gobierno por Sancho de la ínsula prometida: en efecto, ",
+       "fragmento": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques interesados en burlarse del escudero",
+       "despues": ". Sancho, no obstante, demuestra tanto su inteligencia como su carácter pacífico y sencillo en el gobierno de la dependencia. Así, pronto renunciará a un puesto en el que se ve acosado por todo tipo de peligros y por un médico, Pedro Recio de Tirteafuera, que no le deja probar",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c3",
+     "texto": "Caballero de la Blanca Luna",
+     "explicacion": "Es la identidad secreta que adopta el bachiller Sansón Carrasco para derrotar en un duelo al protagonista y obligarlo a regresar a su hogar.",
+     "verificado": true,
+     "fuente": {
+      "texto": "El caballero de la Blanca Luna es en realidad el bachiller Sansón Carrasco disfrazado y le ha hecho prometer que regresará a su pueblo",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "dijo:\n> -Dulcinea del Toboso es la más hermosa mujer del mundo, y yo el más desdichado caballero de la tierra, y no es bien que mi flaqueza defraude esta verdad. Aprieta, caballero, la lanza, y quítame la vida, pues me has quitado la honra. (cap. 64 de la Segunda Parte)\n\n",
+       "fragmento": "El caballero de la Blanca Luna es en realidad el bachiller Sansón Carrasco disfrazado y le ha hecho prometer que regresará a su pueblo",
+       "despues": " y no volverá a salir de él como caballero andante en el plazo de un año. Así lo hace don Quijote, tras varios días de permanecer abatido en cama.\n\nEl regreso es triste y melancólico y Sancho trata por varios medios de subirle el ánimo a su señor. Don Quijote piensa, por un",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ]
+  },
+  "flashcards": [
+   {
+    "id": "fc-1",
+    "frente": "¿Cómo se titula oficialmente la segunda parte de la obra de Cervantes?",
+    "dorso": "El ingenioso caballero don Quijote de la Mancha.",
+    "pista_didactica": "Piensa en el nombre completo que recibe esta segunda entrega de la novela dentro del mercado literario.",
+    "fuente": {
+     "texto": "El título de esta fue El ingenioso caballero don Quijote de la Mancha y consta de 74 capítulos.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+      "fragmento": "El título de esta fue El ingenioso caballero don Quijote de la Mancha y consta de 74 capítulos",
+      "despues": ". En el prólogo, Cervantes se defiende irónicamente de las acusaciones del lopista Avellaneda y se lamenta de la dificultad del arte de novelar: la fantasía se vuelve tan insaciable como un perro hambriento. En la novela se juega con diversos planos de la realidad al incluir,",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Quién es en realidad el Caballero de los Espejos que desafía a don Quijote?",
+    "dorso": "El bachiller Sansón Carrasco disfrazado.",
+    "pista_didactica": "Recuerda al personaje de la aldea que, junto al cura y el barbero, intenta idear planes para que don Quijote regrese a casa.",
+    "fuente": {
+     "texto": "un supuesto caballero andante que se autodenomina el Caballero de los Espejos —quien es ni más ni menos que el bachiller Sansón Carrasco disfrazado— junto a su escudero, un vecino llamado Tomé Cecial.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "será uno de los motivos de esta segunda parte. Apesadumbrado, don Quijote continúa su camino; pronto se topa con unos actores que van en un carro a representar el acto Las Cortes de la Muerte, quienes les toman el pelo y enfurecen a don Quijote. Una noche se encuentra con ",
+      "fragmento": "un supuesto caballero andante que se autodenomina el Caballero de los Espejos —quien es ni más ni menos que el bachiller Sansón Carrasco disfrazado— junto a su escudero, un vecino llamado Tomé Cecial",
+      "despues": ". El caballero de los Espejos presume de haber derrotado a don Quijote en una batalla anterior, lo que provoca el desafío de este. El de los Espejos acepta e impone como condición de que si vence don Quijote se retirará a su aldea. Se disponen a luchar, pero con tan mala suerte",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Qué condición impone el mago Merlín para lograr el desencantamiento de Dulcinea?",
+    "dorso": "Que Sancho se dé 3000 azotes en sus posaderas.",
+    "pista_didactica": "Imagina la negociación de una campaña o tarea difícil que el fiel compañero debe realizar en su propio cuerpo para alcanzar la meta.",
+    "fuente": {
+     "texto": "la sorpresiva aparición del mago Merlín, que declara que Dulcinea solo podrá ser desencantada si Sancho se da 3000 azotes en sus posaderas",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "que ponen en ridículo a los dos protagonistas quienes, pese a todo, confían hasta el final en sus anfitriones. Solo el capellán del castillo rechaza de plano la opereta e increpa violentamente a don Quijote su falta de cordura.\n\nSe suceden los siguientes episodios de chanza: ",
+      "fragmento": "la sorpresiva aparición del mago Merlín, que declara que Dulcinea solo podrá ser desencantada si Sancho se da 3000 azotes en sus posaderas",
+      "despues": "; esto no le parece nada bien al escudero y de ahí en adelante habrá una permanente tensión entre amo y mozo por causa de esta penitencia. Enseguida, convencen a don Quijote de que vaya volando en un caballo de madera llamado Clavileño a rescatar a una princesa y a su padre del",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Cómo se llama la ínsula de la cual Sancho Panza es nombrado gobernador por los duques?",
+    "dorso": "Barataria.",
+    "pista_didactica": "Asócialo con el nombre de esa ínsula inventada para poner a prueba las habilidades de gestión del escudero.",
+    "fuente": {
+     "texto": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques interesados en burlarse del escudero.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "de madera llamado Clavileño a rescatar a una princesa y a su padre del encantamiento que les ha echado un gigante; don Quijote y Sancho caen con naturalidad en la burla. Una de las farsas más memorables es la obtención y gobierno por Sancho de la ínsula prometida: en efecto, ",
+      "fragmento": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques interesados en burlarse del escudero",
+      "despues": ". Sancho, no obstante, demuestra tanto su inteligencia como su carácter pacífico y sencillo en el gobierno de la dependencia. Así, pronto renunciará a un puesto en el que se ve acosado por todo tipo de peligros y por un médico, Pedro Recio de Tirteafuera, que no le deja probar",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "tutorial": [
+   {
+    "id": "t-1",
+    "paso": 1,
+    "titulo": "Paso 1: Identificar el inicio de la segunda parte",
+    "descripcion": "Comprender la situación inicial de los protagonistas y la tercera salida organizada junto a Sansón Carrasco y los convecinos.",
+    "cli_command": "Revisar los preparativos de la tercera salida y la promesa de la ínsula a cambio de compañía.",
+    "completado": false,
+    "verificacion": "Explicar cómo reaccionan la sobrina, el ama, el cura y el barbero ante el renovado propósito de don Quijote."
+   },
+   {
+    "id": "t-2",
+    "paso": 2,
+    "titulo": "Paso 2: Analizar los episodios intermedios y las burlas",
+    "descripcion": "Estudiar el paso por el castillo de los duques, el gobierno de Barataria por Sancho y la estancia en Barcelona.",
+    "cli_command": "Reconocer las farsas organizadas por la nobleza y la visita a la ciudad cosmopolita.",
+    "completado": false,
+    "verificacion": "Describir el rol de Sancho como gobernador de Barataria y las bromas sufridas por don Quijote."
+   },
+   {
+    "id": "t-3",
+    "paso": 3,
+    "titulo": "Paso 3: Comprender el desenlace y la muerte del hidalgo",
+    "descripcion": "Examinar el enfrentamiento contra el Caballero de la Blanca Luna y el regreso definitivo a la aldea.",
+    "cli_command": "Leer los detalles sobre la derrota en la playa de Barcelona y la vuelta a la cordura antes de morir.",
+    "completado": false,
+    "verificacion": "Confirmar que don Quijote recupera la cordura y abomina de los libros de caballerías antes de su fallecimiento."
+   }
+  ],
+  "diagrama_mermaid": "flowchart TD\n    A[Inicio: Tercera Salida] --> B[Aventuras y Farsas de los Duques]\n    B --> C[Estancia en Barcelona]\n    C --> D[Derrota por la Blanca Luna]\n    D --> E[Regreso a la Aldea y Cordura]",
+  "director_cut": [
+   {
+    "id": "sc-1",
+    "escena": 1,
+    "tiempo": "00:00 - 00:20",
+    "duracion_segundos": 20.0,
+    "titulo": "Inicio de la segunda parte y preparativos",
+    "guion_locutor": "Don Quijote y Sancho inician su tercera salida tras enterarse del éxito editorial de la primera parte. Al igual que cuando segmentas tu mercado, cada aventura planeada define el rumbo de su campaña. El cura y el barbero intentan recluirlo, mientras Sancho busca gobernar una ínsula.",
+    "estimacion_palabras": 46,
+    "storyboard_visual": "Imagen de dos personajes listos para un viaje con un libro abierto de fondo.",
+    "consejo_pedagogico": "Explica la relación entre la fama previa de los personajes y sus nuevos preparativos de viaje.",
+    "objetivo_pedagogico": "Comprender el punto de partida y las motivaciones iniciales de los protagonistas en la segunda entrega.",
+    "visual": {
+     "tipo": "ppt_concepto",
+     "titulo": "Preparativos y Fama",
+     "puntos_clave": [
+      "Consta de 74 capítulos escritos por Cervantes",
+      "Los protagonistas conocen el éxito de la primera parte",
+      "Sancho busca ser gobernador de una ínsula"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-1-1",
+      "pagina": null,
+      "texto_fuente": "En esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "leído. Cervantes se defiende de las inverosimilitudes que se han encontrado en la primera parte, como la misteriosa reaparición del rucio de Sancho después de ser robado por Ginés de Pasamonte y el destino de los dineros encontrados en una maleta de Sierra Morena.\n\nAsí pues, ",
+       "fragmento": "en esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres",
+       "despues": ". De hecho, algunos de los personajes que aparecerán en lo sucesivo han leído el libro y los reconocen. Es más, en un alarde de clarividencia, tanto Cervantes como el propio don Quijote manifiestan que la novela pasará a convertirse en un clásico de la literatura y que la figura",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     },
+     {
+      "chunk_id": "cita-1-2",
+      "pagina": null,
+      "texto_fuente": "Sancho reacciona obsesionándose con la idea de ser gobernador y cambiar de estatus social, lo que provoca la burla de su esposa Teresa Panza.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "la locura de don Quijote y urden, junto al bachiller Sansón Carrasco, un nuevo plan que les permita recluir a don Quijote por un largo tiempo en su aldea. Por su parte, don Quijote renueva los ofrecimientos a Sancho prometiéndole la ansiada ínsula a cambio de su compañía. ",
+       "fragmento": "Sancho reacciona obsesionándose con la idea de ser gobernador y cambiar de estatus social, lo que provoca la burla de su esposa Teresa Panza",
+       "despues": ". Con conocimiento de sus convecinos don Quijote y Sancho inician su tercera salida.\n\nAmbos se dirigen al Toboso con objeto de visitar a Dulcinea, lo que pone en un duro aprieto a Sancho, temeroso de que su mentira anterior salga a luz. En uno de los episodios más logrados de la",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "medieval travelers",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   },
+   {
+    "id": "sc-2",
+    "escena": 2,
+    "tiempo": "00:20 - 00:39",
+    "duracion_segundos": 19.6,
+    "titulo": "Aventuras finales y el desenlace",
+    "guion_locutor": "Tras múltiples episodios de chanza con los duques y su visita a Barcelona, don Quijote es derrotado por el Caballero de la Blanca Luna. Al regresar a su aldea, del mismo modo que un producto cierra su ciclo comercial, recupera la cordura antes de morir.",
+    "estimacion_palabras": 45,
+    "storyboard_visual": "Ilustración de un caballero abatido junto a su fiel escudero en un camino de regreso.",
+    "consejo_pedagogico": "Destaca cómo la derrota final ante el Caballero de la Blanca Luna transforma el destino del hidalgo.",
+    "objetivo_pedagogico": "Identificar el desenlace de la obra y la recuperación de la cordura del protagonista.",
+    "visual": {
+     "tipo": "ppt_concepto",
+     "titulo": "Desenlace de la Obra",
+     "puntos_clave": [
+      "Derrota por el Caballero de la Blanca Luna",
+      "Regreso melancólico a la aldea",
+      "Recuperación de la cordura y muerte"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-2-1",
+      "pagina": null,
+      "texto_fuente": "Se llega, finalmente, al momento más dramático de su carrera: su vencimiento por el caballero de la Blanca Luna.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "repentinamente se ven inmersos en un combate naval contra un barco turco —que traía a una dama morisca huida de Argel—, con amplio despliegue de hombres y artillería, muertos y heridos. Nadie hace caso a las observaciones y propuestas de don Quijote y su locura ya no divierte. ",
+       "fragmento": "Se llega, finalmente, al momento más dramático de su carrera: su vencimiento por el caballero de la Blanca Luna",
+       "despues": ". Cierta mañana este aparece en la playa de Barcelona y desafía a don Quijote a un singular duelo por asuntos de prevalencia de damas; la batalla —en presencia de las autoridades y el público barcelonés— es rápida y el gran manchego cae en la arena derrotado.\n\n> Fue luego sobre",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     },
+     {
+      "chunk_id": "cita-2-2",
+      "pagina": null,
+      "texto_fuente": "Don Quijote enferma, pero retorna, al fin, a la cordura y abomina con lúcidas razones de los disparates de los libros de caballerías, aunque no del ideal caballeresco.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "tienen una fuerte discusión por el asunto de los azotes que debe darse el criado para desencantar a Dulcinea. En un cierto lugar conocen a Álvaro Tarfe, personaje del Quijote de Avellaneda, quien declara la falsedad del que conoció en Zaragoza. Llegan finalmente a su aldea. ",
+       "fragmento": "Don Quijote enferma, pero retorna, al fin, a la cordura y abomina con lúcidas razones de los disparates de los libros de caballerías, aunque no del ideal caballeresco",
+       "despues": ". Muere de pena entre la compasión y las lágrimas de todos.\n\nMientras se narra la historia, se entremezclan otras muchas que sirven para distraer la atención de la trama principal. Tienen lugar divertidas y amenas conversaciones entre caballero y escudero, en las que se percibe",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "historic knights",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   }
+  ],
+  "quiz": [
+   {
+    "id": "q-1",
+    "pregunta": "¿Cómo se titula oficialmente la segunda parte de la obra de Cervantes?",
+    "opciones": [
+     "El ingenioso caballero don Quijote de la Mancha",
+     "El ingenioso hidalgo don Quijote de la Mancha",
+     "Don Quijote de la Mancha y sus aventuras",
+     "Las aventuras de don Quijote en la ínsula Barataria"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. Así se titula oficialmente esta segunda parte según el documento.",
+    "explicaciones_opciones": [
+     "Correcto. Así se titula oficialmente esta segunda parte según el documento.",
+     "Incorrecto. Este título no corresponde a la denominación oficial de la segunda entrega explicada en el texto.",
+     "Incorrecto. Es una opción inventada que no aparece en el documento.",
+     "Incorrecto. Barataria es solo una ínsula de la trama, no parte del título oficial."
+    ],
+    "cita_fuente": "El título de esta fue El ingenioso caballero don Quijote de la Mancha y consta de 74 capítulos.",
+    "fuente": {
+     "texto": "El título de esta fue El ingenioso caballero don Quijote de la Mancha y consta de 74 capítulos.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+      "fragmento": "El título de esta fue El ingenioso caballero don Quijote de la Mancha y consta de 74 capítulos",
+      "despues": ". En el prólogo, Cervantes se defiende irónicamente de las acusaciones del lopista Avellaneda y se lamenta de la dificultad del arte de novelar: la fantasía se vuelve tan insaciable como un perro hambriento. En la novela se juega con diversos planos de la realidad al incluir,",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-2",
+    "pregunta": "¿Quién es en realidad el Caballero de la Blanca Luna que derrota a don Quijote?",
+    "opciones": [
+     "Ginés de Pasamonte",
+     "El bachiller Sansón Carrasco",
+     "El duque de la alta nobleza",
+     "Tomé Cecial"
+    ],
+    "respuesta_correcta": 1,
+    "justificacion_rag": "Correcto. El texto señala claramente que este personaje es en realidad el bachiller disfrazado.",
+    "explicaciones_opciones": [
+     "Incorrecto. Ginés de Pasamonte se disfraza de titiritero con un mono adivino.",
+     "Correcto. El texto señala claramente que este personaje es en realidad el bachiller disfrazado.",
+     "Incorrecto. Los duques son los anfitriones del castillo, no este caballero.",
+     "Incorrecto. Tomé Cecial es el vecino que acompaña al Caballero de los Espejos."
+    ],
+    "cita_fuente": "El caballero de la Blanca Luna es en realidad el bachiller Sansón Carrasco disfrazado y le ha hecho prometer que regresará a su pueblo",
+    "fuente": {
+     "texto": "El caballero de la Blanca Luna es en realidad el bachiller Sansón Carrasco disfrazado y le ha hecho prometer que regresará a su pueblo",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "dijo:\n> -Dulcinea del Toboso es la más hermosa mujer del mundo, y yo el más desdichado caballero de la tierra, y no es bien que mi flaqueza defraude esta verdad. Aprieta, caballero, la lanza, y quítame la vida, pues me has quitado la honra. (cap. 64 de la Segunda Parte)\n\n",
+      "fragmento": "El caballero de la Blanca Luna es en realidad el bachiller Sansón Carrasco disfrazado y le ha hecho prometer que regresará a su pueblo",
+      "despues": " y no volverá a salir de él como caballero andante en el plazo de un año. Así lo hace don Quijote, tras varios días de permanecer abatido en cama.\n\nEl regreso es triste y melancólico y Sancho trata por varios medios de subirle el ánimo a su señor. Don Quijote piensa, por un",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-3",
+    "pregunta": "¿Qué condición exige el mago Merlín para lograr el desencantamiento de Dulcinea?",
+    "opciones": [
+     "Que don Quijote done todas sus riquezas",
+     "Que Sancho se de 3000 azotes en sus posaderas",
+     "Que el hidalgo abandone para siempre la lectura",
+     "Que los duques pidan disculpas públicas"
+    ],
+    "respuesta_correcta": 1,
+    "justificacion_rag": "Correcto. El mago Merlín declara esta singular penitencia como único método.",
+    "explicaciones_opciones": [
+     "Incorrecto. No se menciona la donación de riquezas como condición.",
+     "Correcto. El mago Merlín declara esta singular penitencia como único método.",
+     "Incorrecto. La condición involucra directamente al escudero, no la lectura de don Quijote.",
+     "Incorrecto. Los duques organizan farsas, pero no participan de esta condición del mago."
+    ],
+    "cita_fuente": "la sorpresiva aparición del mago Merlín, que declara que Dulcinea solo podrá ser desencantada si Sancho se da 3000 azotes en sus posaderas",
+    "fuente": {
+     "texto": "la sorpresiva aparición del mago Merlín, que declara que Dulcinea solo podrá ser desencantada si Sancho se da 3000 azotes en sus posaderas",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "que ponen en ridículo a los dos protagonistas quienes, pese a todo, confían hasta el final en sus anfitriones. Solo el capellán del castillo rechaza de plano la opereta e increpa violentamente a don Quijote su falta de cordura.\n\nSe suceden los siguientes episodios de chanza: ",
+      "fragmento": "la sorpresiva aparición del mago Merlín, que declara que Dulcinea solo podrá ser desencantada si Sancho se da 3000 azotes en sus posaderas",
+      "despues": "; esto no le parece nada bien al escudero y de ahí en adelante habrá una permanente tensión entre amo y mozo por causa de esta penitencia. Enseguida, convencen a don Quijote de que vaya volando en un caballo de madera llamado Clavileño a rescatar a una princesa y a su padre del",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-4",
+    "pregunta": "¿Cómo se llama la ínsula de la cual Sancho Panza es nombrado gobernador por los duques?",
+    "opciones": [
+     "Barataria",
+     "El Toboso",
+     "Zaragoza",
+     "Barcelona"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. Barataria es el nombre de la ínsula donde Sancho gobierna temporalmente.",
+    "explicaciones_opciones": [
+     "Correcto. Barataria es el nombre de la ínsula donde Sancho gobierna temporalmente.",
+     "Incorrecto. El Toboso es el lugar donde buscan a Dulcinea.",
+     "Incorrecto. Zaragoza es la ciudad donde se celebrarían unas justas a las que se encamina don Quijote.",
+     "Incorrecto. Barcelona es la ciudad costera donde ocurre el duelo final."
+    ],
+    "cita_fuente": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques",
+    "fuente": {
+     "texto": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "de madera llamado Clavileño a rescatar a una princesa y a su padre del encantamiento que les ha echado un gigante; don Quijote y Sancho caen con naturalidad en la burla. Una de las farsas más memorables es la obtención y gobierno por Sancho de la ínsula prometida: en efecto, ",
+      "fragmento": "Sancho se convierte en gobernador de una \"ínsula\" llamada Barataria que le otorgan los duques",
+      "despues": " interesados en burlarse del escudero. Sancho, no obstante, demuestra tanto su inteligencia como su carácter pacífico y sencillo en el gobierno de la dependencia. Así, pronto renunciará a un puesto en el que se ve acosado por todo tipo de peligros y por un médico, Pedro Recio de",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "video_job_spec": {
+   "video_job_id": "vjob-doc-fbf27f0fe5c6a0b6",
+   "document_id": "doc-fbf27f0fe5c6a0b6",
+   "target_duration": 50,
+   "max_duration": 60,
+   "aspect_ratio": "9:16",
+   "idioma": "es",
+   "estado": "contract_ready",
+   "escenas": [
+    {
+     "id": "sc-1",
+     "escena": 1,
+     "tiempo": "00:00 - 00:20",
+     "duracion_segundos": 20.0,
+     "titulo": "Inicio de la segunda parte y preparativos",
+     "guion_locutor": "Don Quijote y Sancho inician su tercera salida tras enterarse del éxito editorial de la primera parte. Al igual que cuando segmentas tu mercado, cada aventura planeada define el rumbo de su campaña. El cura y el barbero intentan recluirlo, mientras Sancho busca gobernar una ínsula.",
+     "estimacion_palabras": 46,
+     "storyboard_visual": "Imagen de dos personajes listos para un viaje con un libro abierto de fondo.",
+     "consejo_pedagogico": "Explica la relación entre la fama previa de los personajes y sus nuevos preparativos de viaje.",
+     "objetivo_pedagogico": "Comprender el punto de partida y las motivaciones iniciales de los protagonistas en la segunda entrega.",
+     "visual": {
+      "tipo": "ppt_concepto",
+      "titulo": "Preparativos y Fama",
+      "puntos_clave": [
+       "Consta de 74 capítulos escritos por Cervantes",
+       "Los protagonistas conocen el éxito de la primera parte",
+       "Sancho busca ser gobernador de una ínsula"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-1-1",
+       "pagina": null,
+       "texto_fuente": "En esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "leído. Cervantes se defiende de las inverosimilitudes que se han encontrado en la primera parte, como la misteriosa reaparición del rucio de Sancho después de ser robado por Ginés de Pasamonte y el destino de los dineros encontrados en una maleta de Sierra Morena.\n\nAsí pues, ",
+        "fragmento": "en esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres",
+        "despues": ". De hecho, algunos de los personajes que aparecerán en lo sucesivo han leído el libro y los reconocen. Es más, en un alarde de clarividencia, tanto Cervantes como el propio don Quijote manifiestan que la novela pasará a convertirse en un clásico de la literatura y que la figura",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      },
+      {
+       "chunk_id": "cita-1-2",
+       "pagina": null,
+       "texto_fuente": "Sancho reacciona obsesionándose con la idea de ser gobernador y cambiar de estatus social, lo que provoca la burla de su esposa Teresa Panza.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "la locura de don Quijote y urden, junto al bachiller Sansón Carrasco, un nuevo plan que les permita recluir a don Quijote por un largo tiempo en su aldea. Por su parte, don Quijote renueva los ofrecimientos a Sancho prometiéndole la ansiada ínsula a cambio de su compañía. ",
+        "fragmento": "Sancho reacciona obsesionándose con la idea de ser gobernador y cambiar de estatus social, lo que provoca la burla de su esposa Teresa Panza",
+        "despues": ". Con conocimiento de sus convecinos don Quijote y Sancho inician su tercera salida.\n\nAmbos se dirigen al Toboso con objeto de visitar a Dulcinea, lo que pone en un duro aprieto a Sancho, temeroso de que su mentira anterior salga a luz. En uno de los episodios más logrados de la",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "medieval travelers",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    },
+    {
+     "id": "sc-2",
+     "escena": 2,
+     "tiempo": "00:20 - 00:39",
+     "duracion_segundos": 19.6,
+     "titulo": "Aventuras finales y el desenlace",
+     "guion_locutor": "Tras múltiples episodios de chanza con los duques y su visita a Barcelona, don Quijote es derrotado por el Caballero de la Blanca Luna. Al regresar a su aldea, del mismo modo que un producto cierra su ciclo comercial, recupera la cordura antes de morir.",
+     "estimacion_palabras": 45,
+     "storyboard_visual": "Ilustración de un caballero abatido junto a su fiel escudero en un camino de regreso.",
+     "consejo_pedagogico": "Destaca cómo la derrota final ante el Caballero de la Blanca Luna transforma el destino del hidalgo.",
+     "objetivo_pedagogico": "Identificar el desenlace de la obra y la recuperación de la cordura del protagonista.",
+     "visual": {
+      "tipo": "ppt_concepto",
+      "titulo": "Desenlace de la Obra",
+      "puntos_clave": [
+       "Derrota por el Caballero de la Blanca Luna",
+       "Regreso melancólico a la aldea",
+       "Recuperación de la cordura y muerte"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-2-1",
+       "pagina": null,
+       "texto_fuente": "Se llega, finalmente, al momento más dramático de su carrera: su vencimiento por el caballero de la Blanca Luna.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "repentinamente se ven inmersos en un combate naval contra un barco turco —que traía a una dama morisca huida de Argel—, con amplio despliegue de hombres y artillería, muertos y heridos. Nadie hace caso a las observaciones y propuestas de don Quijote y su locura ya no divierte. ",
+        "fragmento": "Se llega, finalmente, al momento más dramático de su carrera: su vencimiento por el caballero de la Blanca Luna",
+        "despues": ". Cierta mañana este aparece en la playa de Barcelona y desafía a don Quijote a un singular duelo por asuntos de prevalencia de damas; la batalla —en presencia de las autoridades y el público barcelonés— es rápida y el gran manchego cae en la arena derrotado.\n\n> Fue luego sobre",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      },
+      {
+       "chunk_id": "cita-2-2",
+       "pagina": null,
+       "texto_fuente": "Don Quijote enferma, pero retorna, al fin, a la cordura y abomina con lúcidas razones de los disparates de los libros de caballerías, aunque no del ideal caballeresco.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "tienen una fuerte discusión por el asunto de los azotes que debe darse el criado para desencantar a Dulcinea. En un cierto lugar conocen a Álvaro Tarfe, personaje del Quijote de Avellaneda, quien declara la falsedad del que conoció en Zaragoza. Llegan finalmente a su aldea. ",
+        "fragmento": "Don Quijote enferma, pero retorna, al fin, a la cordura y abomina con lúcidas razones de los disparates de los libros de caballerías, aunque no del ideal caballeresco",
+        "despues": ". Muere de pena entre la compasión y las lágrimas de todos.\n\nMientras se narra la historia, se entremezclan otras muchas que sirven para distraer la atención de la trama principal. Tienen lugar divertidas y amenas conversaciones entre caballero y escudero, en las que se percibe",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "historic knights",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    }
+   ],
+   "total_palabras": 91,
+   "duracion_total_estimada": 39.6,
+   "wpm": 138,
+   "degradaciones": [],
+   "manifiesto_url_oci": null,
+   "video_url_oci": null,
+   "duracion_total_real": null,
+   "velocidad_reproduccion": 1.0
+  },
+  "resumen_ejecutivo": {
+   "texto": "En la segunda parte de la obra, don Quijote y Sancho Panza descubren que ya son famosos gracias al éxito de la primera entrega. Ambos inician una tercera salida llena de aventuras donde se enfrentan a engaños urdimbrados por otros personajes, como los duques o el bachiller Sansón Carrasco. A lo largo del camino, don Quijote experimenta diversos encuentros y burlas, y llega a gobernar brevemente una ínsula a través de Sancho. Finalmente, tras ser derrotado en Barcelona por el caballero de la Blanca Luna, don Quijote regresa a su aldea, recupera la cordura y muere melancólicamente.",
+   "por_secciones": [
+    {
+     "seccion": "Argumento",
+     "resumen": "Se detalla el inicio de la tercera salida de don Quijote y Sancho, quienes descubren que su primera aventura es un éxito editorial conocido por todos, lo que genera múltiples interacciones y burlas por parte de su entorno.",
+     "fuente": {
+      "texto": "Así pues, en esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "han leído. Cervantes se defiende de las inverosimilitudes que se han encontrado en la primera parte, como la misteriosa reaparición del rucio de Sancho después de ser robado por Ginés de Pasamonte y el destino de los dineros encontrados en una maleta de Sierra Morena.\n\n",
+       "fragmento": "Así pues, en esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres",
+       "despues": ". De hecho, algunos de los personajes que aparecerán en lo sucesivo han leído el libro y los reconocen. Es más, en un alarde de clarividencia, tanto Cervantes como el propio don Quijote manifiestan que la novela pasará a convertirse en un clásico de la literatura y que la figura",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ],
+   "conclusiones": [
+    "Los protagonistas son plenamente conscientes de la fama obtenida por la primera parte de la obra.",
+    "Las interacciones con la nobleza y los convecinos están marcadas por constantes farsas y pruebas a la cordura de los personajes.",
+    "La trama concluye con la derrota del protagonista, su regreso a la cordura y su fallecimiento en su aldea."
+   ]
+  },
+  "glosario": [
+   {
+    "termino": "Caballero de la Triste Figura",
+    "definicion": "Apodo anterior que utilizaba don Quijote y que luego decide cambiar tras la aventura de los leones.",
+    "fuente": {
+     "texto": "cambia su anterior apodo de \"Caballero de la Triste Figura\" al del \"Caballero de Los Leones\".",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "aventuras de don Quijote: la aventura de los leones; don Quijote prueba su valor desafiando a un león macho que es transportado a la corte del rey por un carretero; por fortuna el león no hace caso de él y don Quijote se da por satisfecho; inclusive, para celebrar su victoria, ",
+      "fragmento": "cambia su anterior apodo de \"Caballero de la Triste Figura\" al del \"Caballero de Los Leones",
+      "despues": "\". Don Diego de Miranda —el del Verde Gabán— lo invita a su casa unos días, donde es probado en el grado de su locura por su hijo, un estudiante y poeta alabado por don Quijote. Don Quijote se despide y reemprende el camino, encontrando pronto a dos estudiantes que van en",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "Ínsula",
+    "definicion": "Término utilizado para referirse a la isla o territorio que prometen y otorgan a Sancho Panza para gobernar.",
+    "fuente": {
+     "texto": "don Quijote renueva los ofrecimientos a Sancho prometiéndole la ansiada ínsula a cambio de su compañía.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "para ello, no sin la fiera resistencia de su sobrina y el ama. El cura y el barbero tienen que confesar la locura de don Quijote y urden, junto al bachiller Sansón Carrasco, un nuevo plan que les permita recluir a don Quijote por un largo tiempo en su aldea. Por su parte, ",
+      "fragmento": "don Quijote renueva los ofrecimientos a Sancho prometiéndole la ansiada ínsula a cambio de su compañía",
+      "despues": ". Sancho reacciona obsesionándose con la idea de ser gobernador y cambiar de estatus social, lo que provoca la burla de su esposa Teresa Panza. Con conocimiento de sus convecinos don Quijote y Sancho inician su tercera salida.\n\nAmbos se dirigen al Toboso con objeto de visitar a",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "Caballero de la Blanca Luna",
+    "definicion": "Identidad adoptada por el bachiller Sansón Carrasco en su segundo enfrentamiento con don Quijote en la playa de Barcelona.",
+    "fuente": {
+     "texto": "El caballero de la Blanca Luna es en realidad el bachiller Sansón Carrasco disfrazado y le ha hecho prometer que regresará a su pueblo",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "dijo:\n> -Dulcinea del Toboso es la más hermosa mujer del mundo, y yo el más desdichado caballero de la tierra, y no es bien que mi flaqueza defraude esta verdad. Aprieta, caballero, la lanza, y quítame la vida, pues me has quitado la honra. (cap. 64 de la Segunda Parte)\n\n",
+      "fragmento": "El caballero de la Blanca Luna es en realidad el bachiller Sansón Carrasco disfrazado y le ha hecho prometer que regresará a su pueblo",
+      "despues": " y no volverá a salir de él como caballero andante en el plazo de un año. Así lo hace don Quijote, tras varios días de permanecer abatido en cama.\n\nEl regreso es triste y melancólico y Sancho trata por varios medios de subirle el ánimo a su señor. Don Quijote piensa, por un",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "objetivos_aprendizaje": [
+   "Describir el argumento central y la estructura de la segunda parte de don Quijote de la Mancha.",
+   "Identificar a los personajes principales y sus interacciones en el desarrollo de la narrativa.",
+   "Explicar las diferentes aventuras y episodios autoconclusivos que viven los protagonistas en su camino."
+  ],
+  "diapositivas": [
+   {
+    "orden": 1,
+    "titulo": "Contexto y Fama de los Protagonistas",
+    "puntos_clave": [
+     "La obra cuenta con 74 capítulos publicados en 1615",
+     "Don Quijote y Sancho son conscientes de que su primera aventura es célebre",
+     "Los personajes interactúan con otros que ya han leído el libro"
+    ],
+    "concepto_visual": "Un libro abierto rodeado de dos figuras con vestimenta del hidalgo y su escudero.",
+    "fuente": {
+     "texto": "En esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "leído. Cervantes se defiende de las inverosimilitudes que se han encontrado en la primera parte, como la misteriosa reaparición del rucio de Sancho después de ser robado por Ginés de Pasamonte y el destino de los dineros encontrados en una maleta de Sierra Morena.\n\nAsí pues, ",
+      "fragmento": "en esta segunda entrega don Quijote y Sancho son conscientes del éxito editorial de la primera parte de sus aventuras y ya son célebres",
+      "despues": ". De hecho, algunos de los personajes que aparecerán en lo sucesivo han leído el libro y los reconocen. Es más, en un alarde de clarividencia, tanto Cervantes como el propio don Quijote manifiestan que la novela pasará a convertirse en un clásico de la literatura y que la figura",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 2,
+    "titulo": "Las Burlas de los Duques y Barataria",
+    "puntos_clave": [
+     "Los duques reciben a la pareja en su castillo y organizan farsas",
+     "Sancho asume el gobierno de la ínsula Barataria demostrando inteligencia",
+     "Altisidora finge estar enamorada y ocurren diversas bromas"
+    ],
+    "concepto_visual": "Un castillo medieval con símbolos festivos representando las bromas cortesanas.",
+    "fuente": {
+     "texto": "En forma sutil, pero despiadadamente, los castellanos organizan una serie de farsas que ponen en ridículo a los dos protagonistas",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "parte, se esmeran en presentarles la realidad del mismo modo, orquestando situaciones caballerescas en que don Quijote pueda actuar como tal; en el fondo don Quijote y Sancho son considerados como dos bufones cuya estadía en el castillo tiene por objeto entretener a los duques. ",
+      "fragmento": "En forma sutil, pero despiadadamente, los castellanos organizan una serie de farsas que ponen en ridículo a los dos protagonistas",
+      "despues": " quienes, pese a todo, confían hasta el final en sus anfitriones. Solo el capellán del castillo rechaza de plano la opereta e increpa violentamente a don Quijote su falta de cordura.\n\nSe suceden los siguientes episodios de chanza: la sorpresiva aparición del mago Merlín, que",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 3,
+    "titulo": "Desenlace y Recuperación de la Cordura",
+    "puntos_clave": [
+     "Derrota definitiva ante el Caballero de la Blanca Luna en Barcelona",
+     "Promesa de no salir como caballero andante por un año",
+     "Retorno a la aldea, recuperación de la cordura y fallecimiento"
+    ],
+    "concepto_visual": "Una cama de descanso al atardecer con un escudo apoyado en la pared.",
+    "fuente": {
+     "texto": "Don Quijote enferma, pero retorna, al fin, a la cordura y abomina con lúcidas razones de los disparates de los libros de caballerías, aunque no del ideal caballeresco.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "tienen una fuerte discusión por el asunto de los azotes que debe darse el criado para desencantar a Dulcinea. En un cierto lugar conocen a Álvaro Tarfe, personaje del Quijote de Avellaneda, quien declara la falsedad del que conoció en Zaragoza. Llegan finalmente a su aldea. ",
+      "fragmento": "Don Quijote enferma, pero retorna, al fin, a la cordura y abomina con lúcidas razones de los disparates de los libros de caballerías, aunque no del ideal caballeresco",
+      "despues": ". Muere de pena entre la compasión y las lágrimas de todos.\n\nMientras se narra la historia, se entremezclan otras muchas que sirven para distraer la atención de la trama principal. Tienen lugar divertidas y amenas conversaciones entre caballero y escudero, en las que se percibe",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "estado_recursos": {
+   "resumen": {
+    "recurso": "resumen",
+    "tarea": "A",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 4.429,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "flashcards": {
+    "recurso": "flashcards",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 3.876,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "cuestionario": {
+    "recurso": "cuestionario",
+    "tarea": "C",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 3.275,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "glosario": {
+    "recurso": "glosario",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 3.876,
+    "citas_totales": 3,
+    "citas_verificadas": 3,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "objetivos": {
+    "recurso": "objetivos",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 3.876,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "guion": {
+    "recurso": "guion",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 7.099,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [
+     "el guion tiene 91 palabras (objetivo 110-125)"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diapositivas": {
+    "recurso": "diapositivas",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 7.099,
+    "citas_totales": 3,
+    "citas_verificadas": 3,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "tutorial": {
+    "recurso": "tutorial",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 7.099,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diagrama": {
+    "recurso": "diagrama",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 7.099,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   }
+  }
+ },
+ "fuentes_utilizadas": [],
+ "evaluacion_calidad": {
+  "anclaje_fuente_score": 1.0,
+  "auditoria_ejecutada": true,
+  "claridad_pedagogica": "Alta",
+  "observaciones": "Todas las afirmaciones técnicas se corroboran con el texto fuente; no se detectan inconsistencias ni omisiones.",
+  "afirmaciones": [],
+  "sugerencias_correccion": []
+ },
+ "almacenamiento_oci": {
+  "bucket": null,
+  "objeto_id": null,
+  "status_upload": "omitido"
+ },
+ "advertencias": [
+  "Guion de locución: el guion tiene 91 palabras (objetivo 110-125)."
+ ],
+ "error": null,
+ "orquestacion": {
+  "intentos_redaccion": 1,
+  "scores_por_intento": [
+   1.0
+  ],
+  "umbral_anclaje": 0.75,
+  "max_reintentos": 0,
+  "duracion_segundos": 13.2,
+  "documento_id": "doc-fbf27f0fe5c6a0b6",
+  "chunks_recuperados": 0
+ }
+}

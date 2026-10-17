@@ -37,6 +37,18 @@ def guest_mode_enabled() -> bool:
         return explicito.strip().lower() in ('1', 'true', 'yes')
     return os.getenv('APP_ENV', 'dev').strip().lower() != 'prod'
 
+def guest_generation_enabled() -> bool:
+    """
+    Generar gasta cuota (Gemini, ElevenLabs) y el token de invitado es público: el invitado
+    solo ve las muestras pregeneradas. Se habilita a mano, nunca en la VM, para pregenerarlas.
+    """
+    return os.getenv('PERMITIR_GENERACION_INVITADO', '').strip().lower() in ('1', 'true', 'yes')
+
+def rechazar_generacion_invitado(principal: 'Principal') -> None:
+    if principal.is_guest and not guest_generation_enabled():
+        raise HTTPException(403, 'El modo invitado solo muestra las muestras pregeneradas: '
+                                 'inicia sesión para generar con tus propios documentos.')
+
 def settings():
     url = os.getenv('SUPABASE_URL', '').rstrip('/')
     key = os.getenv('SUPABASE_PUBLISHABLE_KEY', '')
@@ -71,6 +83,11 @@ async def require_user(credentials: HTTPAuthorizationCredentials = Depends(beare
     except (ValueError, KeyError, TypeError):
         raise HTTPException(503, 'Respuesta de autenticación inválida.') from None
     return Principal(user_id, credentials.credentials, result.json().get('email') or '')
+
+async def require_generador(principal: Principal = Depends(require_user)) -> Principal:
+    """Para los endpoints que gastan cuota: una sesión real (o el invitado habilitado a mano)."""
+    rechazar_generacion_invitado(principal)
+    return principal
 
 def private_query(principal: Principal, table: str, params: dict):
     """Forward the user's JWT so Postgres RLS also enforces ownership."""

@@ -278,3 +278,13 @@
 .toggleVisibilityBtn:hover {
   color: var(--color-violet-400);
 }
+
+/* Modo invitado: seguir sin sesión (solo muestras, sin gastar cuota) */
+.invitado {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

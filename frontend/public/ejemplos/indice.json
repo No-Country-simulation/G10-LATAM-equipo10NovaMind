@@ -1,74 +1,137 @@
 [
  {
-  "documento": "guia-swap-oci",
-  "generado_el": "15/10/2026",
-  "ajustes": {
-   "perfil": "Principiante",
-   "nicho": "General",
-   "formato": "Paquete Educativo Completo (5 Estaciones)",
-   "detalle": "Didáctico"
-  },
-  "voz": "Diego (ElevenLabs)",
-  "base": "/ejemplos/guia-swap-oci/"
- },
- {
   "documento": "apache-kafka",
-  "generado_el": "15/10/2026",
+  "escenario": "junior-finanzas",
+  "etiqueta": "Desarrollador Junior · Finanzas y Contabilidad",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
   "ajustes": {
    "perfil": "Desarrollador Junior",
    "nicho": "Finanzas y Contabilidad",
    "formato": "Paquete Educativo Completo (5 Estaciones)",
    "detalle": "Didáctico"
   },
-  "voz": "Kore (Gemini TTS)",
-  "base": "/ejemplos/apache-kafka/"
+  "voz": "Diego (ElevenLabs)",
+  "base": "/ejemplos/apache-kafka/junior-finanzas/"
+ },
+ {
+  "documento": "apache-kafka",
+  "escenario": "principiante-finanzas",
+  "etiqueta": "Principiante · Finanzas y Contabilidad",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
+  "ajustes": {
+   "perfil": "Principiante",
+   "nicho": "Finanzas y Contabilidad",
+   "formato": "Paquete Educativo Completo (5 Estaciones)",
+   "detalle": "Didáctico"
+  },
+  "voz": "Diego (ElevenLabs)",
+  "base": "/ejemplos/apache-kafka/principiante-finanzas/"
+ },
+ {
+  "documento": "apache-kafka",
+  "escenario": "lider-finanzas-clasico",
+  "etiqueta": "Líder Técnico · Finanzas y Contabilidad",
+  "modo": "clasico",
+  "generado_el": "16/10/2026",
+  "ajustes": {
+   "perfil": "Líder Técnico / Arquitecto",
+   "nicho": "Finanzas y Contabilidad",
+   "formato": "Paquete Educativo Completo (5 Estaciones)",
+   "detalle": "Didáctico"
+  },
+  "voz": "Diego (ElevenLabs)",
+  "base": "/ejemplos/apache-kafka/lider-finanzas-clasico/"
+ },
+ {
+  "documento": "apache-kafka",
+  "escenario": "gestor-finanzas",
+  "etiqueta": "Gestor / Ejecutivo · Finanzas y Contabilidad",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
+  "ajustes": {
+   "perfil": "Gestor / Ejecutivo (No Técnico)",
+   "nicho": "Finanzas y Contabilidad",
+   "formato": "Paquete Educativo Completo (5 Estaciones)",
+   "detalle": "Didáctico"
+  },
+  "voz": "Diego (ElevenLabs)",
+  "base": "/ejemplos/apache-kafka/gestor-finanzas/"
+ },
+ {
+  "documento": "apache-kafka",
+  "escenario": "junior-salud",
+  "etiqueta": "Desarrollador Junior · Medicina y Salud",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
+  "ajustes": {
+   "perfil": "Desarrollador Junior",
+   "nicho": "Medicina y Salud",
+   "formato": "Paquete Educativo Completo (5 Estaciones)",
+   "detalle": "Didáctico"
+  },
+  "voz": "Diego (ElevenLabs)",
+  "base": "/ejemplos/apache-kafka/junior-salud/"
+ },
+ {
+  "documento": "guia-swap-oci",
+  "escenario": "principiante-industria",
+  "etiqueta": "Principiante · Industria y Operaciones",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
+  "ajustes": {
+   "perfil": "Principiante",
+   "nicho": "Industria y Operaciones",
+   "formato": "Paquete Educativo Completo (5 Estaciones)",
+   "detalle": "Didáctico"
+  },
+  "voz": "Diego (ElevenLabs)",
+  "base": "/ejemplos/guia-swap-oci/principiante-industria/"
  },
  {
   "documento": "enisa-threat-landscape",
-  "generado_el": "15/10/2026",
+  "escenario": "lider-salud",
+  "etiqueta": "Líder Técnico · Medicina y Salud",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
   "ajustes": {
    "perfil": "Líder Técnico / Arquitecto",
-   "nicho": "General",
+   "nicho": "Medicina y Salud",
    "formato": "Paquete Educativo Completo (5 Estaciones)",
    "detalle": "Didáctico"
   },
-  "voz": "Kore (Gemini TTS)",
-  "base": "/ejemplos/enisa-threat-landscape/"
- },
- {
-  "documento": "snowflake-architecture",
-  "generado_el": "15/10/2026",
-  "ajustes": {
-   "perfil": "Líder Técnico / Arquitecto",
-   "nicho": "General",
-   "formato": "Paquete Educativo Completo (5 Estaciones)",
-   "detalle": "Didáctico"
-  },
-  "voz": "Kore (Gemini TTS)",
-  "base": "/ejemplos/snowflake-architecture/"
+  "voz": "Diego (ElevenLabs)",
+  "base": "/ejemplos/enisa-threat-landscape/lider-salud/"
  },
  {
   "documento": "quijote-primera-parte",
-  "generado_el": "15/10/2026",
+  "escenario": "principiante-leyes",
+  "etiqueta": "Principiante · Leyes y Legal",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
   "ajustes": {
    "perfil": "Principiante",
-   "nicho": "Educación y Academia",
+   "nicho": "Leyes y Legal",
    "formato": "Paquete Educativo Completo (5 Estaciones)",
    "detalle": "Didáctico"
   },
   "voz": "Diego (ElevenLabs)",
-  "base": "/ejemplos/quijote-primera-parte/"
+  "base": "/ejemplos/quijote-primera-parte/principiante-leyes/"
  },
  {
   "documento": "quijote-segunda-parte",
-  "generado_el": "15/10/2026",
+  "escenario": "principiante-marketing",
+  "etiqueta": "Principiante · Marketing y Ventas",
+  "modo": "paralelo",
+  "generado_el": "16/10/2026",
   "ajustes": {
    "perfil": "Principiante",
-   "nicho": "Educación y Academia",
+   "nicho": "Marketing y Ventas",
    "formato": "Paquete Educativo Completo (5 Estaciones)",
    "detalle": "Didáctico"
   },
   "voz": "Diego (ElevenLabs)",
-  "base": "/ejemplos/quijote-segunda-parte/"
+  "base": "/ejemplos/quijote-segunda-parte/principiante-marketing/"
  }
 ]

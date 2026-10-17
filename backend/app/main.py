@@ -31,6 +31,7 @@ load_dotenv()
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile, status, Depends
 from app.auth import Principal, ensure_document, persist_result, private_query, require_user
+from app.auth import rechazar_generacion_invitado, require_generador
 from app.auth import settings as supabase_settings
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
@@ -417,6 +418,7 @@ async def extraer_documento(
             }
         except PdfSinTexto as exc:
             mime, paginas_pdf = "application/pdf", exc.num_paginas
+    rechazar_generacion_invitado(principal)  # transcribir gasta cuota de Gemini
     try:
         async with _cupo(principal):
             resultado = await transcribir(
@@ -522,7 +524,7 @@ async def _extraer_solicitud(
 )
 async def adaptar_contenido(
     background_tasks: BackgroundTasks,
-    principal: Principal = Depends(require_user),
+    principal: Principal = Depends(require_generador),
     archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
     texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
     titulo: Optional[str] = Form(None, description="Título del documento"),
@@ -584,7 +586,7 @@ async def adaptar_contenido(
     tags=["Adaptación Pedagógica"],
 )
 async def adaptar_contenido_stream(
-    principal: Principal = Depends(require_user),
+    principal: Principal = Depends(require_generador),
     archivo: Optional[UploadFile] = File(None, description="Documento PDF, MD o TXT"),
     texto_directo: Optional[str] = Form(None, description="Texto alternativo si no se sube archivo"),
     titulo: Optional[str] = Form(None, description="Título del documento"),
@@ -820,7 +822,8 @@ async def generar_narracion(
     Convierte el guion (VideoJobSpec) en video narrado: voz por escena (ElevenLabs y, si no
     puede, Gemini TTS con la voz `voz`), duración medida (máximo 60 s) y fotos libres opcionales.
     Usuarios: se guarda en su almacén privado y se reutiliza si se pide de nuevo.
-    Invitados: el audio vuelve en la respuesta y no se guarda.
+    Invitados: solo con PERMITIR_GENERACION_INVITADO (pregenerar muestras); el audio vuelve en la
+    respuesta y no se guarda.
     Con voz_servidor=false (voz del navegador) solo se buscan las fotos: ni voz ni almacén.
     """
     if not solicitud.voz_servidor:
@@ -830,6 +833,7 @@ async def generar_narracion(
                 return await diapositivas_sin_voz(solicitud, buscador)
         finally:
             await buscador.aclose()
+    rechazar_generacion_invitado(principal)  # la voz del servidor gasta cuota (ElevenLabs, Gemini TTS)
     try:
         almacen = None if principal.is_guest else almacen_del_entorno()
     except ValueError as exc:
@@ -858,7 +862,7 @@ async def generar_narracion(
 
 @app.post("/api/v1/narracion/ampliar", response_model=RespuestaAmpliacion, tags=["Video narrado"])
 async def ampliar_escena(
-    solicitud: SolicitudAmpliacion, _principal: Principal = Depends(require_user)
+    solicitud: SolicitudAmpliacion, _principal: Principal = Depends(require_generador)
 ) -> RespuestaAmpliacion:
     """
     "Profundizar concepto" (tipo guion) y "Enriquecer con IA" (tipo visual) del teleprompter.
@@ -947,7 +951,7 @@ CATALOGO_DOCUMENTOS = [
         "id": "guia-swap-oci",
         "nombre_archivo": "guia_optimizacion_swap_oci.md",
         "titulo": "Guía Técnica OCI: Optimización de Memoria y Swap de 4 GB",
-        "nicho": "General",
+        "nicho": "Industria y Operaciones",
         "perfil": "Principiante",
         "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
         "tipo": "markdown",
@@ -969,7 +973,7 @@ CATALOGO_DOCUMENTOS = [
         "id": "enisa-threat-landscape",
         "nombre_archivo": "ENISA Threat Landscape 2026_Final.pdf",
         "titulo": "ENISA Threat Landscape: Ciberamenazas y Resiliencia Digital",
-        "nicho": "General",
+        "nicho": "Medicina y Salud",
         "perfil": "Líder Técnico / Arquitecto",
         "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
         "tipo": "pdf",
@@ -977,21 +981,10 @@ CATALOGO_DOCUMENTOS = [
         "descripcion": "Informe exhaustivo de la Agencia Europea de Ciberseguridad sobre vectores de ataque, cadenas de suministro y ciberdefensa moderna.",
     },
     {
-        "id": "snowflake-architecture",
-        "nombre_archivo": "Snowflake_SIGMOD.pdf",
-        "titulo": "Snowflake Elastic Data Warehouse (SIGMOD Paper)",
-        "nicho": "General",
-        "perfil": "Líder Técnico / Arquitecto",
-        "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
-        "tipo": "pdf",
-        "tamano_formato": "909 KB (PDF Técnico)",
-        "descripcion": "Paper académico oficial de SIGMOD sobre arquitectura elástica desacoplada de cómputo y almacenamiento en bases de datos analíticas cloud.",
-    },
-    {
         "id": "quijote-primera-parte",
         "nombre_archivo": "quijote_primera_parte_resumen.md",
         "titulo": "Don Quijote de la Mancha · Primera Parte (1605)",
-        "nicho": "Educación y Academia",
+        "nicho": "Leyes y Legal",
         "perfil": "Principiante",
         "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
         "tipo": "markdown",
@@ -1002,7 +995,7 @@ CATALOGO_DOCUMENTOS = [
         "id": "quijote-segunda-parte",
         "nombre_archivo": "quijote_segunda_parte_resumen.md",
         "titulo": "Don Quijote de la Mancha · Segunda Parte (1615)",
-        "nicho": "Educación y Academia",
+        "nicho": "Marketing y Ventas",
         "perfil": "Principiante",
         "formato_sugerido": "Paquete Educativo Completo (5 Estaciones)",
         "tipo": "markdown",

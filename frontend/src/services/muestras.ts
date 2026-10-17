@@ -1,28 +1,48 @@
 /**
  * Muestras pregeneradas de los documentos de ejemplo: el paquete y su video se generaron una
  * vez y se sirven como archivos estáticos (frontend/public/ejemplos/), así que abrirlas no
- * gasta cuota de Gemini ni de ElevenLabs.
+ * gasta cuota de Gemini ni de ElevenLabs. Un documento puede tener varios escenarios: el mismo
+ * texto adaptado con otro perfil, otro sector u otro modo de generación.
  *
- *   /ejemplos/indice.json            [{ documento, generado_el, ajustes, voz, base }]
- *   /ejemplos/<documento>/paquete.json   AdaptedContentPackage
- *   /ejemplos/<documento>/narracion.json RespuestaNarracion (rutas de audio relativas)
- *   /ejemplos/<documento>/escena-N.mp3
+ *   /ejemplos/indice.json                         [{ documento, escenario, etiqueta, modo, generado_el, ajustes, voz, base }]
+ *   /ejemplos/<documento>/<escenario>/paquete.json   AdaptedContentPackage
+ *   /ejemplos/<documento>/<escenario>/narracion.json RespuestaNarracion (rutas de audio relativas)
+ *   /ejemplos/<documento>/<escenario>/escena-N.mp3
  */
 import type { AdaptedContentPackage, MuestraPregenerada, RespuestaNarracion } from '../types/types';
 
 const RAIZ = '/ejemplos/';
 
-/** Las muestras disponibles por id de documento; vacío si aún no se generó ninguna. */
-export async function indiceMuestras(): Promise<Record<string, MuestraPregenerada>> {
+/** Un índice antiguo (un escenario por documento) no trae escenario, etiqueta ni modo. */
+const normalizar = (m: Partial<MuestraPregenerada> & Pick<MuestraPregenerada, 'documento' | 'ajustes'>) =>
+  ({
+    ...m,
+    escenario: m.escenario ?? 'principal',
+    etiqueta: m.etiqueta ?? `${m.ajustes.perfil} · ${m.ajustes.nicho}`,
+    modo: m.modo === 'clasico' ? 'clasico' : 'paralelo',
+  }) as MuestraPregenerada;
+
+/** Los escenarios disponibles por id de documento, en el orden del índice; vacío si no hay ninguno. */
+export async function indiceMuestras(): Promise<Record<string, MuestraPregenerada[]>> {
   try {
     const res = await fetch(`${RAIZ}indice.json`, { cache: 'no-cache' });
     if (!res.ok) return {};
     const lista = (await res.json()) as MuestraPregenerada[];
-    return Object.fromEntries(lista.map((m) => [m.documento, m]));
+    const porDocumento: Record<string, MuestraPregenerada[]> = {};
+    for (const m of lista.map(normalizar)) (porDocumento[m.documento] ??= []).push(m);
+    return porDocumento;
   } catch {
     return {}; // sin índice la app funciona igual: solo no hay muestras
   }
 }
+
+/** El escenario pedido de un documento, o el primero si no se pide ninguno o no existe. */
+export const escenarioDe = (
+  muestras: Record<string, MuestraPregenerada[]>, documento: string, escenario?: string,
+): MuestraPregenerada | undefined => {
+  const lista = muestras[documento] ?? [];
+  return lista.find((m) => m.escenario === escenario) ?? lista[0];
+};
 
 /** Paquete de la muestra, con su narración adjunta (si se pregrabó). */
 export async function cargarMuestra(muestra: MuestraPregenerada): Promise<AdaptedContentPackage> {

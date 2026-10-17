@@ -307,6 +307,12 @@ export interface EstadoRecurso {
 export interface MuestraPregenerada {
   /** id del documento en REAL_DOCUMENTS_CATALOG */
   documento: string;
+  /** Escenario dentro del documento (un documento puede tener varios: mismo texto, otros ajustes) */
+  escenario: string;
+  /** Nombre visible del escenario, p. ej. «Principiante · Finanzas y Contabilidad» */
+  etiqueta: string;
+  /** Cómo se generó: 'paralelo' (Gemini) o 'clasico' (RAG vectorial: Cohere, ChromaDB y LangGraph) */
+  modo: 'paralelo' | 'clasico';
   generado_el: string;
   /** Ajustes con los que se generó (perfil, nicho, formato y nivel) */
   ajustes: { perfil: RecipientProfile; nicho: IndustryNiche; formato: OutputFormat; detalle: DetailLevel };

@@ -1,0 +1,988 @@
+{
+ "status": "exito_con_advertencias",
+ "metadatos": {
+  "perfil_aplicado": "Principiante / Transición de Carrera",
+  "formato_generado": "Paquete Educativo Completo (5 Estaciones)",
+  "nicho_aplicado": "Leyes y Legal",
+  "tiempo_estimado_estudio_minutos": 8,
+  "conceptos_clave": [
+   "Caballero andante",
+   "Escudero",
+   "Encantadores"
+  ],
+  "prerrequisitos": []
+ },
+ "contenido_adaptado": {
+  "titulo": "Don Quijote de la Mancha · Primera Parte (1605)",
+  "introduccion_contextualizada": "Este documento ofrece una síntesis detallada de la primera parte de una de las obras más célebres de la literatura, detallando su estructura, el desarrollo de su argumento y las vivencias de sus protagonistas. La lectura de este texto resulta de gran utilidad para comprender los riesgos derivados de actuar al margen de los procedimientos establecidos, así como para analizar la importancia de la correcta gestión documental y las obligaciones asumidas por las partes en distintas situaciones.",
+  "items": [
+   {
+    "id": "fc-1",
+    "frente": "¿Cómo se llamó originalmente la que después sería conocida como la Primera Parte de la obra de Cervantes?",
+    "dorso": "Originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha.",
+    "pista_didactica": "Busca el nombre completo con el que fue concebida la obra al inicio del documento.",
+    "fuente": {
+     "texto": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+      "fragmento": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente",
+      "despues": ". Empieza con un prólogo en el que Cervantes se burla de la erudición pedantesca y con unos poemas cómicos, a manera de preliminares, compuestos en alabanza de la obra por el propio autor, quien lo justifica diciendo que no encontró a nadie que quisiera alabar una obra tan",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Cómo se llama el hidalgo pobre protagonista de la historia cuyo nombre real se revela al final?",
+    "dorso": "Se llama Alonso Quijano.",
+    "pista_didactica": "Piensa en el nombre verdadero del hidalgo que enloquece leyendo libros de caballerías.",
+    "fuente": {
+     "texto": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "recurso literario, atribuye a un autor árabe (Cide Hamete Benengeli), pero que los encontró casualmente paseando en Toledo, de modo que podrá seguir relatando las aventuras de don Quijote, después de que consiga quien le traduzca los «caracteres que conocí ser arábigos».\n\n",
+      "fragmento": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval",
+      "despues": ".\n\n> En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante...(cap. 1)\n\nSe pone un",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Quién es el vecino labrador que acompaña a don Quijote como su escudero?",
+    "dorso": "Sancho Panza.",
+    "pista_didactica": "Es el fiel escudero que contrapesa el idealismo de don Quijote y a quien le promete gobernar un reino.",
+    "fuente": {
+     "texto": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "que han sido unos encantadores quienes han hecho desaparecer su colección. El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos.\n\n",
+      "fragmento": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras",
+      "despues": ". Aparece entonces el otro personaje fundamental en la novela, que le permite a don Quijote dialogar y que contrapesará su extremo idealismo.\n\nUna vez más, en su segunda salida, esta vez acompañado por su escudero Sancho, don Quijote se lanza por el Campo de Montiel en demanda",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Qué creía don Quijote que eran los treinta o cuarenta molinos de viento con los que luchó?",
+    "dorso": "Creía que eran desaforados gigantes con brazos largos.",
+    "pista_didactica": "Imagina qué elementos gigantescos confusos para el protagonista giraban en el Campo de Montiel.",
+    "fuente": {
+     "texto": "Mire vuestra merced-respondió Sancho-, que aquellos que allí se parecen no son gigantes, sino molinos de viento, y lo que en ellos parecen brazos son las aspas, que volteadas del viento hacen andar la piedra del molino.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "a enriquecer: que esta es buena guerra, y es gran servicio de Dios quitar tan mala simiente de sobre la faz de la tierra.-¿Qué gigantes?-dijo Sancho Panza.-Aquellos que allí ves-respondió su amo-, de los brazos largos, que los suelen tener algunos de casi dos leguas.-",
+      "fragmento": "Mire vuestra merced-respondió Sancho-, que aquellos que allí se parecen no son gigantes, sino molinos de viento, y lo que en ellos parecen brazos son las aspas, que volteadas del viento hacen andar la piedra del molino",
+      "despues": ".-Bien parece-respondió don Quijote- que no estás cursado en esto de las aventuras; ellos son gigantes, y si tienes miedo quítate de ahí, y ponte en oración en el espacio que yo voy a entrar con ellos en fiera y desigual batalla.Y diciendo esto, dio de espuelas a su caballo",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "resumen_ninja": {
+   "titulo": "Síntesis Conceptual",
+   "analogia_central": "Asumir obligaciones legales sin verificar la realidad normativa o los términos de un contrato equivale a que un profesional del derecho ignore las cláusulas vigentes y actúe bajo una interpretación completamente distorsionada de la legislación aplicable, lo que inevitablemente genera conflictos y perjuicios procesales.",
+   "conceptos_clave": [
+    {
+     "id": "c1",
+     "texto": "Caballero andante",
+     "explicacion": "Figura central que adopta el protagonista, caracterizada por la búsqueda de aventuras, la defensa de causas justas y la protección de los desvalidos según un código de honor idealizado.",
+     "verificado": true,
+     "fuente": {
+      "texto": "enloquece leyendo libros de caballerías y se cree un caballero andante medieval.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "don Quijote, después de que consiga quien le traduzca los «caracteres que conocí ser arábigos».\n\nLa novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien ",
+       "fragmento": "enloquece leyendo libros de caballerías y se cree un caballero andante medieval",
+       "despues": ".\n\n> En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante...(cap. 1)\n\nSe pone un",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c2",
+     "texto": "Escudero",
+     "explicacion": "Persona que acompaña al caballero en sus travesías, sirviendo de contrapeso realista a las fantasías del protagonista y participando en las gestiones cotidianas del viaje.",
+     "verificado": true,
+     "fuente": {
+      "texto": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes...",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "que han sido unos encantadores quienes han hecho desaparecer su colección. El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos.\n\n",
+       "fragmento": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes",
+       "despues": ", en especial hacerlo gobernador de algún reino que conquiste en sus aventuras. Aparece entonces el otro personaje fundamental en la novela, que le permite a don Quijote dialogar y que contrapesará su extremo idealismo.\n\nUna vez más, en su segunda salida, esta vez acompañado por",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c3",
+     "texto": "Encantadores",
+     "explicacion": "Recurso argumental utilizado por el protagonista para justificar los fracasos de sus empresas y la discrepancia entre sus expectativas y la realidad fáctica.",
+     "verificado": true,
+     "fuente": {
+      "texto": "El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "es atendido por su sobrina y el ama de la casa. El cura y el barbero del lugar someten la biblioteca de Don Quijote a un expurgo, y queman parte de los libros que le han hecho tanto mal, haciéndole creer que han sido unos encantadores quienes han hecho desaparecer su colección. ",
+       "fragmento": "El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos",
+       "despues": ".\n\nEn el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras. Aparece entonces",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ]
+  },
+  "flashcards": [
+   {
+    "id": "fc-1",
+    "frente": "¿Cómo se llamó originalmente la que después sería conocida como la Primera Parte de la obra de Cervantes?",
+    "dorso": "Originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha.",
+    "pista_didactica": "Busca el nombre completo con el que fue concebida la obra al inicio del documento.",
+    "fuente": {
+     "texto": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+      "fragmento": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente",
+      "despues": ". Empieza con un prólogo en el que Cervantes se burla de la erudición pedantesca y con unos poemas cómicos, a manera de preliminares, compuestos en alabanza de la obra por el propio autor, quien lo justifica diciendo que no encontró a nadie que quisiera alabar una obra tan",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Cómo se llama el hidalgo pobre protagonista de la historia cuyo nombre real se revela al final?",
+    "dorso": "Se llama Alonso Quijano.",
+    "pista_didactica": "Piensa en el nombre verdadero del hidalgo que enloquece leyendo libros de caballerías.",
+    "fuente": {
+     "texto": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "recurso literario, atribuye a un autor árabe (Cide Hamete Benengeli), pero que los encontró casualmente paseando en Toledo, de modo que podrá seguir relatando las aventuras de don Quijote, después de que consiga quien le traduzca los «caracteres que conocí ser arábigos».\n\n",
+      "fragmento": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval",
+      "despues": ".\n\n> En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante...(cap. 1)\n\nSe pone un",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Quién es el vecino labrador que acompaña a don Quijote como su escudero?",
+    "dorso": "Sancho Panza.",
+    "pista_didactica": "Es el fiel escudero que contrapesa el idealismo de don Quijote y a quien le promete gobernar un reino.",
+    "fuente": {
+     "texto": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "que han sido unos encantadores quienes han hecho desaparecer su colección. El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos.\n\n",
+      "fragmento": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras",
+      "despues": ". Aparece entonces el otro personaje fundamental en la novela, que le permite a don Quijote dialogar y que contrapesará su extremo idealismo.\n\nUna vez más, en su segunda salida, esta vez acompañado por su escudero Sancho, don Quijote se lanza por el Campo de Montiel en demanda",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Qué creía don Quijote que eran los treinta o cuarenta molinos de viento con los que luchó?",
+    "dorso": "Creía que eran desaforados gigantes con brazos largos.",
+    "pista_didactica": "Imagina qué elementos gigantescos confusos para el protagonista giraban en el Campo de Montiel.",
+    "fuente": {
+     "texto": "Mire vuestra merced-respondió Sancho-, que aquellos que allí se parecen no son gigantes, sino molinos de viento, y lo que en ellos parecen brazos son las aspas, que volteadas del viento hacen andar la piedra del molino.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "a enriquecer: que esta es buena guerra, y es gran servicio de Dios quitar tan mala simiente de sobre la faz de la tierra.-¿Qué gigantes?-dijo Sancho Panza.-Aquellos que allí ves-respondió su amo-, de los brazos largos, que los suelen tener algunos de casi dos leguas.-",
+      "fragmento": "Mire vuestra merced-respondió Sancho-, que aquellos que allí se parecen no son gigantes, sino molinos de viento, y lo que en ellos parecen brazos son las aspas, que volteadas del viento hacen andar la piedra del molino",
+      "despues": ".-Bien parece-respondió don Quijote- que no estás cursado en esto de las aventuras; ellos son gigantes, y si tienes miedo quítate de ahí, y ponte en oración en el espacio que yo voy a entrar con ellos en fiera y desigual batalla.Y diciendo esto, dio de espuelas a su caballo",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "tutorial": [
+   {
+    "id": "t-1",
+    "paso": 1,
+    "titulo": "Paso 1: Identificar el origen y la estructura de la obra",
+    "descripcion": "Reconocer cómo se compone formalmente la primera parte de la novela y quién es su autor.",
+    "cli_command": "Estudiar la autoría de Miguel de Cervantes y la división original de cincuenta y dos capítulos en cuatro partes.",
+    "completado": false,
+    "verificacion": "El estudiante puede nombrar correctamente el número total de capítulos y la cantidad en que se dividen."
+   },
+   {
+    "id": "t-2",
+    "paso": 2,
+    "titulo": "Paso 2: Conocer a los personajes principales y sus motivaciones",
+    "descripcion": "Comprender el perfil de Alonso Quijano y su transformación en caballero andante junto a su escudero.",
+    "cli_command": "Analizar la transición de hidalgo pobre a don Quijote de la Mancha y la incorporación de Sancho Panza.",
+    "completado": false,
+    "verificacion": "El estudiante explica la relación entre amo y escudero y el papel de Sancho Panza."
+   },
+   {
+    "id": "t-3",
+    "paso": 3,
+    "titulo": "Paso 3: Analizar el desarrollo y cierre de las aventuras",
+    "descripcion": "Revisar los episodios más destacados y el método utilizado para regresar al protagonista a su aldea.",
+    "cli_command": "Examinar eventos como la aventura de los molinos de viento y el traslado final de don Quijote en una jaula.",
+    "completado": false,
+    "verificacion": "El estudiante describe cómo concluye la primera parte y el estado en el que regresa el protagonista a su hogar."
+   }
+  ],
+  "diagrama_mermaid": "flowchart TD\n    A[Inicio: Alonso Quijano enloquece] --> B[Primera salida y nombramiento como caballero]\n    B --> C[Segunda salida con Sancho Panza]\n    C --> D[Aventuras: molinos de viento y otros incidentes]\n    D --> E[Regreso a la aldea en una jaula y fin de la primera parte]",
+  "director_cut": [
+   {
+    "id": "sc-1",
+    "escena": 1,
+    "tiempo": "00:00 - 00:23",
+    "duracion_segundos": 23.5,
+    "titulo": "El inicio del hidalgo",
+    "guion_locutor": "La primera parte consta de cincuenta y dos capítulos y comienza describiendo a un hidalgo pobre que enloquece leyendo libros de caballerías y se cree un caballero andante. Así como un contrato mal redactado puede generar litigios imprevistos por falta de claridad, este personaje adopta un nombre sugerente y se lanza a la aventura.",
+    "estimacion_palabras": 54,
+    "storyboard_visual": "Imagen de un hidalgo leyendo libros antiguos en una habitación.",
+    "consejo_pedagogico": "Presentar el origen del protagonista de forma clara.",
+    "objetivo_pedagogico": "Comprender cómo comienza la historia de don Quijote.",
+    "visual": {
+     "tipo": "ppt_concepto",
+     "titulo": "El Ingenioso Hidalgo",
+     "puntos_clave": [
+      "52 capítulos divididos en cuatro partes",
+      "Un hidalgo pobre oriundo de La Mancha",
+      "Enloquece leyendo libros de caballerías"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-1-1",
+      "pagina": null,
+      "texto_fuente": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+       "fragmento": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente",
+       "despues": ". Empieza con un prólogo en el que Cervantes se burla de la erudición pedantesca y con unos poemas cómicos, a manera de preliminares, compuestos en alabanza de la obra por el propio autor, quien lo justifica diciendo que no encontró a nadie que quisiera alabar una obra tan",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     },
+     {
+      "chunk_id": "cita-1-2",
+      "pagina": null,
+      "texto_fuente": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "recurso literario, atribuye a un autor árabe (Cide Hamete Benengeli), pero que los encontró casualmente paseando en Toledo, de modo que podrá seguir relatando las aventuras de don Quijote, después de que consiga quien le traduzca los «caracteres que conocí ser arábigos».\n\n",
+       "fragmento": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval",
+       "despues": ".\n\n> En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante...(cap. 1)\n\nSe pone un",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "knight armor",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   },
+   {
+    "id": "sc-2",
+    "escena": 2,
+    "tiempo": "00:23 - 00:41",
+    "duracion_segundos": 18.3,
+    "titulo": "Aventuras y regreso",
+    "guion_locutor": "Acompañado por su escudero Sancho Panza, don Quijote protagoniza múltiples peripecias, como la lucha contra los molinos de viento. Tras numerosos incidentes, es llevado de regreso a su aldea dentro de una jaula, creyendo firmemente que ha sido encantado por malvados hechiceros.",
+    "estimacion_palabras": 42,
+    "storyboard_visual": "Ilustración de molinos de viento en un campo abierto.",
+    "consejo_pedagogico": "Explicar el desarrollo de las aventuras principales.",
+    "objetivo_pedagogico": "Identificar los episodios centrales y el final de la primera parte.",
+    "visual": {
+     "tipo": "diagrama_bloques",
+     "titulo": "Aventuras Principales",
+     "puntos_clave": [
+      "Segunda salida junto a Sancho Panza",
+      "La famosa lucha contra los molinos de viento",
+      "Retorno a la aldea en una jaula"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-2-1",
+      "pagina": null,
+      "texto_fuente": "Una vez más, en su segunda salida, esta vez acompañado por su escudero Sancho, don Quijote se lanza por el Campo de Montiel en demanda de ejercer su nuevo oficio.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras. Aparece entonces el otro personaje fundamental en la novela, que le permite a don Quijote dialogar y que contrapesará su extremo idealismo.\n\n",
+       "fragmento": "Una vez más, en su segunda salida, esta vez acompañado por su escudero Sancho, don Quijote se lanza por el Campo de Montiel en demanda de ejercer su nuevo oficio",
+       "despues": ". En este momento ocurre su más famosa aventura: Don Quijote lucha contra unos gigantes, que no son otra cosa que molinos de viento, pese a las advertencias de su escudero.\n\n-\n\n> En esto descubrieron treinta o cuarenta molinos de viento que hay en aquel campo, y así como don",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     },
+     {
+      "chunk_id": "cita-2-2",
+      "pagina": null,
+      "texto_fuente": "Finalmente, todos se ponen de acuerdo en el modo de controlar a don Quijote: lo amarran y le hacen creer que ha sido encantado, y lo depositan en una jaula en la cual lo trasladan nuevamente a su aldea.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "tinto, a los que cree gigantes, y el pleito con el dueño de la bacía que la reclama airado; también don Quijote es presa de una pesada broma de parte de Maritornes y la hija del ventero, consistente en dejarlo amarrado y colgando de una mano en una de las murallas de la venta. ",
+       "fragmento": "Finalmente, todos se ponen de acuerdo en el modo de controlar a don Quijote: lo amarran y le hacen creer que ha sido encantado, y lo depositan en una jaula en la cual lo trasladan nuevamente a su aldea",
+       "despues": ". Por su parte, Sancho se da cuenta del embuste, pero don Quijote no le hace caso, creyéndose hechizado. Después de algunas peripecias retornan a su pueblo donde nuevamente el protagonista es atendido por su sobrina y el ama. Hasta aquí llega la primera parte. Como epílogo, a",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "windmill field",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   }
+  ],
+  "quiz": [
+   {
+    "id": "q-1",
+    "pregunta": "¿Cómo se define en el texto a los personajes que en la obra desfiguran la realidad a don Quijote y le permiten explicar sus fracasos?",
+    "opciones": [
+     "Encantadores",
+     "Escuderos",
+     "Caballeros andantes",
+     "Venteros"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. El texto indica que el recurso a las manipulaciones de los encantadores es permanente y les permite explicar los fracasos.",
+    "explicaciones_opciones": [
+     "Correcto. El texto indica que el recurso a las manipulaciones de los encantadores es permanente y les permite explicar los fracasos.",
+     "Incorrecto. El escudero es Sancho Panza, el vecino labrador que acompaña al protagonista y contrapesará su idealismo.",
+     "Incorrecto. Don Quijote cree ser un caballero andante, pero no son ellos quienes desfiguran la realidad.",
+     "Incorrecto. El ventero es quien atiende la posada y confunde a don Quijote en su primera parada."
+    ],
+    "cita_fuente": "El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos.",
+    "fuente": {
+     "texto": "El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "es atendido por su sobrina y el ama de la casa. El cura y el barbero del lugar someten la biblioteca de Don Quijote a un expurgo, y queman parte de los libros que le han hecho tanto mal, haciéndole creer que han sido unos encantadores quienes han hecho desaparecer su colección. ",
+      "fragmento": "El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos",
+      "despues": ".\n\nEn el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras. Aparece entonces",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-2",
+    "pregunta": "¿Cuál es el nombre original con el que se llamó a la que después sería conocida como la Primera Parte de la obra?",
+    "opciones": [
+     "El Ingenioso Hidalgo don Quijote de la Mancha",
+     "Don Quijote y Sancho en el Campo de Montiel",
+     "La Primera Salida de don Quijote",
+     "El Ingenioso Caballero don Quijote"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. Así lo señala textualmente el documento al explicar el origen de la obra.",
+    "explicaciones_opciones": [
+     "Correcto. Así lo señala textualmente el documento al explicar el origen de la obra.",
+     "Incorrecto. El Campo de Montiel es el lugar donde se lanzan en su segunda salida.",
+     "Incorrecto. Es una denominación parcial sobre una de sus aventuras.",
+     "Incorrecto. El título original indicado en el documento contiene la palabra 'Hidalgo', no 'Caballero'."
+    ],
+    "cita_fuente": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos",
+    "fuente": {
+     "texto": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+      "fragmento": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos",
+      "despues": ", separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente. Empieza con un prólogo en el que Cervantes se burla de la erudición pedantesca y con unos poemas cómicos, a manera de preliminares, compuestos en alabanza de la obra por el propio autor, quien lo",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-3",
+    "pregunta": "Según la Guía paso a paso, ¿qué aspecto se aborda en el Paso 2 de la estructura de estudio?",
+    "opciones": [
+     "Conocer a los personajes principales y sus motivaciones",
+     "Analizar el desarrollo y cierre de las aventuras",
+     "Identificar el origen y la estructura de la obra",
+     "Estudiar el impacto en la beatificación de Teresa de Jesús"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. Corresponde exactamente al Paso 2 del temario enseñado.",
+    "explicaciones_opciones": [
+     "Correcto. Corresponde exactamente al Paso 2 del temario enseñado.",
+     "Incorrecto. Eso corresponde al Paso 3.",
+     "Incorrecto. Eso corresponde al Paso 1.",
+     "Incorrecto. No forma parte de los pasos enumerados en el temario."
+    ],
+    "cita_fuente": "- Paso 2: Conocer a los personajes principales y sus motivaciones",
+    "fuente": {
+     "texto": "- Paso 2: Conocer a los personajes principales y sus motivaciones",
+     "pagina": null,
+     "verificada": false
+    }
+   },
+   {
+    "id": "q-4",
+    "pregunta": "De acuerdo con el documento, ¿qué creía don Quijote que eran los treinta o cuarenta molinos de viento contra los que luchó?",
+    "opciones": [
+     "Gigantes desaforados de brazos largos",
+     "Monjes benedictinos enlutados",
+     "Un ejército de pastores con ovejas",
+     "Caballeros contrarios en un duelo"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. El texto detalla que los confundió con gigantes de brazos largos.",
+    "explicaciones_opciones": [
+     "Correcto. El texto detalla que los confundió con gigantes de brazos largos.",
+     "Incorrecto. Los monjes benedictinos aparecen en otra aventura posterior.",
+     "Incorrecto. La aventura con las ovejas ocurre en un episodio distinto.",
+     "Incorrecto. Don Quijote enfrenta a comerciantes y a un vizcaíno en otros pasajes, no a caballeros aquí."
+    ],
+    "cita_fuente": "...don Quijote los vió, dijo a su escudero:-La ventura va guiando nuestras cosas mejor de lo que acertáramos a desear; porque ves allí, amigo Sancho Panza, donde se descubren treinta o poco más desaforados gigantes con quien pienso hacer batalla...",
+    "fuente": {
+     "texto": "...don Quijote los vió, dijo a su escudero:-La ventura va guiando nuestras cosas mejor de lo que acertáramos a desear; porque ves allí, amigo Sancho Panza, donde se descubren treinta o poco más desaforados gigantes con quien pienso hacer batalla...",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "oficio. En este momento ocurre su más famosa aventura: Don Quijote lucha contra unos gigantes, que no son otra cosa que molinos de viento, pese a las advertencias de su escudero.\n\n-\n\n> En esto descubrieron treinta o cuarenta molinos de viento que hay en aquel campo, y así como ",
+      "fragmento": "don Quijote los vió, dijo a su escudero:-La ventura va guiando nuestras cosas mejor de lo que acertáramos a desear; porque ves allí, amigo Sancho Panza, donde se descubren treinta o poco más desaforados gigantes con quien pienso hacer batalla",
+      "despues": ", y quitarles a todos las vidas, con cuyos despojos comenzaremos a enriquecer: que esta es buena guerra, y es gran servicio de Dios quitar tan mala simiente de sobre la faz de la tierra.-¿Qué gigantes?-dijo Sancho Panza.-Aquellos que allí ves-respondió su amo-, de los brazos",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "video_job_spec": {
+   "video_job_id": "vjob-doc-13a2e66086984fc8",
+   "document_id": "doc-13a2e66086984fc8",
+   "target_duration": 50,
+   "max_duration": 60,
+   "aspect_ratio": "9:16",
+   "idioma": "es",
+   "estado": "contract_ready",
+   "escenas": [
+    {
+     "id": "sc-1",
+     "escena": 1,
+     "tiempo": "00:00 - 00:23",
+     "duracion_segundos": 23.5,
+     "titulo": "El inicio del hidalgo",
+     "guion_locutor": "La primera parte consta de cincuenta y dos capítulos y comienza describiendo a un hidalgo pobre que enloquece leyendo libros de caballerías y se cree un caballero andante. Así como un contrato mal redactado puede generar litigios imprevistos por falta de claridad, este personaje adopta un nombre sugerente y se lanza a la aventura.",
+     "estimacion_palabras": 54,
+     "storyboard_visual": "Imagen de un hidalgo leyendo libros antiguos en una habitación.",
+     "consejo_pedagogico": "Presentar el origen del protagonista de forma clara.",
+     "objetivo_pedagogico": "Comprender cómo comienza la historia de don Quijote.",
+     "visual": {
+      "tipo": "ppt_concepto",
+      "titulo": "El Ingenioso Hidalgo",
+      "puntos_clave": [
+       "52 capítulos divididos en cuatro partes",
+       "Un hidalgo pobre oriundo de La Mancha",
+       "Enloquece leyendo libros de caballerías"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-1-1",
+       "pagina": null,
+       "texto_fuente": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+        "fragmento": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente",
+        "despues": ". Empieza con un prólogo en el que Cervantes se burla de la erudición pedantesca y con unos poemas cómicos, a manera de preliminares, compuestos en alabanza de la obra por el propio autor, quien lo justifica diciendo que no encontró a nadie que quisiera alabar una obra tan",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      },
+      {
+       "chunk_id": "cita-1-2",
+       "pagina": null,
+       "texto_fuente": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "recurso literario, atribuye a un autor árabe (Cide Hamete Benengeli), pero que los encontró casualmente paseando en Toledo, de modo que podrá seguir relatando las aventuras de don Quijote, después de que consiga quien le traduzca los «caracteres que conocí ser arábigos».\n\n",
+        "fragmento": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval",
+        "despues": ".\n\n> En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante...(cap. 1)\n\nSe pone un",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "knight armor",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    },
+    {
+     "id": "sc-2",
+     "escena": 2,
+     "tiempo": "00:23 - 00:41",
+     "duracion_segundos": 18.3,
+     "titulo": "Aventuras y regreso",
+     "guion_locutor": "Acompañado por su escudero Sancho Panza, don Quijote protagoniza múltiples peripecias, como la lucha contra los molinos de viento. Tras numerosos incidentes, es llevado de regreso a su aldea dentro de una jaula, creyendo firmemente que ha sido encantado por malvados hechiceros.",
+     "estimacion_palabras": 42,
+     "storyboard_visual": "Ilustración de molinos de viento en un campo abierto.",
+     "consejo_pedagogico": "Explicar el desarrollo de las aventuras principales.",
+     "objetivo_pedagogico": "Identificar los episodios centrales y el final de la primera parte.",
+     "visual": {
+      "tipo": "diagrama_bloques",
+      "titulo": "Aventuras Principales",
+      "puntos_clave": [
+       "Segunda salida junto a Sancho Panza",
+       "La famosa lucha contra los molinos de viento",
+       "Retorno a la aldea en una jaula"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-2-1",
+       "pagina": null,
+       "texto_fuente": "Una vez más, en su segunda salida, esta vez acompañado por su escudero Sancho, don Quijote se lanza por el Campo de Montiel en demanda de ejercer su nuevo oficio.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "llamado Sancho Panza, a quien le promete grandes mercedes, en especial hacerlo gobernador de algún reino que conquiste en sus aventuras. Aparece entonces el otro personaje fundamental en la novela, que le permite a don Quijote dialogar y que contrapesará su extremo idealismo.\n\n",
+        "fragmento": "Una vez más, en su segunda salida, esta vez acompañado por su escudero Sancho, don Quijote se lanza por el Campo de Montiel en demanda de ejercer su nuevo oficio",
+        "despues": ". En este momento ocurre su más famosa aventura: Don Quijote lucha contra unos gigantes, que no son otra cosa que molinos de viento, pese a las advertencias de su escudero.\n\n-\n\n> En esto descubrieron treinta o cuarenta molinos de viento que hay en aquel campo, y así como don",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      },
+      {
+       "chunk_id": "cita-2-2",
+       "pagina": null,
+       "texto_fuente": "Finalmente, todos se ponen de acuerdo en el modo de controlar a don Quijote: lo amarran y le hacen creer que ha sido encantado, y lo depositan en una jaula en la cual lo trasladan nuevamente a su aldea.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "tinto, a los que cree gigantes, y el pleito con el dueño de la bacía que la reclama airado; también don Quijote es presa de una pesada broma de parte de Maritornes y la hija del ventero, consistente en dejarlo amarrado y colgando de una mano en una de las murallas de la venta. ",
+        "fragmento": "Finalmente, todos se ponen de acuerdo en el modo de controlar a don Quijote: lo amarran y le hacen creer que ha sido encantado, y lo depositan en una jaula en la cual lo trasladan nuevamente a su aldea",
+        "despues": ". Por su parte, Sancho se da cuenta del embuste, pero don Quijote no le hace caso, creyéndose hechizado. Después de algunas peripecias retornan a su pueblo donde nuevamente el protagonista es atendido por su sobrina y el ama. Hasta aquí llega la primera parte. Como epílogo, a",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "windmill field",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    }
+   ],
+   "total_palabras": 96,
+   "duracion_total_estimada": 41.8,
+   "wpm": 138,
+   "degradaciones": [],
+   "manifiesto_url_oci": null,
+   "video_url_oci": null,
+   "duracion_total_real": null,
+   "velocidad_reproduccion": 1.0
+  },
+  "resumen_ejecutivo": {
+   "texto": "La primera parte de la obra relata las peripecias de un hidalgo empobrecido que, tras perder el juicio leyendo libros de caballerías, decide autoproclamarse caballero andante bajo el nombre de don Quijote de la Mancha. Acompañado por su fiel escudero Sancho Panza, se embarca en diversas expediciones por los caminos, confundiendo la realidad con pasajes caballerescos y buscando ayudar a los desfavorecidos. A lo largo del trayecto se entrelazan múltiples historias secundarias, disputas y malentendidos, hasta que sus allegados idean un ardid para retornarlo a su hogar en una jaula. El relato culmina con el regreso del protagonista a su aldea y la promesa de futuras aventuras.",
+   "por_secciones": [
+    {
+     "seccion": "Don Quijote de la Mancha · Primera Parte (1605): resumen del argumento",
+     "resumen": "Se detalla el origen de la obra, sus capítulos y la inclusión de diversas historias de variados géneros dentro de la trama principal.",
+     "fuente": {
+      "texto": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+       "fragmento": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente",
+       "despues": ". Empieza con un prólogo en el que Cervantes se burla de la erudición pedantesca y con unos poemas cómicos, a manera de preliminares, compuestos en alabanza de la obra por el propio autor, quien lo justifica diciendo que no encontró a nadie que quisiera alabar una obra tan",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "Argumento",
+     "resumen": "Se describe cómo el hidalgo Alonso Quijano enloquece debido a sus lecturas, adopta una nueva identidad como caballero andante, es armado en una venta e inicia sus salidas en busca de aventuras y agravios que desfacer.",
+     "fuente": {
+      "texto": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "recurso literario, atribuye a un autor árabe (Cide Hamete Benengeli), pero que los encontró casualmente paseando en Toledo, de modo que podrá seguir relatando las aventuras de don Quijote, después de que consiga quien le traduzca los «caracteres que conocí ser arábigos».\n\n",
+       "fragmento": "La novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval",
+       "despues": ".\n\n> En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante...(cap. 1)\n\nSe pone un",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ],
+   "conclusiones": [
+    "El documento expone cómo la percepción subjetiva de la realidad puede apartarse por completo de los hechos objetivos, generando consecuencias gravosas para quienes actúan bajo dichos errores.",
+    "Se evidencia la importancia de contar con un contrapeso realista —representado por el escudero— para evaluar de manera adecuada el cumplimiento de los objetivos y evitar perjuicios mayores.",
+    "El texto muestra que la alteración de los procedimientos ordinarios y la suposición de condiciones inexistentes conducen inevitablemente al fracaso de las pretensiones iniciales."
+   ]
+  },
+  "glosario": [
+   {
+    "termino": "Caballero andante",
+    "definicion": "Personaje de los libros de caballerías que vaga por el mundo en busca de aventuras, justicia y cumplimiento del honor.",
+    "fuente": {
+     "texto": "En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante...",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "arábigos».\n\nLa novela comienza describiendo a un hidalgo pobre —cuyo exacto nombre solo se revelará al final de la obra: Alonso Quijano—, oriundo de un lugar indeterminado de La Mancha, quien enloquece leyendo libros de caballerías y se cree un caballero andante medieval.\n\n> ",
+      "fragmento": "En efecto, rematado ya su juicio, vino a dar en el más extraño pensamiento que jamás dio loco en el mundo, y fue que le pareció convenible y necesario, así para el aumento de su honra como para el servicio de su república, hacerse caballero andante",
+      "despues": "...(cap. 1)\n\nSe pone un nombre sugerente: don Quijote de la Mancha; bautiza a su caballo como Rocinante, reconstruye las armas de sus bisabuelos y elige a la dama de quien estar enamorado. Sin que nadie lo vea se lanza al campo en su primera salida, pero con sobresalto recuerda",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "Narrador homodiegético",
+    "definicion": "Narrador que interviene a la par como narrador y personaje dentro de la misma obra.",
+    "fuente": {
+     "texto": "Cervantes, como narrador homodiegético, esto es, que interviene a la par como narrador y personaje, explica (en el capítulo 9) que no tenía los manuscritos de la continuación de la novela...",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "la novela de El curioso impertinente, la historia del cautivo, el discurso sobre las armas y las letras, el de la Edad de Oro, la primera salida de don Quijote solo y la segunda con su inseparable escudero Sancho Panza (la segunda parte narra la tercera y postrera salida).\n\n",
+      "fragmento": "Cervantes, como narrador homodiegético, esto es, que interviene a la par como narrador y personaje, explica (en el capítulo 9) que no tenía los manuscritos de la continuación de la novela",
+      "despues": " que, como ingenioso recurso literario, atribuye a un autor árabe (Cide Hamete Benengeli), pero que los encontró casualmente paseando en Toledo, de modo que podrá seguir relatando las aventuras de don Quijote, después de que consiga quien le traduzca los «caracteres que conocí",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "Bálsamo de Fierabrás",
+    "definicion": "Una poción o remedio mágico utilizado por don Quijote para intentar sanar sus malestares físicos tras una pelea.",
+    "fuente": {
+     "texto": "Por la mañana, después de que don Quijote probara de su mágico bálsamo de Fierabrás, ambos se marchan, no sin antes que Sancho —con gran vergüenza suya— fuese manteado en el aire por un grupo de cardadores que se alojaban en el lugar.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "protagonizan un hilarante escándalo nocturno, al confundir don Quijote en su imaginación a una desaliñada prostituta llamada Maritornes con la hija del ventero, a quien cree enamorada de él; esto despierta la cólera de un arriero, quien muele a golpes a don Quijote y a Sancho. ",
+      "fragmento": "Por la mañana, después de que don Quijote probara de su mágico bálsamo de Fierabrás, ambos se marchan, no sin antes que Sancho —con gran vergüenza suya— fuese manteado en el aire por un grupo de cardadores que se alojaban en el lugar",
+      "despues": ".\n\nLuego ocurre una de las más disparatadas aventuras de don Quijote: la aventura de los rebaños de ovejas, en la cual el personaje confunde a las ovejas con dos ejércitos que se van a embestir; en su imaginación hace una prolija descripción de los principales combatientes ante",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "objetivos_aprendizaje": [
+   "Identificar los datos principales del argumento y la estructura de la Primera Parte de la obra según el texto.",
+   "Describir los personajes principales y sus interacciones en el contexto de la narrativa.",
+   "Explicar las aventuras más representativas y su desenlace de acuerdo con los eventos relatados."
+  ],
+  "diapositivas": [
+   {
+    "orden": 1,
+    "titulo": "Estructura de la Primera Parte",
+    "puntos_clave": [
+     "Consta de 52 capítulos en total",
+     "Separada en cuatro partes de 8, 6, 14 y 24 capítulos",
+     "Incluye un prólogo donde Cervantes se burla de la erudición"
+    ],
+    "concepto_visual": "Esquema numérico con la división de capítulos.",
+    "fuente": {
+     "texto": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Licencia CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/deed.es). Cambios: se quitaron las notas al pie y las imágenes. Este documento se distribuye con la misma licencia.\n\n## Argumento\n\n",
+      "fragmento": "La que después se llamaría «Primera Parte» originalmente se llamó El Ingenioso Hidalgo don Quijote de la Mancha y consta de 52 capítulos, separados a su vez en cuatro partes de 8, 6, 14 y 24 capítulos, respectivamente",
+      "despues": ". Empieza con un prólogo en el que Cervantes se burla de la erudición pedantesca y con unos poemas cómicos, a manera de preliminares, compuestos en alabanza de la obra por el propio autor, quien lo justifica diciendo que no encontró a nadie que quisiera alabar una obra tan",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 2,
+    "titulo": "El protagonista y su escudero",
+    "puntos_clave": [
+     "Alonso Quijano enloquece por los libros de caballerías",
+     "Se hace llamar don Quijote de la Mancha",
+     "Requiere los servicios de Sancho Panza como escudero"
+    ],
+    "concepto_visual": "Retrato de don Quijote junto a Sancho Panza.",
+    "fuente": {
+     "texto": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "que han sido unos encantadores quienes han hecho desaparecer su colección. El recurso a las manipulaciones de los encantadores será permanente en el discurso de la obra, encantadores que le desfigurarán a cada paso la realidad a don Quijote permitiéndole explicar sus fracasos.\n\n",
+      "fragmento": "En el intertanto de la primera y segunda salida don Quijote requiere los servicios como escudero de su vecino, un labrador llamado Sancho Panza, a quien le promete grandes mercedes",
+      "despues": ", en especial hacerlo gobernador de algún reino que conquiste en sus aventuras. Aparece entonces el otro personaje fundamental en la novela, que le permite a don Quijote dialogar y que contrapesará su extremo idealismo.\n\nUna vez más, en su segunda salida, esta vez acompañado por",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 3,
+    "titulo": "Desenlace de la Primera Parte",
+    "puntos_clave": [
+     "Conflicto con los cueros de vino tinto",
+     "Traslado a la aldea dentro de una jaula",
+     "Cervantes promete una tercera salida en el epílogo"
+    ],
+    "concepto_visual": "Imagen de una jaula de madera antigua.",
+    "fuente": {
+     "texto": "Finalmente, todos se ponen de acuerdo en el modo de controlar a don Quijote: lo amarran y le hacen creer que ha sido encantado, y lo depositan en una jaula en la cual lo trasladan nuevamente a su aldea.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "tinto, a los que cree gigantes, y el pleito con el dueño de la bacía que la reclama airado; también don Quijote es presa de una pesada broma de parte de Maritornes y la hija del ventero, consistente en dejarlo amarrado y colgando de una mano en una de las murallas de la venta. ",
+      "fragmento": "Finalmente, todos se ponen de acuerdo en el modo de controlar a don Quijote: lo amarran y le hacen creer que ha sido encantado, y lo depositan en una jaula en la cual lo trasladan nuevamente a su aldea",
+      "despues": ". Por su parte, Sancho se da cuenta del embuste, pero don Quijote no le hace caso, creyéndose hechizado. Después de algunas peripecias retornan a su pueblo donde nuevamente el protagonista es atendido por su sobrina y el ama. Hasta aquí llega la primera parte. Como epílogo, a",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "estado_recursos": {
+   "resumen": {
+    "recurso": "resumen",
+    "tarea": "A",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 5.451,
+    "citas_totales": 5,
+    "citas_verificadas": 5,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "flashcards": {
+    "recurso": "flashcards",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 4.45,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "cuestionario": {
+    "recurso": "cuestionario",
+    "tarea": "C",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 3.646,
+    "citas_totales": 4,
+    "citas_verificadas": 3,
+    "avisos": [
+     "1 de 4 citas no aparecen literalmente en el documento"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "glosario": {
+    "recurso": "glosario",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 4.45,
+    "citas_totales": 3,
+    "citas_verificadas": 3,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "objetivos": {
+    "recurso": "objetivos",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 4.45,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "guion": {
+    "recurso": "guion",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 5.932,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [
+     "el guion tiene 96 palabras (objetivo 110-125)"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diapositivas": {
+    "recurso": "diapositivas",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 5.932,
+    "citas_totales": 3,
+    "citas_verificadas": 3,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "tutorial": {
+    "recurso": "tutorial",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 5.932,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diagrama": {
+    "recurso": "diagrama",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 5.932,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   }
+  }
+ },
+ "fuentes_utilizadas": [],
+ "evaluacion_calidad": {
+  "anclaje_fuente_score": 0.99,
+  "auditoria_ejecutada": true,
+  "claridad_pedagogica": "Alta",
+  "observaciones": "Todas las afirmaciones están respaldadas por el fragmento fuente; definiciones y datos coinciden con el texto, sin inconsistencias.",
+  "afirmaciones": [],
+  "sugerencias_correccion": []
+ },
+ "almacenamiento_oci": {
+  "bucket": null,
+  "objeto_id": null,
+  "status_upload": "omitido"
+ },
+ "advertencias": [
+  "Cuestionario: 1 de 4 citas no aparecen literalmente en el documento.",
+  "Guion de locución: el guion tiene 96 palabras (objetivo 110-125)."
+ ],
+ "error": null,
+ "orquestacion": {
+  "intentos_redaccion": 1,
+  "scores_por_intento": [
+   0.99
+  ],
+  "umbral_anclaje": 0.75,
+  "max_reintentos": 0,
+  "duracion_segundos": 12.83,
+  "documento_id": "doc-13a2e66086984fc8",
+  "chunks_recuperados": 0
+ }
+}

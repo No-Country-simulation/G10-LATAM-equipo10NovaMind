@@ -87,6 +87,7 @@ def test_subida_demasiado_grande_devuelve_413(monkeypatch):
     from app import main
 
     monkeypatch.setenv("APP_ENV", "dev")
+    monkeypatch.setenv("PERMITIR_GENERACION_INVITADO", "true")
     monkeypatch.setattr(main, "MAX_BYTES_ARCHIVO", 64)
     cliente = TestClient(main.app)
     r = cliente.post(
@@ -96,6 +97,26 @@ def test_subida_demasiado_grande_devuelve_413(monkeypatch):
         files={"archivo": ("doc.md", b"x" * 65, "text/markdown")},
     )
     assert r.status_code == 413
+
+
+def test_invitado_no_genera_sin_permiso_explicito(monkeypatch):
+    from unittest.mock import patch
+
+    from app import main
+
+    monkeypatch.setenv("APP_ENV", "dev")
+    monkeypatch.delenv("PERMITIR_GENERACION_INVITADO", raising=False)
+    cliente = TestClient(main.app)
+    with patch("app.main._generar") as generar:
+        for ruta in ("/api/v1/adaptar", "/api/v1/adaptar/stream"):
+            r = cliente.post(
+                ruta,
+                headers={"Authorization": f"Bearer {auth.GUEST_TOKEN}"},
+                data={"perfil_destinatario": "Principiante", "formato_salida": "Flashcards",
+                      "texto_directo": "texto"},
+            )
+            assert r.status_code == 403, ruta
+    generar.assert_not_called()
 
 
 # --- Conteo de palabras: mismos separadores que JavaScript ---------------------------

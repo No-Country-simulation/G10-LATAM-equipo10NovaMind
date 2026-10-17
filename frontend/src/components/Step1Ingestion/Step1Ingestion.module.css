@@ -1151,3 +1151,33 @@ details[open] .promptChevron {
   font-size: 0.75rem;
   color: var(--color-text-secondary);
 }
+
+/* Escenarios de un mismo documento (modo invitado): elegir cuál abrir */
+.escenarios {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-bottom: 0.4rem;
+}
+
+.escenario {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-violet-border);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.escenario:hover {
+  background: rgba(139, 92, 246, 0.18);
+}
+
+.escenarioActivo {
+  background: rgba(139, 92, 246, 0.35);
+  font-weight: 600;
+}

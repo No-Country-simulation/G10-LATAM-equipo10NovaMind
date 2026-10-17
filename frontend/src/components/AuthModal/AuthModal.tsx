@@ -131,6 +131,14 @@ export function AuthModal({ isOpen, onClose, onLoginSuccess }: Props) {
           {register ? 'Inicia sesión' : 'Regístrate aquí'}
         </button>
       </div>
+
+      {/* Sin sesión ya se está en modo invitado: este enlace solo lo dice y cierra la ventana */}
+      <div className={styles.invitado}>
+        <button type="button" disabled={busy} className={styles.linkButton} onClick={onClose}>
+          Continuar como invitado
+        </button>
+        <span> · ver las muestras sin gastar cuota</span>
+      </div>
     </section>
   </div>;
 }

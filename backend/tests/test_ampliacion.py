@@ -111,11 +111,21 @@ def test_una_ampliacion_demasiado_larga_se_rechaza():
 
 # --------------------------------------------------------------------- API
 @pytest.fixture
-def api():
+def api(monkeypatch):
+    # Invitado habilitado a mano para generar, como al pregenerar las muestras
+    monkeypatch.setenv("PERMITIR_GENERACION_INVITADO", "true")
     app.dependency_overrides[require_user] = lambda: Principal(
         "00000000-0000-0000-0000-000000000000", "guest-demo-token", is_guest=True)
     yield TestClient(app)
     app.dependency_overrides.pop(require_user, None)
+
+
+def test_api_invitado_sin_permiso_no_gasta_cuota(api, monkeypatch):
+    monkeypatch.delenv("PERMITIR_GENERACION_INVITADO")
+    with patch("app.main._cliente_gemini") as cliente:
+        r = api.post("/api/v1/narracion/ampliar", json=_solicitud().model_dump())
+    assert r.status_code == 403
+    cliente.assert_not_called()
 
 
 def test_api_invitado_amplia(api):
