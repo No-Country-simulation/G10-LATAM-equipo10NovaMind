@@ -64,7 +64,6 @@ data/documents/*
 !data/documents/.gitkeep
 !data/documents/ENISA Threat Landscape 2026_Final.pdf
 !data/documents/apache_kafka_introduction.md
-!data/documents/Snowflake_SIGMOD.pdf
 !data/documents/guia_optimizacion_swap_oci.md
 
 # Archivos binarios pesados en carpetas de historial
@@ -105,6 +104,20 @@ historial_progreso/
 legado/
 backend/docs/CHANGELOG.md
 backend/docs/PROJECT_AUDIT.md
+
+# Solo el README principal se publica; el resto de la documentación queda en local.
+# Los .md de data/documents/ son documentos de entrada de la biblioteca, no documentación.
+*.md
+!/README.md
+!/data/documents/apache_kafka_introduction.md
+!/data/documents/guia_optimizacion_swap_oci.md
+!/data/documents/quijote_primera_parte_resumen.md
+!/data/documents/quijote_segunda_parte_resumen.md
+
+# Salidas de scripts de prueba y sondas sueltas: no se publican
+scripts/resultado_*.json
+scripts/modelgroq.py
+frontend/docs/
 
 # Documentación modular interna y análisis estático
 backend/docs/modulos/

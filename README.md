@@ -2,7 +2,7 @@
 
 > **Desarrollado por el Equipo 10 (G10 - NuevaMente) para No-Country**  
 > **Hackathon ONE G10 · Oracle Next Education & Alura · Proyecto 1**  
-> Solución integral desacoplada en **Microservicios (Backend FastAPI + Frontend React 19 + Vite)** con orquestación multi-agente en **LangGraph**, **RAG vectorial con Cohere**, **ChromaDB**, y persistencia modular.
+> Convierte un documento técnico en un recorrido de 5 estaciones. **Backend FastAPI + Frontend React 19 + Vite**, generación con **Gemini en paralelo** y citas verificadas contra el documento, video narrado en el navegador, y persistencia en **Supabase** y **OCI Object Storage**. La cadena colaborativa (Gemini, Groq y Cohere) y el RAG con **LangGraph**, **Cohere** y **ChromaDB** quedan como respaldo.
 
 <p align="center">
   <img src="docs/flujo-nuevamente.svg" alt="Flujo de NuevaMente: el documento se ingiere, Gemini genera en paralelo el resumen, las tarjetas y la producción y después el cuestionario, se verifican las citas, el paquete llega por SSE a las 5 estaciones y el video narrado se genera bajo demanda" width="960">
@@ -16,7 +16,7 @@ Las secciones posteriores conservan la historia de las fases del proyecto (LangG
 
 **Recorrido del estudiante**
 
-1. **Configuración e ingesta.** Sin sesión se elige un documento de la biblioteca (Don Quijote I y II, Apache Kafka, ENISA Threat Landscape, Snowflake y la guía de swap de OCI). Cada uno trae su perfil, sector y nivel, y se abre su **muestra pregenerada** (`frontend/public/ejemplos/`), sin llamar a ningún modelo. El botón «Prueba rápida 😊» hace lo mismo en un clic. Con sesión se puede subir un archivo propio (PDF, MD, TXT o imagen) y elegir perfil, sector y nivel.
+1. **Configuración e ingesta.** En **modo invitado** (sin sesión) se elige un documento de la biblioteca (Don Quijote I y II, Apache Kafka, ENISA Threat Landscape y la guía de swap de OCI) y se abre su **muestra pregenerada** (`frontend/public/ejemplos/`), sin llamar a ningún modelo: el backend rechaza con 403 cualquier generación del invitado. **Apache Kafka trae 5 escenarios del mismo documento** para comparar: 4 perfiles (Principiante, Desarrollador Junior, Líder Técnico y Gestor/Ejecutivo) en Finanzas, el mismo perfil en Salud y uno generado con el modo clásico (RAG vectorial). Los otros documentos muestran cómo influye el sector (Industria, Salud, Leyes, Marketing). El botón «Prueba rápida 😊» abre la guía de OCI en un clic. Con sesión se puede subir un archivo propio (PDF, MD, TXT o imagen), elegir perfil, sector y nivel, y el resultado se guarda en la cuenta.
 2. **Visualizar Resultados: cinco estaciones.**
 
 | Estación | Qué enseña |
@@ -46,39 +46,9 @@ Las secciones posteriores conservan la historia de las fases del proyecto (LangG
 
 Si un modo no da resultado, se pasa al siguiente y el paquete lo advierte: **paralelo → cadena colaborativa → clásico**. El modo paralelo solo conmuta si ninguna tarea produjo recursos; si falla un recurso suelto, ese recurso queda marcado como fallido y no se inventa. Dentro de la cadena colaborativa, una cuota agotada (429) pasa de un proveedor a otro entre Gemini, Groq y Cohere antes de recurrir al clásico.
 
-**Base de datos (Supabase).** Las migraciones de `supabase/migrations/` se aplican en orden; la última, `202610160001_tarea_cuestionario.sql`, admite la tarea `C` en `generation_tasks`. El detalle está en [backend/docs/DATABASE.md](backend/docs/DATABASE.md).
+**Base de datos (Supabase).** Las migraciones de `supabase/migrations/` se aplican en orden; la última, `202610160001_tarea_cuestionario.sql`, admite la tarea `C` en `generation_tasks`.
 
-**Documentación por área:** arquitectura en [backend/docs/ARCHITECTURE.md](backend/docs/ARCHITECTURE.md), API en [backend/docs/API.md](backend/docs/API.md) y frontend en [frontend/README.md](frontend/README.md). Las bitácoras y el historial de cambios se llevan en local y no se publican.
-
----
-
-## Integración Supabase sobre la última versión del equipo — 12 de octubre de 2026
-
-Esta copia parte de `feature/fullstack-nuevamente-v2`, commit `b9d23cc`, e incorpora el login y persistencia de nuestra copia anterior. La carpeta anterior permanece intacta. No se ha creado un commit ni enviado código a GitHub.
-
-Se mantienen ambos pipelines (vectorless y clásico, incluido su failover), modelos/prompts, PDF del equipo, Mermaid, navegación entre estaciones y concurrencia de cinco solicitudes. Los generadores se reutilizan mediante adaptadores en `backend/app/integration/private_pipeline.py`: la cadena guarda texto/JSON en `users/<UUID>/<ejecución>/`; el dossier PDF usa otra ruta privada por usuario y solo se sube a un bucket `NoPublicAccess`. Las colecciones Chroma de las tareas en segundo plano también se separan por cuenta. No se utilizan singletons con estado privado compartido.
-
-La API normal y SSE verifican sesión Supabase antes de leer/generar. Ambos modos guardan fuente y paquete en Supabase con el JWT del usuario y RLS. El historial, estaciones completadas, XP, medallas, escudos y respuestas del quiz se recuperan al volver a ingresar. Los botones de navegación nuevos se conservan. No se persisten todos los estados visuales transitorios de una estación incompleta.
-
-El envío de correo sigue disponible en el backend, pero requiere `email_notificacion` explícito que coincida con el correo verificado de la sesión; no se envía información privada automáticamente a un destinatario de ejemplo. Sin destinatario se genera/archiva el PDF sin envío SMTP. El frontend original no expone un selector de notificación. No se ha probado entrega SMTP real. El recibo del adaptador solo indica una ruta OCI si la subida ocurrió, y distingue generación del PDF de su almacenamiento.
-
-Cambios mínimos adicionales para proteger credenciales/sesiones: la clave Gemini se envía por cabecera, no en una URL que pueda aparecer en logs; Mermaid usa modo `strict` para representar contenido generado sin habilitar acciones inseguras. No se modificaron los prompts ni la lógica pedagógica de la cadena o del generador PDF.
-
-Verificaciones iniciales: **101 pruebas backend correctas**, incluyendo pruebas nuevas del equipo y nuestros controles de autenticación, propiedad, PDF privado y destinatarios; compilación TypeScript/Vite correcta. Hay dos avisos de dependencias de severidad baja (Mermaid/KaTeX) y avisos por chunks grandes. No se aplicó `npm audit fix --force` ni se rebajó Mermaid de versión.
-
-En esta máquina los servicios se ejecutan desde `G10-LATAM-equipo10NovaMind-auth-latest`. Los comandos de arranque y diagnóstico de las secciones siguientes siguen siendo válidos desde esta carpeta. La configuración local y PEM están excluidas de Git; el esquema Supabase ya existente no se recreó. El login Google se completó y mantuvo sesión al recargar el 12 de octubre, tras la reactivación del proyecto, usando la cuenta del equipo (no la cuenta personal eliminada).
-
-La configuración local del servidor contiene claves de Gemini y Groq. Se verificó por separado una respuesta JSON mínima de Gemini 3.6 Flash y una respuesta de Groq. La aplicación conserva el modelo Gemini elegido originalmente por el equipo (`gemini-2.5-flash`); no se ha repetido una generación pedagógica completa con las claves nuevas y ese modelo.
-
-### Resultado de la prueba real integrada
-
-En la primera prueba integrada se usó `guia_optimizacion_swap_oci.md` desde la biblioteca, con la cuenta del equipo. FastAPI verificó su sesión contra Supabase (200). Como entonces no estaban configuradas las claves nuevas, la cadena conmutó al modo clásico; Cohere generó el contenido (139 s). La auditoría externa agotó sus tiempos de espera y utilizó la contingencia segura preexistente del equipo (135 s); no se acredita una auditoría LLM exitosa en esa ejecución. Tiempo observado hasta guardar/devolver el paquete: aproximadamente 280 s.
-
-Supabase confirmó creación de fuente y paquete (ambos 201); el paquete real apareció en el historial. OCI recibió tres objetos, verificados mediante lectura bajo el prefijo exclusivo de la cuenta: `original.txt` (7.693 bytes), `package.json` (16.045 bytes, JSON con status `exito`) y `dossier.pdf` (8.149 bytes, encabezado PDF válido). El generador PDF no se modificó. No se enviaron correos SMTP.
-
-Se verificó renderizado Mermaid, avance entre estaciones, dos estaciones completadas (+100 XP sobre los 125 existentes), dos medallas y una respuesta incorrecta del quiz. Recargar recuperó 225 XP, progreso del 40%, dos escudos y la pregunta ya evaluada. Cerrar sesión limpió los datos visibles; un login Google nuevo con la misma cuenta recuperó exactamente ese estado. La cuenta personal eliminada no se volvió a crear. Estos objetos y registros reales se conservaron como evidencia de prueba.
-
-La revisión de 217 archivos de texto candidatos a Git y archivos compilados del frontend no encontró las claves privadas conocidas ni contenido PEM. `.env`, `.env.local` y archivos PEM siguen ignorados; esta comprobación no certifica el historial histórico completo del repositorio.
+**Documentación:** este README es la única documentación publicada. La documentación por área, las bitácoras y el historial de cambios se llevan en local.
 
 ---
 
@@ -233,7 +203,6 @@ graph LR
     %% BACKEND
     ROOT --> B_DIR["📁 backend/<br/><i>(Ramas: backend + feature/agents-langgraph)</i>"]:::dir
     B_DIR --> B_APP["📁 app/ (main.py, orquestador.py, agentes, core, storage)"]:::dir
-    B_DIR --> B_DOCS["📁 docs/ (arquitectura, API, base de datos, despliegue, operación, seguridad y pruebas)"]:::dir
     B_DIR --> B_TESTS["📁 tests/ (pruebas unitarias e integrales, sin cuota)"]:::dir
     B_DIR --> B_DATA["📁 data/ (chroma/, outputs/, documents/)"]:::dir
     B_DIR --> B_REQ["📄 requirements.txt"]:::file
@@ -251,7 +220,7 @@ graph LR
     %% RAÍZ
     ROOT --> R_ENV["📄 .env.example (Plantilla pública unificada)"]:::file
     ROOT --> R_BAT["📄 Scripts .bat (iniciar_local, reestablecer_local, setup)"]:::file
-    ROOT --> R_DOC["📄 Documentación Raíz (CONTRIBUTING, README)"]:::file
+    ROOT --> R_DOC["📄 README.md (documentación publicada)"]:::file
     ROOT --> R_GIT["📄 .gitignore (Reglas de exclusión)"]:::file
 ```
 
@@ -261,7 +230,6 @@ graph LR
 G10-LATAM-equipo10NovaMind/
 ├── .env.example                       # Plantilla de variables de entorno (Cohere, OCI, ChromaDB)
 ├── .gitignore                         # Exclusiones estrictas (.env, *.pem, __pycache__, .venv)
-├── CONTRIBUTING.md                    # Normas de contribución y flujo de ramas de Git
 ├── README.md                          # Documentación maestra y manual general del proyecto
 ├── requirements.txt                   # Dependencias principales unificadas de Python (FastAPI + LangGraph)
 ├── iniciar_local.bat                  # Script para arranque concurrente (FastAPI :8000 + React Vite :5173)
@@ -271,15 +239,7 @@ G10-LATAM-equipo10NovaMind/
 ├── backend/                           # MICROSERVICIO BACKEND (FastAPI + LangGraph + Agentes)
 │   ├── requirements.txt               # Dependencias limpias fijadas para Python 3.12.7
 │   ├── pytest.ini                     # Configuración de pytest (testpaths = tests)
-│   ├── docs/                          # Paquete de documentación técnica y auditoría
-│   │   ├── API.md                     # Referencia exhaustiva de endpoints REST y contratos
-│   │   ├── ARCHITECTURE.md            # Diagramas de secuencia y flujo Mermaid del backend
-│   │   ├── DATABASE.md                # Persistencia (ChromaDB vectorial, Local y OCI)
-│   │   ├── DEPLOYMENT.md              # Manual de configuración, variables y despliegue
-│   │   ├── OPERATIONS.md              # Observabilidad, logs, healthcheck y diagnóstico
-│   │   ├── SECURITY.md                # Evaluación de controles y seguridad preventiva
-│   │   └── TESTING.md                 # Estrategia de testing y pruebas unitarias/integrales
-│   ├── tests/                         # Suite de pruebas deterministas (ver docs/TESTING.md)
+│   ├── tests/                         # Suite de pruebas deterministas, sin cuota
 │   │   ├── test_api.py                # Validación de endpoints REST y SSE con TestClient (7 tests)
 │   │   ├── test_critico_multiproveedor.py # Pruebas unitarias de Gemini, Groq, fallback y sanitización (4 tests)
 │   │   ├── test_orquestador.py        # Pruebas unitarias de agentes, contratos y feedback (56 tests)
@@ -571,7 +531,7 @@ Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben t
 
 ### 1. Política CORS y Mapeo de Puertos
 * El backend FastAPI corre por defecto en el puerto `8000` (`http://127.0.0.1:8000`), mientras que el frontend Vite se ejecuta en el puerto `5173` (`http://localhost:5173`).
-* El backend implementa `CORSMiddleware` en [backend/app/main.py](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/backend/app/main.py) autorizando explícitamente los orígenes `http://localhost:5173`, `http://127.0.0.1:5173` y `http://localhost:8501`. Si se despliega en un puerto o dominio alternativo, debe actualizarse la lista `allow_origins`.
+* El backend implementa `CORSMiddleware` en [backend/app/main.py](backend/app/main.py) autorizando explícitamente los orígenes `http://localhost:5173`, `http://127.0.0.1:5173` y `http://localhost:8501`. Si se despliega en un puerto o dominio alternativo, debe actualizarse la lista `allow_origins`.
 
 ### 2. Contratos Dinámicos de Configuración
 * La interfaz de usuario no hardcodea los perfiles ni los formatos pedagógicos. En su lugar, consume al inicio el endpoint `GET /api/v1/config/opciones`.
@@ -587,7 +547,7 @@ Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben t
 * Emite un evento inmediato de `inicio`, comentarios `: ping - heartbeat anti-timeout` cada 15 segundos y eventos `heartbeat` con el tiempo transcurrido, finalizando con el evento `resultado` portador del JSON pedagógico completo y validado.
 
 ### 5. Protección de Memoria OCI y Concurrencia No Bloqueante
-* La instancia Always Free de OCI opera con 1 GB de memoria RAM. Para prevenir que dos ejecuciones paralelas de inferencia activen el kernel OOM Killer, [main.py](file:///c:/Users/gdq_1/Documents/Gabotech/Ia_NovaMind/G10-LATAM-equipo10NovamindA/G10-LATAM-equipo10NovaMind/backend/app/main.py) implementa un semáforo asíncrono estricto `_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(1)`.
+* La instancia Always Free de OCI opera con 1 GB de memoria RAM. Para prevenir que dos ejecuciones paralelas de inferencia activen el kernel OOM Killer, [main.py](backend/app/main.py) implementa un semáforo asíncrono estricto `_SEMAFORO_CONCURRENCIA = asyncio.Semaphore(1)`.
 * Cada orquestación se ejecuta en un hilo de trabajo (`asyncio.to_thread`), garantizando que el bucle de eventos principal de FastAPI permanezca 100% receptivo: el endpoint `/health` responde en **~6.6 ms promedio** incluso durante la fase de mayor carga computacional.
 
 ### 6. Agente Crítico Multi-Proveedor Desacoplado
@@ -606,34 +566,21 @@ Al desarrollar, extender o desplegar esta arquitectura cliente-servidor, deben t
 
 ### 9. Organización Limpia del Repositorio
 * La raíz del repositorio se mantiene minimalista con los archivos esenciales de configuración y ejecución.
-* En GitHub solo se publica lo necesario para ejecutar, probar y entender el proyecto: código, pruebas, migraciones, muestras y documentación técnica vigente.
-* Las bitácoras de avance, el historial de problemas, el registro de versiones y los bocetos preliminares (`historial_progreso/`, `legado/`, `backend/docs/CHANGELOG.md` y `backend/docs/PROJECT_AUDIT.md`) se conservan en local y están en `.gitignore`.
+* En GitHub solo se publica lo necesario para ejecutar y probar el proyecto: código, pruebas, migraciones, muestras y este README.
+* El resto de la documentación (por área, bitácoras, historial de problemas, registro de versiones y bocetos) se conserva en local y está en `.gitignore`.
 
 ---
 
 ## 🧪 9. Suite de Pruebas Automatizadas
 
-Las pruebas son deterministas: Gemini, Groq, ElevenLabs y los bancos de imágenes se simulan, así que no gastan cuota. Al 16/10/2026 son **355 en el backend y 45 en el frontend**; la cifra al día es la que dan los comandos:
+Las pruebas son deterministas: Gemini, Groq, ElevenLabs y los bancos de imágenes se simulan, así que no gastan cuota. Al 16/10/2026 son **340 en el backend y 46 en el frontend**; la cifra al día es la que dan los comandos:
 
 ```bash
 cd backend && ../.venv/Scripts/python -m pytest -q
 cd frontend && npm test && npx tsc --noEmit -p .
 ```
 
-El detalle por área está en [backend/docs/TESTING.md](backend/docs/TESTING.md).
-
-### Distribución original de la fase 9 (70 tests):
-* **`tests/test_api.py` (7 tests):** Validación con `TestClient` de `/health`, `/api/v1/config/opciones`, `/api/v1/adaptar` (multipart y texto), el nuevo endpoint SSE `/api/v1/adaptar/stream`, `/api/v1/paquetes` y manejo de 404 en descarga de paquetes.
-* **`tests/test_critico_multiproveedor.py` (4 tests):** Pruebas unitarias aisladas de las llamadas REST a Google Gemini, Groq, conmutación automática por fallback ante timeouts o caídas de red, y sanitización de respuestas en bloque markdown JSON.
-* **`tests/test_integracion_offline.py` (3 tests):** Validación del ciclo E2E completo con embeddings y LLMs simulados, verificación de reutilización del índice vectorial y adaptación con feedback correctivo.
-* **`tests/test_orquestador.py` (56 tests):** Pruebas unitarias exhaustivas de:
-  - Puerta de calidad (`anclaje_fuente_score` y claridad pedagógica).
-  - Normalización estricta de alias del brief.
-  - Inyección de few-shots según formato pedido.
-  - Límite de lote de embeddings en llamadas a Cohere (máx. 96 textos).
-  - Manejo resiliente de caídas transitorias de API con reintentos exponenciales.
-
-**Estado de la suite al 16/10/2026:** 🟢 **355 pasadas en backend y 45 en frontend, 0 fallidas.**
+**Estado de la suite al 16/10/2026:** 🟢 **340 pasadas en backend y 46 en frontend, 0 fallidas.**
 
 ---
 
@@ -645,17 +592,9 @@ El detalle por área está en [backend/docs/TESTING.md](backend/docs/TESTING.md)
 * **Project Manager (`origin/project-manager`)**: Gobernanza, definición funcional de requerimientos, cronograma de trabajo, actas de acuerdos y alineación estratégica con los objetivos del Hackathon ONE G10.
 * **Equipo NuevaMente (`origin/integracion` ➔ `origin/main`)**: Sinergia técnica de integración continua, armonización de contratos, scripts unificados de ejecución local (`iniciar_local.bat`), validación End-to-End con score de anclaje RAG de 1.00 y empaquetado para release final.
 
-# Integración de autenticación y persistencia (9–10 de octubre de 2026)
+---
 
-Esta copia parte de `feature/fullstack-nuevamente-v2` (commit `54d85de`). El acceso simulado se reemplazó por Supabase Auth: Google mediante PKCE y correo/contraseña con confirmación de correo. No utiliza claves privadas en el navegador.
-
-El frontend recupera historial, último paquete seleccionado, estaciones completadas, estación activa, paso, respuestas del quiz, escudos, XP y medallas. El progreso se guarda con un debounce de 400 ms y una cola serial. Esperar el mensaje «Progreso guardado en Supabase» antes de cerrar la pestaña: no se promete recuperar cambios que aún no llegaron al servidor. El cierre de sesión intenta guardar los últimos cambios antes de desconectar.
-
-La cuenta se verifica contra Supabase; no se acepta un UUID arbitrario del cliente. El backend exige un token Bearer en adaptación (normal y SSE) e historial. Verifica el token mediante `/auth/v1/user`; ante un fallo de red no permite el acceso. Las consultas a Postgres conservan el JWT del usuario y RLS, sin `service_role`. Los endpoints de paquetes ya no listan archivos compartidos de OCI o del disco. La colección Chroma y los artefactos locales también están separados por propietario.
-
-El backend guarda el texto extraído y el paquete generado en Supabase antes de devolver el resultado. El campo `persistencia.package_id` evita un segundo guardado del mismo resultado desde React. Si la generación termina pero falla el guardado, se informa el error. Documentos y paquetes se insertan en operaciones distintas: puede quedar un documento propio sin paquete si falla la segunda operación; no existe una transacción distribuida con OCI.
-
-## Arranque de esta integración
+## Autenticación con Supabase
 
 1. Node.js 22+; en `frontend`, ejecutar `npm ci`, copiar `.env.example` a `.env.local` y ejecutar `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Abrir **http://localhost:5173** (no cambiar a 127.0.0.1 para el login: el origen/callback debe estar autorizado).
 2. Python y dependencias de `backend/requirements.txt`; configurar el `.env` raíz con Cohere y las dos variables públicas `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` de `.env.example`.
@@ -667,50 +606,3 @@ El backend guarda el texto extraído y el paquete generado en Supabase antes de 
 El navegador solo necesita `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`; el backend usa `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. En Google Cloud, `http://localhost:5173` va en **Orígenes autorizados de JavaScript**. La URI autorizada de redirección de Google es la callback de Supabase: `https://pvgafxwsmatjebklmqlc.supabase.co/auth/v1/callback`. En Supabase Dashboard → Authentication → URL Configuration, permitir `http://localhost:5173/auth/callback` como redirect URL. El Client ID y Client Secret de Google se guardan en Supabase Dashboard → Authentication → Providers → Google; nunca se agregan al frontend ni a variables `VITE_*`.
 
 El login con Google no necesita SMTP. El registro con correo/contraseña sí depende de que Supabase pueda enviar el mensaje de confirmación cuando la confirmación de email está activada; para entregar a direcciones fuera del equipo hay que configurar un SMTP propio en Supabase Auth. El SMTP del backend (`SMTP_*`) es independiente y solo se usa para enviar dossiers PDF.
-
-En esta máquina se reutilizó el Python del entorno de la copia anterior y su configuración Cohere en un `.env` ignorado por Git. No se copiaron las credenciales de la cuenta Supabase al frontend. La configuración pública de ejemplo apunta al proyecto existente.
-
-## OCI: clave y almacenamiento privado verificados
-
-`deploy/` está creado y excluido por Git, al igual que `*.pem`. No se generó ni inventó una clave privada. La PEM debe corresponder al fingerprint/API key registrado por Gabriel; una PEM cualquiera no sirve. Confirmar con él si se trata de **firma de la API OCI** o **acceso SSH a la VM**, pues son usos y pares de claves distintos.
-
-`scripts/iniciar_backend_auth.ps1 -Python <ruta-python> -OciEnvFile <archivo-env> -PemFile <ruta-pem>` importa solo las variables OCI autorizadas, sin las credenciales `USER`/`PASS` de Supabase. Con una PEM válida, el almacenador usa prefijos privados `users/<UUID>/<ejecución>/` en OCI. Sin PEM se usa disco local separado por cuenta; la persistencia de usuarios sigue en Supabase. Si se configura una ruta PEM inexistente, se informa un error en lugar de simular almacenamiento OCI. No se desplegó a una VM. No exponer una URL PAR de escritura como variable `VITE_*`.
-
-### Prueba real de OCI — 10 de octubre de 2026
-
-La PEM proporcionada coincide con el fingerprint de la API key configurada. La consulta autenticada del bucket fue correcta y confirmó `NoPublicAccess`; no se modificaron sus permisos. Las credenciales explícitas de la aplicación tienen prioridad sobre un perfil OCI local ajeno. El cliente tiene límites de conexión/lectura de 5/30 segundos.
-
-Se ejecutó el adaptador real `storage_for` con texto y JSON sintéticos, sin llamadas a IA: subida y descarga de ambos objetos verificadas por comparación de contenido, rutas `users/<UUID-sintético>/<ejecución>/original.txt` y `package.json`. Los dos objetos creados se eliminaron al terminar. Duración reportada: **0,49 segundos** (desde lectura de credenciales hasta limpieza). No se accedió a documentos de otros usuarios ni se listó el bucket.
-
-Comando reproducible, desde esta copia del repositorio:
-
-```powershell
-$python = 'C:\Users\tencina\Downloads\Hackaton\G10-LATAM-equipo10NovaMind\.venv\Scripts\python.exe'
-& $python scripts/verificar_oci.py --env-file 'C:\Users\tencina\Downloads\Hackaton\.env' --pem-file 'C:\Users\tencina\Downloads\Hackaton\oci_api_key.pem'
-# Opcional: crea dos objetos sintéticos, verifica y elimina únicamente esos objetos.
-& $python scripts/verificar_oci.py --env-file 'C:\Users\tencina\Downloads\Hackaton\.env' --pem-file 'C:\Users\tencina\Downloads\Hackaton\oci_api_key.pem' --write-test
-# Arranque de FastAPI con OCI habilitado (puerto 8000 libre).
-./scripts/iniciar_backend_auth.ps1 -Python $python -OciEnvFile 'C:\Users\tencina\Downloads\Hackaton\.env' -PemFile 'C:\Users\tencina\Downloads\Hackaton\oci_api_key.pem'
-```
-
-Sin `--write-test`, el diagnóstico solo consulta OCI. No imprime claves, fingerprint, OCID ni contenido PEM. La clave se mantiene fuera del repositorio; no es necesario copiarla a `deploy/` para el arranque local. Si se prepara un despliegue, usar un archivo privado en el servidor o un gestor de secretos, nunca incluir la PEM en Git.
-
-Esta prueba acredita almacenamiento OCI, no generación IA de extremo a extremo, aislamiento IAM entre usuarios ni despliegue. El backend controla los prefijos por propietario y conserva privado el bucket; los usuarios no reciben credenciales OCI. Falta repetir una generación autenticada completa con OCI habilitado cuando haya una sesión válida disponible. Para desplegar a la VM faltan su dirección, usuario y acceso SSH: una API key OCI no sustituye una clave SSH.
-
-## Verificación
-
-- Compilación TypeScript/Vite: correcta.
-- Suite backend: 88 pruebas correctas, incluidas autenticación, rechazo de tokens inválidos, fallo cerrado, filtrado por propietario, persistencia del texto/resultado, separación de Chroma/disco, rechazo de buckets públicos, ruta PEM inválida y prioridad de credenciales OCI explícitas.
-- `npm audit`: sin vulnerabilidades tras actualizar puntualmente `source-map-js`.
-- Verificación real de sesión desde React y desde FastAPI: correcta.
-- Cierre de sesión: cuenta, historial, contenido, XP, medallas y progreso visibles limpiados; el formulario de documento también se reinicia al cambiar de cuenta.
-- **Bloqueo externo al iniciar un login nuevo el 10 de octubre:** Google devuelve `401: disabled_client` («The OAuth client was disabled»). El modal llega al proveedor real, pero no se completó un nuevo login OAuth en esta versión. Las comprobaciones anteriores usaron una sesión Supabase existente y válida. Revisar el estado del cliente en Google Cloud (`nueva-mente-511100` → Google Auth Platform → Clientes); no se reactivó ni reemplazó la credencial automáticamente. Si se reemplaza, actualizar ID/secreto exclusivamente en el proveedor Google de Supabase y repetir login con dos cuentas. No pegar el secreto OAuth en variables `VITE_*`.
-- Pipeline real sobre `guia_optimizacion_swap_oci.md`: ingesta y embeddings correctos, 9 chunks indexados y 5 recuperados; Cohere produjo el paquete en aproximadamente 206 s. La auditoría Gemini/Groq/Cohere agotó sus tiempos de espera y utilizó la contingencia segura preexistente. No se acredita una auditoría LLM exitosa ni una subida OCI: el artefacto quedó en disco local privado y el paquete se guardó en Supabase desde React.
-- Prueba manual sobre ese paquete real: estación 1 completada (+50 XP), medalla Ninja y estación activa 2 recuperadas al recargar; el usuario partía de 25 XP y recuperó 75 XP. Después se completó la estación 2 y se probó una respuesta incorrecta del quiz. Una nueva recarga recuperó la pregunta ya respondida, 125 XP, dos medallas, dos estaciones, estación activa 5 y dos escudos.
-- HTTP real del backend: listado sin sesión y listado con token inválido rechazados con 401.
-- Se guardó también un paquete identificado como «Ejemplo de demostración · prueba de persistencia»; no es una generación de IA.
-
-Limitaciones: XP/medallas son datos de interfaz del usuario, no un sistema antitrampas ni un ranking autoritativo; no hay sincronización de edición concurrente entre dispositivos. La interfaz preexistente de OCI contiene indicadores de demostración y no acredita un despliegue real. Email/contraseña está implementado, pero no se probó registro ni entrega de correo. Para producción falta autorizar el dominio y callback HTTPS, añadir ese origen en CORS y configurar el fallback SPA de `/auth/callback`.
-
-Referencias oficiales: [Google en Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google), [verificación de usuario](https://supabase.com/docs/reference/javascript/auth-getuser).
-
