@@ -19,8 +19,6 @@ pypdf==5.0.1
 
 # --- Almacenamiento OCI (cliente real aislado para integración futura) ---
 oci==2.135.1
-# Espejo de Supabase en Autonomous Database (modo thin: sin Oracle Client instalado)
-oracledb==3.3.0
 
 # --- Pruebas ---
 pytest==8.3.3
