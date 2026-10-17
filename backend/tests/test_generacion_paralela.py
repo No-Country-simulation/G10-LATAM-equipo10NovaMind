@@ -223,10 +223,13 @@ def test_el_cuestionario_pregunta_por_lo_que_ensenaron_las_otras_estaciones():
     respuesta, _ = _generar(sim)
     instr = next(c["system_instruction"] for t, c in sim.peticiones if t == "C")
     temario = instr.split("TEMARIO ENSEÑADO:", 1)[1]
-    assert "NAT Gateway: Salida de subredes privadas." in temario        # estación 1
-    assert "¿Por dónde sale una subred privada? → NAT Gateway." in temario  # estación 2
-    assert "Crear swap: Crea el archivo." in temario                     # estación 3
+    assert "- NAT Gateway" in temario                         # estación 1
+    assert "- ¿Por dónde sale una subred privada?" in temario  # estación 2
+    assert "- Crear swap" in temario                          # estación 3
     assert "ESTACIÓN 4 · VIDEO" in temario
+    # Solo los temas: sin explicaciones que el modelo pueda copiar como cita
+    for explicacion in ("Salida de subredes privadas.", "→ NAT Gateway.", "Crea el archivo."):
+        assert explicacion not in temario
     assert respuesta.contenido_adaptado.estado_recursos["cuestionario"].tarea == "C"
 
 
