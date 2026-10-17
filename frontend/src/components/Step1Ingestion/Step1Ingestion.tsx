@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import {
   UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock, ScanText, PenLine, AlertTriangle, Loader2,
   Dices, SlidersHorizontal, FileText, X, ChevronRight,
@@ -8,6 +8,7 @@ import type {
 } from '../../types/types';
 import { REAL_DOCUMENTS_CATALOG } from '../../data/mockScenarios';
 import { extraerDocumento, textoDocumentoEjemplo } from '../../services/api';
+import { escenarioDe } from '../../services/muestras';
 import { HeroAnimacion } from './HeroAnimacion';
 import { MiniAnimacionRecursos } from './MiniAnimacionRecursos';
 import styles from './Step1Ingestion.module.css';
@@ -102,9 +103,9 @@ interface Step1Props {
     rawFile?: File | null,
     origenContenido?: OrigenContenido
   ) => void;
-  /** Documentos de ejemplo con paquete y video pregenerados, por id del catálogo */
-  muestras: Record<string, MuestraPregenerada>;
-  onAbrirMuestra: (documento: string) => void;
+  /** Escenarios pregenerados (paquete y video) de los documentos de ejemplo, por id del catálogo */
+  muestras: Record<string, MuestraPregenerada[]>;
+  onAbrirMuestra: (documento: string, escenario?: string) => void;
   /** Sin sesión (o como invitado) solo se abren las muestras de la biblioteca, con sus ajustes fijos */
   sesionIniciada: boolean;
   onIniciarSesion: () => void;
@@ -127,6 +128,8 @@ export const Step1Ingestion = ({
   processingStage,
 }: Step1Props) => {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  // Escenario elegido del documento (mismo texto, otros ajustes); sin elegir, el primero
+  const [escenarioId, setEscenarioId] = useState<string | undefined>(undefined);
   const [isLoadingPreset, setIsLoadingPreset] = useState<boolean>(false);
   const [docTitle, setDocTitle] = useState<string>('');
   const [docContent, setDocContent] = useState<string>('');
@@ -146,6 +149,12 @@ export const Step1Ingestion = ({
   const [avisosFuente, setAvisosFuente] = useState<string[]>([]);
   const turnoSubida = useRef(0); // descarta respuestas de una subida anterior
   const [arrastrando, setArrastrando] = useState<boolean>(false);
+  // La tarjeta de progreso queda al pie del formulario: al empezar se lleva a la vista,
+  // si no, quien pulsó arriba no ve que algo se está generando
+  const tarjetaProgresoRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isProcessing) tarjetaProgresoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [isProcessing]);
   // Sin documento todavía, la zona de carga se destaca como el punto de partida
   const sinDocumento = !fileName && !docContent && !isLoadingPreset;
   const documentoElegido = REAL_DOCUMENTS_CATALOG.find((d) => d.id === selectedDocId);
@@ -183,6 +192,7 @@ export const Step1Ingestion = ({
     reiniciarFuente();
     const turno = turnoSubida.current;
     setSelectedDocId(doc.id);
+    setEscenarioId(undefined);
     setIsLoadingPreset(true);
     setDocTitle(doc.titulo);
     // El invitado usa los ajustes fijos del documento; en Sorpréndeme se respeta el sorteo que se ve
@@ -243,7 +253,7 @@ export const Step1Ingestion = ({
   // La demo siempre termina en el recorrido (paso 2): con muestra, sin gastar cuota; sin muestra,
   // y solo con sesión, se genera con los ajustes fijos del documento.
   const demo = REAL_DOCUMENTS_CATALOG[0];
-  const demoConMuestra = Boolean(muestras[demo.id]);
+  const demoConMuestra = Boolean(muestras[demo.id]?.length);
   const demoDisponible = demoConMuestra || sesionIniciada;
   const handleLoadDemoScenario = async () => {
     if (demoConMuestra) {
@@ -257,7 +267,8 @@ export const Step1Ingestion = ({
         demo.id, cargado.archivo, 'documento');
     }
   };
-  const muestraElegida = selectedDocId ? muestras[selectedDocId] : undefined;
+  const escenariosDoc = selectedDocId ? muestras[selectedDocId] ?? [] : [];
+  const muestraElegida = selectedDocId ? escenarioDe(muestras, selectedDocId, escenarioId) : undefined;
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -346,7 +357,7 @@ export const Step1Ingestion = ({
     e.preventDefault();
     if (extrayendo) return;
     if (!sesionIniciada) {  // el invitado no genera: abre la muestra del documento elegido
-      if (selectedDocId && muestras[selectedDocId]) onAbrirMuestra(selectedDocId);
+      if (selectedDocId && muestraElegida) onAbrirMuestra(selectedDocId, muestraElegida.escenario);
       return;
     }
     if (!docContent.trim() && !rawFile) {
@@ -394,7 +405,7 @@ export const Step1Ingestion = ({
         </div>
       </div>
 
-      {/* Acción Rápida: Cargar Documento Propio vs Modo Demo Instantáneo */}
+      {/* Prueba rápida: abre la muestra de la Guía OCI Swap sin gastar cuota (también en modo invitado) */}
       <div className={styles.demoBannerCard}>
         <div className={styles.demoBannerRow}>
           <div className={styles.demoBannerText}>
@@ -410,7 +421,7 @@ export const Step1Ingestion = ({
             disabled={isLoadingPreset || isProcessing || !demoDisponible}
             title={demoConMuestra
               ? 'Abre el recorrido ya generado de la Guía OCI Swap: no gasta cuota'
-              : demoDisponible ? undefined : 'La muestra de la demo aún no está generada'}
+              : demoDisponible ? undefined : 'La muestra de la prueba rápida aún no está generada'}
           >
             <Zap size={16} />
             {isLoadingPreset
@@ -418,8 +429,8 @@ export const Step1Ingestion = ({
               : demoConMuestra
                 ? 'Prueba rápida 😊'
                 : sesionIniciada
-                  ? '⚡ Generar demo: Guía OCI Swap (gasta cuota)'
-                  : 'Demo en preparación'}
+                  ? '⚡ Generar la Guía OCI Swap (gasta cuota)'
+                  : 'Prueba rápida en preparación'}
           </button>
         </div>
       </div>
@@ -468,6 +479,7 @@ export const Step1Ingestion = ({
           {REAL_DOCUMENTS_CATALOG.map((doc) => (
             <option key={doc.id} value={doc.id}>
               {doc.titulo} · {doc.tipo === 'pdf' ? 'PDF' : 'MD'} {doc.tamano_formato.split(' ').slice(0, 2).join(' ')}
+              {(muestras[doc.id]?.length ?? 0) > 1 ? ` · ⭐ ${muestras[doc.id].length} ejemplos distintos del mismo documento` : ''}
             </option>
           ))}
         </select>
@@ -644,10 +656,30 @@ export const Step1Ingestion = ({
             <div className={styles.sorteo} aria-live="polite">
               {documentoElegido ? (
                 <>
-                  <span className={styles.sorteoTitulo}>Ajustes de este documento:</span>
-                  <span className={styles.sorteoChip}><strong>Perfil:</strong> {etiqueta(PERFILES, documentoElegido.perfil)}</span>
-                  <span className={styles.sorteoChip}><strong>Sector:</strong> {etiqueta(NICHOS, documentoElegido.nicho)}</span>
-                  <span className={styles.sorteoChip}><strong>Nivel:</strong> {etiqueta(NIVELES, documentoElegido.detalle)}</span>
+                  {escenariosDoc.length > 1 && (
+                    <div className={styles.escenarios} role="radiogroup" aria-label="Escenarios de este documento">
+                      <span className={styles.sorteoTitulo}>Mismo documento, {escenariosDoc.length} escenarios:</span>
+                      {escenariosDoc.map((e) => (
+                        <button
+                          key={e.escenario}
+                          type="button"
+                          role="radio"
+                          aria-checked={e.escenario === muestraElegida?.escenario}
+                          onClick={() => setEscenarioId(e.escenario)}
+                          className={`${styles.escenario} ${e.escenario === muestraElegida?.escenario ? styles.escenarioActivo : ''}`}
+                        >
+                          {e.etiqueta}{e.modo === 'clasico' ? ' · modo clásico (RAG)' : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <span className={styles.sorteoTitulo}>Ajustes de {escenariosDoc.length > 1 ? 'este escenario' : 'este documento'}:</span>
+                  <span className={styles.sorteoChip}><strong>Perfil:</strong> {etiqueta(PERFILES, muestraElegida?.ajustes.perfil ?? documentoElegido.perfil)}</span>
+                  <span className={styles.sorteoChip}><strong>Sector:</strong> {etiqueta(NICHOS, muestraElegida?.ajustes.nicho ?? documentoElegido.nicho)}</span>
+                  <span className={styles.sorteoChip}><strong>Nivel:</strong> {etiqueta(NIVELES, muestraElegida?.ajustes.detalle ?? documentoElegido.detalle)}</span>
+                  {muestraElegida?.modo === 'clasico' && (
+                    <span className={styles.sorteoChip}><strong>Modo:</strong> clásico, RAG vectorial (Cohere, ChromaDB y LangGraph)</span>
+                  )}
                 </>
               ) : (
                 <span className={styles.sorteoTitulo}>Elige un documento de la biblioteca: cada uno trae su perfil, sector y nivel</span>
@@ -742,7 +774,7 @@ export const Step1Ingestion = ({
 
           {/* Estado de Animación del Pipeline o Botón de Acción */}
       {isProcessing ? (
-            <div className={styles.processingCard}>
+            <div className={styles.processingCard} ref={tarjetaProgresoRef} role="status" aria-live="polite">
               <div className={styles.processingHeader}>
                 <Cpu size={24} className={styles.spinningIcon} />
                 <span className={styles.processingStageText}>
@@ -755,7 +787,9 @@ export const Step1Ingestion = ({
               <div className={styles.processingMeta}>
                 {esEtapaDeMuestra(processingStage)
                   ? 'Muestra pregenerada: no se llama a ningún modelo ni se gasta cuota'
-                  : 'Recursive Chunking · Vector Search · Faithfulness Verification · OCI Bucket Sync'}
+                  // Lo que de verdad hace el modo paralelo (regla 1). Dónde se guarda depende del servidor
+                  // (OCI con clave, disco si no): «en tu cuenta» es cierto en los dos casos
+                  : 'Gemini en paralelo · Citas verificadas en el documento · Guardado en tu cuenta'}
               </div>
             </div>
           ) : (
@@ -767,10 +801,10 @@ export const Step1Ingestion = ({
                 <div className={styles.accionesMuestra}>
                   <span className={styles.notaInvitado}>
                     {muestraElegida
-                      ? `Sin sesión se abre la muestra generada el ${muestraElegida.generado_el} con estos ajustes: no gasta cuota.`
+                      ? `Modo invitado: se abre la muestra generada el ${muestraElegida.generado_el} con estos ajustes, sin gastar cuota. Para generar y guardar en OCI, inicia sesión.`
                       : selectedDocId
                         ? 'Este documento aún no tiene su muestra generada. Inicia sesión para generarlo.'
-                        : 'Elige un documento de la biblioteca o prueba la demo.'}
+                        : 'Modo invitado: elige un documento de la biblioteca o usa la prueba rápida.'}
                   </span>
                   <button type="submit" className={styles.submitButton} disabled={!muestraElegida || isLoadingPreset}>
                     <Sparkles size={16} color="#fde047" />
@@ -783,8 +817,8 @@ export const Step1Ingestion = ({
                   <button
                     type="button"
                     className={styles.submitButton}
-                    onClick={() => onAbrirMuestra(selectedDocId)}
-                    title={`Paquete y video generados el ${muestraElegida.generado_el} (${muestraElegida.ajustes.perfil}, ${muestraElegida.ajustes.detalle})`}
+                    onClick={() => onAbrirMuestra(selectedDocId, muestraElegida.escenario)}
+                    title={`Paquete y video generados el ${muestraElegida.generado_el} (${muestraElegida.etiqueta}, ${muestraElegida.ajustes.detalle})`}
                   >
                     <Zap size={16} color="#fde047" />
                     <span>Ver recorrido de muestra (sin gastar cuota)</span>

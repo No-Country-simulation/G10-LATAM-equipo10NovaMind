@@ -62,7 +62,7 @@ export function ResumenEjecutivo({ paquete }: { paquete: AdaptedContentPackage }
           {r.por_secciones.length > 0 && (
             <>
               <h5 className={styles.subtitulo}>Por secciones</h5>
-              <dl className={styles.definiciones}>
+              <dl className={`${styles.definiciones} ${styles.porSecciones}`}>
                 {r.por_secciones.map((s, i) => (
                   <div key={`${s.seccion}-${i}`}>
                     <dt>{s.seccion} <FuenteChip fuente={s.fuente} /></dt>

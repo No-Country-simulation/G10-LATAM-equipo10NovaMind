@@ -264,10 +264,10 @@ def test_texto_de_un_ejemplo_se_extrae_en_el_servidor_y_se_cachea():
     _texto_documento_ejemplo.cache_clear()
     cliente = TestClient(app)
     for _ in range(2):
-        r = cliente.get("/api/v1/documentos/ejemplos/Snowflake_SIGMOD.pdf/texto")
+        r = cliente.get("/api/v1/documentos/ejemplos/ENISA Threat Landscape 2026_Final.pdf/texto")
         assert r.status_code == 200, r.text
     datos = r.json()
-    assert datos["origen"] == "documento" and datos["paginas"] == 12 and "Snowflake" in datos["texto"]
+    assert datos["origen"] == "documento" and datos["paginas"] == 101 and "ENISA" in datos["texto"]
     assert _texto_documento_ejemplo.cache_info().hits == 1
 
 

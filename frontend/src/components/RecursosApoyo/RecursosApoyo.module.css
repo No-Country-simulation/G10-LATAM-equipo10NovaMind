@@ -127,6 +127,13 @@
   color: var(--color-text-primary);
 }
 .definiciones dd { margin: 0.125rem 0 0; }
+/* Resumen por secciones: sangría y una línea guía para que cada resumen cuelgue de su sección */
+.porSecciones { padding-left: 0.75rem; }
+.porSecciones dd {
+  margin-left: 0.25rem;
+  padding-left: 0.875rem;
+  border-left: 2px solid var(--color-violet-border);
+}
 
 .diapositivas {
   display: grid;

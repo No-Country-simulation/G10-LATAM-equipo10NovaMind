@@ -1,0 +1,316 @@
+{
+ "status": "exito",
+ "video_job_spec": {
+  "video_job_id": "vjob-doc-a184bfa55112c5c4",
+  "document_id": "doc-a184bfa55112c5c4",
+  "target_duration": 50,
+  "max_duration": 60,
+  "aspect_ratio": "9:16",
+  "idioma": "es",
+  "estado": "completed",
+  "escenas": [
+   {
+    "id": "sc-1",
+    "escena": 1,
+    "tiempo": "00:00 - 00:15",
+    "duracion_segundos": 15.2,
+    "titulo": "Fundamentos del Event Streaming",
+    "guion_locutor": "El flujo de eventos es como registrar cada transacción contable en tiempo real, almacenándola de forma segura y duradera para consultarla cuando lo necesites, facilitando la automatización de procesos corporativos y el análisis financiero constante.",
+    "estimacion_palabras": 35,
+    "storyboard_visual": "Animación de un sistema nervioso central conectado a flujos de datos financieros.",
+    "consejo_pedagogico": "Comprende el concepto principal como el sistema circulatorio de la información empresarial.",
+    "objetivo_pedagogico": "Explicar qué es el event streaming y su rol en la infraestructura moderna.",
+    "visual": {
+     "tipo": "ppt_concepto",
+     "titulo": "¿Qué es el event streaming?",
+     "puntos_clave": [
+      "Captura de datos en tiempo real",
+      "Almacenamiento duradero de eventos",
+      "Procesamiento y enrutamiento continuo"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-1-1",
+      "pagina": null,
+      "texto_fuente": "Event streaming is the digital equivalent of the human body's central nervous system.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": " distributed under the License is distributed on an \"AS IS\" BASIS,\n WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n See the License for the specific language governing permissions and\n limitations under the License.\n-->\n\n\n## What is event streaming?\n\n",
+       "fragmento": "Event streaming is the digital equivalent of the human body's central nervous system",
+       "despues": ". It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software. \n\nTechnically speaking, event streaming is the practice of capturing data in real-time from event",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "foto",
+     "palabra_clave": "neural network",
+     "url": "/ejemplos/apache-kafka/principiante-finanzas/foto-1.jpg",
+     "alt": "Fundamentos del Event Streaming",
+     "autor": "fdecomite",
+     "licencia": "CC BY 2.0",
+     "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+     "fuente_url": "https://www.flickr.com/photos/21649179@N00/3237928173",
+     "proveedor": "openverse"
+    },
+    "audio": {
+     "ruta": "escena-1.mp3",
+     "duracion_real_s": 13.066,
+     "voz": "Diego",
+     "modelo": "eleven_flash_v2_5",
+     "proveedor": "elevenlabs",
+     "mime_type": "audio/mpeg",
+     "tiempos_palabras": [
+      0.163,
+      0.476,
+      0.569,
+      0.964,
+      1.092,
+      1.312,
+      1.777,
+      2.032,
+      2.555,
+      2.996,
+      3.065,
+      3.367,
+      3.878,
+      4.83,
+      4.923,
+      5.202,
+      5.562,
+      5.608,
+      6.026,
+      6.223,
+      6.827,
+      7.059,
+      7.164,
+      7.884,
+      8.731,
+      8.824,
+      9.544,
+      9.637,
+      10.043,
+      10.74,
+      11.111,
+      11.192,
+      11.61,
+      12.098,
+      12.957
+     ]
+    }
+   },
+   {
+    "id": "sc-2",
+    "escena": 2,
+    "tiempo": "00:15 - 00:29",
+    "duracion_segundos": 13.9,
+    "titulo": "Arquitectura y Componentes de Kafka",
+    "guion_locutor": "Apache Kafka opera mediante servidores llamados intermediarios o brokers que gestionan los temas donde se organizan los mensajes. Esto funciona igual que tu libro mayor, donde cada asiento contable queda registrado ordenadamente.",
+    "estimacion_palabras": 32,
+    "storyboard_visual": "Esquema de servidores distribuidos comunicándose mediante protocolo de red.",
+    "consejo_pedagogico": "Visualiza los brokers como los centros de almacenamiento de registros principales.",
+    "objetivo_pedagogico": "Describir la arquitectura de servidores y clientes en Kafka.",
+    "visual": {
+     "tipo": "diagrama_bloques",
+     "titulo": "Servidores y Clientes",
+     "puntos_clave": [
+      "Clúster de servidores o brokers",
+      "Clientes productores y consumidores",
+      "Escalabilidad y tolerancia a fallos"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-2-1",
+      "pagina": null,
+      "texto_fuente": "Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments. \n\n**Servers** : ",
+       "fragmento": "Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions",
+       "despues": ". Some of these servers form the storage layer, called the brokers. Other servers run [Kafka Connect](/documentation/#connect) to continuously import and export data as event streams to integrate Kafka with your existing systems such as relational databases as well as other",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "foto",
+     "palabra_clave": "server rack",
+     "url": "/ejemplos/apache-kafka/principiante-finanzas/foto-2.jpg",
+     "alt": "Arquitectura y Componentes de Kafka",
+     "autor": "Robert.Harker",
+     "licencia": "CC BY-SA 3.0",
+     "licencia_url": "https://creativecommons.org/licenses/by-sa/3.0",
+     "fuente_url": "https://commons.wikimedia.org/wiki/File:Network_Aisle_Front.jpg",
+     "proveedor": "wikimedia"
+    },
+    "audio": {
+     "ruta": "escena-2.mp3",
+     "duracion_real_s": 13.222,
+     "voz": "Diego",
+     "modelo": "eleven_flash_v2_5",
+     "proveedor": "elevenlabs",
+     "mime_type": "audio/mpeg",
+     "tiempos_palabras": [
+      0.476,
+      0.998,
+      1.567,
+      1.962,
+      2.496,
+      2.914,
+      3.773,
+      3.993,
+      4.504,
+      4.911,
+      5.375,
+      5.538,
+      5.851,
+      6.083,
+      6.188,
+      6.652,
+      6.78,
+      7.384,
+      8.034,
+      8.475,
+      8.707,
+      8.835,
+      8.963,
+      9.218,
+      9.694,
+      10.089,
+      10.333,
+      10.693,
+      11.145,
+      11.366,
+      11.935,
+      13.096
+     ]
+    }
+   },
+   {
+    "id": "sc-3",
+    "escena": 3,
+    "tiempo": "00:29 - 00:43",
+    "duracion_segundos": 13.9,
+    "titulo": "Conceptos Clave y APIs",
+    "guion_locutor": "Los productores escriben los eventos y los consumidores los leen de manera independiente. Mediante cinco API principales, puedes administrar objetos, procesar flujos y conectar sistemas externos con total seguridad y gran eficiencia.",
+    "estimacion_palabras": 32,
+    "storyboard_visual": "Iconos representando las cinco API principales de Kafka conectadas entre sí.",
+    "consejo_pedagogico": "Diferencia claramente las funciones de lectura y escritura entre productores y consumidores.",
+    "objetivo_pedagogico": "Conocer los conceptos de eventos, temas particionados y las API esenciales.",
+    "visual": {
+     "tipo": "palabras_clave",
+     "titulo": "APIs Principales",
+     "puntos_clave": [
+      "Admin, Producer y Consumer APIs",
+      "Kafka Streams para procesamiento",
+      "Kafka Connect para integración"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-3-1",
+      "pagina": null,
+      "texto_fuente": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "This replication is performed at the level of topic-partitions. \n\nThis primer should be sufficient for an introduction. The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. \n\n## Kafka APIs\n\n",
+       "fragmento": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+       "despues": ": \n\n  * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. \n  * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. \n  * The [Consumer",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "foto",
+     "palabra_clave": "software code",
+     "url": "/ejemplos/apache-kafka/principiante-finanzas/foto-3.jpg",
+     "alt": "Conceptos Clave y APIs",
+     "autor": "Crew crew",
+     "licencia": "CC0",
+     "licencia_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+     "fuente_url": "https://commons.wikimedia.org/wiki/File:Programmer_at_work_(Unsplash).jpg",
+     "proveedor": "wikimedia"
+    },
+    "audio": {
+     "ruta": "escena-3.mp3",
+     "duracion_real_s": 12.047,
+     "voz": "Diego",
+     "modelo": "eleven_flash_v2_5",
+     "proveedor": "elevenlabs",
+     "mime_type": "audio/mpeg",
+     "tiempos_palabras": [
+      0.151,
+      0.662,
+      1.091,
+      1.242,
+      1.695,
+      1.788,
+      1.95,
+      2.612,
+      2.798,
+      2.995,
+      3.111,
+      3.39,
+      4.237,
+      5.027,
+      5.306,
+      5.631,
+      6.281,
+      6.571,
+      7.082,
+      7.57,
+      8.011,
+      8.394,
+      8.487,
+      8.882,
+      9.265,
+      9.717,
+      9.88,
+      10.182,
+      10.693,
+      10.82,
+      11.064,
+      11.935
+     ]
+    }
+   }
+  ],
+  "total_palabras": 99,
+  "duracion_total_estimada": 43.0,
+  "wpm": 138,
+  "degradaciones": [],
+  "manifiesto_url_oci": null,
+  "video_url_oci": null,
+  "duracion_total_real": 38.3,
+  "velocidad_reproduccion": 1.0
+ },
+ "duracion_total_real_s": 38.3,
+ "duraciones_medidas_s": [
+  13.066,
+  13.222,
+  12.047
+ ],
+ "reutilizado": false,
+ "proveedor": "elevenlabs",
+ "almacenamiento": "en_linea",
+ "advertencias": [],
+ "error_codigo": null,
+ "audios_en_linea": {}
+}

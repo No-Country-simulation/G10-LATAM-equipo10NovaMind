@@ -1,0 +1,323 @@
+{
+ "status": "exito",
+ "video_job_spec": {
+  "video_job_id": "vjob-doc-3bf4a63430dd0b05",
+  "document_id": "doc-3bf4a63430dd0b05",
+  "target_duration": 50,
+  "max_duration": 60,
+  "aspect_ratio": "9:16",
+  "idioma": "es",
+  "estado": "completed",
+  "escenas": [
+   {
+    "id": "sc-1",
+    "escena": 1,
+    "tiempo": "00:00 - 00:17",
+    "duracion_segundos": 17.0,
+    "titulo": "Panorama de Amenazas y Vectores de Intrusión",
+    "guion_locutor": "Los ataques de denegación de servicio y el acceso no autorizado dominan el panorama europeo actual. Así como la historia clínica de un paciente requiere controles estrictos para evitar filtraciones, la explotación de vulnerabilidades sigue siendo el vector principal.",
+    "estimacion_palabras": 39,
+    "storyboard_visual": "Esquema animado mostrando porcentajes de DDoS y acceso no autorizado.",
+    "consejo_pedagogico": "Comprender los vectores iniciales ayuda a priorizar las defensas perimetrales.",
+    "objetivo_pedagogico": "Identificar los principales tipos de incidentes y vectores de intrusión reportados en la Unión Europea.",
+    "visual": {
+     "tipo": "diagrama_bloques",
+     "titulo": "Principales Amenazas en la UE",
+     "puntos_clave": [
+      "DDoS representa el 51.3 por ciento de la actividad registrada.",
+      "El acceso no autorizado alcanza el 39.5 por ciento.",
+      "Phishing y vulnerabilidades como vectores de entrada."
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-1-1",
+      "pagina": 7,
+      "texto_fuente": "DDoS attacks (51.3%) and unauthorised access (39.5%) continued to account for a large share of the recorded activity affecting EU Member States and EU-based organisations.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": " \nTLP:CLEAR  | September  2026  \n \n7 \n \nExecutive Summary  \nThe 2025 cyber threat landscape affecting the European Union remained  shaped by a combination \nof threats, sometimes driven by geopolitical developments , and the growing interconnectedness \nof digital ecosystems.  \n",
+       "fragmento": "DDoS attacks (51.3%) and unauthorised access (39.5%)  continued to account for a large share of \nthe recorded activity affecting EU Member States and EU -based organisations",
+       "despues": ". Social engineering  \nremained a common enabling tactic to abuse trust, particularly through phishing campaigns (77.8%), \nincreasingl y supported by phishing kits and service -based ecosystems. The exploitation of \nvulnerabilities , including N -day and 0 -day vulnerabilities,",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "foto",
+     "palabra_clave": "server room",
+     "url": "/ejemplos/enisa-threat-landscape/lider-salud/foto-1.jpg",
+     "alt": "Panorama de Amenazas y Vectores de Intrusión",
+     "autor": "Ruhrfisch",
+     "licencia": "CC BY-SA 2.0",
+     "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+     "fuente_url": "https://www.flickr.com/photos/43344700@N07/6802069536",
+     "proveedor": "openverse"
+    },
+    "audio": {
+     "ruta": "escena-1.mp3",
+     "duracion_real_s": 13.902,
+     "voz": "Diego",
+     "modelo": "eleven_flash_v2_5",
+     "proveedor": "elevenlabs",
+     "mime_type": "audio/mpeg",
+     "tiempos_palabras": [
+      0.163,
+      0.569,
+      0.662,
+      1.185,
+      1.277,
+      1.765,
+      1.846,
+      1.928,
+      2.311,
+      2.45,
+      3.135,
+      3.785,
+      3.89,
+      4.342,
+      4.737,
+      5.213,
+      5.735,
+      5.979,
+      6.061,
+      6.386,
+      6.792,
+      6.873,
+      6.943,
+      7.431,
+      7.779,
+      8.278,
+      8.789,
+      8.986,
+      9.3,
+      10.136,
+      10.461,
+      11.041,
+      11.134,
+      12.016,
+      12.318,
+      12.62,
+      12.69,
+      13.015,
+      13.793
+     ]
+    }
+   },
+   {
+    "id": "sc-2",
+    "escena": 2,
+    "tiempo": "00:17 - 00:33",
+    "duracion_segundos": 16.1,
+    "titulo": "Impacto Financiero y Operativo",
+    "guion_locutor": "Las actividades con motivación financiera, en especial el ransomware y las filtraciones de datos, generan las interrupciones más graves en el corto plazo. Los grupos de extorsión diversifican sus tácticas para forzar negociaciones y eludir las defensas.",
+    "estimacion_palabras": 37,
+    "storyboard_visual": "Gráfica comparativa de incidentes financieros frente a ideológicos.",
+    "consejo_pedagogico": "Evaluar el riesgo financiero permite dimensionar el impacto en la continuidad del negocio.",
+    "objetivo_pedagogico": "Analizar la persistencia y el impacto operacional de las campañas de ransomware y extorsión.",
+    "visual": {
+     "tipo": "comparativa",
+     "titulo": "Ransomware y Extorsión",
+     "puntos_clave": [
+      "El ransomware domina las preocupaciones operativas.",
+      "Uso intensivo de sitios de filtración de datos.",
+      "Herramientas para deshabilitar soluciones de seguridad."
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-2-1",
+      "pagina": 7,
+      "texto_fuente": "Financially motivated activities (29.3% of all recorded incidents), particularly ransomware, remained the most impactful incidents in the short-term.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "also remained a prevalent intrusion vector \nto enable unauthorised access (60.4%). At the same time, the targeting of supply chains, third -party \nproviders, cloud environments and other cyber dependencies  continued resulting in impactful and \nlarge -scale incidents.  \n",
+       "fragmento": "Financially motivated activities (29.3% of all recorded incidents), particularly  ransomware, \nremained the most  impactful incidents in the short -term",
+       "despues": " . Ransomware, data breaches, phishing \nand fraud impacted a broad range of sectors, reflecting the continuing adaptability of the cybercrime \necosystem. Manufacturing, business services and public administration were amo ng the sectors most \naffected by cybercrime -related",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "foto",
+     "palabra_clave": "digital lock",
+     "url": "/ejemplos/enisa-threat-landscape/lider-salud/foto-2.jpg",
+     "alt": "Impacto Financiero y Operativo",
+     "autor": "eevblog",
+     "licencia": "CC BY 2.0",
+     "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+     "fuente_url": "https://www.flickr.com/photos/58072483@N02/19458109015",
+     "proveedor": "openverse"
+    },
+    "audio": {
+     "ruta": "escena-2.mp3",
+     "duracion_real_s": 14.058,
+     "voz": "Diego",
+     "modelo": "eleven_flash_v2_5",
+     "proveedor": "elevenlabs",
+     "mime_type": "audio/mpeg",
+     "tiempos_palabras": [
+      0.221,
+      0.836,
+      0.998,
+      1.555,
+      2.24,
+      2.507,
+      2.925,
+      3.041,
+      3.68,
+      3.796,
+      3.97,
+      4.609,
+      4.702,
+      5.236,
+      5.782,
+      5.921,
+      6.583,
+      6.768,
+      7.117,
+      7.233,
+      7.337,
+      7.628,
+      8.138,
+      8.58,
+      8.928,
+      9.009,
+      9.497,
+      10.135,
+      10.333,
+      10.89,
+      11.25,
+      11.621,
+      12.341,
+      12.55,
+      12.922,
+      13.096,
+      13.932
+     ]
+    }
+   },
+   {
+    "id": "sc-3",
+    "escena": 3,
+    "tiempo": "00:33 - 00:46",
+    "duracion_segundos": 13.0,
+    "titulo": "Amenazas Vinculadas a Estados y Ciberespionaje",
+    "guion_locutor": "Las intrusiones patrocinadas por estados priorizan el ciberespionaje estratégico y la recopilación de inteligencia. Los atacantes explotan continuamente la infraestructura perimetral y aplican la automatización para acelerar sus operaciones maliciosas.",
+    "estimacion_palabras": 30,
+    "storyboard_visual": "Mapa estilizado de redes mostrando conexiones globales y actores estatales.",
+    "consejo_pedagogico": "El espionaje representa un riesgo estratégico a largo plazo que requiere monitorización continua.",
+    "objetivo_pedagogico": "Reconocer las motivaciones y tácticas de los grupos con patrocinio estatal en el ciberespacio europeo.",
+    "visual": {
+     "tipo": "palabras_clave",
+     "titulo": "Ciberespionaje y TTPs",
+     "puntos_clave": [
+      "Enfoque en administración pública y defensa.",
+      "Explotación rápida de vulnerabilidades de día cero.",
+      "Uso creciente de inteligencia artificial."
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-3-1",
+      "pagina": 7,
+      "texto_fuente": "State-nexus intrusion sets continued conducting cyberespionage activities (5.9%), with Russia-nexus intrusion sets primarily targeting central governmental and diplomatic entities",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "a significant share of the observed activity (57.3%), \nparticularly through hacktivist -led DDoS campaigns targeting public -facing services, essential entities \nand organisations associated with political developments or support for countries such as Ukraine or \nIsrael. ",
+       "fragmento": "State -nexus intrusion sets continued conducting cyberespionage activities (5.9%), with Russia -\nnexus intrusion sets primarily targeting  central governmental and diplomatic entities",
+       "despues": ", and China -nexus \nintrusi on sets showing continuous interest in the transport sector including maritime related entities. A \nresurgence in State -nexus financially motivated campaigns was observed.  \n2025 confirmed the continued exposure of sectors to cyber threats ,",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "foto",
+     "palabra_clave": "global network",
+     "url": "/ejemplos/enisa-threat-landscape/lider-salud/foto-3.jpg",
+     "alt": "Amenazas Vinculadas a Estados y Ciberespionaje",
+     "autor": "fdecomite",
+     "licencia": "CC BY 2.0",
+     "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+     "fuente_url": "https://www.flickr.com/photos/21649179@N00/5912303770",
+     "proveedor": "openverse"
+    },
+    "audio": {
+     "ruta": "escena-3.mp3",
+     "duracion_real_s": 13.405,
+     "voz": "Diego",
+     "modelo": "eleven_flash_v2_5",
+     "proveedor": "elevenlabs",
+     "mime_type": "audio/mpeg",
+     "tiempos_palabras": [
+      0.151,
+      0.708,
+      1.37,
+      1.544,
+      2.02,
+      2.671,
+      2.763,
+      3.472,
+      4.133,
+      4.435,
+      4.551,
+      5.202,
+      5.295,
+      6.084,
+      6.514,
+      6.99,
+      7.443,
+      8.116,
+      8.209,
+      8.848,
+      9.463,
+      9.753,
+      10.125,
+      10.218,
+      10.984,
+      11.204,
+      11.587,
+      11.762,
+      12.354,
+      13.283
+     ]
+    }
+   }
+  ],
+  "total_palabras": 106,
+  "duracion_total_estimada": 46.1,
+  "wpm": 138,
+  "degradaciones": [],
+  "manifiesto_url_oci": null,
+  "video_url_oci": null,
+  "duracion_total_real": 41.4,
+  "velocidad_reproduccion": 1.0
+ },
+ "duracion_total_real_s": 41.4,
+ "duraciones_medidas_s": [
+  13.902,
+  14.058,
+  13.405
+ ],
+ "reutilizado": false,
+ "proveedor": "elevenlabs",
+ "almacenamiento": "en_linea",
+ "advertencias": [],
+ "error_codigo": null,
+ "audios_en_linea": {}
+}

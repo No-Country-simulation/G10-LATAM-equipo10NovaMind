@@ -840,7 +840,12 @@ const DirectorStudio = ({
         ) : (
           <div className={styles.videoEspera}>
             {narracion.fase === 'generando' ? (
-              <LoaderCircle size={28} className={styles.spin} aria-hidden="true" />
+              // Onda de voz animada mientras se graba la locución (sin significado de progreso real)
+              <div className={styles.ondaCarga} aria-hidden="true">
+                {Array.from({ length: 7 }, (_, i) => (
+                  <span key={i} style={{ animationDelay: `${i * 0.11}s` }} />
+                ))}
+              </div>
             ) : (
               <Clapperboard size={28} color="#f0abfc" aria-hidden="true" />
             )}

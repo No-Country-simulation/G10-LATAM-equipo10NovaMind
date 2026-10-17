@@ -28,7 +28,7 @@ import type {
 } from "./types/types";
 import { triggerLevelUpConfetti, triggerSmallConfetti } from "./utils/confetti";
 import { solicitarAdaptacion } from "./services/api";
-import { cargarMuestra, indiceMuestras } from "./services/muestras";
+import { cargarMuestra, escenarioDe, indiceMuestras } from "./services/muestras";
 import { estacionesResueltas } from "./utils/paqueteIncremental";
 import styles from "./App.module.css";
 
@@ -93,7 +93,7 @@ export default function App() {
   // Antes de eso, el paquete de ejemplo no se muestra como si fuera un resultado (15/10).
   const [paqueteListo, setPaqueteListo] = useState(false);
   // Documentos de ejemplo con su paquete y su video ya generados (no gastan cuota al abrirlos)
-  const [muestras, setMuestras] = useState<Record<string, MuestraPregenerada>>({});
+  const [muestras, setMuestras] = useState<Record<string, MuestraPregenerada[]>>({});
   useEffect(() => {
     let vivo = true;
     void indiceMuestras().then((indice) => {
@@ -278,9 +278,10 @@ export default function App() {
   /**
    * Abre la muestra pregenerada de un documento de ejemplo: no llama a ningún modelo. La carga
    * recorre las mismas etapas que una generación, pero dice que es una muestra (regla 1).
+   * Sin escenario se abre el primero del documento.
    */
-  const handleAbrirMuestra = async (documento: string) => {
-    const muestra = muestras[documento];
+  const handleAbrirMuestra = async (documento: string, escenario?: string) => {
+    const muestra = escenarioDe(muestras, documento, escenario);
     if (!muestra || isProcessing) return;
     const version = accountVersion.current;
     setIsProcessing(true);
@@ -299,7 +300,7 @@ export default function App() {
       setQuizState(EMPTY_QUIZ);
       setCurrentPackage(paquete);
       setPackageId(null);
-      setQuestKey(`muestra-${documento}-${Date.now()}`);
+      setQuestKey(`muestra-${documento}-${muestra.escenario}-${Date.now()}`);
       setUnlockedStations([0, 1, 2, 3, 4]);
       setPaqueteListo(true);
       setCurrentStep(2);
@@ -548,7 +549,7 @@ export default function App() {
             key={user?.id || 'guest'}
             onStartPipeline={handleStartPipeline}
             muestras={muestras}
-            onAbrirMuestra={(documento) => void handleAbrirMuestra(documento)}
+            onAbrirMuestra={(documento, escenario) => void handleAbrirMuestra(documento, escenario)}
             sesionIniciada={user !== null && user.id !== '00000000-0000-0000-0000-000000000000'}
             onIniciarSesion={() => setIsAuthOpen(true)}
             isProcessing={isProcessing}
@@ -562,6 +563,8 @@ export default function App() {
             quizState={quizState}
             onQuizChange={setQuizState}
             contentPackage={currentPackage}
+            escenarios={currentPackage.muestra ? muestras[currentPackage.muestra.documento] ?? [] : []}
+            onAbrirEscenario={(m) => void handleAbrirMuestra(m.documento, m.escenario)}
             completedStations={completedStations}
             activeStationIndex={activeStationIndex}
             onSelectStationIndex={setActiveStationIndex}

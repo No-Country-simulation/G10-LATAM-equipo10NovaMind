@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
           {steps.map((s, index) => {
             const isActive = currentStep === s.num;
             const isPassed = currentStep > s.num;
-            // Para avanzar hay que cargar un documento o la demo en el paso 1
+            // Para avanzar hay que cargar un documento o abrir una muestra en el paso 1
             const bloqueado = s.num > 1 && !pasosAbiertos;
 
             let buttonClass = styles.stepButton;
@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => onSelectStep(s.num as 1 | 2 | 3)}
                   className={buttonClass}
                   disabled={bloqueado}
-                  title={bloqueado ? 'Carga un documento o la demo en el paso 1 para continuar' : undefined}
+                  title={bloqueado ? 'Carga un documento o abre una muestra en el paso 1 para continuar' : undefined}
                 >
                   <span className={badgeClass}>
                     {isPassed ? <Check size={10} strokeWidth={3.5} /> : s.num}
@@ -110,7 +110,13 @@ export const Header: React.FC<HeaderProps> = ({
                 <LogOut size={15} />
               </button>
             </div>
-          ) : (
+          ) : (<>
+            <span
+              className={styles.modoInvitado}
+              title="Sin sesión: se abren las muestras pregeneradas, sin gastar cuota. Para generar con tus documentos y guardar en OCI, ingresa."
+            >
+              Modo invitado
+            </span>
             <button
               type="button"
               onClick={onOpenAuth}
@@ -119,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
               <LogIn size={14} />
               <span>Ingresar</span>
             </button>
-          )}
+          </>)}
         </div>
       </div>
     </header>

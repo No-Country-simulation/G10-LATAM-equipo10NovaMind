@@ -448,7 +448,17 @@ def _como(principal: Principal):
     app.dependency_overrides[require_user] = lambda: principal
 
 
-def test_api_invitado_genera_sin_almacen(api):
+def test_api_invitado_sin_permiso_no_gasta_voz(api, monkeypatch):
+    monkeypatch.delenv("PERMITIR_GENERACION_INVITADO", raising=False)
+    _como(Principal("00000000-0000-0000-0000-000000000000", "guest-demo-token", is_guest=True))
+    with patch("app.main._voces_narracion") as voces:
+        r = api.post("/api/v1/narracion/generar", json={"video_job_spec": _spec(2).model_dump()})
+    assert r.status_code == 403
+    voces.assert_not_called()
+
+
+def test_api_invitado_genera_sin_almacen(api, monkeypatch):
+    monkeypatch.setenv("PERMITIR_GENERACION_INVITADO", "true")  # como al pregenerar las muestras
     _como(Principal("00000000-0000-0000-0000-000000000000", "guest-demo-token", is_guest=True))
     with patch("app.main._voces_narracion", return_value=[VozGemini(VozSimulada(), "tts-modelo")]), \
          patch("app.main.BuscadorImagenes", return_value=_BancoCerrable()), \

@@ -1,0 +1,1241 @@
+{
+ "status": "exito_con_advertencias",
+ "metadatos": {
+  "perfil_aplicado": "Desarrollador Junior / Semi Senior",
+  "formato_generado": "Paquete Educativo Completo (5 Estaciones)",
+  "nicho_aplicado": "Finanzas y Contabilidad",
+  "tiempo_estimado_estudio_minutos": 10,
+  "conceptos_clave": [
+   "Event (Evento)",
+   "Producers and Consumers (Productores y Consumidores)",
+   "Topics and Partitions (Tópicos y Particiones)",
+   "Replication (Replicación)"
+  ],
+  "prerrequisitos": []
+ },
+ "contenido_adaptado": {
+  "titulo": "Apache Kafka: Fundamentos y Arquitectura de Event Streaming",
+  "introduccion_contextualizada": "Este documento explica los fundamentos y la arquitectura de Apache Kafka como una plataforma de transmisión de eventos, detallando cómo se capturan, almacenan y procesan los flujos de datos en tiempo real. Para un desarrollador junior, este material es clave para entender cómo diseñar sistemas distribuidos resilientes que manejan grandes volúmenes de información transaccional y operativa de forma eficiente.",
+  "items": [
+   {
+    "id": "fc-1",
+    "frente": "¿Qué es un evento en Apache Kafka?",
+    "dorso": "Un registro que plasma el hecho de que 'algo sucedió' en el mundo o en tu negocio. Consta conceptualmente de una clave, un valor, una marca de tiempo y cabeceras de metadatos opcionales.",
+    "pista_didactica": "Piensa en un registro contable que documenta una transacción financiera o comercial específica en el momento exacto en que ocurre.",
+    "fuente": {
+     "texto": "An event records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "provided by the Kafka community: clients are available for Java and Scala including the higher-level [Kafka Streams](/documentation/streams/) library, for Go, Python, C/C++, and many other programming languages as well as REST APIs. \n\n## Main Concepts and Terminology\n\n",
+      "fragmento": "An **event** records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation",
+      "despues": ". When you read or write data to Kafka, you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp:",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Cuál es la función principal de los productores (producers) en Kafka?",
+    "dorso": "Son aquellas aplicaciones cliente que publican (escriben) eventos en Kafka, operando de forma totalmente desacoplada de los consumidores.",
+    "pista_didactica": "En la gestión de presupuestos, actúan como las fuentes u origen que generan y emiten nuevos registros de ingresos o gastos.",
+    "fuente": {
+     "texto": "Producers are those client applications that publish (write) events to Kafka, and consumers are those that subscribe to (read and process) these events.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp: \"Jun. 25, 2020 at 2:06 p.m.\" \n\n\n\n**",
+      "fragmento": "Producers** are those client applications that publish (write) events to Kafka, and **consumers** are those that subscribe to (read and process) these events",
+      "despues": ". In Kafka, producers and consumers are fully decoupled and agnostic of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Cómo se organizan y almacenan de forma duradera los eventos en Kafka?",
+    "dorso": "Se organizan en tópicos (topics), los cuales son multiproductor y multisuscripter, permitiendo definir un tiempo de retención mediante configuración.",
+    "pista_didactica": "Funciona conceptualmente de manera similar a una carpeta en un sistema de archivos donde se guardan los documentos de transacciones.",
+    "fuente": {
+     "texto": "Events are organized and durably stored in topics. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various [guarantees](/documentation/#semantics) such as the ability to process events exactly-once. \n\n",
+      "fragmento": "Events are organized and durably stored in **topics**. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder",
+      "despues": ". An example topic name could be \"payments\". Topics in Kafka are always multi-producer and multi-subscriber: a topic can have zero, one, or many producers that write events to it, as well as zero, one, or many consumers that subscribe to these events. Events in a topic can be",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Cuáles son las cinco APIs principales de Kafka para Java y Scala?",
+    "dorso": "Admin API, Producer API, Consumer API, Kafka Streams API y Kafka Connect API.",
+    "pista_didactica": "Son interfaces de programación para administrar, producir, consumir, procesar flujos y conectar sistemas externos.",
+    "fuente": {
+     "texto": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala:",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "This replication is performed at the level of topic-partitions. \n\nThis primer should be sufficient for an introduction. The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. \n\n## Kafka APIs\n\n",
+      "fragmento": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+      "despues": ": \n\n  * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. \n  * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. \n  * The [Consumer",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "resumen_ninja": {
+   "titulo": "Síntesis Conceptual",
+   "analogia_central": "Imagina el flujo de datos en Kafka como el libro mayor general o el sistema de caja de una empresa: los productores son las diferentes sucursales registrando cada transacción (ingresos y gastos) en tiempo real, mientras que los tópicos son las cuentas contables donde se archivan de forma duradera y organizada para que los auditores o analistas financieros (consumidores) puedan revisarlas las veces que necesiten sin alterar ni borrar los registros históricos.",
+   "conceptos_clave": [
+    {
+     "id": "c1",
+     "texto": "Event (Evento)",
+     "explicacion": "Un registro inmutable que indica que algo ha sucedido en el negocio, compuesto por una clave, un valor, una marca de tiempo y metadatos opcionales.",
+     "verificado": true,
+     "fuente": {
+      "texto": "Conceptually, an event has a key, value, timestamp, and optional metadata headers.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "as well as REST APIs. \n\n## Main Concepts and Terminology\n\nAn **event** records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation. When you read or write data to Kafka, you do this in the form of events. ",
+       "fragmento": "Conceptually, an event has a key, value, timestamp, and optional metadata headers",
+       "despues": ". Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp: \"Jun. 25, 2020 at 2:06 p.m.\" \n\n\n\n**Producers** are those client applications that publish (write) events to Kafka, and **consumers** are those that",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c2",
+     "texto": "Producers and Consumers (Productores y Consumidores)",
+     "explicacion": "Los productores son las aplicaciones cliente que publican eventos en Kafka, mientras que los consumidores son las aplicaciones que se suscriben para leerlos y procesarlos de forma completamente desacoplada.",
+     "verificado": true,
+     "fuente": {
+      "texto": "Producers are those client applications that publish (write) events to Kafka, and consumers are those that subscribe to (read and process) these events.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp: \"Jun. 25, 2020 at 2:06 p.m.\" \n\n\n\n**",
+       "fragmento": "Producers** are those client applications that publish (write) events to Kafka, and **consumers** are those that subscribe to (read and process) these events",
+       "despues": ". In Kafka, producers and consumers are fully decoupled and agnostic of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c3",
+     "texto": "Topics and Partitions (Tópicos y Particiones)",
+     "explicacion": "Los tópicos son las categorías o carpetas lógicas donde se almacenan los eventos de forma duradera; estos se dividen en particiones distribuidas en múltiples brokers para permitir la lectura y escritura en paralelo.",
+     "verificado": true,
+     "fuente": {
+      "texto": "Topics are partitioned, meaning a topic is spread over a number of \"buckets\" located on different Kafka brokers.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "Instead, you define for how long Kafka should retain your events through a per-topic configuration setting, after which old events will be discarded. Kafka's performance is effectively constant with respect to data size, so storing data for a long time is perfectly fine. \n\n",
+       "fragmento": "Topics are **partitioned** , meaning a topic is spread over a number of \"buckets\" located on different Kafka brokers",
+       "despues": ". This distributed placement of your data is very important for scalability because it allows client applications to both read and write the data from/to many brokers at the same time. When a new event is published to a topic, it is actually appended to one of the topic's",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "id": "c4",
+     "texto": "Replication (Replicación)",
+     "explicacion": "El mecanismo de duplicación de los datos de los tópicos entre diferentes brokers para garantizar la alta disponibilidad y tolerancia a fallos ante caídas de infraestructura.",
+     "verificado": true,
+     "fuente": {
+      "texto": "To make your data fault-tolerant and highly-available, every topic can be replicated, even across geo-regions or datacenters",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "from each other, new events to the topic by writing events over the network to the topic's partitions. Events with the same key (denoted by their color in the figure) are written to the same partition. Note that both producers can write to the same partition if appropriate. \n\n",
+       "fragmento": "To make your data fault-tolerant and highly-available, every topic can be **replicated** , even across geo-regions or datacenters",
+       "despues": ", so that there are always multiple brokers that have a copy of the data just in case things go wrong, you want to do maintenance on the brokers, and so on. A common production setting is a replication factor of 3, i.e., there will always be three copies of your data. This",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ]
+  },
+  "flashcards": [
+   {
+    "id": "fc-1",
+    "frente": "¿Qué es un evento en Apache Kafka?",
+    "dorso": "Un registro que plasma el hecho de que 'algo sucedió' en el mundo o en tu negocio. Consta conceptualmente de una clave, un valor, una marca de tiempo y cabeceras de metadatos opcionales.",
+    "pista_didactica": "Piensa en un registro contable que documenta una transacción financiera o comercial específica en el momento exacto en que ocurre.",
+    "fuente": {
+     "texto": "An event records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "provided by the Kafka community: clients are available for Java and Scala including the higher-level [Kafka Streams](/documentation/streams/) library, for Go, Python, C/C++, and many other programming languages as well as REST APIs. \n\n## Main Concepts and Terminology\n\n",
+      "fragmento": "An **event** records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation",
+      "despues": ". When you read or write data to Kafka, you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp:",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-2",
+    "frente": "¿Cuál es la función principal de los productores (producers) en Kafka?",
+    "dorso": "Son aquellas aplicaciones cliente que publican (escriben) eventos en Kafka, operando de forma totalmente desacoplada de los consumidores.",
+    "pista_didactica": "En la gestión de presupuestos, actúan como las fuentes u origen que generan y emiten nuevos registros de ingresos o gastos.",
+    "fuente": {
+     "texto": "Producers are those client applications that publish (write) events to Kafka, and consumers are those that subscribe to (read and process) these events.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp: \"Jun. 25, 2020 at 2:06 p.m.\" \n\n\n\n**",
+      "fragmento": "Producers** are those client applications that publish (write) events to Kafka, and **consumers** are those that subscribe to (read and process) these events",
+      "despues": ". In Kafka, producers and consumers are fully decoupled and agnostic of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-3",
+    "frente": "¿Cómo se organizan y almacenan de forma duradera los eventos en Kafka?",
+    "dorso": "Se organizan en tópicos (topics), los cuales son multiproductor y multisuscripter, permitiendo definir un tiempo de retención mediante configuración.",
+    "pista_didactica": "Funciona conceptualmente de manera similar a una carpeta en un sistema de archivos donde se guardan los documentos de transacciones.",
+    "fuente": {
+     "texto": "Events are organized and durably stored in topics. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various [guarantees](/documentation/#semantics) such as the ability to process events exactly-once. \n\n",
+      "fragmento": "Events are organized and durably stored in **topics**. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder",
+      "despues": ". An example topic name could be \"payments\". Topics in Kafka are always multi-producer and multi-subscriber: a topic can have zero, one, or many producers that write events to it, as well as zero, one, or many consumers that subscribe to these events. Events in a topic can be",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "fc-4",
+    "frente": "¿Cuáles son las cinco APIs principales de Kafka para Java y Scala?",
+    "dorso": "Admin API, Producer API, Consumer API, Kafka Streams API y Kafka Connect API.",
+    "pista_didactica": "Son interfaces de programación para administrar, producir, consumir, procesar flujos y conectar sistemas externos.",
+    "fuente": {
+     "texto": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala:",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "This replication is performed at the level of topic-partitions. \n\nThis primer should be sufficient for an introduction. The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. \n\n## Kafka APIs\n\n",
+      "fragmento": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+      "despues": ": \n\n  * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. \n  * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. \n  * The [Consumer",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "tutorial": [
+   {
+    "id": "t-1",
+    "paso": 1,
+    "titulo": "Comprender el concepto de Event Streaming",
+    "descripcion": "Identificar la definición técnica y el propósito del streaming de eventos como equivalente al sistema nervioso digital.",
+    "cli_command": "Leer la sección introductoria sobre la captura, almacenamiento y enrutamiento de flujos de datos.",
+    "completado": false,
+    "verificacion": "Explicar con tus propias palabras cómo el streaming procesa información en tiempo real."
+   },
+   {
+    "id": "t-2",
+    "paso": 2,
+    "titulo": "Identificar las capacidades de Kafka",
+    "descripcion": "Reconocer las tres funciones principales que combinan la plataforma para un manejo end-to-end.",
+    "cli_command": "Revisar las capacidades de publicar/suscribir, almacenar duraderamente y procesar flujos de eventos.",
+    "completado": false,
+    "verificacion": "Listar las tres capacidades fundamentales de Apache Kafka sin consultar el texto."
+   },
+   {
+    "id": "t-3",
+    "paso": 3,
+    "titulo": "Diferenciar Servidores y Clientes",
+    "descripcion": "Entender el rol de los servidores (como brokers y Kafka Connect) frente a las aplicaciones cliente.",
+    "cli_command": "Analizar la sección de trabajo de Kafka para identificar los componentes de infraestructura y software.",
+    "completado": false,
+    "verificacion": "Describir la diferencia operativa entre un servidor broker y una aplicación cliente."
+   },
+   {
+    "id": "t-4",
+    "paso": 4,
+    "titulo": "Analizar la estructura de Eventos y Topics",
+    "descripcion": "Comprender la anatomía de un evento (key, value, timestamp) y cómo se organizan en topics particionados.",
+    "cli_command": "Revisar el ejemplo de evento y la distribución de particiones para asegurar la tolerancia a fallos y replicación.",
+    "completado": false,
+    "verificacion": "Explicar qué función cumple la partición de un topic y la replicación de datos."
+   },
+   {
+    "id": "t-5",
+    "paso": 5,
+    "titulo": "Revisar las APIs centrales de Kafka",
+    "descripcion": "Familiarizarse con las cinco interfaces de programación disponibles en Java y Scala.",
+    "cli_command": "Estudiar la lista de APIs que incluye Admin, Producer, Consumer, Kafka Streams y Kafka Connect.",
+    "completado": false,
+    "verificacion": "Mencionar los propósitos específicos de Kafka Streams API y Kafka Connect API."
+   }
+  ],
+  "diagrama_mermaid": "flowchart TD\n    A[Producers] -->|Publish Events| B[Kafka Topic Partitions]\n    B -->|Read Streams| C[Consumers]\n    D[Brokers & Storage] -.- B\n    E[Kafka Connect] -.- A\n    E -.- C\n    F[Kafka Streams] -->|Transformations| B",
+  "director_cut": [
+   {
+    "id": "sc-1",
+    "escena": 1,
+    "tiempo": "00:00 - 00:17",
+    "duracion_segundos": 17.4,
+    "titulo": "Fundamentos y Plataforma",
+    "guion_locutor": "El streaming de eventos captura datos en tiempo real desde múltiples fuentes y los almacena de forma duradera. Apache Kafka combina publicación, almacenamiento y procesamiento en una plataforma distribuida y tolerante a fallos, ideal para gestionar flujos económicos y presupuestos.",
+    "estimacion_palabras": 40,
+    "storyboard_visual": "Esquema animado que muestra la captura de datos en tiempo real y su almacenamiento en la plataforma Kafka.",
+    "consejo_pedagogico": "Comprende que el streaming de eventos actúa como un sistema nervioso central para los datos.",
+    "objetivo_pedagogico": "Definir qué es el streaming de eventos y el propósito principal de la plataforma Apache Kafka.",
+    "visual": {
+     "tipo": "ppt_concepto",
+     "titulo": "Streaming de Eventos con Kafka",
+     "puntos_clave": [
+      "Captura de datos en tiempo real",
+      "Almacenamiento duradero de eventos",
+      "Procesamiento y enrutamiento continuo",
+      "Plataforma altamente escalable"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-1-1",
+      "pagina": null,
+      "texto_fuente": "Event streaming is the digital equivalent of the human body's central nervous system.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": " distributed under the License is distributed on an \"AS IS\" BASIS,\n WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n See the License for the specific language governing permissions and\n limitations under the License.\n-->\n\n\n## What is event streaming?\n\n",
+       "fragmento": "Event streaming is the digital equivalent of the human body's central nervous system",
+       "despues": ". It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software. \n\nTechnically speaking, event streaming is the practice of capturing data in real-time from event",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "server rack",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   },
+   {
+    "id": "sc-2",
+    "escena": 2,
+    "tiempo": "00:17 - 00:34",
+    "duracion_segundos": 17.0,
+    "titulo": "Servidores, Clientes y Conceptos",
+    "guion_locutor": "Kafka funciona mediante servidores que forman clústeres y brokers para el almacenamiento, y clientes que permiten leer y escribir. Los eventos registran hechos con claves y valores, organizándose en topics particionados que garantizan el orden y la alta disponibilidad.",
+    "estimacion_palabras": 39,
+    "storyboard_visual": "Diagrama de bloques que conecta productores, topics particionados y consumidores.",
+    "consejo_pedagogico": "Recuerda que un topic es similar a una carpeta en un sistema de archivos donde residen los eventos.",
+    "objetivo_pedagogico": "Describir la arquitectura de servidores, clientes, topics y particiones en Kafka.",
+    "visual": {
+     "tipo": "diagrama_bloques",
+     "titulo": "Arquitectura y Componentes",
+     "puntos_clave": [
+      "Servidores y capa de almacenamiento brokers",
+      "Aplicaciones cliente desacopladas",
+      "Topics organizados en particiones",
+      "Replicación para alta disponibilidad"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-2-1",
+      "pagina": null,
+      "texto_fuente": "Kafka is a distributed system consisting of servers and clients that communicate via a high-performance TCP network protocol.",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "be deployed on bare-metal hardware, virtual machines, and containers, and on-premises as well as in the cloud. You can choose between self-managing your Kafka environments and using fully managed services offered by a variety of vendors. \n\n## How does Kafka work in a nutshell?\n\n",
+       "fragmento": "Kafka is a distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol",
+       "despues": "](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments. \n\n**Servers** : Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions. Some of these servers",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "network cables",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   },
+   {
+    "id": "sc-3",
+    "escena": 3,
+    "tiempo": "00:34 - 00:47",
+    "duracion_segundos": 13.5,
+    "titulo": "APIs Principales",
+    "guion_locutor": "Kafka provee cinco APIs centrales para Java y Scala. Estas herramientas incluyen el manejo de administración, productores, consumidores, procesamiento avanzado con Streams y conectores con Kafka Connect para integrar sistemas externos.",
+    "estimacion_palabras": 31,
+    "storyboard_visual": "Panel visual mostrando las cinco APIs principales de Kafka y sus funciones de integración.",
+    "consejo_pedagogico": "Identifica qué API necesitas según si requieres escribir datos, leerlos o realizar transformaciones complejas.",
+    "objetivo_pedagogico": "Conocer las cinco APIs centrales que ofrece Apache Kafka para el desarrollo de aplicaciones.",
+    "visual": {
+     "tipo": "palabras_clave",
+     "titulo": "APIs Centrales de Kafka",
+     "puntos_clave": [
+      "Admin API y Producer API",
+      "Consumer API",
+      "Kafka Streams API",
+      "Kafka Connect API"
+     ],
+     "codigo_o_estructura": null,
+     "prompt_grafico": null
+    },
+    "fuentes": [
+     {
+      "chunk_id": "cita-3-1",
+      "pagina": null,
+      "texto_fuente": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala:",
+      "origen": "llm",
+      "verificada": true,
+      "contexto": {
+       "antes": "This replication is performed at the level of topic-partitions. \n\nThis primer should be sufficient for an introduction. The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. \n\n## Kafka APIs\n\n",
+       "fragmento": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+       "despues": ": \n\n  * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. \n  * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. \n  * The [Consumer",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    ],
+    "origen": "llm",
+    "imagen": {
+     "tipo": "diapositiva",
+     "palabra_clave": "code screen",
+     "url": null,
+     "alt": null,
+     "autor": null,
+     "licencia": null,
+     "licencia_url": null,
+     "fuente_url": null,
+     "proveedor": null
+    },
+    "audio": null
+   }
+  ],
+  "quiz": [
+   {
+    "id": "q-1",
+    "pregunta": "¿Cómo se define conceptualmente un evento dentro de la plataforma Apache Kafka al registrar el hecho de que algo sucedió en una transacción financiera?",
+    "opciones": [
+     "Un registro con clave, valor, marca de tiempo y cabeceras de metadatos opcionales.",
+     "Una tabla relacional particionada exclusivamente en bases de datos externas.",
+     "Un conector de importación y exportación de datos basado en REST APIs.",
+     "Un bloque de almacenamiento temporal que se elimina inmediatamente tras la lectura."
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. Según el documento, conceptualmente un evento consta de una clave, un valor, una marca de tiempo y cabeceras de metadatos opcionales.",
+    "explicaciones_opciones": [
+     "Correcto. Según el documento, conceptualmente un evento consta de una clave, un valor, una marca de tiempo y cabeceras de metadatos opcionales.",
+     "Incorrecto. Las tablas relacionales no forman parte de la definición conceptual básica del evento en Kafka descrita en el texto.",
+     "Incorrecto. Los conectores corresponden a Kafka Connect, no a la anatomía conceptual individual de un evento.",
+     "Incorrecto. El texto indica que los eventos no se eliminan tras el consumo tradicional, sino que se retienen según una configuración."
+    ],
+    "cita_fuente": "Conceptually, an event has a key, value, timestamp, and optional metadata headers.",
+    "fuente": {
+     "texto": "Conceptually, an event has a key, value, timestamp, and optional metadata headers.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "as well as REST APIs. \n\n## Main Concepts and Terminology\n\nAn **event** records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation. When you read or write data to Kafka, you do this in the form of events. ",
+      "fragmento": "Conceptually, an event has a key, value, timestamp, and optional metadata headers",
+      "despues": ". Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp: \"Jun. 25, 2020 at 2:06 p.m.\" \n\n\n\n**Producers** are those client applications that publish (write) events to Kafka, and **consumers** are those that",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-2",
+    "pregunta": "¿Qué rol desempeñan los productores (producers) dentro de la arquitectura de Apache Kafka cuando se gestionan flujos de pagos?",
+    "opciones": [
+     "Son las aplicaciones cliente que publican y escriben eventos en Kafka de forma desacoplada.",
+     "Son los servidores que forman la capa de almacenamiento exclusiva denominada brokers.",
+     "Son herramientas de línea de comandos para la administración y control del clúster.",
+     "Son bibliotecas de procesamiento avanzado orientadas únicamente a transformar salidas."
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. Los productores son aquellas aplicaciones cliente que publican eventos en Kafka, operando de forma totalmente desacoplada.",
+    "explicaciones_opciones": [
+     "Correcto. Los productores son aquellas aplicaciones cliente que publican eventos en Kafka, operando de forma totalmente desacoplada.",
+     "Incorrecto. Los brokers corresponden a la capa de servidores, mientras que los productores son aplicaciones cliente.",
+     "Incorrecto. La administración se realiza mediante herramientas de línea de comandos y la Admin API, no mediante productores.",
+     "Incorrecto. Las bibliotecas de procesamiento avanzado corresponden a Kafka Streams, no a los productores."
+    ],
+    "cita_fuente": "Producers are those client applications that publish (write) events to Kafka, and consumers are those that subscribe to (read and process) these events.",
+    "fuente": {
+     "texto": "Producers are those client applications that publish (write) events to Kafka, and consumers are those that subscribe to (read and process) these events.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp: \"Jun. 25, 2020 at 2:06 p.m.\" \n\n\n\n**",
+      "fragmento": "Producers** are those client applications that publish (write) events to Kafka, and **consumers** are those that subscribe to (read and process) these events",
+      "despues": ". In Kafka, producers and consumers are fully decoupled and agnostic of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-3",
+    "pregunta": "¿Cuál es el propósito fundamental de organizar y almacenar los eventos en tópicos (topics) particionados para el análisis de costos y presupuestos?",
+    "opciones": [
+     "Distribuir los datos en múltiples brokers para permitir la lectura y escritura en paralelo a escala.",
+     "Forzar la eliminación inmediata de los registros económicos tras ser procesados por un consumidor.",
+     "Limitar el acceso de escritura a un único productor por cada tópico disponible.",
+     "Sustituir por completo la necesidad de replicar la información entre diferentes centros de datos."
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Incorrecto en las demás y correcto aquí: las particiones distribuidas en múltiples brokers permiten que las aplicaciones lean y escriban datos en paralelo.",
+    "explicaciones_opciones": [
+     "Incorrecto en las demás y correcto aquí: las particiones distribuidas en múltiples brokers permiten que las aplicaciones lean y escriban datos en paralelo.",
+     "Incorrecto. El documento aclara que los eventos no se eliminan tras el consumo, sino que se retienen por configuración.",
+     "Incorrecto. Los tópicos son multi-productor y permiten múltiples fuentes escribiendo en ellos.",
+     "Incorrecto. La replicación es un mecanismo adicional para alta disponibilidad y tolerancia a fallos independiente de la partición."
+    ],
+    "cita_fuente": "This distributed placement of your data is very important for scalability because it allows client applications to both read and write the data from/to many brokers at the same time.",
+    "fuente": {
+     "texto": "This distributed placement of your data is very important for scalability because it allows client applications to both read and write the data from/to many brokers at the same time.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "which old events will be discarded. Kafka's performance is effectively constant with respect to data size, so storing data for a long time is perfectly fine. \n\nTopics are **partitioned** , meaning a topic is spread over a number of \"buckets\" located on different Kafka brokers. ",
+      "fragmento": "This distributed placement of your data is very important for scalability because it allows client applications to both read and write the data from/to many brokers at the same time",
+      "despues": ". When a new event is published to a topic, it is actually appended to one of the topic's partitions. Events with the same event key (e.g., a customer or vehicle ID) are written to the same partition, and Kafka [guarantees](/documentation/#semantics) that any consumer of a given",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-4",
+    "pregunta": "¿Cuál de las siguientes afirmaciones describe con precisión el mecanismo de replicación en los tópicos de Apache Kafka para mitigar riesgos operativos?",
+    "opciones": [
+     "Cada tópico puede replicarse, incluso entre regiones, para asegurar que múltiples brokers posean una copia de los datos.",
+     "La replicación se ejecuta exclusivamente a nivel de cliente productor antes de enviar el evento a la red.",
+     "La replicación borra los eventos antiguos de manera automática para ahorrar espacio en los brokers principales.",
+     "La replicación sustituye el uso de particiones al centralizar todos los registros financieros en un único servidor."
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. El texto detalla que cada tópico puede ser replicado para garantizar la alta disponibilidad y tolerancia a fallos ante caídas.",
+    "explicaciones_opciones": [
+     "Correcto. El texto detalla que cada tópico puede ser replicado para garantizar la alta disponibilidad y tolerancia a fallos ante caídas.",
+     "Incorrecto. La replicación se realiza a nivel de topic-partitions entre los brokers del sistema, no en el cliente productor.",
+     "Incorrecto. El tiempo de retención define cuándo se descartan los eventos antiguos, no el mecanismo de replicación.",
+     "Incorrecto. Las particiones distribuyen los datos en múltiples buckets y brokers, mientras que la replicación duplica dichos datos."
+    ],
+    "cita_fuente": "every topic can be replicated , even across geo-regions or datacenters, so that there are always multiple brokers that have a copy of the data",
+    "fuente": {
+     "texto": "every topic can be replicated , even across geo-regions or datacenters, so that there are always multiple brokers that have a copy of the data",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "over the network to the topic's partitions. Events with the same key (denoted by their color in the figure) are written to the same partition. Note that both producers can write to the same partition if appropriate. \n\nTo make your data fault-tolerant and highly-available, ",
+      "fragmento": "every topic can be **replicated** , even across geo-regions or datacenters, so that there are always multiple brokers that have a copy of the data",
+      "despues": " just in case things go wrong, you want to do maintenance on the brokers, and so on. A common production setting is a replication factor of 3, i.e., there will always be three copies of your data. This replication is performed at the level of topic-partitions. \n\nThis primer",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "id": "q-5",
+    "pregunta": "¿Cuál de las cinco APIs principales de Kafka se utiliza específicamente para implementar aplicaciones de procesamiento de flujos y microservicios complejos con operaciones de agregación?",
+    "opciones": [
+     "La Kafka Streams API",
+     "La Admin API",
+     "La Producer API",
+     "La Kafka Connect API"
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Correcto. La Kafka Streams API provee funciones de nivel superior para transformaciones, agregaciones y uniones en el procesamiento de flujos.",
+    "explicaciones_opciones": [
+     "Correcto. La Kafka Streams API provee funciones de nivel superior para transformaciones, agregaciones y uniones en el procesamiento de flujos.",
+     "Incorrecto. La Admin API está diseñada para inspeccionar y administrar tópicos, brokers y objetos de Kafka.",
+     "Incorrecto. La Producer API se limita a publicar flujos de eventos hacia uno o más tópicos.",
+     "Incorrecto. La Kafka Connect API se enfoca en integrar sistemas externos mediante conectores de importación y exportación."
+    ],
+    "cita_fuente": "The Kafka Streams API to implement stream processing applications and microservices. It provides higher-level functions to process event streams",
+    "fuente": {
+     "texto": "The Kafka Streams API to implement stream processing applications and microservices. It provides higher-level functions to process event streams",
+     "pagina": null,
+     "verificada": false
+    }
+   }
+  ],
+  "video_job_spec": {
+   "video_job_id": "vjob-doc-a184bfa55112c5c4",
+   "document_id": "doc-a184bfa55112c5c4",
+   "target_duration": 50,
+   "max_duration": 60,
+   "aspect_ratio": "9:16",
+   "idioma": "es",
+   "estado": "contract_ready",
+   "escenas": [
+    {
+     "id": "sc-1",
+     "escena": 1,
+     "tiempo": "00:00 - 00:17",
+     "duracion_segundos": 17.4,
+     "titulo": "Fundamentos y Plataforma",
+     "guion_locutor": "El streaming de eventos captura datos en tiempo real desde múltiples fuentes y los almacena de forma duradera. Apache Kafka combina publicación, almacenamiento y procesamiento en una plataforma distribuida y tolerante a fallos, ideal para gestionar flujos económicos y presupuestos.",
+     "estimacion_palabras": 40,
+     "storyboard_visual": "Esquema animado que muestra la captura de datos en tiempo real y su almacenamiento en la plataforma Kafka.",
+     "consejo_pedagogico": "Comprende que el streaming de eventos actúa como un sistema nervioso central para los datos.",
+     "objetivo_pedagogico": "Definir qué es el streaming de eventos y el propósito principal de la plataforma Apache Kafka.",
+     "visual": {
+      "tipo": "ppt_concepto",
+      "titulo": "Streaming de Eventos con Kafka",
+      "puntos_clave": [
+       "Captura de datos en tiempo real",
+       "Almacenamiento duradero de eventos",
+       "Procesamiento y enrutamiento continuo",
+       "Plataforma altamente escalable"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-1-1",
+       "pagina": null,
+       "texto_fuente": "Event streaming is the digital equivalent of the human body's central nervous system.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": " distributed under the License is distributed on an \"AS IS\" BASIS,\n WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n See the License for the specific language governing permissions and\n limitations under the License.\n-->\n\n\n## What is event streaming?\n\n",
+        "fragmento": "Event streaming is the digital equivalent of the human body's central nervous system",
+        "despues": ". It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software. \n\nTechnically speaking, event streaming is the practice of capturing data in real-time from event",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "server rack",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    },
+    {
+     "id": "sc-2",
+     "escena": 2,
+     "tiempo": "00:17 - 00:34",
+     "duracion_segundos": 17.0,
+     "titulo": "Servidores, Clientes y Conceptos",
+     "guion_locutor": "Kafka funciona mediante servidores que forman clústeres y brokers para el almacenamiento, y clientes que permiten leer y escribir. Los eventos registran hechos con claves y valores, organizándose en topics particionados que garantizan el orden y la alta disponibilidad.",
+     "estimacion_palabras": 39,
+     "storyboard_visual": "Diagrama de bloques que conecta productores, topics particionados y consumidores.",
+     "consejo_pedagogico": "Recuerda que un topic es similar a una carpeta en un sistema de archivos donde residen los eventos.",
+     "objetivo_pedagogico": "Describir la arquitectura de servidores, clientes, topics y particiones en Kafka.",
+     "visual": {
+      "tipo": "diagrama_bloques",
+      "titulo": "Arquitectura y Componentes",
+      "puntos_clave": [
+       "Servidores y capa de almacenamiento brokers",
+       "Aplicaciones cliente desacopladas",
+       "Topics organizados en particiones",
+       "Replicación para alta disponibilidad"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-2-1",
+       "pagina": null,
+       "texto_fuente": "Kafka is a distributed system consisting of servers and clients that communicate via a high-performance TCP network protocol.",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "be deployed on bare-metal hardware, virtual machines, and containers, and on-premises as well as in the cloud. You can choose between self-managing your Kafka environments and using fully managed services offered by a variety of vendors. \n\n## How does Kafka work in a nutshell?\n\n",
+        "fragmento": "Kafka is a distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol",
+        "despues": "](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments. \n\n**Servers** : Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions. Some of these servers",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "network cables",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    },
+    {
+     "id": "sc-3",
+     "escena": 3,
+     "tiempo": "00:34 - 00:47",
+     "duracion_segundos": 13.5,
+     "titulo": "APIs Principales",
+     "guion_locutor": "Kafka provee cinco APIs centrales para Java y Scala. Estas herramientas incluyen el manejo de administración, productores, consumidores, procesamiento avanzado con Streams y conectores con Kafka Connect para integrar sistemas externos.",
+     "estimacion_palabras": 31,
+     "storyboard_visual": "Panel visual mostrando las cinco APIs principales de Kafka y sus funciones de integración.",
+     "consejo_pedagogico": "Identifica qué API necesitas según si requieres escribir datos, leerlos o realizar transformaciones complejas.",
+     "objetivo_pedagogico": "Conocer las cinco APIs centrales que ofrece Apache Kafka para el desarrollo de aplicaciones.",
+     "visual": {
+      "tipo": "palabras_clave",
+      "titulo": "APIs Centrales de Kafka",
+      "puntos_clave": [
+       "Admin API y Producer API",
+       "Consumer API",
+       "Kafka Streams API",
+       "Kafka Connect API"
+      ],
+      "codigo_o_estructura": null,
+      "prompt_grafico": null
+     },
+     "fuentes": [
+      {
+       "chunk_id": "cita-3-1",
+       "pagina": null,
+       "texto_fuente": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala:",
+       "origen": "llm",
+       "verificada": true,
+       "contexto": {
+        "antes": "This replication is performed at the level of topic-partitions. \n\nThis primer should be sufficient for an introduction. The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. \n\n## Kafka APIs\n\n",
+        "fragmento": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+        "despues": ": \n\n  * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. \n  * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. \n  * The [Consumer",
+        "recortado_inicio": true,
+        "recortado_fin": true
+       }
+      }
+     ],
+     "origen": "llm",
+     "imagen": {
+      "tipo": "diapositiva",
+      "palabra_clave": "code screen",
+      "url": null,
+      "alt": null,
+      "autor": null,
+      "licencia": null,
+      "licencia_url": null,
+      "fuente_url": null,
+      "proveedor": null
+     },
+     "audio": null
+    }
+   ],
+   "total_palabras": 110,
+   "duracion_total_estimada": 47.9,
+   "wpm": 138,
+   "degradaciones": [],
+   "manifiesto_url_oci": null,
+   "video_url_oci": null,
+   "duracion_total_real": null,
+   "velocidad_reproduccion": 1.0
+  },
+  "resumen_ejecutivo": {
+   "texto": "Apache Kafka es una plataforma de transmisión de eventos distribuida y tolerante a fallos que combina capacidades para publicar, almacenar y procesar flujos de datos en tiempo real. Funciona mediante un clúster de servidores que actúan como intermediarios o brokers, organizando la información en tópicos particionados. Los productores escriben los eventos y los consumidores los leen de forma desacoplada y escalable. Además, incluye APIs robustas en Java y Scala para la administración, producción, consumo, procesamiento de flujos y conectividad con otros sistemas.",
+   "por_secciones": [
+    {
+     "seccion": "What is event streaming?",
+     "resumen": "Describe el streaming de eventos como el sistema nervioso digital que captura, almacena de forma duradera, procesa y enruta datos en tiempo real desde diversas fuentes tecnológicas.",
+     "fuente": {
+      "texto": "Technically speaking, event streaming is the practice of capturing data in real-time from event sources like databases, sensors, mobile devices, cloud services, and software applications in the form of streams of events",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "streaming?\n\nEvent streaming is the digital equivalent of the human body's central nervous system. It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software. \n\n",
+       "fragmento": "Technically speaking, event streaming is the practice of capturing data in real-time from event sources like databases, sensors, mobile devices, cloud services, and software applications in the form of streams of events",
+       "despues": "; storing these event streams durably for later retrieval; manipulating, processing, and reacting to the event streams in real-time as well as retrospectively; and routing the event streams to different destination technologies as needed. Event streaming thus ensures a",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "What can I use event streaming for?",
+     "resumen": "Muestra aplicaciones prácticas del streaming de eventos, como el procesamiento de transacciones financieras, seguimiento logístico y análisis de datos de sensores.",
+     "fuente": {
+      "texto": "To process payments and financial transactions in real-time, such as in stock exchanges, banks, and insurances.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "of data so that the right information is at the right place, at the right time. \n\n## What can I use event streaming for?\n\nEvent streaming is applied to a [wide variety of use cases](/powered-by) across a plethora of industries and organizations. Its many examples include: \n\n  * ",
+       "fragmento": "To process payments and financial transactions in real-time, such as in stock exchanges, banks, and insurances",
+       "despues": ". \n  * To track and monitor cars, trucks, fleets, and shipments in real-time, such as in logistics and the automotive industry. \n  * To continuously capture and analyze sensor data from IoT devices or other equipment, such as in factories and wind parks. \n  * To collect and",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "Apache Kafka® is an event streaming platform. What does that mean?",
+     "resumen": "Explica que Kafka integra publicación, suscripción, almacenamiento duradero y procesamiento de eventos en una solución escalable y tolerante a fallos.",
+     "fuente": {
+      "texto": "Kafka combines three key capabilities so you can implement your use cases for event streaming end-to-end with a single battle-tested solution",
+      "pagina": null,
+      "verificada": false
+     }
+    },
+    {
+     "seccion": "How does Kafka work in a nutshell?",
+     "resumen": "Detalla la arquitectura basada en servidores (brokers y conectores) y clientes que se comunican mediante un protocolo TCP de alto rendimiento.",
+     "fuente": {
+      "texto": "Kafka is a distributed system consisting of servers and clients that communicate via a high-performance TCP network protocol.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "be deployed on bare-metal hardware, virtual machines, and containers, and on-premises as well as in the cloud. You can choose between self-managing your Kafka environments and using fully managed services offered by a variety of vendors. \n\n## How does Kafka work in a nutshell?\n\n",
+       "fragmento": "Kafka is a distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol",
+       "despues": "](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments. \n\n**Servers** : Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions. Some of these servers",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "Main Concepts and Terminology",
+     "resumen": "Introduce los conceptos fundamentales de la arquitectura: eventos, productores, consumidores, tópicos, particiones y replicación.",
+     "fuente": {
+      "texto": "An event records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "provided by the Kafka community: clients are available for Java and Scala including the higher-level [Kafka Streams](/documentation/streams/) library, for Go, Python, C/C++, and many other programming languages as well as REST APIs. \n\n## Main Concepts and Terminology\n\n",
+       "fragmento": "An **event** records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation",
+       "despues": ". When you read or write data to Kafka, you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp:",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "Kafka APIs",
+     "resumen": "Presenta las cinco APIs principales de Kafka para Java y Scala destinadas a la administración, producción, consumo, procesamiento de streams y conectividad.",
+     "fuente": {
+      "texto": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "This replication is performed at the level of topic-partitions. \n\nThis primer should be sufficient for an introduction. The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. \n\n## Kafka APIs\n\n",
+       "fragmento": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+       "despues": ": \n\n  * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. \n  * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. \n  * The [Consumer",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    },
+    {
+     "seccion": "Where to go from here",
+     "resumen": "Ofrece recursos adicionales para profundizar en el aprendizaje de Kafka, incluyendo guías de inicio rápido, documentación oficial y conferencias.",
+     "fuente": {
+      "texto": "To get hands-on experience with Kafka, follow the Quickstart.",
+      "pagina": null,
+      "verificada": true,
+      "contexto": {
+       "antes": "relational database like PostgreSQL might capture every change to a set of tables. However, in practice, you typically don't need to implement your own connectors because the Kafka community already provides hundreds of ready-to-use connectors. \n\n\n\n## Where to go from here\n\n  * ",
+       "fragmento": "To get hands-on experience with Kafka, follow the [Quickstart",
+       "despues": "](/quickstart). \n  * To understand Kafka in more detail, read the [Documentation](/documentation/). You also have your choice of [Kafka books and academic papers](/books-and-papers). \n  * Browse through the [Use Cases](/powered-by) to learn how other users in our world-wide",
+       "recortado_inicio": true,
+       "recortado_fin": true
+      }
+     }
+    }
+   ],
+   "conclusiones": [
+    "Apache Kafka actúa como una plataforma centralizada de transmisión de eventos que permite procesar y almacenar flujos de datos en tiempo real de manera escalable.",
+    "El desacoplamiento entre productores y consumidores mediante tópicos particionados permite construir arquitecturas robustas y tolerantes a fallos.",
+    "Los eventos no se eliminan inmediatamente tras ser consumidos, sino que se retienen según una configuración de tiempo, permitiendo su lectura histórica y repetida.",
+    "Kafka proporciona un conjunto completo de APIs en Java y Scala (Admin, Producer, Consumer, Streams y Connect) para cubrir cualquier necesidad de integración y procesamiento de datos."
+   ]
+  },
+  "glosario": [
+   {
+    "termino": "Event streaming",
+    "definicion": "La práctica de capturar datos en tiempo real desde fuentes de eventos en forma de flujos, almacenarlos de manera duradera, manipularlos, procesarlos y enrutarlos a diferentes tecnologías de destino.",
+    "fuente": {
+     "texto": "Technically speaking, event streaming is the practice of capturing data in real-time from event sources like databases, sensors, mobile devices, cloud services, and software applications in the form of streams of events",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "streaming?\n\nEvent streaming is the digital equivalent of the human body's central nervous system. It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software. \n\n",
+      "fragmento": "Technically speaking, event streaming is the practice of capturing data in real-time from event sources like databases, sensors, mobile devices, cloud services, and software applications in the form of streams of events",
+      "despues": "; storing these event streams durably for later retrieval; manipulating, processing, and reacting to the event streams in real-time as well as retrospectively; and routing the event streams to different destination technologies as needed. Event streaming thus ensures a",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "Brokers",
+    "definicion": "Servidores que forman la capa de almacenamiento dentro de un clúster de Kafka.",
+    "fuente": {
+     "texto": "Some of these servers form the storage layer, called the brokers.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "[TCP network protocol](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments. \n\n**Servers** : Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions. ",
+      "fragmento": "Some of these servers form the storage layer, called the brokers",
+      "despues": ". Other servers run [Kafka Connect](/documentation/#connect) to continuously import and export data as event streams to integrate Kafka with your existing systems such as relational databases as well as other Kafka clusters. To let you implement mission-critical use cases, a",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "Topics",
+    "definicion": "Estructuras donde los eventos son organizados y almacenados de forma duradera, similares a carpetas en un sistema de archivos, y que admiten múltiples productores y consumidores.",
+    "fuente": {
+     "texto": "Events are organized and durably stored in topics. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various [guarantees](/documentation/#semantics) such as the ability to process events exactly-once. \n\n",
+      "fragmento": "Events are organized and durably stored in **topics**. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder",
+      "despues": ". An example topic name could be \"payments\". Topics in Kafka are always multi-producer and multi-subscriber: a topic can have zero, one, or many producers that write events to it, as well as zero, one, or many consumers that subscribe to these events. Events in a topic can be",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "termino": "Partitions",
+    "definicion": "Subdivisiones o 'cubos' distribuidos en diferentes brokers sobre los cuales se extiende un tópico para permitir escalabilidad y lectura/escritura en paralelo.",
+    "fuente": {
+     "texto": "Topics are partitioned , meaning a topic is spread over a number of",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "Instead, you define for how long Kafka should retain your events through a per-topic configuration setting, after which old events will be discarded. Kafka's performance is effectively constant with respect to data size, so storing data for a long time is perfectly fine. \n\n",
+      "fragmento": "Topics are **partitioned** , meaning a topic is spread over a number of",
+      "despues": " \"buckets\" located on different Kafka brokers. This distributed placement of your data is very important for scalability because it allows client applications to both read and write the data from/to many brokers at the same time. When a new event is published to a topic, it is",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "objetivos_aprendizaje": [
+   "Identificar los componentes fundamentales y la arquitectura básica de una plataforma de streaming de eventos con Apache Kafka",
+   "Explicar el propósito y funcionamiento de productores, consumidores, tópicos y particiones en la gestión de flujos de datos",
+   "Describir las cinco APIs principales de Kafka y su aplicación en arquitecturas orientadas a eventos y microservicios",
+   "Reconocer las capacidades clave de almacenamiento, procesamiento y publicación/suscripción que ofrece Kafka en entornos distribuidos"
+  ],
+  "diapositivas": [
+   {
+    "orden": 1,
+    "titulo": "¿Qué es el Event Streaming?",
+    "puntos_clave": [
+     "Captura datos en tiempo real desde bases de datos, sensores y aplicaciones.",
+     "Almacena flujos de eventos de forma duradera.",
+     "Permite manipular y reaccionar a los eventos en tiempo real."
+    ],
+    "concepto_visual": "Ilustración de un flujo continuo de datos conectando diversas fuentes tecnológicas.",
+    "fuente": {
+     "texto": "Technically speaking, event streaming is the practice of capturing data in real-time from event sources like databases, sensors, mobile devices, cloud services, and software applications in the form of streams of events",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "streaming?\n\nEvent streaming is the digital equivalent of the human body's central nervous system. It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software. \n\n",
+      "fragmento": "Technically speaking, event streaming is the practice of capturing data in real-time from event sources like databases, sensors, mobile devices, cloud services, and software applications in the form of streams of events",
+      "despues": "; storing these event streams durably for later retrieval; manipulating, processing, and reacting to the event streams in real-time as well as retrospectively; and routing the event streams to different destination technologies as needed. Event streaming thus ensures a",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 2,
+    "titulo": "Capacidades de Apache Kafka",
+    "puntos_clave": [
+     "Publicar y suscribirse a flujos de eventos.",
+     "Almacenar eventos de forma duradera y confiable.",
+     "Procesar flujos de eventos de manera sincrónica o retrospectiva."
+    ],
+    "concepto_visual": "Esquema de tres pilares principales que representan las funciones clave de Kafka.",
+    "fuente": {
+     "texto": "Kafka combines three key capabilities so you can implement your use cases for event streaming end-to-end with a single battle-tested solution",
+     "pagina": null,
+     "verificada": false
+    }
+   },
+   {
+    "orden": 3,
+    "titulo": "Servidores y Clientes",
+    "puntos_clave": [
+     "Servidores organizados en un clúster que incluye brokers y Kafka Connect.",
+     "Clientes que permiten escribir aplicaciones y microservicios paralelos.",
+     "Alta escalabilidad y tolerancia a fallos ante caídas de red o servidores."
+    ],
+    "concepto_visual": "Arquitectura de red mostrando clústeres de servidores comunicándose con aplicaciones cliente.",
+    "fuente": {
+     "texto": "Kafka is a distributed system consisting of servers and clients that communicate via a high-performance TCP network protocol.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "be deployed on bare-metal hardware, virtual machines, and containers, and on-premises as well as in the cloud. You can choose between self-managing your Kafka environments and using fully managed services offered by a variety of vendors. \n\n## How does Kafka work in a nutshell?\n\n",
+      "fragmento": "Kafka is a distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol",
+      "despues": "](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments. \n\n**Servers** : Kafka is run as a cluster of one or more servers that can span multiple datacenters or cloud regions. Some of these servers",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 4,
+    "titulo": "Conceptos Clave: Eventos y Topics",
+    "puntos_clave": [
+     "Un evento registra un hecho e incluye clave, valor, timestamp y metadatos.",
+     "Los productores publican y los consumidores leen de forma desacoplada.",
+     "Los topics organizan los eventos de manera similar a carpetas en un sistema de archivos."
+    ],
+    "concepto_visual": "Estructura de un evento JSON junto a un repositorio de topics con múltiples particiones.",
+    "fuente": {
+     "texto": "An event records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation.",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "provided by the Kafka community: clients are available for Java and Scala including the higher-level [Kafka Streams](/documentation/streams/) library, for Go, Python, C/C++, and many other programming languages as well as REST APIs. \n\n## Main Concepts and Terminology\n\n",
+      "fragmento": "An **event** records the fact that \"something happened\" in the world or in your business. It is also called record or message in the documentation",
+      "despues": ". When you read or write data to Kafka, you do this in the form of events. Conceptually, an event has a key, value, timestamp, and optional metadata headers. Here's an example event: \n\n  * Event key: \"Alice\" \n  * Event value: \"Made a payment of $200 to Bob\" \n  * Event timestamp:",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   },
+   {
+    "orden": 5,
+    "titulo": "APIs Principales de Kafka",
+    "puntos_clave": [
+     "Admin API para gestión de objetos.",
+     "Producer API y Consumer API para lectura y escritura.",
+     "Kafka Streams API y Kafka Connect API para procesamiento y flujos externos."
+    ],
+    "concepto_visual": "Mapa mental desplegando las cinco interfaces de programación de Kafka.",
+    "fuente": {
+     "texto": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala:",
+     "pagina": null,
+     "verificada": true,
+     "contexto": {
+      "antes": "This replication is performed at the level of topic-partitions. \n\nThis primer should be sufficient for an introduction. The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. \n\n## Kafka APIs\n\n",
+      "fragmento": "In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala",
+      "despues": ": \n\n  * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. \n  * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. \n  * The [Consumer",
+      "recortado_inicio": true,
+      "recortado_fin": true
+     }
+    }
+   }
+  ],
+  "estado_recursos": {
+   "resumen": {
+    "recurso": "resumen",
+    "tarea": "A",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 7.096,
+    "citas_totales": 11,
+    "citas_verificadas": 10,
+    "avisos": [
+     "1 de 11 citas no aparecen literalmente en el documento"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "flashcards": {
+    "recurso": "flashcards",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 6.908,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "cuestionario": {
+    "recurso": "cuestionario",
+    "tarea": "C",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 7.46,
+    "citas_totales": 5,
+    "citas_verificadas": 4,
+    "avisos": [
+     "1 de 5 citas no aparecen literalmente en el documento"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "glosario": {
+    "recurso": "glosario",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 6.908,
+    "citas_totales": 4,
+    "citas_verificadas": 4,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "objetivos": {
+    "recurso": "objetivos",
+    "tarea": "B1",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 6.908,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "guion": {
+    "recurso": "guion",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.059,
+    "citas_totales": 3,
+    "citas_verificadas": 3,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diapositivas": {
+    "recurso": "diapositivas",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.059,
+    "citas_totales": 5,
+    "citas_verificadas": 4,
+    "avisos": [
+     "1 de 5 citas no aparecen literalmente en el documento"
+    ],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "tutorial": {
+    "recurso": "tutorial",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.059,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   },
+   "diagrama": {
+    "recurso": "diagrama",
+    "tarea": "B2",
+    "estado": "completado",
+    "verificacion": "no_auditada",
+    "modelo": "gemini-3.5-flash-lite",
+    "intentos": 1,
+    "latencia_s": 10.059,
+    "citas_totales": 0,
+    "citas_verificadas": 0,
+    "avisos": [],
+    "error_codigo": null,
+    "reutilizado": false
+   }
+  }
+ },
+ "fuentes_utilizadas": [],
+ "evaluacion_calidad": {
+  "anclaje_fuente_score": 0.97,
+  "auditoria_ejecutada": true,
+  "claridad_pedagogica": "Alta",
+  "observaciones": "Todas las afirmaciones están respaldadas por el documento fuente; la redacción refleja fielmente los conceptos de eventos, productores, consumidores, topics, particiones y APIs de Kafka.",
+  "afirmaciones": [],
+  "sugerencias_correccion": []
+ },
+ "almacenamiento_oci": {
+  "bucket": null,
+  "objeto_id": null,
+  "status_upload": "omitido"
+ },
+ "advertencias": [
+  "Resumen: 1 de 11 citas no aparecen literalmente en el documento.",
+  "Cuestionario: 1 de 5 citas no aparecen literalmente en el documento.",
+  "Diapositivas: 1 de 5 citas no aparecen literalmente en el documento."
+ ],
+ "error": null,
+ "orquestacion": {
+  "intentos_redaccion": 1,
+  "scores_por_intento": [
+   0.97
+  ],
+  "umbral_anclaje": 0.75,
+  "max_reintentos": 0,
+  "duracion_segundos": 19.92,
+  "documento_id": "doc-a184bfa55112c5c4",
+  "chunks_recuperados": 0
+ }
+}

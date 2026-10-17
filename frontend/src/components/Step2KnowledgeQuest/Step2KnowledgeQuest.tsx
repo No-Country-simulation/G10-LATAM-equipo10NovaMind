@@ -11,7 +11,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import type { AdaptedContentPackage } from '../../types/types';
+import type { AdaptedContentPackage, MuestraPregenerada } from '../../types/types';
 import type { QuizState } from '../../services/persistence';
 import { Station1ResumenNinja } from '../stations/Station1ResumenNinja/Station1ResumenNinja';
 import { Station2FlashcardQuest } from '../stations/Station2FlashcardQuest/Station2FlashcardQuest';
@@ -35,6 +35,9 @@ interface Step2Props {
   quizState: QuizState;
   onQuizChange: (update: (previous: QuizState) => QuizState) => void;
   contentPackage: AdaptedContentPackage;
+  /** Escenarios pregenerados del mismo documento, si el paquete es una muestra (para comparar) */
+  escenarios?: MuestraPregenerada[];
+  onAbrirEscenario?: (muestra: MuestraPregenerada) => void;
   completedStations: Record<number, boolean>;
   activeStationIndex: number;
   onSelectStationIndex: (index: number) => void;
@@ -73,6 +76,8 @@ export const Step2KnowledgeQuest = ({
   quizState,
   onQuizChange,
   contentPackage,
+  escenarios = [],
+  onAbrirEscenario,
   completedStations,
   activeStationIndex,
   onSelectStationIndex,
@@ -165,6 +170,7 @@ export const Step2KnowledgeQuest = ({
   const estadoActivo = estadoDe(contentPackage, recursoActivo);
   const isCurrentStationAvailable = estacionDisponible(contentPackage, activeStationIndex);
   const avisosPaquete = contentPackage.advertencias ?? [];
+  const muestra = contentPackage.muestra;
 
   return (
     <div className={styles.container}>
@@ -198,6 +204,37 @@ export const Step2KnowledgeQuest = ({
           <span className={styles.generatingBannerSub}>
             Estaciones listas: {unlockedList.length} de 5
           </span>
+        </div>
+      )}
+
+      {/* Muestra pregenerada (regla 1): se dice qué es, con qué ajustes y con qué modo se generó */}
+      {muestra && !isGenerating && (
+        <div className={styles.muestraBanner}>
+          <p className={styles.muestraTexto}>
+            <strong>Perfil:</strong> {muestra.ajustes.perfil} · <strong>Sector:</strong> {muestra.ajustes.nicho} ·{' '}
+            <strong>Nivel:</strong> {muestra.ajustes.detalle}
+            {/* El modo clásico se sigue diciendo (regla 1): es otro motor, con otra calidad */}
+            {muestra.modo === 'clasico' && (
+              <> · <strong>Modo clásico</strong> (RAG vectorial: Cohere, ChromaDB y LangGraph)</>
+            )}
+          </p>
+          {escenarios.length > 1 && onAbrirEscenario && (
+            <div className={styles.escenarios} role="group" aria-label="Escenarios del mismo documento">
+              <span className={styles.escenariosTitulo}>Mismo documento, otros escenarios:</span>
+              {escenarios.map((e) => (
+                <button
+                  key={e.escenario}
+                  type="button"
+                  className={e.escenario === muestra.escenario ? styles.escenarioActivo : styles.escenario}
+                  aria-pressed={e.escenario === muestra.escenario}
+                  disabled={e.escenario === muestra.escenario}
+                  onClick={() => onAbrirEscenario(e)}
+                >
+                  {e.etiqueta}{e.modo === 'clasico' ? ' · modo clásico (RAG)' : ''}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -1,0 +1,318 @@
+{
+ "status": "exito_con_advertencias",
+ "metadatos": {
+  "perfil_aplicado": "Líder Técnico / Arquitecto",
+  "formato_generado": "Paquete Educativo Completo (5 Estaciones)",
+  "nicho_aplicado": "Finanzas y Contabilidad",
+  "tiempo_estimado_estudio_minutos": 12,
+  "conceptos_clave": [
+   "Event Streaming",
+   "Apache Kafka",
+   "Plataforma de Event Streaming"
+  ],
+  "prerrequisitos": [
+   "Fundamentos de Arquitectura de Software",
+   "Conocimientos Básicos de Sistemas Distribuidos"
+  ]
+ },
+ "contenido_adaptado": {
+  "titulo": "Apache Kafka: La Plataforma de Event Streaming para Finanzas",
+  "introduccion_contextualizada": "Como líder técnico en el sector financiero, es crucial mantenerse actualizado con las últimas tecnologías. Apache Kafka es una plataforma de event streaming que revoluciona la gestión de datos en tiempo real, especialmente en el ámbito financiero.",
+  "items": [],
+  "resumen_ninja": {
+   "titulo": "Apache Kafka: Fundamentos y Arquitectura",
+   "analogia_central": "Apache Kafka es como el sistema nervioso central de una organización financiera, permitiendo una transmisión continua de datos en tiempo real, similar a una transmisión de noticias en vivo.",
+   "conceptos_clave": [
+    {
+     "id": "c1",
+     "texto": "Event Streaming es la transmisión continua de datos en tiempo real, similar a una transmisión de noticias en vivo.",
+     "verificado": false
+    },
+    {
+     "id": "c2",
+     "texto": "Apache Kafka es una plataforma de event streaming que combina publicación, almacenamiento y procesamiento de eventos.",
+     "verificado": false
+    },
+    {
+     "id": "c3",
+     "texto": "Los eventos se organizan en temas, similares a carpetas en un sistema de archivos, permitiendo una gestión eficiente de los datos.",
+     "verificado": false
+    }
+   ],
+   "metricas_rapidas": {
+    "riesgo": "Bajo",
+    "despliegue": "1-2 horas",
+    "tipo_oci": "OCI Always Free / Standard",
+    "costo": "$0.00 USD"
+   }
+  },
+  "flashcards": [
+   {
+    "id": "fc1",
+    "frente": "¿Qué es Event Streaming?",
+    "dorso": "Event Streaming es la transmisión continua de datos en tiempo real, similar a una transmisión de noticias en vivo.",
+    "pista_didactica": "Piensa en Event Streaming como una fuente de información en constante flujo."
+   },
+   {
+    "id": "fc2",
+    "frente": "¿Cuál es el rol de Apache Kafka?",
+    "dorso": "Apache Kafka es una plataforma de event streaming que permite publicar, almacenar y procesar eventos de manera eficiente.",
+    "pista_didactica": "Kafka es la herramienta clave para gestionar la transmisión de datos en tiempo real."
+   },
+   {
+    "id": "fc3",
+    "frente": "¿Cómo se organizan los eventos en Kafka?",
+    "dorso": "Los eventos se organizan en temas, similares a carpetas en un sistema de archivos, permitiendo una gestión eficiente de los datos.",
+    "pista_didactica": "Los temas son la estructura fundamental para organizar los eventos en Kafka."
+   }
+  ],
+  "tutorial": [
+   {
+    "id": "t1",
+    "paso": 1,
+    "titulo": "Publicar Eventos en Kafka",
+    "descripcion": "Utiliza el comando CLI para publicar eventos en un tema específico.",
+    "cli_command": "kafka-console-producer.sh --broker-list localhost:9092 --topic payments",
+    "completado": false,
+    "verificacion": "Verifica que los eventos se publiquen correctamente en el tema 'payments'."
+   },
+   {
+    "id": "t2",
+    "paso": 2,
+    "titulo": "Suscribirse a Eventos en Kafka",
+    "descripcion": "Utiliza el comando CLI para suscribirse a eventos en un tema específico.",
+    "cli_command": "kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic payments --from-beginning",
+    "completado": false,
+    "verificacion": "Verifica que los eventos se reciban y procesen correctamente."
+   }
+  ],
+  "diagrama_mermaid": "flowchart TD\n    A[Apache Kafka: La Plataforma ] --> B[Núcleo Operativo]\n    B --> C[Aplicación Práctica]\n",
+  "director_cut": [
+   {
+    "id": "d1",
+    "escena": 1,
+    "tiempo": "0:00 - 0:25",
+    "titulo": "Introducción a Event Streaming",
+    "guion_locutor": "Bienvenido a nuestro curso sobre Apache Kafka, una plataforma revolucionaria en el mundo de las finanzas. Hoy exploraremos el concepto de Event Streaming, una tecnología que permite la transmisión continua de datos en tiempo real, similar a una transmisión de noticias en vivo.",
+    "estimacion_palabras": 35,
+    "storyboard_visual": "Visualiza una pantalla de noticias en vivo, con gráficos y datos financieros actualizándose en tiempo real.",
+    "consejo_pedagogico": "Mantén la locución clara y enfocada en el concepto de Event Streaming.",
+    "visual": {
+     "tipo": "comparativa",
+     "titulo": "Event Streaming vs. Transmisión de Noticias",
+     "puntos_clave": [
+      "Transmisión Continua de Datos",
+      "Actualización en Tiempo Real"
+     ]
+    },
+    "fuentes": [
+     {
+      "chunk_id": "doc-a184bfa55112c5c4_2",
+      "texto_fuente": "Event streaming is the digital equivalent of the human body's central nervous system. It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software."
+     }
+    ]
+   },
+   {
+    "id": "d2",
+    "escena": 2,
+    "tiempo": "0:25 - 0:45",
+    "titulo": "Apache Kafka: La Plataforma de Event Streaming",
+    "guion_locutor": "Apache Kafka es la plataforma líder en event streaming, permitiendo la publicación, almacenamiento y procesamiento de eventos de manera eficiente. Es como tener un sistema nervioso central para tu organización financiera, gestionando la transmisión de datos en tiempo real.",
+    "estimacion_palabras": 35,
+    "storyboard_visual": "Visualiza un diagrama de Kafka con servidores y clientes comunicándose a través de un protocolo de red TCP.",
+    "consejo_pedagogico": "Destaca la importancia de Kafka en el mundo financiero.",
+    "visual": {
+     "tipo": "diagrama_bloques",
+     "titulo": "Arquitectura de Apache Kafka",
+     "puntos_clave": [
+      "Servidores",
+      "Clientes",
+      "Comunicación TCP"
+     ]
+    },
+    "fuentes": [
+     {
+      "chunk_id": "doc-a184bfa55112c5c4_3",
+      "texto_fuente": "Kafka combines three key capabilities so you can implement your use cases for event streaming end-to-end with a single battle-tested solution: ... To publish and subscribe to streams of events, including continuous import/export of your data from other systems."
+     }
+    ]
+   }
+  ],
+  "quiz": [
+   {
+    "id": "q1",
+    "pregunta": "¿Cuál es la analogía utilizada para describir Event Streaming?",
+    "opciones": [
+     "Event Streaming es como una transmisión de noticias en vivo.",
+     "Event Streaming es un sistema nervioso central digital.",
+     "Event Streaming es una tecnología antigua para la gestión de datos.",
+     "Event Streaming no tiene una analogía clara."
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "La fuente describe Event Streaming como una transmisión continua de datos en tiempo real, similar a una transmisión de noticias en vivo.",
+    "cita_fuente": "Event streaming is the digital equivalent of the human body's central nervous system. It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software."
+   },
+   {
+    "id": "q2",
+    "pregunta": "¿Cuál es la función principal de Apache Kafka?",
+    "opciones": [
+     "Proporcionar una plataforma de event streaming para la gestión de datos en tiempo real.",
+     "Ofrecer una solución de almacenamiento de datos a largo plazo.",
+     "Implementar arquitecturas de microservicios.",
+     "Todas las anteriores."
+    ],
+    "respuesta_correcta": 3,
+    "justificacion_rag": "Apache Kafka combina tres capacidades clave: publicación, almacenamiento y procesamiento de eventos, lo que lo convierte en una solución integral para la gestión de datos en tiempo real.",
+    "cita_fuente": "Kafka combines three key capabilities so you can implement your use cases for event streaming end-to-end with a single battle-tested solution: ... To publish and subscribe to streams of events, including continuous import/export of your data from other systems."
+   },
+   {
+    "id": "q3",
+    "pregunta": "¿Cómo se organizan los eventos en Kafka?",
+    "opciones": [
+     "En temas, similares a carpetas en un sistema de archivos.",
+     "En bases de datos tradicionales.",
+     "En una estructura jerárquica compleja.",
+     "No se organizan, son eventos sueltos."
+    ],
+    "respuesta_correcta": 0,
+    "justificacion_rag": "Los eventos en Kafka se organizan en temas, que son similares a carpetas en un sistema de archivos, permitiendo una gestión eficiente de los datos.",
+    "cita_fuente": "Events are organized and durably stored in topics. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder."
+   }
+  ],
+  "video_job_spec": null,
+  "resumen_ejecutivo": null,
+  "glosario": null,
+  "objetivos_aprendizaje": null,
+  "diapositivas": null,
+  "estado_recursos": null
+ },
+ "fuentes_utilizadas": [
+  {
+   "documento_id": "doc-a184bfa55112c5c4",
+   "chunk_id": "doc-a184bfa55112c5c4_0",
+   "texto_fuente": "--- title: Introduction description: Learn what event streaming is, how Kafka works, and the core Kafka concepts and APIs. weight: 1 tags: ['kafka', 'docs'] aliases: keywords: type: docs --- <!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file distributed with this work for additional information regarding copyright ownership. The ASF licenses this file to You under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. --> ## What is event streaming? Event streaming is the digital equivalent of the human body's central nervous system. It is the technological foundation for the 'always-on' world where businesses are increasingly software-defined and automated, and where the user of software is more software."
+  },
+  {
+   "documento_id": "doc-a184bfa55112c5c4",
+   "chunk_id": "doc-a184bfa55112c5c4_2",
+   "texto_fuente": "information is at the right place, at the right time. ## What can I use event streaming for? Event streaming is applied to a [wide variety of use cases](/powered-by) across a plethora of industries and organizations. Its many examples include: * To process payments and financial transactions in real-time, such as in stock exchanges, banks, and insurances. * To track and monitor cars, trucks, fleets, and shipments in real-time, such as in logistics and the automotive industry. * To continuously capture and analyze sensor data from IoT devices or other equipment, such as in factories and wind parks. * To collect and immediately react to customer interactions and orders, such as in retail, the hotel and travel industry, and mobile applications. * To monitor patients in hospital care and predict changes in condition to ensure timely treatment in emergencies. * To connect, store, and make available data produced by different divisions of a company. * To serve as the foundation for data platforms, event-driven architectures, and microservices. ## Apache Kafka® is an event streaming platform. What does that mean? Kafka combines three key capabilities so you can implement [your use cases](/powered-by) for event streaming end-to-end with a single battle-tested solution:"
+  },
+  {
+   "documento_id": "doc-a184bfa55112c5c4",
+   "chunk_id": "doc-a184bfa55112c5c4_3",
+   "texto_fuente": "for data platforms, event-driven architectures, and microservices. ## Apache Kafka® is an event streaming platform. What does that mean? Kafka combines three key capabilities so you can implement [your use cases](/powered-by) for event streaming end-to-end with a single battle-tested solution: 1. To **publish** (write) and **subscribe to** (read) streams of events, including continuous import/export of your data from other systems. 2. To **store** streams of events durably and reliably for as long as you want. 3. To **process** streams of events as they occur or retrospectively. And all this functionality is provided in a distributed, highly scalable, elastic, fault-tolerant, and secure manner. Kafka can be deployed on bare-metal hardware, virtual machines, and containers, and on-premises as well as in the cloud. You can choose between self-managing your Kafka environments and using fully managed services offered by a variety of vendors. ## How does Kafka work in a nutshell? Kafka is a distributed system consisting of **servers** and **clients** that communicate via a high-performance [TCP network protocol](/protocol.html). It can be deployed on bare-metal hardware, virtual machines, and containers in on-premise as well as cloud environments."
+  },
+  {
+   "documento_id": "doc-a184bfa55112c5c4",
+   "chunk_id": "doc-a184bfa55112c5c4_7",
+   "texto_fuente": "of each other, which is a key design element to achieve the high scalability that Kafka is known for. For example, producers never need to wait for consumers. Kafka provides various [guarantees](/documentation/#semantics) such as the ability to process events exactly-once. Events are organized and durably stored in **topics**. Very simplified, a topic is similar to a folder in a filesystem, and the events are the files in that folder. An example topic name could be \"payments\". Topics in Kafka are always multi-producer and multi-subscriber: a topic can have zero, one, or many producers that write events to it, as well as zero, one, or many consumers that subscribe to these events. Events in a topic can be read as often as needed-unlike traditional messaging systems, events are not deleted after consumption. Instead, you define for how long Kafka should retain your events through a per-topic configuration setting, after which old events will be discarded. Kafka's performance is effectively constant with respect to data size, so storing data for a long time is perfectly fine."
+  },
+  {
+   "documento_id": "doc-a184bfa55112c5c4",
+   "chunk_id": "doc-a184bfa55112c5c4_10",
+   "texto_fuente": "The [Design](/documentation/#design) section of the documentation explains Kafka's various concepts in full detail, if you are interested. ## Kafka APIs In addition to command line tooling for management and administration tasks, Kafka has five core APIs for Java and Scala: * The [Admin API](/documentation.html#adminapi) to manage and inspect topics, brokers, and other Kafka objects. * The [Producer API](/documentation.html#producerapi) to publish (write) a stream of events to one or more Kafka topics. * The [Consumer API](/documentation.html#consumerapi) to subscribe to (read) one or more topics and to process the stream of events produced to them. * The [Kafka Streams API](/documentation/streams) to implement stream processing applications and microservices. It provides higher-level functions to process event streams, including transformations, stateful operations like aggregations and joins, windowing, processing based on event-time, and more. Input is read from one or more topics in order to generate output to one or more topics, effectively transforming the input streams to output streams. * The [Kafka Connect API](/documentation.html#connect) to build and run reusable data import/export connectors that consume (read) or produce (write) streams of events from and to external systems and applications so they can integrate with Kafka. For example, a connector to a relational database like PostgreSQL might capture every change to a set of tables. However, in practice, you typically don't need to implement your own connectors"
+  }
+ ],
+ "evaluacion_calidad": {
+  "anclaje_fuente_score": 0.5833,
+  "auditoria_ejecutada": true,
+  "claridad_pedagogica": "Alta",
+  "observaciones": "",
+  "afirmaciones": [
+   {
+    "afirmacion": "Apache Kafka es una plataforma de event streaming.",
+    "respaldada": true,
+    "chunk_id_evidencia": "doc-a184bfa55112c5c4_3",
+    "comentario": null
+   },
+   {
+    "afirmacion": "Event Streaming es la transmisión continua de datos en tiempo real.",
+    "respaldada": true,
+    "chunk_id_evidencia": "doc-a184bfa55112c5c4_0",
+    "comentario": null
+   },
+   {
+    "afirmacion": "Apache Kafka combina publicación, almacenamiento y procesamiento de eventos.",
+    "respaldada": true,
+    "chunk_id_evidencia": "doc-a184bfa55112c5c4_3",
+    "comentario": null
+   },
+   {
+    "afirmacion": "Los eventos se organizan en temas, similares a carpetas en un sistema de archivos.",
+    "respaldada": true,
+    "chunk_id_evidencia": "doc-a184bfa55112c5c4_7",
+    "comentario": null
+   },
+   {
+    "afirmacion": "Event streaming is the digital equivalent of the human body's central nervous system.",
+    "respaldada": true,
+    "chunk_id_evidencia": "doc-a184bfa55112c5c4_0",
+    "comentario": null
+   },
+   {
+    "afirmacion": "Se puede publicar eventos en Kafka usando el comando kafka-console-producer.sh --broker-list localhost:9092 --topic payments.",
+    "respaldada": false,
+    "chunk_id_evidencia": null,
+    "comentario": "Los fragmentos fuente no mencionan comandos CLI específicos."
+   },
+   {
+    "afirmacion": "Se puede suscribir a eventos en Kafka usando el comando kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic payments --from-beginning.",
+    "respaldada": false,
+    "chunk_id_evidencia": null,
+    "comentario": "Los fragmentos fuente no describen comandos CLI de consumo."
+   },
+   {
+    "afirmacion": "Apache Kafka es la plataforma líder en event streaming.",
+    "respaldada": false,
+    "chunk_id_evidencia": null,
+    "comentario": "La fuente no califica a Kafka como \"líder\"."
+   },
+   {
+    "afirmacion": "Event Streaming es como una transmisión de noticias en vivo.",
+    "respaldada": false,
+    "chunk_id_evidencia": null,
+    "comentario": "La analogía de noticias no aparece en los fragmentos fuente."
+   },
+   {
+    "afirmacion": "La función principal de Apache Kafka es proporcionar una plataforma de event streaming para la gestión de datos en tiempo real.",
+    "respaldada": true,
+    "chunk_id_evidencia": "doc-a184bfa55112c5c4_3",
+    "comentario": null
+   },
+   {
+    "afirmacion": "Los eventos en Kafka se organizan en temas, lo que permite una gestión eficiente de los datos.",
+    "respaldada": true,
+    "chunk_id_evidencia": "doc-a184bfa55112c5c4_7",
+    "comentario": null
+   },
+   {
+    "afirmacion": "Riesgo bajo.",
+    "respaldada": false,
+    "chunk_id_evidencia": null,
+    "comentario": "Los fragmentos fuente no proporcionan una evaluación de riesgo."
+   }
+  ],
+  "sugerencias_correccion": []
+ },
+ "almacenamiento_oci": {
+  "bucket": "nuevamente-contenidos-educativos",
+  "objeto_id": "users/00000000-0000-0000-0000-000000000000/6f9ea2fa-f1a0-4ae9-b2f9-cfe48061b9ca/package.json",
+  "status_upload": "completado"
+ },
+ "advertencias": [
+  "El mejor intento no cumplió todos los criterios de aprobación (anclaje a la fuente (0.58) < umbral (0.75)) tras 2 intento(s). Se entrega el mejor intento y se recomienda revisión humana."
+ ],
+ "error": null,
+ "orquestacion": {
+  "intentos_redaccion": 2,
+  "scores_por_intento": [
+   0.3333,
+   0.5833
+  ],
+  "umbral_anclaje": 0.75,
+  "max_reintentos": 2,
+  "duracion_segundos": 184.912,
+  "documento_id": "doc-a184bfa55112c5c4",
+  "chunks_recuperados": 5
+ }
+}
