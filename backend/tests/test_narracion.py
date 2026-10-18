@@ -368,12 +368,91 @@ def test_palabra_clave_ambigua_no_consulta_los_bancos():
 
     # el sentido literal engaña: nubes del cielo, ríos, el escritor Kafka
     ambiguas = ["cloud computing", "Event Streaming", "message broker", "apache kafka", "data pipelines",
-                "error screen", "server warning"]
+                "error screen", "server warning", "educational technology dashboard"]
     assert asyncio.run(buscar(ambiguas)) == [None] * len(ambiguas)
     assert consultas == []
     # una palabra concreta sí se busca ("cloudy" o "upstream" no son la palabra ambigua)
-    fotos = asyncio.run(buscar(["server room", "cloudy upstream"]))
-    assert all(f and f.proveedor == "openverse" for f in fotos) and consultas == ["api.openverse.org"] * 2
+    fotos = asyncio.run(buscar(["server rack", "cloudy upstream"]))
+    assert consultas.count("api.openverse.org") == 2
+    # la segunda sí se consulta, pero la foto ("Server rack") no trata de eso: sin foto
+    assert fotos[0].proveedor == "openverse" and fotos[1] is None
+
+
+def test_la_foto_tiene_que_tratar_de_lo_que_se_busco():
+    from app.servicios.servicio_imagenes import es_pertinente
+
+    # el sustantivo principal (última palabra) y, si hay más, al menos otra
+    assert es_pertinente("server rack", "Servers in a Rack")
+    assert es_pertinente("network cables", "home network, cable, linksys")  # plural ~ singular
+    assert es_pertinente("students with laptops", "Students working on laptops in class")
+    assert es_pertinente("green leaf", "Leaf macro | green plants")
+    assert not es_pertinente("server rack", "Server room at night")         # falta el principal
+    assert not es_pertinente("server room", "Living room with sofa")        # solo el principal
+    assert not es_pertinente("network cables", "Cablecar in the Alps")      # prefijo, no palabra
+    assert es_pertinente("", "lo que sea") and es_pertinente("ok", "x")     # sin palabras útiles
+
+    # Openverse mira título y etiquetas; Wikimedia, título, categorías y descripción
+    sin_relacion = {**_OV, "title": "Sunset over the sea", "tags": [{"name": "beach"}]}
+    por_etiqueta = {**_OV, "title": "IMG_2041", "tags": [{"name": "server"}, {"name": "rack"}], "creator": "zdw"}
+    foto = elegir_openverse([sin_relacion, por_etiqueta], "x", "server rack")
+    assert foto.autor == "zdw"
+    assert elegir_openverse([sin_relacion], "x", "server rack") is None
+    assert elegir_wikimedia([_wm(titulo="File:Beach.jpg", categorias="Beaches", descripcion="Sunset")],
+                            "x", "server rack") is None
+    assert elegir_wikimedia([_wm(titulo="File:DSC0001.jpg")], "x", "server rack")  # categoría "Computer racks"
+    # caso real del 18/10: pertinente por las palabras, pero es un acto oficial
+    acto = _wm(titulo="File:Inauguración del Hospital Regional.jpg", categorias="Hospital beds",
+               descripcion="Inauguración del hospital")
+    assert elegir_wikimedia([acto], "x", "hospital bed") is None
+
+
+def _banco_simulado(retraso_openverse: float, openverse: Optional[dict], wikimedia: Optional[dict],
+                    estado_openverse: int = 200, corta_openverse: bool = False):
+    """Transporte con Openverse lento a voluntad; cada banco devuelve su foto o ninguna."""
+    async def responder(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "api.openverse.org":
+            await asyncio.sleep(retraso_openverse)
+            if corta_openverse:  # el transporte simulado no aplica plazos: se simula el corte
+                raise httpx.ReadTimeout("plazo de Openverse", request=request)
+            return httpx.Response(estado_openverse, json={"results": [openverse] if openverse else []})
+        return httpx.Response(200, json={"query": {"pages": {"1": wikimedia}} if wikimedia else {}})
+    return httpx.MockTransport(responder)
+
+
+def _buscar_con(transporte: httpx.MockTransport, espera: float = 0.2):
+    async def correr():
+        b = BuscadorImagenes(transport=transporte, espera_openverse_s=espera)
+        try:
+            inicio = time.perf_counter()
+            foto = await b.buscar("server rack", "Escena")
+            return foto, time.perf_counter() - inicio
+        finally:
+            await b.aclose()
+    return asyncio.run(correr())
+
+
+def test_bancos_en_paralelo_openverse_a_tiempo_gana_aunque_wikimedia_tenga_foto():
+    foto, _ = _buscar_con(_banco_simulado(0.05, _OV, _wm()))
+    assert foto.proveedor == "openverse"
+
+
+def test_bancos_en_paralelo_openverse_lento_se_usa_wikimedia_sin_esperar_su_plazo():
+    # Caso real en OCI (18/10): Openverse tardó 51 s sin caché y la escena se quedó sin foto
+    foto, segundos = _buscar_con(_banco_simulado(3.0, _OV, _wm()), espera=0.2)
+    assert foto.proveedor == "wikimedia" and segundos < 1.5
+
+
+def test_bancos_en_paralelo_sin_foto_en_wikimedia_se_espera_a_openverse():
+    foto, segundos = _buscar_con(_banco_simulado(0.5, _OV, None), espera=0.1)
+    assert foto.proveedor == "openverse" and segundos >= 0.5
+
+
+def test_bancos_en_paralelo_openverse_caido_o_sin_respuesta():
+    foto, _ = _buscar_con(_banco_simulado(0.0, None, _wm(), estado_openverse=503))
+    assert foto.proveedor == "wikimedia"
+    # ni Wikimedia tiene foto ni Openverse responde a tiempo: sin foto, en su plazo y sin colgarse
+    foto, segundos = _buscar_con(_banco_simulado(0.3, _OV, None, corta_openverse=True), espera=0.1)
+    assert foto is None and segundos < 1.5
 
 
 def test_openverse_tiene_plazo_propio_y_el_peor_caso_cabe_en_la_narracion():
@@ -394,8 +473,10 @@ def test_openverse_tiene_plazo_propio_y_el_peor_caso_cabe_en_la_narracion():
 
     assert asyncio.run(buscar()) is None  # ninguno tiene foto: pregunta a los dos
     assert plazos == {"api.openverse.org": TIMEOUT_OPENVERSE_S, "commons.wikimedia.org": 8.0}
-    # Openverse sin caché tarda ~18 s; las fotos van en paralelo con la voz y no pueden pasarse de su plazo
-    assert 18 < TIMEOUT_OPENVERSE_S and TIMEOUT_OPENVERSE_S + 8.0 < servicio_narracion.PLAZO_VOZ_S
+    # Las fotos van en paralelo con la voz y no pueden pasarse de su plazo; los bancos corren a la
+    # vez, así que el peor caso es el mayor de los dos plazos (la suma queda como margen)
+    from app.servicios.servicio_imagenes import ESPERA_OPENVERSE_S
+    assert ESPERA_OPENVERSE_S < TIMEOUT_OPENVERSE_S and TIMEOUT_OPENVERSE_S + 8.0 < servicio_narracion.PLAZO_VOZ_S
 
 
 # --------------------------------------------------------------------- guion de 2 o 3 escenas

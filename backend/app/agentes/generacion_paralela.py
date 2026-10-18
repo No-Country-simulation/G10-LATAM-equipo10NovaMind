@@ -190,7 +190,10 @@ class EscenaGenerada(_Salida):
                     "para buscar una foto. Nunca un concepto abstracto ni una metáfora, porque el banco de fotos "
                     "busca el sentido literal: 'cloud computing' devuelve nubes del cielo. Ejemplos de otros "
                     "temas (no los copies): una escena sobre la fotosíntesis, 'green leaf'; sobre la inflación, "
-                    "'supermarket shelf'. Sin marcas, productos, personas ni texto. No repitas la misma "
+                    "'supermarket shelf'. En temas informáticos, nombra el hardware o la escena que se "
+                    "vería en una foto: 'server rack', 'network cables', 'students with laptops'; nunca "
+                    "'cloud', 'dashboard', 'software', 'platform', 'technology' ni 'data'. "
+                    "Sin marcas, productos, personas identificables ni texto. No repitas la misma "
                     "palabra clave en dos escenas.",
     )
     citas: List[str] = Field(..., min_length=1, max_length=3, description=_CITA)
