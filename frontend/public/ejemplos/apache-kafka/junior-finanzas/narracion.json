@@ -153,13 +153,13 @@
     "origen": "llm",
     "imagen": {
      "tipo": "foto",
-     "palabra_clave": "network cables",
+     "palabra_clave": "patch panel cables",
      "url": "/ejemplos/apache-kafka/junior-finanzas/foto-2.jpg",
      "alt": "Servidores, Clientes y Conceptos",
-     "autor": "nzhamstar",
-     "licencia": "CC BY-SA 2.0",
-     "licencia_url": "https://creativecommons.org/licenses/by-sa/2.0/",
-     "fuente_url": "https://www.flickr.com/photos/16982169@N03/2547267767",
+     "autor": "dmitrybarsky",
+     "licencia": "CC BY 2.0",
+     "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
+     "fuente_url": "https://www.flickr.com/photos/84816487@N00/2262195632",
      "proveedor": "openverse"
     },
     "audio": {

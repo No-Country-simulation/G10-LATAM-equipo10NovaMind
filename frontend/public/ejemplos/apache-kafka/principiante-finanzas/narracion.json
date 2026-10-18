@@ -50,13 +50,13 @@
     "origen": "llm",
     "imagen": {
      "tipo": "foto",
-     "palabra_clave": "neural network",
+     "palabra_clave": "cash register roll",
      "url": "/ejemplos/apache-kafka/principiante-finanzas/foto-1.jpg",
      "alt": "Fundamentos del Event Streaming",
-     "autor": "fdecomite",
+     "autor": "Steve Snodgrass",
      "licencia": "CC BY 2.0",
      "licencia_url": "https://creativecommons.org/licenses/by/2.0/",
-     "fuente_url": "https://www.flickr.com/photos/21649179@N00/3237928173",
+     "fuente_url": "https://www.flickr.com/photos/10710442@N08/4034636375",
      "proveedor": "openverse"
     },
     "audio": {
