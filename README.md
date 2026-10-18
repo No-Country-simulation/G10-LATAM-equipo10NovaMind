@@ -5,6 +5,23 @@
 > Convierte un documento técnico en un recorrido de 5 estaciones. **Backend FastAPI + Frontend React 19 + Vite**, generación con **Gemini en paralelo** y citas verificadas contra el documento, video narrado en el navegador, y persistencia en **Supabase** y **OCI Object Storage**. La cadena colaborativa (Gemini, Groq y Cohere) y el RAG con **LangGraph**, **Cohere** y **ChromaDB** quedan como respaldo.
 
 <p align="center">
+  <img src="https://img.shields.io/badge/versión-2.0.0-0A84FF" alt="Versión 2.0.0">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white" alt="Backend FastAPI">
+  <img src="https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61DAFB?logo=react&logoColor=black" alt="Frontend React 19 y Vite">
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white" alt="TypeScript 6.0">
+  <img src="https://img.shields.io/badge/IA-Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white" alt="IA Google Gemini">
+  <img src="https://img.shields.io/badge/Video-Remotion%20Player-4B4BF5" alt="Video con Remotion Player">
+  <img src="https://img.shields.io/badge/Datos-Supabase-3FCF8E?logo=supabase&logoColor=white" alt="Datos en Supabase">
+  <img src="https://img.shields.io/badge/Almacenamiento-OCI%20Object%20Storage-F80000?logo=oracle&logoColor=white" alt="Almacenamiento en un bucket de OCI Object Storage">
+  <img src="https://img.shields.io/badge/Despliegue-OCI%20Compute%20Always%20Free-F80000?logo=oracle&logoColor=white" alt="Despliegue en máquinas virtuales OCI Compute Always Free">
+</p>
+
+<p align="center">
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=No-Country-simulation.G10-LATAM-equipo10NovaMind&left_text=visitas" alt="Visitas al repositorio">
+</p>
+
+<p align="center">
   <img src="docs/flujo-nuevamente.svg" alt="Flujo de NuevaMente: el documento se ingiere, Gemini genera en paralelo el resumen, las tarjetas y la producción y después el cuestionario, se verifican las citas, el paquete llega por SSE a las 5 estaciones y el video narrado se genera bajo demanda" width="960">
 </p>
 
