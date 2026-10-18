@@ -44,6 +44,7 @@ from app.servicios.registro_tareas import RegistroMemoria, RegistroSupabase, Reg
 from app.servicios.servicio_ampliacion import AmpliadorEscenas
 from app.servicios.servicio_gemini import ClienteGemini, GeminiError
 from app.servicios.servicio_imagenes import BuscadorImagenes
+from app.servicios.preparacion_fotos import preparador_del_entorno
 from app.servicios.servicio_narracion import Narrador, diapositivas_sin_voz
 from app.servicios.servicio_voz import VozElevenLabs, VozGemini
 from app.storage.almacen_narracion import almacen_del_entorno, prefijo_narraciones, ruta_segura
@@ -172,13 +173,16 @@ def get_servicio_correo(principal: Principal) -> ServicioCorreo:
 
 def get_generador_paralelo(principal: Principal, registro: Optional[RegistroTareas] = None) -> GeneradorParalelo:
     from app.storage.private_storage import storage_for
+    cliente, cfg = _cliente_gemini(), Config.desde_entorno()
     return GeneradorParalelo(
-        _cliente_gemini(),
-        Config.desde_entorno(),
+        cliente,
+        cfg,
         # Invitados: nada se archiva (comparten identidad).
         almacenar=None if principal.is_guest else storage_for(principal.user_id),
         registro=registro,
         propietario=principal.user_id,
+        # Fotos del video buscadas (y las dudosas revisadas) mientras corre la tarea C
+        preparar_fotos=preparador_del_entorno(cliente, cfg),
     )
 
 

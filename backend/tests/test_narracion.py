@@ -400,7 +400,7 @@ def test_la_foto_tiene_que_tratar_de_lo_que_se_busco():
     assert elegir_wikimedia([_wm(titulo="File:Beach.jpg", categorias="Beaches", descripcion="Sunset")],
                             "x", "server rack") is None
     assert elegir_wikimedia([_wm(titulo="File:DSC0001.jpg")], "x", "server rack")  # categoría "Computer racks"
-    # caso real del 18/10: pertinente por las palabras, pero es un acto oficial
+    # caso real del 18/10: por los metadatos es un acto oficial (filtro conservador)
     acto = _wm(titulo="File:Inauguración del Hospital Regional.jpg", categorias="Hospital beds",
                descripcion="Inauguración del hospital")
     assert elegir_wikimedia([acto], "x", "hospital bed") is None

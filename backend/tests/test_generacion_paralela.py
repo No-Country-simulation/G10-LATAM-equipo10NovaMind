@@ -191,7 +191,8 @@ class Auditor:
         return dict(self.resultado)
 
 
-def _generar(simulador, auditor=None, presupuesto_s=30.0, solicitud=SOLICITUD, config=CONFIG, registro=None):
+def _generar(simulador, auditor=None, presupuesto_s=30.0, solicitud=SOLICITUD, config=CONFIG, registro=None,
+             preparar_fotos=None):
     eventos = []
 
     async def run():
@@ -199,7 +200,7 @@ def _generar(simulador, auditor=None, presupuesto_s=30.0, solicitud=SOLICITUD, c
                                 max_concurrencia=3, dormir=lambda _s: asyncio.sleep(0))
         async with cliente:
             gen = GeneradorParalelo(cliente, config, auditor=auditor or Auditor(), presupuesto_s=presupuesto_s,
-                                    registro=registro)
+                                    registro=registro, preparar_fotos=preparar_fotos)
             return await gen.generar(solicitud, eventos.append)
 
     return asyncio.run(run()), eventos
@@ -827,3 +828,55 @@ def test_cambiar_una_directiva_de_audiencia_invalida_la_huella(monkeypatch):
     antes = gp.huella_tarea(SOLICITUD, tarea)
     monkeypatch.setitem(gp.DIRECTIVAS_NIVEL_DETALLE, SOLICITUD.nivel_detalle, "Otra directiva.")
     assert gp.huella_tarea(SOLICITUD, tarea) != antes
+
+
+
+# --- fotos del video preparadas mientras corre la tarea C ---------------------------
+_FOTO = {"tipo": "foto", "palabra_clave": "network router", "url": "https://x.org/a.jpg", "alt": "Escena 1",
+         "autor": "A", "licencia": "CC0", "licencia_url": None, "fuente_url": None, "proveedor": "openverse"}
+
+
+def _preparador(imagenes=None, avisos=(), espera=0.0, error=None):
+    from app.servicios.preparacion_fotos import FotosPreparadas
+    recibidos = []
+
+    async def preparar(spec):
+        recibidos.append(spec)
+        await asyncio.sleep(espera)
+        if error:
+            raise error
+        return FotosPreparadas(list(imagenes or [_FOTO, None, None]), list(avisos))
+    preparar.recibidos = recibidos
+    return preparar
+
+
+def _eventos_guion(eventos):
+    return [e for e in eventos if e["tipo"] == "recurso" and e["recurso"] == "guion"]
+
+
+def test_las_fotos_del_video_llegan_con_el_paquete_y_se_republica_el_guion():
+    preparar = _preparador(avisos=["La foto de la escena 2 se descartó tras revisarla: es un logo."])
+    respuesta, eventos = _generar(Simulador(), preparar_fotos=preparar)
+    assert len(preparar.recibidos) == 1  # una sola vez, con las palabras clave del guion
+    assert [e["imagen"]["palabra_clave"] for e in preparar.recibidos[0]["escenas"]] == ["network router"] * 3
+    contenido = respuesta.contenido_adaptado
+    assert contenido.video_job_spec.escenas[0].imagen.tipo == "foto"
+    assert contenido.director_cut[0]["imagen"]["url"] == "https://x.org/a.jpg"
+    assert contenido.director_cut[1]["imagen"]["tipo"] == "diapositiva"  # None = sin cambios
+    guion = _eventos_guion(eventos)
+    assert len(guion) == 2 and guion[-1]["campos"]["director_cut"][0]["imagen"]["tipo"] == "foto"
+    assert "es un logo" in " ".join(contenido.estado_recursos["guion"].avisos)
+
+
+def test_si_las_fotos_tardan_demasiado_el_paquete_no_las_espera(monkeypatch):
+    import app.agentes.generacion_paralela as gp
+    monkeypatch.setattr(gp, "PLAZO_FOTOS_S", 0.2)
+    respuesta, eventos = _generar(Simulador(), preparar_fotos=_preparador(espera=5.0))
+    assert respuesta.contenido_adaptado.video_job_spec.escenas[0].imagen.tipo == "diapositiva"
+    assert len(_eventos_guion(eventos)) == 1
+
+
+def test_si_preparar_las_fotos_falla_el_paquete_sale_igual():
+    respuesta, eventos = _generar(Simulador(), preparar_fotos=_preparador(error=RuntimeError("x")))
+    assert respuesta.contenido_adaptado.video_job_spec.escenas[0].imagen.tipo == "diapositiva"
+    assert len(_eventos_guion(eventos)) == 1

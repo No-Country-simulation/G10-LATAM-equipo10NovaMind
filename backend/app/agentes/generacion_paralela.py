@@ -75,6 +75,11 @@ logger = logging.getLogger("nuevamente.generacion_paralela")
 
 MAX_CARACTERES_DOCUMENTO = 350_000
 PRESUPUESTO_GENERACION_S = 240.0  # después, las tareas pendientes se cancelan y se publica lo que haya
+# Fotos del video preparadas en paralelo con la tarea C: desde que sale el guion, como mucho
+# este tiempo (Openverse sin caché 25 s + revisión). Si no llegan, el botón de voz las busca.
+PLAZO_FOTOS_S = 45.0
+# Recibe el video_job_spec (dict) y devuelve FotosPreparadas (app.servicios.preparacion_fotos)
+PrepararFotos = Callable[[Dict[str, Any]], Awaitable[Any]]
 PALABRAS_GUION_MIN, PALABRAS_GUION_MAX = 110, 125
 
 Publicar = Callable[[Dict[str, Any]], None]
@@ -807,6 +812,8 @@ class _Ejecucion:
     afirmaciones: Dict[str, List[str]] = field(default_factory=dict)
     filas: Dict[str, Dict[str, Any]] = field(default_factory=dict)  # recurso → fila de generation_tasks
     inicios: Dict[str, str] = field(default_factory=dict)  # tarea → started_at
+    fotos: Optional["asyncio.Task[Any]"] = None  # fotos del video en preparación
+    fotos_inicio: float = 0.0
 
 
 def _fila(tarea: Tarea, recurso: str, huella: str, inicio: str, estado: Optional[EstadoRecurso] = None,
@@ -845,7 +852,9 @@ class GeneradorParalelo:
         propietario: str = "anonimo",
         presupuesto_s: float = PRESUPUESTO_GENERACION_S,
         dormir: Optional[Callable[[float], Awaitable[None]]] = None,
+        preparar_fotos: Optional[PrepararFotos] = None,
     ) -> None:
+        self._preparar_fotos = preparar_fotos
         self._cliente = cliente
         self._config = config
         self._auditor = auditor
@@ -867,23 +876,28 @@ class GeneradorParalelo:
         ej = _Ejecucion(solicitud, entrada, publicar, huellas, previos,
                         contenido={"titulo": solicitud.documento_titulo})
 
-        en_curso = {asyncio.create_task(self._ejecutar_tarea(t, ej)): t for t in tareas}
         try:
-            _, pendientes = await asyncio.wait(en_curso, timeout=self._presupuesto_s)
-        except asyncio.CancelledError:
-            for tarea_async in en_curso:
-                tarea_async.cancel()
-            raise
-        for tarea_async in pendientes:
-            tarea_async.cancel()
-        if pendientes:
-            await asyncio.gather(*pendientes, return_exceptions=True)
+            en_curso = {asyncio.create_task(self._ejecutar_tarea(t, ej)): t for t in tareas}
+            try:
+                _, pendientes = await asyncio.wait(en_curso, timeout=self._presupuesto_s)
+            except asyncio.CancelledError:
+                for tarea_async in en_curso:
+                    tarea_async.cancel()
+                raise
             for tarea_async in pendientes:
-                t = en_curso[tarea_async]
-                logger.warning("[paralelo] Tarea %s cancelada por presupuesto (%.0fs).", t.id, self._presupuesto_s)
-                await self._fallar(t, "presupuesto_agotado", [r for r in t.recursos if r not in ej.estados], ej)
+                tarea_async.cancel()
+            if pendientes:
+                await asyncio.gather(*pendientes, return_exceptions=True)
+                for tarea_async in pendientes:
+                    t = en_curso[tarea_async]
+                    logger.warning("[paralelo] Tarea %s cancelada por presupuesto (%.0fs).", t.id, self._presupuesto_s)
+                    await self._fallar(t, "presupuesto_agotado", [r for r in t.recursos if r not in ej.estados], ej)
 
-        await self._ejecutar_cuestionario(ej, self._presupuesto_s - (time.perf_counter() - t0))
+            await self._ejecutar_cuestionario(ej, self._presupuesto_s - (time.perf_counter() - t0))
+            await self._completar_fotos(ej, self._presupuesto_s - (time.perf_counter() - t0))
+        finally:
+            if ej.fotos is not None and not ej.fotos.done():
+                ej.fotos.cancel()
 
         if not any(e.estado == "completado" for e in ej.estados.values()):
             codigos = sorted({e.error_codigo or "?" for e in ej.estados.values()})
@@ -938,7 +952,62 @@ class GeneradorParalelo:
         ej.afirmaciones[recurso] = [a for a in previo.get("afirmaciones") or [] if isinstance(a, str)]
         ej.estados[recurso] = estado
         ej.publicar({"tipo": "recurso", "recurso": recurso, "campos": campos, "estado": estado.model_dump()})
+        if recurso == "guion":
+            self._lanzar_fotos(ej)
         return True
+
+    # ------------------------------------------------------------------ fotos del video
+    def _lanzar_fotos(self, ej: _Ejecucion) -> None:
+        """Busca las fotos del guion en segundo plano; solo si alguna escena aún no tiene."""
+        spec = ej.contenido.get("video_job_spec")
+        if self._preparar_fotos is None or ej.fotos is not None or not isinstance(spec, dict):
+            return
+        escenas = spec.get("escenas") or []
+        if not any(isinstance(e.get("imagen"), dict) and e["imagen"].get("tipo") != "foto"
+                   and e["imagen"].get("palabra_clave") for e in escenas):
+            return
+        ej.fotos_inicio = time.perf_counter()
+        ej.fotos = asyncio.create_task(self._preparar_fotos(json.loads(json.dumps(spec))))
+
+    async def _completar_fotos(self, ej: _Ejecucion, restante_s: float) -> None:
+        """Espera las fotos (lo normal: ya llegaron mientras corría C) y las pone en el guion."""
+        if ej.fotos is None:
+            return
+        espera = max(0.0, min(PLAZO_FOTOS_S - (time.perf_counter() - ej.fotos_inicio), restante_s))
+        try:
+            preparadas = await asyncio.wait_for(ej.fotos, timeout=espera)
+        except asyncio.TimeoutError:
+            logger.warning("[paralelo] Las fotos del video no llegaron en %.0f s: se buscarán al pedir la voz.",
+                           PLAZO_FOTOS_S)
+            return
+        except Exception as exc:
+            logger.warning("[paralelo] No se pudieron preparar las fotos del video (%s).", type(exc).__name__)
+            return
+        estado = ej.estados.get("guion")
+        spec, escenas = ej.contenido.get("video_job_spec"), ej.contenido.get("director_cut")
+        if estado is None or not isinstance(spec, dict) or not isinstance(escenas, list):
+            return
+        spec, escenas = json.loads(json.dumps(spec)), json.loads(json.dumps(escenas))
+        cambios = 0
+        for i, imagen in enumerate(preparadas.imagenes):
+            if imagen is None:
+                continue
+            for lista in (spec.get("escenas") or [], escenas):
+                if i < len(lista):
+                    lista[i]["imagen"] = imagen
+            cambios += 1
+        if not cambios and not preparadas.avisos:
+            return
+        if preparadas.avisos:
+            estado = estado.model_copy(update={"avisos": [*estado.avisos, *preparadas.avisos]})
+            ej.estados["guion"] = estado
+        campos = {"director_cut": escenas, "video_job_spec": spec}
+        ej.contenido.update(campos)
+        fila = ej.filas.get("guion")
+        if fila and isinstance(fila.get("result"), dict):  # la caché guarda el guion con sus fotos
+            fila["result"] = {**fila["result"], "campos": campos, "estado": estado.model_dump()}
+        ej.publicar({"tipo": "recurso", "recurso": "guion", "campos": campos, "estado": estado.model_dump()})
+        logger.info("[paralelo] Fotos del video preparadas: %d escena(s) con cambios.", cambios)
 
     async def _ejecutar_tarea(self, tarea: Tarea, ej: _Ejecucion) -> None:
         huella = ej.huellas[tarea.id]
@@ -1017,6 +1086,8 @@ class GeneradorParalelo:
             ej.publicar({"tipo": "recurso", "recurso": recurso, "campos": listo.campos,
                          "estado": estado.model_dump()})
         await self._guardar([ej.filas[r] for r in pendientes if r in ej.filas])
+        if "guion" in pendientes and getattr(ej.estados.get("guion"), "estado", None) == "completado":
+            self._lanzar_fotos(ej)
 
     async def _ejecutar_cuestionario(self, ej: _Ejecucion, restante_s: float) -> None:
         """Tarea C con lo que enseñaron las demás estaciones y el tiempo que quede del presupuesto."""

@@ -62,7 +62,9 @@ _TEMAS_EXCLUIDOS = re.compile(
     r"\b(epstein|raids?|crimes?|criminal|evidence|police|polic[ií]a|court|trials?|protests?|riots?|"
     r"wars?|military|weapons?|victims?|accidents?|disasters?|funerals?|nudity|nude|events?|festivals?|"
     r"birthday|conferences?|summits?|parades?|ceremon(y|ies)|elections?|campaigns?|advertis\w*|"
-    # Prueba en OCI del 2026-10-18: "hospital bed" devolvía la inauguración de un hospital
+    # 2026-10-18: "hospital bed" eligió «Inauguración del Hospital Regional...». La imagen sí
+    # servía (Gemini lo confirmó mirándola), pero el filtro solo ve metadatos: mejor perder
+    # una foto buena que colar un acto oficial. Había otra: Hospital_Bed_2011.
     r"inaugura\w*|ceremonias?|eventos?|desfiles?|protestas?|elecciones|campañas?|publicidad)\b",
     re.IGNORECASE,
 )
