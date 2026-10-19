@@ -384,7 +384,7 @@ export const Step1Ingestion = ({
               Agentes Pedagógicos
             </span>
             <span className={styles.hackathonSign}>
-              Oracle Next Education · Hackathon ONE G10
+            Oracle Next Education · Hackathon ONE G10 · <strong>Equipo 10</strong>  
             </span>
           </div>
 

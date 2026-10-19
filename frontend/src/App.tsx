@@ -606,7 +606,7 @@ export default function App() {
               />
             </div>
             <span className={styles.brandSign}>NuevaMente</span>
-            <span> · Hackathon ONE G10 (Oracle Next Education & Alura)</span>
+            <span> · Hackathon ONE G10 (Oracle Next Education & Alura) · <strong>Equipo 10</strong></span>
           </div>
 
           <div className={styles.footerLinks}>
