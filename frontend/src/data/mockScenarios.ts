@@ -292,7 +292,7 @@ export const REAL_DOCUMENTS_CATALOG: RealDocumentPreset[] = [
 export const INITIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'ninja',
-    titulo: 'Síntesis Ninja',
+    titulo: 'Síntesis',
     descripcion: 'Asimila los conceptos esenciales y activa la intuición didáctica del tema.',
     icono: '⚡',
     desbloqueado: false,
