@@ -263,6 +263,8 @@ Las muestras de `frontend/public/ejemplos/` se regeneran con un script local que
 
 ## ⚙️ 7. Decisiones técnicas
 
+El detalle de cada decisión (qué se descartó, por qué y qué cuesta) está en [docs/DECISIONES.md](docs/DECISIONES.md).
+
 1. **Procedencia honesta.** Nada se presenta como verificado si no lo está. Las citas se buscan literalmente en el documento y la página sale de ahí; un recurso que falla se muestra como fallido; si el texto lo transcribió la IA, se dice.
 2. **Solo cuota gratuita.** El modo invitado no gasta cuota: el backend rechaza sus generaciones con 403 y las muestras son archivos estáticos. Las fotos son de bancos libres con licencias que permiten adaptarlas, y se muestran con autor y licencia.
 3. **VM de OCI con 1 vCPU y 1 GB.** No hay MP4 ni FFmpeg en el servidor: el video son diapositivas narradas que dibuja el navegador. Las generaciones simultáneas se limitan con un semáforo (5 a la vez).
@@ -274,7 +276,7 @@ Las muestras de `frontend/public/ejemplos/` se regeneran con un script local que
 6. **Claves solo en el backend.** En el navegador solo hay valores públicos (`VITE_API_URL`, `VITE_SUPABASE_*`).
 7. **Aislamiento por usuario.** El backend verifica el token con Supabase, consulta Postgres con el JWT del usuario (RLS) y guarda en OCI bajo `users/<UUID>/` en un bucket privado. ChromaDB también tiene una colección por usuario.
 8. **CORS.** Se admiten `localhost` y `127.0.0.1` en cualquier puerto. En producción hay que agregar el dominio público a `allow_origins` en `backend/app/main.py`.
-9. **Repositorio.** Este README es la única documentación publicada: en GitHub están el código, las pruebas, las migraciones y las muestras. La documentación por área, las bitácoras y el historial de cambios se conservan en local.
+9. **Repositorio.** Este README y [docs/DECISIONES.md](docs/DECISIONES.md) son la documentación publicada: en GitHub están el código, las pruebas, las migraciones y las muestras. La documentación por área, las bitácoras y el historial de cambios se conservan en local.
 
 ---
 

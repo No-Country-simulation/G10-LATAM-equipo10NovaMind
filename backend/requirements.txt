@@ -17,7 +17,7 @@ tenacity==8.5.0
 # --- Ingesta de documentos ---
 pypdf==5.0.1
 
-# --- Almacenamiento OCI (cliente real aislado para integración futura) ---
+# --- OCI Object Storage: bucket privado con documentos, paquetes y guiones de video (storage/oci_client.py) ---
 oci==2.135.1
 
 # --- Pruebas ---

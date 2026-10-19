@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type MouseEvent } from 'react';
 import { RotateCw, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight, HelpCircle, Sparkles, BookOpen, Award } from 'lucide-react';
 import type { FlashcardItem } from '../../../types/types';
 import { triggerLevelUpConfetti, triggerSmallConfetti } from '../../../utils/confetti';
+import { sonar } from '../../../utils/sonidos';
 import styles from './Station2FlashcardQuest.module.css';
 
 interface Station2Props {
@@ -64,7 +65,10 @@ export const Station2FlashcardQuest = ({
   };
 
   const handleMouseLeave = () => setTilt({ x: 0, y: 0 });
-  const handleFlip = () => setIsFlipped((prev) => !prev);
+  const handleFlip = () => {
+    sonar('giro');
+    setIsFlipped((prev) => !prev);
+  };
 
   const handleCardClick = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;

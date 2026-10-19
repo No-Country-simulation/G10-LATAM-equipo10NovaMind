@@ -35,6 +35,7 @@ import { PizarraDidactica } from './PizarraDidactica';
 import { TeleprompterEstudio } from './TeleprompterEstudio';
 import { VELOCIDADES_LOCUCION, type EstadoAmpliacion, type VelocidadLocucion } from './estudioTipos';
 import { duracionesDeAudio } from './video/medirAudio';
+import { marcarVoz } from '../../../utils/sonidos';
 import { FuenteChip } from '../../RecursoEstado/RecursoEstado';
 import styles from './Station4DirectorCut.module.css';
 import estudio from './EstudioDirector.module.css';
@@ -226,6 +227,12 @@ const DirectorStudio = ({
     window.speechSynthesis.addEventListener('voiceschanged', alCambiar);
     return () => window.speechSynthesis.removeEventListener('voiceschanged', alCambiar);
   }, []);
+
+  // Mientras habla el video o el teleprompter, los efectos de sonido se callan
+  useEffect(() => {
+    marcarVoz('estacion4', isPlaying || hablandoTele);
+  }, [isPlaying, hablandoTele]);
+  useEffect(() => () => marcarVoz('estacion4', false), []);
 
   const completionFiredRef = useRef(false);
   const promptTimeoutRef = useRef<number | undefined>(undefined);

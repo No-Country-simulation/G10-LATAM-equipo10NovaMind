@@ -27,6 +27,8 @@ import type {
   OrigenContenido,
 } from "./types/types";
 import { triggerLevelUpConfetti, triggerSmallConfetti } from "./utils/confetti";
+import { sonar } from "./utils/sonidos";
+import { mazoAnkiCsv, nombreArchivoAnki } from "./utils/exportAnki";
 import { solicitarAdaptacion } from "./services/api";
 import { cargarMuestra, escenarioDe, indiceMuestras } from "./services/muestras";
 import { estacionesResueltas } from "./utils/paqueteIncremental";
@@ -235,6 +237,7 @@ export default function App() {
       addXp(xpAmount);
 
       const newCount = Object.values(nextCompleted).filter(Boolean).length;
+      sonar(newCount === 5 ? 'fanfarria' : 'logro');
       if (newCount === 5) {
         triggerLevelUpConfetti();
       }
@@ -305,6 +308,7 @@ export default function App() {
       setPaqueteListo(true);
       setCurrentStep(2);
       triggerSmallConfetti();
+      sonar('logro');
     } catch (err: unknown) {
       if (version !== accountVersion.current) return;
       alert(`⚠️ ${err instanceof Error ? err.message : String(err)}`);
@@ -399,6 +403,7 @@ export default function App() {
       setPaqueteListo(true);
       setCurrentStep(2);
       triggerSmallConfetti();
+      sonar('logro');
     } catch (err: unknown) {
       if (version !== accountVersion.current) return;
       setCompletedStations(priorState.completedStations); setQuizState(priorState.quizState);
@@ -468,19 +473,13 @@ export default function App() {
   };
 
   const handleDownloadAnkiCSV = () => {
-    const rows = [
-      ["Front", "Back"],
-      ...(currentPackage.contenido_adaptado.flashcards ?? []).map((f) => [
-        `"${f.frente.replace(/"/g, '""')}"`,
-        `"${f.dorso.replace(/"/g, '""')} <br><em>Hint: ${f.pista_didactica.replace(/"/g, '""')}</em>"`,
-      ]),
-    ];
-    const csvContent = rows.map((e) => e.join(",")).join("\n");
+    const titulo = currentPackage.contenido_adaptado.titulo;
+    const csvContent = mazoAnkiCsv(currentPackage.contenido_adaptado.flashcards ?? [], titulo);
     const dataStr =
       "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "anki-cards-adaptacion.csv");
+    downloadAnchor.setAttribute("download", nombreArchivoAnki(titulo));
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();

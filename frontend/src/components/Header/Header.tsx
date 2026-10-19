@@ -1,7 +1,29 @@
-import React from 'react';
-import { Check, LogIn, User as UserIcon, LogOut } from 'lucide-react';
+import React, { useSyncExternalStore } from 'react';
+import { Check, LogIn, User as UserIcon, LogOut, Volume2, VolumeX } from 'lucide-react';
 import type { AuthUser } from '../AuthModal/AuthModal';
+import { cambiarSonido, sonar, sonidoActivo, suscribirSonido } from '../../utils/sonidos';
 import styles from './Header.module.css';
+
+/** Activa o silencia los efectos de sonido; la preferencia se recuerda en este navegador. */
+const BotonSonido: React.FC = () => {
+  const activo = useSyncExternalStore(suscribirSonido, sonidoActivo);
+  const etiqueta = activo ? 'Silenciar los efectos de sonido' : 'Activar los efectos de sonido';
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        cambiarSonido(!activo);
+        if (!activo) sonar('acierto'); // muestra cómo suenan al activarlos
+      }}
+      className={styles.sonidoBtn}
+      title={etiqueta}
+      aria-label={etiqueta}
+      aria-pressed={activo}
+    >
+      {activo ? <Volume2 size={15} /> : <VolumeX size={15} />}
+    </button>
+  );
+};
 
 interface HeaderProps {
   currentStep: 1 | 2 | 3;
@@ -91,6 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Columna Derecha: Auth / Perfil */}
         <div className={styles.rightCol}>
+          <BotonSonido />
           {user ? (
             <div className={styles.userProfileWrapper}>
               <div className={styles.userAvatarCircle} title={user.email}>

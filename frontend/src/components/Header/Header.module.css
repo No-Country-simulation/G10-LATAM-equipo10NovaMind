@@ -395,6 +395,32 @@ filter: drop-shadow(0 0 15px rgba(0, 220, 180, 0.6))
   background: rgba(244, 63, 94, 0.12);
 }
 
+/* Activar o silenciar los efectos de sonido */
+.sonidoBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  margin-right: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sonidoBtn:hover {
+  color: var(--color-violet-300);
+  background: var(--color-violet-bg);
+}
+
+.sonidoBtn:focus-visible {
+  outline: 2px solid var(--color-violet-300);
+  outline-offset: 2px;
+}
+
 /* Etiqueta visible mientras no hay sesión */
 .modoInvitado {
   margin-right: 0.5rem;

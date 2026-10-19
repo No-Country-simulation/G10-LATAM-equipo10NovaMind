@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { QuizQuestion } from "../../../types/types";
 import { triggerCelebrationConfetti } from "../../../utils/confetti";
+import { sonar } from "../../../utils/sonidos";
 import { FuenteChip } from "../../RecursoEstado/RecursoEstado";
 import { puntosDeRepaso } from "../../../utils/repasoQuiz";
 import { RepasoGuiado } from "./RepasoGuiado";
@@ -234,6 +235,7 @@ export const Station5FinalTrial = ({
     if (isEvaluated || fallidas.includes(index)) return;
 
     if (index === currentQ.respuesta_correcta) {
+      sonar('acierto');
       setSelectedOption(index);
       setIsEvaluated(true);
       setUserAnswers((prev) => ({ ...prev, [currentQuestionIndex]: true }));
@@ -241,6 +243,7 @@ export const Station5FinalTrial = ({
     }
 
     // Incorrecta: cuesta un escudo y se puede reintentar sin revelar la correcta.
+    sonar('error');
     onQuizChange((prev) => ({
       ...prev,
       failedOptions: {
