@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import {
   UploadCloud, Sparkles, Database, CheckCircle2, Zap, Cpu, ArrowRight, Eye, Lock, ScanText, PenLine, AlertTriangle, Loader2,
-  Dices, SlidersHorizontal, FileText, X, ChevronRight,
+  Dices, SlidersHorizontal, FileText, X, ChevronRight, Play,
 } from 'lucide-react';
 import type {
   RecipientProfile, OutputFormat, IndustryNiche, DetailLevel, RealDocumentPreset, OrigenContenido, MuestraPregenerada,
@@ -18,24 +18,26 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const ARCHIVOS_ACEPTADOS = '.pdf,.md,.markdown,.txt,.png,.jpg,.jpeg,.webp';
 const esImagen = (f: File) => f.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(f.name);
 const esPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
-// Tarjeta del archivo elegido: etiqueta de tipo y tamaño legible
+
 const tipoArchivo = (nombre: string): 'PDF' | 'MD' | 'TXT' | 'IMG' => {
   if (/\.pdf$/i.test(nombre)) return 'PDF';
   if (/\.(md|markdown)$/i.test(nombre)) return 'MD';
   if (/\.(png|jpe?g|webp)$/i.test(nombre)) return 'IMG';
   return 'TXT';
 };
+
 const tamanoLegible = (bytes: number) =>
   bytes < 1024 * 1024
     ? `${Math.max(1, Math.round(bytes / 1024))} KB`
     : `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
-// Opciones de adaptación: las usan los selectores (modo Personalizado) y el sorteo (Sorpréndeme)
+
 const PERFILES: ReadonlyArray<[RecipientProfile, string]> = [
   ['Principiante', 'Principiante / Transición'],
   ['Desarrollador Junior', 'Desarrollador Junior / Semi Senior'],
   ['Líder Técnico / Arquitecto', 'Líder Técnico / Arquitecto'],
   ['Gestor / Ejecutivo (No Técnico)', 'Gestor / Ejecutivo (No Técnico)'],
 ];
+
 const NICHOS: ReadonlyArray<[IndustryNiche, string]> = [
   ['Tecnología e Informática', 'Tecnología e Informática'],
   ['Medicina y Salud', 'Medicina y Salud'],
@@ -49,28 +51,24 @@ const NICHOS: ReadonlyArray<[IndustryNiche, string]> = [
   ['Industria y Operaciones', 'Industria y Operaciones'],
   ['General', 'General (Multisectorial)'],
 ];
+
 const NIVELES: ReadonlyArray<[DetailLevel, string]> = [
   ['Didáctico', 'Didáctico (Metáforas y Analogías)'],
   ['Técnico Profundo', 'Técnico Profundo (Sintaxis y Flags)'],
 ];
-// Resumen, en forma de prompt de rol, de las instrucciones que de verdad recibe Gemini: el backend
-// le describe al estudiante (DIRECTIVAS_PERFIL_DESTINATARIO, DIRECTIVAS_NICHO_SECTOR y
-// DIRECTIVAS_NIVEL_DETALLE en schemas.py). Si cambia una directiva, hay que actualizar su frase aquí.
+
 const PROMPT_PERFIL: Record<RecipientProfile, [string, string]> = {
-  'Principiante': ['un principiante',
-    'Explícale desde cero con lenguaje sencillo, define cada término técnico y apóyate en situaciones cotidianas.'],
-  'Desarrollador Junior': ['un desarrollador junior',
-    'Usa lenguaje técnico y explica cómo funciona cada componente, con sus buenas prácticas y errores frecuentes.'],
-  'Líder Técnico / Arquitecto': ['un líder técnico o arquitecto',
-    'Céntrate en la arquitectura, las decisiones, los riesgos y los compromisos técnicos.'],
-  'Gestor / Ejecutivo (No Técnico)': ['un gestor o ejecutivo no técnico',
-    'Háblale en lenguaje de negocio: impacto, beneficios, riesgos y decisiones, sin detalle técnico innecesario.'],
+  'Principiante': ['un principiante', 'Explícale desde cero con lenguaje sencillo, define cada término técnico y apóyate en situaciones cotidianas.'],
+  'Desarrollador Junior': ['un desarrollador junior', 'Usa lenguaje técnico y explica cómo funciona cada componente, con sus buenas prácticas y errores frecuentes.'],
+  'Líder Técnico / Arquitecto': ['un líder técnico o arquitecto', 'Céntrate en la arquitectura, las decisiones, los riesgos y los compromisos técnicos.'],
+  'Gestor / Ejecutivo (No Técnico)': ['un gestor o ejecutivo no técnico', 'Háblale en lenguaje de negocio: impacto, beneficios, riesgos y decisiones, sin detalle técnico innecesario.'],
 };
+
 const PROMPT_NIVEL: Record<DetailLevel, [string, string]> = {
   'Didáctico': ['entender las ideas clave', 'Usa analogías y avanza un paso cada vez.'],
-  'Técnico Profundo': ['profundizar en los detalles',
-    'Entra en la arquitectura y la configuración, y reproduce los comandos tal como aparecen en el documento.'],
+  'Técnico Profundo': ['profundizar en los detalles', 'Entra en la arquitectura y la configuración, y reproduce los comandos tal como aparecen en el documento.'],
 };
+
 const promptPaquete = (perfil: RecipientProfile, nicho: IndustryNiche, nivel: DetailLevel) => {
   const [quien, enfoque] = PROMPT_PERFIL[perfil];
   const [meta, profundidad] = PROMPT_NIVEL[nivel];
@@ -80,15 +78,15 @@ const promptPaquete = (perfil: RecipientProfile, nicho: IndustryNiche, nivel: De
     + `${profundidad} Con este documento, genera 5 estaciones: resumen, flashcards, tutorial con diagrama, `
     + 'video narrado de hasta 60 s y quiz. Usa solo lo que dice el documento y respalda cada afirmación con una cita.';
 };
+
 const etiqueta = <T,>(opciones: ReadonlyArray<[T, string]>, valor: T) =>
   opciones.find(([v]) => v === valor)?.[1] ?? String(valor);
+
 const alAzar = <T,>(opciones: ReadonlyArray<[T, string]>): T =>
   opciones[Math.floor(Math.random() * opciones.length)][0];
 
-// `accept` solo filtra el diálogo de archivos: lo que se arrastra hay que comprobarlo a mano
 const esAceptado = (f: File) => ARCHIVOS_ACEPTADOS.split(',').some((ext) => f.name.toLowerCase().endsWith(ext));
 
-/** bloquea=false: solo falta la vista previa; el archivo ya se puede enviar */
 type Extraccion = { estado: 'inactiva' } | { estado: 'cargando' | 'error'; mensaje: string; bloquea?: boolean };
 
 interface Step1Props {
@@ -103,10 +101,8 @@ interface Step1Props {
     rawFile?: File | null,
     origenContenido?: OrigenContenido
   ) => void;
-  /** Escenarios pregenerados (paquete y video) de los documentos de ejemplo, por id del catálogo */
   muestras: Record<string, MuestraPregenerada[]>;
   onAbrirMuestra: (documento: string, escenario?: string) => void;
-  /** Sin sesión (o como invitado) solo se abren las muestras de la biblioteca, con sus ajustes fijos */
   sesionIniciada: boolean;
   onIniciarSesion: () => void;
   isProcessing: boolean;
@@ -115,7 +111,6 @@ interface Step1Props {
 
 type DocumentoCargado = { archivo: File; texto: string };
 
-/** La carga en curso es la de una muestra (sus etapas lo dicen): no hay modelos trabajando. */
 const esEtapaDeMuestra = (etapa: string) => /^(Muestra|Abriendo la muestra)/.test(etapa);
 
 export const Step1Ingestion = ({
@@ -128,39 +123,32 @@ export const Step1Ingestion = ({
   processingStage,
 }: Step1Props) => {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
-  // Escenario elegido del documento (mismo texto, otros ajustes); sin elegir, el primero
   const [escenarioId, setEscenarioId] = useState<string | undefined>(undefined);
   const [isLoadingPreset, setIsLoadingPreset] = useState<boolean>(false);
   const [docTitle, setDocTitle] = useState<string>('');
   const [docContent, setDocContent] = useState<string>('');
-  // Se empieza en Personalizado (decisión del usuario, 16/10) con valores de partida fijos;
-  // Sorpréndeme sortea al elegirlo
   const [profile, setProfile] = useState<RecipientProfile>('Principiante');
   const [format, setFormat] = useState<OutputFormat>('Paquete Educativo Completo (5 Estaciones)');
   const [niche, setNiche] = useState<IndustryNiche>('General');
   const [detail, setDetail] = useState<DetailLevel>('Didáctico');
   const [fileName, setFileName] = useState<string | null>(null);
   const [rawFile, setRawFile] = useState<File | null>(null);
-  // rawFile queda vacío mientras se extrae o si el texto es una transcripción: el tamaño se guarda aparte
   const [bytesArchivo, setBytesArchivo] = useState<number | null>(null);
-  // transcripcion_ia: el texto lo transcribió Gemini de una imagen o un PDF escaneado y es editable
   const [origen, setOrigen] = useState<OrigenContenido>('documento');
   const [extraccion, setExtraccion] = useState<Extraccion>({ estado: 'inactiva' });
   const [avisosFuente, setAvisosFuente] = useState<string[]>([]);
-  const turnoSubida = useRef(0); // descarta respuestas de una subida anterior
+  const turnoSubida = useRef(0);
   const [arrastrando, setArrastrando] = useState<boolean>(false);
-  // La tarjeta de progreso queda al pie del formulario: al empezar se lleva a la vista,
-  // si no, quien pulsó arriba no ve que algo se está generando
   const tarjetaProgresoRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (isProcessing) tarjetaProgresoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [isProcessing]);
-  // Sin documento todavía, la zona de carga se destaca como el punto de partida
+
   const sinDocumento = !fileName && !docContent && !isLoadingPreset;
   const documentoElegido = REAL_DOCUMENTS_CATALOG.find((d) => d.id === selectedDocId);
   const [modo, setModo] = useState<'personalizado' | 'sorpresa'>('personalizado');
 
-  // Sorteo visible: lo que se muestra es exactamente lo que se envía. Nunca repite la combinación actual.
   const sortear = () => {
     let p = profile, n = niche, d = detail;
     for (let i = 0; i < 10 && p === profile && n === niche && d === detail; i++) {
@@ -177,6 +165,7 @@ export const Step1Ingestion = ({
     if (nuevo === 'sorpresa' && modo !== 'sorpresa') sortear();
     setModo(nuevo);
   };
+
   const esTranscripcion = origen === 'transcripcion_ia';
   const extrayendo = extraccion.estado === 'cargando' && extraccion.bloquea !== false;
 
@@ -187,7 +176,6 @@ export const Step1Ingestion = ({
     setAvisosFuente([]);
   };
 
-  /** Carga un documento de la biblioteca; devuelve el archivo y su texto, o null si falló o se reemplazó */
   const handleSelectRealDocument = async (doc: RealDocumentPreset): Promise<DocumentoCargado | null> => {
     reiniciarFuente();
     const turno = turnoSubida.current;
@@ -195,7 +183,7 @@ export const Step1Ingestion = ({
     setEscenarioId(undefined);
     setIsLoadingPreset(true);
     setDocTitle(doc.titulo);
-    // El invitado usa los ajustes fijos del documento; en Sorpréndeme se respeta el sorteo que se ve
+
     if (modo === 'personalizado' || !sesionIniciada) {
       setNiche(doc.nicho);
       setProfile(doc.perfil);
@@ -223,9 +211,8 @@ export const Step1Ingestion = ({
         setExtraccion({ estado: 'inactiva' });
         return { archivo, texto };
       }
-      // El PDF ya se puede enviar; su texto (el ENISA tarda ~15 s la primera vez) solo es vista previa
-      setExtraccion({ estado: 'cargando', bloquea: false,
-        mensaje: 'Extrayendo el texto para la vista previa… ya puedes generar.' });
+
+      setExtraccion({ estado: 'cargando', bloquea: false, mensaje: 'Extrayendo el texto para la vista previa… ya puedes generar.' });
       try {
         const { texto } = await textoDocumentoEjemplo(doc.nombre_archivo);
         if (turno !== turnoSubida.current) return null;
@@ -234,12 +221,14 @@ export const Step1Ingestion = ({
         return { archivo, texto };
       } catch (err) {
         if (turno !== turnoSubida.current) return null;
-        setExtraccion({ estado: 'error', bloquea: false, mensaje:
-          `No se pudo previsualizar el texto (${err instanceof Error ? err.message : String(err)}); el PDF se procesará igualmente.` });
+        setExtraccion({
+          estado: 'error',
+          bloquea: false,
+          mensaje: `No se pudo previsualizar el texto (${err instanceof Error ? err.message : String(err)}); el PDF se procesará igualmente.`,
+        });
         return { archivo, texto: '' };
       }
     } catch (err) {
-      // Sin el documento no se genera nada: nunca a partir de la descripción del catálogo
       if (turno !== turnoSubida.current) return null;
       setFileName(null);
       setSelectedDocId(null);
@@ -250,11 +239,10 @@ export const Step1Ingestion = ({
     }
   };
 
-  // La demo siempre termina en el recorrido (paso 2): con muestra, sin gastar cuota; sin muestra,
-  // y solo con sesión, se genera con los ajustes fijos del documento.
   const demo = REAL_DOCUMENTS_CATALOG[0];
   const demoConMuestra = Boolean(muestras[demo.id]?.length);
   const demoDisponible = demoConMuestra || sesionIniciada;
+
   const handleLoadDemoScenario = async () => {
     if (demoConMuestra) {
       onAbrirMuestra(demo.id);
@@ -263,21 +251,31 @@ export const Step1Ingestion = ({
     if (!sesionIniciada) return;
     const cargado = await handleSelectRealDocument(demo);
     if (cargado) {
-      onStartPipeline(demo.titulo, cargado.texto, demo.perfil, demo.formato_sugerido, demo.nicho, demo.detalle,
-        demo.id, cargado.archivo, 'documento');
+      onStartPipeline(
+        demo.titulo,
+        cargado.texto,
+        demo.perfil,
+        demo.formato_sugerido,
+        demo.nicho,
+        demo.detalle,
+        demo.id,
+        cargado.archivo,
+        'documento'
+      );
     }
   };
+
   const escenariosDoc = selectedDocId ? muestras[selectedDocId] ?? [] : [];
   const muestraElegida = selectedDocId ? escenarioDe(muestras, selectedDocId, escenarioId) : undefined;
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = ''; // permite volver a elegir el mismo archivo
+    e.target.value = '';
     if (file) void procesarArchivo(file);
   };
 
   const handleDragOver = (e: DragEvent<HTMLLabelElement>) => {
-    e.preventDefault(); // sin esto, el navegador abre el archivo en la pestaña en vez de soltarlo aquí
+    e.preventDefault();
     if (!extrayendo) setArrastrando(true);
   };
 
@@ -312,13 +310,11 @@ export const Step1Ingestion = ({
       return;
     }
 
-    // PDF e imágenes: se previsualiza el texto real que se va a procesar. Una imagen o un PDF
-    // escaneado vuelven transcritos por IA y se generan desde esa transcripción revisada.
     setRawFile(null);
     setDocContent('');
     setExtraccion({
       estado: 'cargando',
-      mensaje: esImagen(file) ? 'Transcribiendo la imagen con IA…' : 'Extrayendo el texto del PDF…',
+      mensaje: esImagen(file) ? 'Transcribiendo imagen con IA…' : 'Extrayendo texto del PDF…',
     });
     try {
       const doc = await extraerDocumento(file);
@@ -329,7 +325,7 @@ export const Step1Ingestion = ({
       if (doc.origen === 'transcripcion_ia') {
         setOrigen('transcripcion_ia');
       } else {
-        setRawFile(file); // PDF con texto: se envía el archivo, con sus páginas y secciones exactas
+        setRawFile(file);
       }
     } catch (err) {
       if (turno !== turnoSubida.current) return;
@@ -338,7 +334,6 @@ export const Step1Ingestion = ({
     }
   };
 
-  // Quita el documento elegido; si aún se estaba extrayendo, su respuesta se descarta por turno
   const quitarArchivo = () => {
     reiniciarFuente();
     setSelectedDocId(null);
@@ -356,7 +351,7 @@ export const Step1Ingestion = ({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (extrayendo) return;
-    if (!sesionIniciada) {  // el invitado no genera: abre la muestra del documento elegido
+    if (!sesionIniciada) {
       if (selectedDocId && muestraElegida) onAbrirMuestra(selectedDocId, muestraElegida.escenario);
       return;
     }
@@ -365,7 +360,7 @@ export const Step1Ingestion = ({
       return;
     }
     onStartPipeline(
-      docTitle.trim() || 'Documento sin título',  // ya no hay campo para escribirlo
+      docTitle.trim() || 'Documento sin título',
       docContent,
       profile,
       format,
@@ -379,38 +374,36 @@ export const Step1Ingestion = ({
 
   return (
     <div className={styles.container}>
-      {/* Top Hero / Context Banner */}
+      {/* Hero Banner */}
       <div className={styles.heroBanner}>
         <HeroAnimacion />
         <div className={styles.heroContent}>
           <div className={styles.tagRow}>
             <span className={styles.pipelineTag}>
-              <Sparkles size={14} color="#fbbf24" />
+              <Sparkles size={13} color="var(--color-violet-400)" />
               Agentes Pedagógicos
             </span>
             <span className={styles.hackathonSign}>
-              Oracle Next Education · Hackathon ONE G10 · NuevaMente
+              Oracle Next Education · Hackathon ONE G10
             </span>
           </div>
 
-          <h2 className={styles.heroTitle}>
-            Convierte documentos en rutas de aprendizaje
-          </h2>
+       <h2 className={styles.heroTitle}>
+  Convierte documentos <span className={styles.heroTitleGradient}>en rutas de aprendizaje</span>
+</h2>
 
-          {/* Sin «sin alucinaciones»: las citas se verifican contra el documento, pero no se
-              promete lo que no se puede garantizar (regla 1, procedencia honesta) */}
           <p className={styles.heroText}>
-            Resumen, tarjetas, diagrama, video y quiz a partir de tu documento, con citas comprobadas.
+            Resumen, tarjetas, diagrama, video narrado y quiz a partir de tu documentación técnica, con citas comprobadas.
           </p>
         </div>
       </div>
 
-      {/* Prueba rápida: abre la muestra de la Guía OCI Swap sin gastar cuota (también en modo invitado) */}
+      {/* Franja de Prueba Rápida */}
       <div className={styles.demoBannerCard}>
         <div className={styles.demoBannerRow}>
           <div className={styles.demoBannerText}>
             <div className={styles.demoBannerTitle}>
-              <Zap size={22} color="#fbbf24" />
+              <Zap size={18} color="var(--color-violet-400)" />
               ¿Quieres probar la plataforma en 1 solo clic?
             </div>
           </div>
@@ -423,75 +416,84 @@ export const Step1Ingestion = ({
               ? 'Abre el recorrido ya generado de la Guía OCI Swap: no gasta cuota'
               : demoDisponible ? undefined : 'La muestra de la prueba rápida aún no está generada'}
           >
-            <Zap size={16} />
-            {isLoadingPreset
-              ? '⏳ Descargando documento...'
-              : demoConMuestra
-                ? 'Prueba rápida 😊'
-                : sesionIniciada
-                  ? '⚡ Generar la Guía OCI Swap (gasta cuota)'
-                  : 'Prueba rápida en preparación'}
+            {isLoadingPreset ? (
+              <>
+                <Loader2 size={15} className={styles.spinningIcon} />
+                <span>Cargando documento...</span>
+              </>
+            ) : (
+              <>
+                <Zap size={15} />
+                <span>Prueba rápida</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Biblioteca: para quien llega sin sesión es el punto de partida, y se dice en claro */}
+      {/* Sección Selección de Biblioteca */}
       <div className={styles.scenariosSection}>
-        <h2 className={styles.tituloRuta}>Aquí empieza tu ruta de aprendizaje</h2>
+        <h2 className={styles.tituloRuta}>Ruta de aprendizaje</h2>
+        
         <div className={styles.scenariosHeader}>
-          <h3 className={`${styles.scenariosLabel} ${styles.scenariosLabelPaso}`}>
-            <Database size={16} color="var(--color-violet-400)" />
-            Elige un documento de ejemplo…
-          </h3>
+          <div className={styles.scenariosLabel}>
+            <Database size={15} color="var(--color-violet-400)" />
+            <span>Documentos de ejemplo</span>
+          </div>
           <span className={styles.scenariosHelp}>
-            {isLoadingPreset
-              ? '⏳ Cargando el documento…'
-              : sesionIniciada
-                ? 'Documentos reales listos para probar, o sube el tuyo en el formulario de abajo'
-                : 'Documentos reales con su paquete y su video ya generados'}
+            {isLoadingPreset ? (
+              <span className={styles.inlineLoading}>
+                <Loader2 size={12} className={styles.spinningIcon} /> Cargando...
+              </span>
+            ) : sesionIniciada ? (
+              'Materiales preconfigurados o sube tu archivo abajo'
+            ) : (
+              'Recorridos y video pregenerados listos para explorar'
+            )}
           </span>
         </div>
 
-        {/* Qué va a pasar, en tres pasos: para quien entra por primera vez */}
+        {/* Guía de pasos compacta */}
         {!sesionIniciada && !selectedDocId && (
-          <ol className={styles.guiaPasos}>
-            <li><span className={styles.guiaNumero}>1</span> Elige un documento en la lista</li>
-            <li><span className={styles.guiaNumero}>2</span> Pulsa «Iniciar Aprendizaje»</li>
-            <li><span className={styles.guiaNumero}>3</span> Recorre 5 estaciones: resumen, tarjetas, tutorial, video narrado y quiz</li>
-          </ol>
+          <div className={styles.guiaContainer}>
+            <ol className={styles.guiaPasos}>
+              <li><span className={styles.guiaNumero}>1</span> Elige un documento de la lista</li>
+              <li><span className={styles.guiaNumero}>2</span> Pulsa «Iniciar Aprendizaje»</li>
+              <li><span className={styles.guiaNumero}>3</span> Explora las 5 estaciones pedagógicas</li>
+            </ol>
+          </div>
         )}
 
-        <div className={`${styles.selectorBiblioteca} ${!sesionIniciada && !selectedDocId ? styles.selectorInvitacion : ''}`}>
-          {!sesionIniciada && !selectedDocId && <span className={styles.pasoBadge}>Empieza aquí</span>}
-        <select
-          value={selectedDocId ?? ''}
-          onChange={(e) => {
-            const doc = REAL_DOCUMENTS_CATALOG.find((d) => d.id === e.target.value);
-            if (doc) handleSelectRealDocument(doc);
-          }}
-          disabled={isLoadingPreset}
-          className={styles.selectInput}
-          aria-label="Documento de la biblioteca"
-        >
-          <option value="" disabled>
-            👉 Haz clic aquí y elige un documento: Don Quijote, Apache Kafka, Guía OCI…
-          </option>
-          {REAL_DOCUMENTS_CATALOG.map((doc) => (
-            <option key={doc.id} value={doc.id}>
-              {doc.titulo} · {doc.tipo === 'pdf' ? 'PDF' : 'MD'} {doc.tamano_formato.split(' ').slice(0, 2).join(' ')}
-              {(muestras[doc.id]?.length ?? 0) > 1 ? ` · ⭐ ${muestras[doc.id].length} ejemplos distintos del mismo documento` : ''}
+        <div className={styles.selectorBiblioteca}>
+          <select
+            value={selectedDocId ?? ''}
+            onChange={(e) => {
+              const doc = REAL_DOCUMENTS_CATALOG.find((d) => d.id === e.target.value);
+              if (doc) handleSelectRealDocument(doc);
+            }}
+            disabled={isLoadingPreset}
+            className={styles.selectInput}
+            aria-label="Documento de la biblioteca"
+          >
+            <option value="" disabled>
+              Selecciona un documento: Don Quijote, Apache Kafka, Guía OCI...
             </option>
-          ))}
-        </select>
+            {REAL_DOCUMENTS_CATALOG.map((doc) => (
+              <option key={doc.id} value={doc.id}>
+                {doc.titulo} · {doc.tipo.toUpperCase()} ({doc.tamano_formato.split(' ').slice(0, 2).join(' ')})
+                {(muestras[doc.id]?.length ?? 0) > 1 ? ` · ${muestras[doc.id].length} variantes` : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
         {documentoElegido && (
           <div className={`${styles.scenarioCard} ${styles.scenarioCardSelected}`}>
             <div className={styles.scenarioTopRow}>
-              <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+              <div className={styles.badgeRow}>
                 <span className={styles.nicheBadge}>{documentoElegido.nicho}</span>
                 <span className={styles.formatTypeBadge}>
-                  {documentoElegido.tipo === 'pdf' ? '📕 PDF' : '📄 MD'} · {documentoElegido.tamano_formato.split(' ').slice(0, 2).join(' ')}
+                  {documentoElegido.tipo.toUpperCase()} · {documentoElegido.tamano_formato.split(' ').slice(0, 2).join(' ')}
                 </span>
               </div>
               <CheckCircle2 size={16} color="var(--color-violet-400)" />
@@ -501,29 +503,29 @@ export const Step1Ingestion = ({
         )}
       </div>
 
-      {/* Formulario Principal */}
-      <form onSubmit={handleSubmit} className={styles.container}>
-        {/* Alternativa al documento de ejemplo: mismo formato que «Elige un documento de ejemplo…» */}
-        <h3 className={`${styles.scenariosLabel} ${styles.scenariosLabelPaso} ${styles.tituloCarga}`}>
-          <UploadCloud size={16} color="var(--color-violet-400)" />
-          o carga tu propio documento
-        </h3>
+      {/* Formulario de Ingestión */}
+      <form onSubmit={handleSubmit} className={styles.formContainer}>
+        <div className={styles.seccionSubidaHeader}>
+          <div className={styles.scenariosLabel}>
+            <UploadCloud size={15} color="var(--color-violet-400)" />
+            <span>O sube tu propio documento</span>
+          </div>
+        </div>
+
         <div className={styles.formCard}>
-          {/* File Dropzone & Document Title */}
-          <div className={styles.inputGrid}>
-            <div className={`${styles.fieldGroup} ${styles.fieldGroupAncho}`}>
-              <label className={styles.fieldLabel}>
-                Carga de Archivo (PDF, MD, TXT o imagen)
-              </label>
-              {!sesionIniciada ? (
-                <div className={styles.cargaBloqueada}>
-                  <Lock size={16} aria-hidden="true" />
-                  <span>Para subir tu propio documento y elegir perfil, sector y nivel, inicia sesión. Sin sesión, usa los documentos de la biblioteca.</span>
-                  <button type="button" onClick={onIniciarSesion} className={styles.botonSecundario}>
-                    Iniciar sesión
-                  </button>
-                </div>
-              ) : (
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Documento de entrada (PDF, MD, TXT o Imagen)</label>
+            {!sesionIniciada ? (
+              <div className={styles.cargaBloqueada}>
+                <Lock size={16} className={styles.lockIcon} aria-hidden="true" />
+                <span className={styles.bloqueoTexto}>
+                  Inicia sesión para subir archivos propios y personalizar sector, audiencia y nivel.
+                </span>
+                <button type="button" onClick={onIniciarSesion} className={styles.botonSecundario}>
+                  Iniciar sesión
+                </button>
+              </div>
+            ) : (
               <label
                 className={[
                   styles.fileDropzone,
@@ -534,24 +536,21 @@ export const Step1Ingestion = ({
                 onDragLeave={() => setArrastrando(false)}
                 onDrop={handleDrop}
               >
-                {sinDocumento && <span className={styles.pasoBadge}>Paso 1 · Empieza aquí</span>}
-                <UploadCloud
-                  size={sinDocumento ? 34 : 18}
-                  color="var(--color-violet-400)"
-                  className={sinDocumento && !arrastrando ? styles.iconoFlotante : undefined}
-                />
-                <span className={styles.fileText}>
-                  {arrastrando
-                    ? 'Suelta el archivo aquí'
-                    : sinDocumento
-                      ? 'Arrastra tu documento aquí o haz clic para elegirlo'
-                      : 'Arrastra o haz clic para cambiar de documento'}
-                </span>
-                {sinDocumento && (
-                  <span className={styles.fileHint}>
-                    PDF, MD, TXT o imagen (.png, .jpg, .webp) · hasta 15 MB · o elige uno de la biblioteca de arriba
+                <div className={styles.dropzoneIconWrapper}>
+                  <UploadCloud size={24} color="var(--color-violet-400)" />
+                </div>
+                <div className={styles.dropzoneTextWrapper}>
+                  <span className={styles.fileText}>
+                    {arrastrando
+                      ? 'Suelta el archivo aquí'
+                      : sinDocumento
+                        ? 'Arrastra un archivo aquí o haz clic para seleccionarlo'
+                        : 'Arrastra o haz clic para sustituir el documento'}
                   </span>
-                )}
+                  <span className={styles.fileHint}>
+                    PDF, Markdown, TXT o imagen (PNG, JPG, WEBP) · Máx. 15 MB
+                  </span>
+                </div>
                 <input
                   type="file"
                   accept={ARCHIVOS_ACEPTADOS}
@@ -560,34 +559,33 @@ export const Step1Ingestion = ({
                   style={{ display: 'none' }}
                 />
               </label>
-              )}
-              {fileName && (() => {
-                const tipo = tipoArchivo(fileName);
-                return (
-                  <div className={`${styles.fileCard} ${styles[`fileCard${tipo}`]}`}>
-                    <FileText size={16} className={styles.fileCardIcon} aria-hidden />
-                    <span className={styles.fileCardName} title={fileName}>{fileName}</span>
-                    <span className={`${styles.fileTypeBadge} ${styles[`fileTypeBadge${tipo}`]}`}>{tipo}</span>
-                    {bytesArchivo !== null && (
-                      <span className={styles.fileCardMeta}>{tamanoLegible(bytesArchivo)}</span>
-                    )}
-                    <button
-                      type="button"
-                      className={styles.fileCardRemove}
-                      onClick={quitarArchivo}
-                      aria-label={`Quitar ${fileName}`}
-                      title="Quitar el documento"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                );
-              })()}
-            </div>
+            )}
+
+            {fileName && (() => {
+              const tipo = tipoArchivo(fileName);
+              return (
+                <div className={`${styles.fileCard} ${styles[`fileCard${tipo}`]}`}>
+                  <FileText size={16} className={styles.fileCardIcon} aria-hidden />
+                  <span className={styles.fileCardName} title={fileName}>{fileName}</span>
+                  <span className={`${styles.fileTypeBadge} ${styles[`fileTypeBadge${tipo}`]}`}>{tipo}</span>
+                  {bytesArchivo !== null && (
+                    <span className={styles.fileCardMeta}>{tamanoLegible(bytesArchivo)}</span>
+                  )}
+                  <button
+                    type="button"
+                    className={styles.fileCardRemove}
+                    onClick={quitarArchivo}
+                    aria-label={`Quitar ${fileName}`}
+                    title="Quitar archivo"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
-          {/* Sin campo de título (decisión del usuario, 16/10): se toma del catálogo o del nombre del archivo */}
-          {/* Previsualización del documento (solo lectura) */}
+          {/* Previsualización del Documento */}
           <div className={styles.fieldGroup}>
             <div className={styles.fieldLabelRow}>
               <span className={styles.fieldLabel}>Previsualización del Documento</span>
@@ -595,12 +593,12 @@ export const Step1Ingestion = ({
                 {esTranscripcion ? (
                   <span className={styles.transcriptionBadge}>
                     <ScanText size={12} />
-                    <span>Transcripción IA · revísala y corrígela</span>
+                    <span>Transcripción IA (editable)</span>
                   </span>
                 ) : (
                   <span className={styles.readOnlyBadge}>
                     <Eye size={12} />
-                    <span>Solo Lectura · Previsualización</span>
+                    <span>Solo Lectura</span>
                   </span>
                 )}
                 {docContent && (
@@ -616,28 +614,30 @@ export const Step1Ingestion = ({
                 className={extraccion.estado === 'error' ? styles.sourceError : styles.sourceLoading}
                 role={extraccion.estado === 'error' ? 'alert' : 'status'}
               >
-                {extraccion.estado === 'error'
-                  ? <AlertTriangle size={14} />
-                  : <Loader2 size={14} className={styles.spinningIcon} />}
+                {extraccion.estado === 'error' ? (
+                  <AlertTriangle size={14} />
+                ) : (
+                  <Loader2 size={14} className={styles.spinningIcon} />
+                )}
                 <span>{extraccion.mensaje}</span>
               </div>
             )}
 
             <div className={styles.previewBoxWrapper}>
               <textarea
-                rows={esTranscripcion ? 10 : 5}
+                rows={esTranscripcion ? 9 : 5}
                 value={docContent}
                 readOnly={!esTranscripcion}
                 onChange={(e) => handleTranscripcionEditada(e.target.value)}
-                placeholder="Selecciona un documento oficial de la biblioteca superior o sube un archivo (PDF, MD, TXT o imagen) para previsualizar su contenido aquí..."
+                placeholder="El contenido del documento seleccionado o subido se visualizará aquí..."
                 className={styles.previewTextArea}
               />
               <div className={styles.previewFooterNotice}>
-                {esTranscripcion ? <PenLine size={12} /> : <Lock size={12} />}
+                {esTranscripcion ? <PenLine size={13} /> : <Lock size={13} />}
                 <span>
                   {esTranscripcion
-                    ? 'Texto transcrito por IA desde tu archivo: corrige lo que esté mal leído. Las citas del material se verificarán contra este texto, no contra la imagen.'
-                    : 'Documento protegido contra edición: el contenido fuente se procesará íntegro sin modificaciones manuales.'}
+                    ? 'Texto extraído por visión IA: puedes corregirlo. La fundamentación pedagógica citará este texto exacto.'
+                    : 'Documento protegido contra edición: el material fuente se procesará íntegro para garantizar citas exactas.'}
                 </span>
               </div>
             </div>
@@ -651,14 +651,14 @@ export const Step1Ingestion = ({
             )}
           </div>
 
-          {/* Parámetros pedagógicos: el invitado ve los fijos del documento; con sesión, dos formas de empezar */}
+          {/* Sección de Personalización Pedagógica */}
           {!sesionIniciada ? (
             <div className={styles.sorteo} aria-live="polite">
               {documentoElegido ? (
                 <>
                   {escenariosDoc.length > 1 && (
                     <div className={styles.escenarios} role="radiogroup" aria-label="Escenarios de este documento">
-                      <span className={styles.sorteoTitulo}>Mismo documento, {escenariosDoc.length} escenarios:</span>
+                      <span className={styles.sorteoTitulo}>Escenarios disponibles:</span>
                       {escenariosDoc.map((e) => (
                         <button
                           key={e.escenario}
@@ -668,115 +668,118 @@ export const Step1Ingestion = ({
                           onClick={() => setEscenarioId(e.escenario)}
                           className={`${styles.escenario} ${e.escenario === muestraElegida?.escenario ? styles.escenarioActivo : ''}`}
                         >
-                          {e.etiqueta}{e.modo === 'clasico' ? ' · modo clásico (RAG)' : ''}
+                          {e.etiqueta}{e.modo === 'clasico' ? ' · RAG Tradicional' : ''}
                         </button>
                       ))}
                     </div>
                   )}
-                  <span className={styles.sorteoTitulo}>Ajustes de {escenariosDoc.length > 1 ? 'este escenario' : 'este documento'}:</span>
+                  <span className={styles.sorteoTitulo}>Parámetros configurados:</span>
                   <span className={styles.sorteoChip}><strong>Perfil:</strong> {etiqueta(PERFILES, muestraElegida?.ajustes.perfil ?? documentoElegido.perfil)}</span>
                   <span className={styles.sorteoChip}><strong>Sector:</strong> {etiqueta(NICHOS, muestraElegida?.ajustes.nicho ?? documentoElegido.nicho)}</span>
                   <span className={styles.sorteoChip}><strong>Nivel:</strong> {etiqueta(NIVELES, muestraElegida?.ajustes.detalle ?? documentoElegido.detalle)}</span>
                   {muestraElegida?.modo === 'clasico' && (
-                    <span className={styles.sorteoChip}><strong>Modo:</strong> clásico, RAG vectorial (Cohere, ChromaDB y LangGraph)</span>
+                    <span className={styles.sorteoChip}><strong>Modo:</strong> RAG Vectorial (Cohere + LangGraph)</span>
                   )}
                 </>
               ) : (
-                <span className={styles.sorteoTitulo}>Elige un documento de la biblioteca: cada uno trae su perfil, sector y nivel</span>
+                <span className={styles.sorteoTitulo}>Elige un documento para revisar sus parámetros predeterminados</span>
               )}
             </div>
-          ) : (<>
-          <h3 className={styles.tituloPerfil}>Antes de empezar 👀 selecciona tu perfil</h3>
-          <div className={styles.modoSelector} role="radiogroup" aria-label="Cómo quieres adaptar el documento">
-            <button
-              type="button"
-              role="radio"
-              aria-checked={modo === 'personalizado'}
-              onClick={() => elegirModo('personalizado')}
-              className={`${styles.modoOpcion} ${modo === 'personalizado' ? styles.modoOpcionActiva : ''}`}
-            >
-              <SlidersHorizontal size={18} color="var(--color-violet-400)" />
-              <span className={styles.modoTitulo}>Personalizado</span>
-              <span className={styles.modoDesc}>Tú eliges cada parámetro</span>
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={modo === 'sorpresa'}
-              onClick={() => elegirModo('sorpresa')}
-              className={`${styles.modoOpcion} ${styles.modoSorpresa} ${modo === 'sorpresa' ? styles.modoOpcionActiva : ''}`}
-              title="Sorteamos perfil, sector y nivel por ti"
-            >
-              <Sparkles size={18} color="#fde047" className={styles.destello} />
-              <span className={styles.modoTitulo}>Sorpréndeme</span>
-              <span className={styles.modoDesc}>Perfil al azar</span>
-            </button>
-          </div>
-
-          {modo === 'sorpresa' ? (
-            <div className={styles.sorteo} aria-live="polite">
-              <span className={styles.sorteoTitulo}>Te tocó:</span>
-              <span className={styles.sorteoChip}><strong>Perfil:</strong> {etiqueta(PERFILES, profile)}</span>
-              <span className={styles.sorteoChip}><strong>Sector:</strong> {etiqueta(NICHOS, niche)}</span>
-              <span className={styles.sorteoChip}><strong>Nivel:</strong> {etiqueta(NIVELES, detail)}</span>
-              <button type="button" onClick={sortear} className={styles.sorteoBoton}>
-                <Dices size={14} />
-                Otra combinación
-              </button>
-            </div>
           ) : (
-            <div className={styles.paramsGrid}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Perfil del Destinatario</label>
-                <select
-                  value={profile}
-                  onChange={(e) => setProfile(e.target.value as RecipientProfile)}
-                  className={styles.selectInput}
-                >
-                  {PERFILES.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
-                </select>
+            <div className={styles.parametrizacionBloque}>
+              <div className={styles.parametrizacionHeader}>
+                <span className={styles.fieldLabel}>Adaptación pedagógica</span>
+                
+                {/* Segmented Control */}
+                <div className={styles.segmentedControl} role="radiogroup" aria-label="Modo de parametrización">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={modo === 'personalizado'}
+                    onClick={() => elegirModo('personalizado')}
+                    className={`${styles.segmentedTab} ${modo === 'personalizado' ? styles.segmentedTabActiva : ''}`}
+                  >
+                    <SlidersHorizontal size={14} />
+                    <span>Personalizado</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={modo === 'sorpresa'}
+                    onClick={() => elegirModo('sorpresa')}
+                    className={`${styles.segmentedTab} ${modo === 'sorpresa' ? styles.segmentedTabActiva : ''}`}
+                  >
+                    <Sparkles size={14} />
+                    <span>Sorpréndeme</span>
+                  </button>
+                </div>
               </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Nicho / Sector</label>
-                <select
-                  value={niche}
-                  onChange={(e) => setNiche(e.target.value as IndustryNiche)}
-                  className={styles.selectInput}
-                >
-                  {NICHOS.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
-                </select>
-              </div>
+              {modo === 'sorpresa' ? (
+                <div className={styles.sorteo} aria-live="polite">
+                  <span className={styles.sorteoTitulo}>Configuración aleatoria:</span>
+                  <span className={styles.sorteoChip}><strong>Perfil:</strong> {etiqueta(PERFILES, profile)}</span>
+                  <span className={styles.sorteoChip}><strong>Sector:</strong> {etiqueta(NICHOS, niche)}</span>
+                  <span className={styles.sorteoChip}><strong>Nivel:</strong> {etiqueta(NIVELES, detail)}</span>
+                  <button type="button" onClick={sortear} className={styles.sorteoBoton}>
+                    <Dices size={14} />
+                    <span>Reintentar</span>
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.paramsGrid}>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldSubLabel}>Perfil del Destinatario</label>
+                    <select
+                      value={profile}
+                      onChange={(e) => setProfile(e.target.value as RecipientProfile)}
+                      className={styles.selectInput}
+                    >
+                      {PERFILES.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                    </select>
+                  </div>
 
-              <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Nivel de Detalle</label>
-                <select
-                  value={detail}
-                  onChange={(e) => setDetail(e.target.value as DetailLevel)}
-                  className={styles.selectInput}
-                >
-                  {NIVELES.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
-                </select>
-              </div>
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldSubLabel}>Nicho / Sector</label>
+                    <select
+                      value={niche}
+                      onChange={(e) => setNiche(e.target.value as IndustryNiche)}
+                      className={styles.selectInput}
+                    >
+                      {NICHOS.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                    </select>
+                  </div>
+
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldSubLabel}>Nivel de Detalle</label>
+                    <select
+                      value={detail}
+                      onChange={(e) => setDetail(e.target.value as DetailLevel)}
+                      className={styles.selectInput}
+                    >
+                      {NIVELES.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          </>)}
 
-          {/* Plegado por defecto: está para quien quiera saber qué se le pide a la IA */}
+          {/* Directivas Prompt del Sistema */}
           <details className={styles.promptPaquete}>
             <summary className={styles.promptEtiqueta}>
-              <ChevronRight size={12} className={styles.promptChevron} aria-hidden="true" />
-              <Sparkles size={12} aria-hidden="true" />
-              Lo que NuevaMente le pedirá a la IA <em>(resumen de las instrucciones reales)</em>
+              <ChevronRight size={13} className={styles.promptChevron} aria-hidden="true" />
+              <Sparkles size={13} aria-hidden="true" />
+              <span>Instrucciones pedagógicas para los modelos</span>
             </summary>
             <p className={styles.promptTexto}>{promptPaquete(profile, niche, detail)}</p>
           </details>
 
-          {/* Estado de Animación del Pipeline o Botón de Acción */}
-      {isProcessing ? (
+          {/* Barra de Procesamiento / Botones Finales */}
+          {isProcessing ? (
             <div className={styles.processingCard} ref={tarjetaProgresoRef} role="status" aria-live="polite">
               <div className={styles.processingHeader}>
-                <Cpu size={24} className={styles.spinningIcon} />
+                <Cpu size={22} className={styles.spinningIcon} />
                 <span className={styles.processingStageText}>
                   {processingStage || 'Orquestando agentes pedagógicos...'}
                 </span>
@@ -786,28 +789,25 @@ export const Step1Ingestion = ({
               </div>
               <div className={styles.processingMeta}>
                 {esEtapaDeMuestra(processingStage)
-                  ? 'Muestra pregenerada: no se llama a ningún modelo ni se gasta cuota'
-                  // Lo que de verdad hace el modo paralelo (regla 1). Dónde se guarda depende del servidor
-                  // (OCI con clave, disco si no): «en tu cuenta» es cierto en los dos casos
-                  : 'Gemini en paralelo · Citas verificadas en el documento · Guardado en tu cuenta'}
+                  ? 'Abriendo muestra pregenerada (sin consumo de cuota)'
+                  : 'Procesamiento paralelo con Gemini · Fundamentación en documento · OCI Object Storage'}
               </div>
             </div>
           ) : (
             <div className={styles.submitBar}>
-              {/* En vez del texto de OCI (decisión del usuario, 16/10): la hoja que se convierte en recursos */}
               <MiniAnimacionRecursos />
 
               {!sesionIniciada ? (
                 <div className={styles.accionesMuestra}>
                   <span className={styles.notaInvitado}>
                     {muestraElegida
-                      ? `Modo invitado: se abre la muestra generada el ${muestraElegida.generado_el} con estos ajustes, sin gastar cuota. Para generar y guardar en OCI, inicia sesión.`
+                      ? `Modo invitado: apertura de la muestra del ${muestraElegida.generado_el}. Inicia sesión para generar documentos nuevos.`
                       : selectedDocId
-                        ? 'Este documento aún no tiene su muestra generada. Inicia sesión para generarlo.'
-                        : 'Modo invitado: elige un documento de la biblioteca o usa la prueba rápida.'}
+                        ? 'Este documento aún no tiene una muestra precargada. Inicia sesión para crearlo.'
+                        : 'Elige un documento de ejemplo para previsualizar.'}
                   </span>
                   <button type="submit" className={styles.submitButton} disabled={!muestraElegida || isLoadingPreset}>
-                    <Sparkles size={16} color="#fde047" />
+                    <Play size={16} fill="currentColor" />
                     <span>Iniciar Aprendizaje</span>
                     <ArrowRight size={16} />
                   </button>
@@ -818,15 +818,13 @@ export const Step1Ingestion = ({
                     type="button"
                     className={styles.submitButton}
                     onClick={() => onAbrirMuestra(selectedDocId, muestraElegida.escenario)}
-                    title={`Paquete y video generados el ${muestraElegida.generado_el} (${muestraElegida.etiqueta}, ${muestraElegida.ajustes.detalle})`}
                   >
-                    <Zap size={16} color="#fde047" />
-                    <span>Ver recorrido de muestra (sin gastar cuota)</span>
-                    <ArrowRight size={16} />
+                    <Play size={15} fill="currentColor" />
+                    <span>Ver muestra precargada</span>
                   </button>
                   <button type="submit" className={styles.botonSecundario} disabled={extrayendo}>
                     <Sparkles size={14} aria-hidden="true" />
-                    <span>Generar con mis ajustes (gasta cuota)</span>
+                    <span>Generar con mis parámetros</span>
                   </button>
                 </div>
               ) : (
@@ -835,7 +833,7 @@ export const Step1Ingestion = ({
                   className={styles.submitButton}
                   disabled={extrayendo}
                 >
-                  <Sparkles size={16} color="#fde047" />
+                  <Sparkles size={16} />
                   <span>Iniciar Aprendizaje</span>
                   <ArrowRight size={16} />
                 </button>
