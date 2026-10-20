@@ -11,18 +11,18 @@
   max-width: 90rem;
   width: 100%;
   margin: 0 auto;
-  padding: 2rem 1rem;
-}
+  padding: 2rem 0;
+ }
 
 @media (min-width: 640px) {
   .mainContent {
-    padding: 2rem 1.5rem;
+    padding: 2rem 0;
   }
 }
 
 @media (min-width: 1024px) {
   .mainContent {
-    padding: 2.5rem 2rem;
+    padding: 2.5rem 0;
   }
 }
 
