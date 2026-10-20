@@ -10,6 +10,9 @@ import {
   ChevronRight,
   Sparkles,
   X,
+  Loader2,
+  AlertTriangle,
+  Layers,
 } from 'lucide-react';
 import type { AdaptedContentPackage, MuestraPregenerada } from '../../types/types';
 import type { QuizState } from '../../services/persistence';
@@ -19,23 +22,20 @@ import { Station3TutorialQuest } from '../stations/Station3TutorialQuest/Station
 import { Station4DirectorCut } from '../stations/Station4DirectorCut/Station4DirectorCut';
 import { Station5FinalTrial } from '../stations/Station5Quiz/Station5Quiz';
 import { EstadoRecursoBar, ListaRecursos, RecursoNoDisponible } from '../RecursoEstado/RecursoEstado';
-
-/**
- * Ocultos por decisión del usuario (14/10): los avisos del paquete ("N avisos sobre este material")
- * y la barra de cada recurso (Auditada, N/M citas localizadas, avisos de las comprobaciones).
- * Se siguen calculando y viajan en el paquete; para volver a mostrarlos, poner `true`.
- * Las citas no verificadas siguen marcadas en cada chip de fuente.
- */
-const MOSTRAR_AVISOS_DE_CALIDAD = false;
 import { RecursosApoyo, ResumenEjecutivo } from '../RecursosApoyo/RecursosApoyo';
 import { RECURSO_POR_ESTACION, estacionDisponible, estadoDe } from '../../utils/paqueteIncremental';
 import styles from './Step2KnowledgeQuest.module.css';
+
+/**
+ * Ocultos por decisión de diseño: avisos del paquete y la barra de auditoría por recurso.
+ * Se siguen calculando internamente.
+ */
+const MOSTRAR_AVISOS_DE_CALIDAD = false;
 
 interface Step2Props {
   quizState: QuizState;
   onQuizChange: (update: (previous: QuizState) => QuizState) => void;
   contentPackage: AdaptedContentPackage;
-  /** Escenarios pregenerados del mismo documento, si el paquete es una muestra (para comparar) */
   escenarios?: MuestraPregenerada[];
   onAbrirEscenario?: (muestra: MuestraPregenerada) => void;
   completedStations: Record<number, boolean>;
@@ -55,12 +55,13 @@ interface Step2Props {
   isGenerating?: boolean;
   unlockedStations?: number[];
   generatingMessage?: string;
+  ajustesSeleccionados?: {
+    perfil?: string;
+    sector?: string;
+    nivel?: string;
+  };
 }
 
-/**
- * Lista de un recurso del paquete. Paquetes antiguos o del respaldo pueden traerla envuelta
- * en un objeto (`{ pasos: [...] }`, `{ scenes: [...] }`…): se acepta cualquiera de esas claves.
- */
 function listaDe<T>(valor: T[] | null | undefined, ...claves: string[]): T[] {
   if (Array.isArray(valor)) return valor;
   if (valor && typeof valor === 'object') {
@@ -95,6 +96,7 @@ export const Step2KnowledgeQuest = ({
   isGenerating = false,
   unlockedStations = [0, 1, 2, 3, 4],
   generatingMessage = '',
+  ajustesSeleccionados,
 }: Step2Props) => {
   const [lockedWarning, setLockedWarning] = useState<string | null>(null);
 
@@ -106,6 +108,7 @@ export const Step2KnowledgeQuest = ({
       return () => clearTimeout(timer);
     }
   }, [lockedWarning]);
+
   const completedStationsCount = Object.values(completedStations).filter(Boolean).length;
   const isFinalTrialUnlocked = completedStationsCount >= 2;
   const unlockedList = unlockedStations || [0, 1, 2, 3, 4];
@@ -114,7 +117,7 @@ export const Step2KnowledgeQuest = ({
     {
       index: 0,
       title: 'Resumen',
-      subtitle: '',
+      subtitle: 'Síntesis y conceptos clave',
       icon: Zap,
       xp: '+50 XP',
       isLocked: false,
@@ -122,7 +125,7 @@ export const Step2KnowledgeQuest = ({
     {
       index: 1,
       title: 'Tarjetas didácticas',
-      subtitle: '',
+      subtitle: 'Memorización activa',
       icon: BookOpen,
       xp: '+50 XP',
       isLocked: false,
@@ -130,7 +133,7 @@ export const Step2KnowledgeQuest = ({
     {
       index: 2,
       title: 'Guía paso a paso',
-      subtitle: '',
+      subtitle: 'Tutorial interactivo',
       icon: Target,
       xp: '+75 XP',
       isLocked: false,
@@ -138,7 +141,7 @@ export const Step2KnowledgeQuest = ({
     {
       index: 3,
       title: 'Contenido Audiovisual',
-      subtitle: '',
+      subtitle: 'Video narrado 60s',
       icon: Clapperboard,
       xp: '+50 XP',
       isLocked: false,
@@ -146,7 +149,7 @@ export const Step2KnowledgeQuest = ({
     {
       index: 4,
       title: 'Cuestionario',
-      subtitle: '',
+      subtitle: 'Evaluación final',
       icon: Award,
       xp: '+100 XP',
       isLocked: !isFinalTrialUnlocked,
@@ -172,6 +175,34 @@ export const Step2KnowledgeQuest = ({
   const avisosPaquete = contentPackage.advertencias ?? [];
   const muestra = contentPackage.muestra;
 
+  // Extracción flexible y segura de los metadatos para contemplar documento propio, muestra o "Sorpréndeme"
+  const metaExt = (contentPackage.metadatos || {}) as Record<string, unknown>;
+  const orqExt = (contentPackage.orquestacion || {}) as Record<string, unknown>;
+
+  const perfilActivo =
+    ajustesSeleccionados?.perfil ||
+    metaExt.perfil_aplicado ||
+    metaExt.perfil_destinatario ||
+    muestra?.ajustes?.perfil ||
+    'Principiante / Transición de Carrera';
+
+  const sectorActivo =
+    ajustesSeleccionados?.sector ||
+    metaExt.nicho_sector ||
+    metaExt.nicho ||
+    metaExt.sector ||
+    orqExt.nicho_sector ||
+    muestra?.ajustes?.nicho ||
+    'General (Infraestructura & Cloud)';
+
+  const nivelActivo =
+    ajustesSeleccionados?.nivel ||
+    metaExt.nivel_detalle ||
+    metaExt.detalle ||
+    orqExt.nivel_detalle ||
+    muestra?.ajustes?.detalle ||
+    'Didáctico (Metáforas y Analogías)';
+
   return (
     <div className={styles.container}>
       {/* Toast Flotante de Protocolo de Desbloqueo */}
@@ -179,7 +210,7 @@ export const Step2KnowledgeQuest = ({
         <div className={styles.lockedToast}>
           <div className={styles.lockedToastContent}>
             <div className={styles.lockedToastIcon}>
-              <Lock size={18} />
+              <Lock size={16} />
             </div>
             <span>{lockedWarning}</span>
           </div>
@@ -189,7 +220,7 @@ export const Step2KnowledgeQuest = ({
             className={styles.lockedToastClose}
             title="Cerrar notificación"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       )}
@@ -198,7 +229,7 @@ export const Step2KnowledgeQuest = ({
       {isGenerating && (
         <div className={styles.generatingBanner}>
           <div className={styles.generatingBannerText}>
-            <Sparkles size={16} className={styles.spinningIcon} color="#f0abfc" />
+            <Sparkles size={16} className={styles.spinningIcon} color="#c084fc" />
             <span>{generatingMessage || 'Orquestando agentes pedagógicos en tiempo real...'}</span>
           </div>
           <span className={styles.generatingBannerSub}>
@@ -207,38 +238,95 @@ export const Step2KnowledgeQuest = ({
         </div>
       )}
 
-      {/* Muestra pregenerada (regla 1): se dice qué es, con qué ajustes y con qué modo se generó */}
-      {muestra && !isGenerating && (
-        <div className={styles.muestraBanner}>
-          <p className={styles.muestraTexto}>
-            <strong>Perfil:</strong> {muestra.ajustes.perfil} · <strong>Sector:</strong> {muestra.ajustes.nicho} ·{' '}
-            <strong>Nivel:</strong> {muestra.ajustes.detalle}
-            {/* El modo clásico se sigue diciendo (regla 1): es otro motor, con otra calidad */}
-            {muestra.modo === 'clasico' && (
-              <> · <strong>Modo clásico</strong> (RAG vectorial: Cohere, ChromaDB y LangGraph)</>
-            )}
-          </p>
-          {escenarios.length > 1 && onAbrirEscenario && (
-            <div className={styles.escenarios} role="group" aria-label="Escenarios del mismo documento">
-              <span className={styles.escenariosTitulo}>Mismo documento, otros escenarios:</span>
-              {escenarios.map((e) => (
-                <button
-                  key={e.escenario}
-                  type="button"
-                  className={e.escenario === muestra.escenario ? styles.escenarioActivo : styles.escenario}
-                  aria-pressed={e.escenario === muestra.escenario}
-                  disabled={e.escenario === muestra.escenario}
-                  onClick={() => onAbrirEscenario(e)}
-                >
-                  {e.etiqueta}{e.modo === 'clasico' ? ' · modo clásico (RAG)' : ''}
-                </button>
-              ))}
+      {/* ── BARRA SUPERIOR DE CONTEXTO Y ESCENARIOS PEDAGÓGICOS ── */}
+      {!isGenerating && (
+        <>
+          {/* CASO 1: Muestra precargada con múltiples escenarios para alternar */}
+          {muestra && escenarios.length > 1 && onAbrirEscenario ? (
+            <div className={styles.muestraBanner}>
+              <div className={styles.escenariosHeader}>
+                <div className={styles.escenariosTitleGroup}>
+                  <Layers size={14} className={styles.escenariosIcon} />
+                  <span className={styles.escenariosTitulo}>
+                    Escenarios Pedagógicos Precargados
+                  </span>
+                  <span className={styles.escenariosSub}>
+                    (Compara cómo adapta la IA el mismo documento según rol y sector)
+                  </span>
+                </div>
+
+                <div className={styles.escenariosChipsGroup} role="tablist" aria-label="Variantes del documento">
+                  {escenarios.map((e) => {
+                    const esActivo = e.escenario === muestra.escenario;
+                    const perfil = e.ajustes.perfil;
+                    const sector = e.ajustes.nicho;
+
+                    return (
+                      <button
+                        key={e.escenario}
+                        type="button"
+                        role="tab"
+                        aria-selected={esActivo}
+                        className={`${styles.escenarioCard} ${esActivo ? styles.escenarioCardActivo : ''}`}
+                        disabled={esActivo}
+                        onClick={() => onAbrirEscenario(e)}
+                        title={`Cargar adaptación para ${perfil} en ${sector}`}
+                      >
+                        <div className={styles.escenarioContent}>
+                          <span className={styles.escenarioPerfil}>{perfil}</span>
+                          <span className={styles.escenarioDot}>·</span>
+                          <span className={styles.escenarioSector}>{sector}</span>
+                        </div>
+
+                        {e.modo === 'clasico' && (
+                          <span className={styles.badgeClasico}>RAG Clásico</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* CASOS 2, 3 y 4: Muestra de escenario único, Documento propio o Modo Sorpréndeme */
+            <div className={styles.customBadgeBanner}>
+              <div className={styles.customBadgeLeft}>
+                <Sparkles size={14} className={styles.customSparkleIcon} />
+                <span className={styles.customBadgeLabel}>
+                  {muestra
+                    ? 'Muestra Didáctica Preconfigurada:'
+                    : 'Adaptación Pedagógica Generada:'}
+                </span>
+              </div>
+
+              <div className={styles.customBadgeList}>
+                <span className={styles.customTag}>
+                  <strong className={styles.customTagKey}>Perfil:</strong> {String(perfilActivo)}
+                </span>
+
+                <span className={styles.customTag}>
+                  <strong className={styles.customTagKey}>Sector:</strong> {String(sectorActivo)}
+                </span>
+
+                <span className={styles.customTag}>
+                  <strong className={styles.customTagKey}>Nivel:</strong> {String(nivelActivo)}
+                </span>
+
+                {muestra?.modo === 'clasico' ? (
+                  <span className={styles.badgeClasico}>Modo Clásico (RAG)</span>
+                ) : contentPackage.metadatos?.modelo_llm ? (
+                  <span className={styles.customTag}>
+                    <strong className={styles.customTagKey}>Motor:</strong>{' '}
+                    {contentPackage.metadatos.modelo_llm}
+                  </span>
+                ) : null}
+              </div>
             </div>
           )}
-        </div>
+        </>
       )}
 
-      {/* Avisos del backend sobre la procedencia del material (transcripción IA, modelo de respaldo...) */}
+      {/* Avisos de calidad opcionales */}
       {MOSTRAR_AVISOS_DE_CALIDAD && !isGenerating && avisosPaquete.length > 0 && (
         <details className={styles.packageNotices} open={avisosPaquete.length <= 2}>
           <summary>
@@ -252,27 +340,27 @@ export const Step2KnowledgeQuest = ({
         </details>
       )}
 
-      {/* RPG Stepper Strip */}
+      {/* Barra de Secuencia Stepper RPG */}
       <div className={styles.stepperBarCard}>
         <div className={styles.stepperHeader}>
           <div className={styles.titleArea}>
             <span className={styles.pulseIndicator} />
-            <h2 className={styles.mainTitle}>
-              Ruta Cognitiva · {contentPackage.contenido_adaptado.titulo}
-            </h2>
+            <div className={styles.titleGroup}>
+              <span className={styles.kicker}>Ruta de Aprendizaje Activa</span>
+              <h2 className={styles.mainTitle}>
+                {contentPackage.contenido_adaptado.titulo}
+              </h2>
+            </div>
           </div>
           <div className={styles.metaGroup}>
-            <span className={styles.profilePill}>
-              Perfil: {contentPackage.metadatos.perfil_aplicado}
-            </span>
             <span className={styles.ratioCounter}>
-              {completedStationsCount} de 5 Estaciones Dominadas
+              <strong>{completedStationsCount}</strong> de 5 Estaciones Dominadas
             </span>
           </div>
         </div>
 
-        {/* 5-Node Sequence Bar */}
-        <div className={styles.nodesGrid}>
+        {/* Grilla de las 5 Estaciones */}
+       <div className={styles.nodesGrid}>
           {stationsMeta.map((node) => {
             const isSelected = activeStationIndex === node.index;
             const isDone = !!completedStations[node.index];
@@ -281,6 +369,7 @@ export const Step2KnowledgeQuest = ({
             const NodeIcon = node.icon;
 
             const selectedClass = isSelected ? styles[`nodeSelected_${node.index}`] : '';
+            const accentClass = styles[`nodeAccent_${node.index}`] || '';
 
             return (
               <button
@@ -288,8 +377,16 @@ export const Step2KnowledgeQuest = ({
                 type="button"
                 onClick={() => handleSelectStation(node.index)}
                 disabled={node.isLocked && !isGenerating}
-                className={`${styles.nodeBtn} ${selectedClass} ${node.isLocked && !isGenerating ? styles.nodeBtnLocked : ''}`}
+                className={`${styles.nodeBtn} ${accentClass} ${selectedClass} ${
+                  node.isLocked && !isGenerating ? styles.nodeBtnLocked : ''
+                }`}
               >
+                {/* ✨ CAPA AWWWARDS: Marca de agua vectorial y halo que emergen de la esquina sup-derecha */}
+                <div className={styles.nodeCornerGlow} aria-hidden="true" />
+                <div className={styles.nodeWatermark} aria-hidden="true">
+                  <NodeIcon size={108} strokeWidth={1.2} />
+                </div>
+
                 <div className={styles.nodeTopRow}>
                   <div
                     className={`${styles.nodeIconBox} ${
@@ -301,11 +398,11 @@ export const Step2KnowledgeQuest = ({
                     }`}
                   >
                     {isDone ? (
-                      <CheckCircle2 size={16} />
+                      <CheckCircle2 size={15} />
                     ) : node.isLocked && !isGenerating ? (
-                      <Lock size={14} color="#f59e0b" />
+                      <Lock size={13} color="#f59e0b" />
                     ) : !isStationReady ? (
-                      <Sparkles size={14} className={styles.spinningIcon} color="#fbbf24" />
+                      <Loader2 size={13} className={styles.spinningIcon} color="#c084fc" />
                     ) : (
                       <NodeIcon size={14} />
                     )}
@@ -313,15 +410,18 @@ export const Step2KnowledgeQuest = ({
 
                   {!isStationReady ? (
                     <span className={styles.nodeGeneratingPill}>
-                      ⏳ Generando...
+                      <Loader2 size={10} className={styles.spinningIcon} />
+                      <span>Generando</span>
                     </span>
                   ) : isStationFailed ? (
-                    <span className={styles.nodeGeneratingPill}>
-                      ⚠️ No disponible
+                    <span className={styles.nodeFailedPill}>
+                      <AlertTriangle size={10} />
+                      <span>No disponible</span>
                     </span>
                   ) : isGenerating ? (
                     <span className={styles.nodeReadyPill}>
-                      ✨ Lista
+                      <Sparkles size={10} />
+                      <span>Lista</span>
                     </span>
                   ) : (
                     <span className={styles.nodeXpPill}>
@@ -336,9 +436,9 @@ export const Step2KnowledgeQuest = ({
                   </div>
                   <div className={styles.nodeSubtitleText}>
                     {!isStationReady
-                      ? 'Redactando con Agente 2...'
+                      ? 'Procesando con agente...'
                       : node.isLocked && !isGenerating
-                      ? '🔒 Requiere 2 completadas'
+                      ? 'Requiere 2 previas'
                       : node.subtitle}
                   </div>
                 </div>
@@ -350,12 +450,12 @@ export const Step2KnowledgeQuest = ({
         </div>
       </div>
 
-      {/* Active Station Viewport */}
+      {/* Contenedor Principal de la Estación */}
       <div className={styles.viewportContainer}>
         {!isCurrentStationReady ? (
           <div className={styles.generatingCard}>
             <div className={styles.generatingHeader}>
-              <Sparkles size={28} className={styles.spinningIcon} color="#f0abfc" />
+              <Sparkles size={26} className={styles.spinningIcon} color="#c084fc" />
               <h3 className={styles.generatingTitle}>
                 Generando 0{activeStationIndex + 1}. {stationsMeta[activeStationIndex]?.title}
               </h3>
@@ -370,7 +470,7 @@ export const Step2KnowledgeQuest = ({
               {contenido.estado_recursos ? (
                 <ListaRecursos estados={contenido.estado_recursos} />
               ) : (
-                <span>✦ Generando y verificando los recursos contra el documento…</span>
+                <span>Generando y verificando recursos contra el documento fuente...</span>
               )}
             </div>
           </div>
@@ -404,9 +504,7 @@ export const Step2KnowledgeQuest = ({
 
             {activeStationIndex === 2 && (
               <Station3TutorialQuest
-                steps={
-                  listaDe(contentPackage.contenido_adaptado.tutorial, 'pasos', 'steps')
-                }
+                steps={listaDe(contentPackage.contenido_adaptado.tutorial, 'pasos', 'steps')}
                 tituloDocumento={contenido.titulo}
                 objetivos={contenido.objetivos_aprendizaje}
                 isCompleted={!!completedStations[2]}
@@ -426,9 +524,7 @@ export const Step2KnowledgeQuest = ({
                 degradaciones={contentPackage.contenido_adaptado.video_job_spec?.degradaciones}
                 videoJobSpec={contentPackage.contenido_adaptado.video_job_spec}
                 muestra={contentPackage.muestra}
-                scenes={
-                  listaDe(contentPackage.contenido_adaptado.director_cut, 'escenas', 'scenes')
-                }
+                scenes={listaDe(contentPackage.contenido_adaptado.director_cut, 'escenas', 'scenes')}
                 isCompleted={!!completedStations[3]}
                 onCompleteStation={(xp) => onCompleteStation(3, xp)}
                 onOpenDirectorBadge={onOpenDirectorBadge}
@@ -440,9 +536,7 @@ export const Step2KnowledgeQuest = ({
               <Station5FinalTrial
                 quizState={quizState}
                 onQuizChange={onQuizChange}
-                questions={
-                  listaDe(contentPackage.contenido_adaptado.quiz, 'preguntas', 'questions')
-                }
+                questions={listaDe(contentPackage.contenido_adaptado.quiz, 'preguntas', 'questions')}
                 completedStationsCount={completedStationsCount}
                 isUnlocked={isFinalTrialUnlocked || isGenerating}
                 cognitiveShields={cognitiveShields}
@@ -457,14 +551,13 @@ export const Step2KnowledgeQuest = ({
           </>
         )}
 
-        {/* Objetivos, resumen ejecutivo, glosario y diapositivas junto a su estación */}
         {isCurrentStationReady && <RecursosApoyo paquete={contentPackage} estacion={activeStationIndex} />}
       </div>
 
-      {/* Quick Navigation Footer */}
+      {/* Footer de Navegación Rápida */}
       <div className={styles.quickNavFooter}>
         <div className={styles.footerInfo}>
-          <span>Estación actual:</span>
+          <span className={styles.footerInfoLabel}>Estación activa:</span>
           <strong className={styles.activeStationHighlight}>
             0{activeStationIndex + 1} / 05 · {stationsMeta[activeStationIndex]?.title}
           </strong>
@@ -487,7 +580,7 @@ export const Step2KnowledgeQuest = ({
               className={styles.finishQuestButton}
             >
               <span>Ver Métricas & Artefactos OCI (Paso 03)</span>
-              <ChevronRight size={14} />
+              <ChevronRight size={15} />
             </button>
           )}
         </div>
@@ -495,3 +588,5 @@ export const Step2KnowledgeQuest = ({
     </div>
   );
 };
+
+export default Step2KnowledgeQuest;
