@@ -18,7 +18,7 @@ Backend: Pedro Ruiz, Gabriel Quinenao, Emanuel López
 
 Blockchain: Alejandro Cárdenas
 
-Data Engineering: Tomás Encina
+Data Engineering: Tomás Encina, Wilson Ignao
 
 Verificar y actualizar esta lista con el equipo antes de publicar.
 
