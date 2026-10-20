@@ -221,6 +221,16 @@ export const Step1Ingestion = ({
   const documentoElegido = REAL_DOCUMENTS_CATALOG.find(
     (d) => d.id === selectedDocId,
   );
+  const escenariosDoc = selectedDocId ? (muestras[selectedDocId] ?? []) : [];
+  const muestraElegida = selectedDocId
+    ? escenarioDe(muestras, selectedDocId, escenarioId)
+    : undefined;
+
+  // Validación de estado habilitado para el CTA final
+  const hayDocumentoListo = Boolean(
+    docContent.trim() || rawFile || fileName || (selectedDocId && (muestraElegida || sesionIniciada))
+  );
+
   const [modo, setModo] = useState<"personalizado" | "sorpresa">(
     "personalizado",
   );
@@ -362,11 +372,6 @@ export const Step1Ingestion = ({
     }
   };
 
-  const escenariosDoc = selectedDocId ? (muestras[selectedDocId] ?? []) : [];
-  const muestraElegida = selectedDocId
-    ? escenarioDe(muestras, selectedDocId, escenarioId)
-    : undefined;
-
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -457,18 +462,17 @@ export const Step1Ingestion = ({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (extrayendo) return;
+    if (extrayendo || isLoadingPreset || !hayDocumentoListo) return;
+
     if (!sesionIniciada) {
-      if (selectedDocId && muestraElegida)
+      if (selectedDocId && muestraElegida) {
         onAbrirMuestra(selectedDocId, muestraElegida.escenario);
+      }
       return;
     }
-    if (!docContent.trim() && !rawFile) {
-      alert(
-        "Por favor selecciona un documento de la biblioteca o sube un archivo antes de iniciar el pipeline.",
-      );
-      return;
-    }
+
+    if (!docContent.trim() && !rawFile) return;
+
     onStartPipeline(
       docTitle.trim() || "Documento sin título",
       docContent,
@@ -510,7 +514,9 @@ export const Step1Ingestion = ({
             </h1>
 
             <p className={styles.heroText}>
-              Resumen, tarjetas interactivas, diagrama de arquitectura, video narrado y evaluación formativa a partir de tu documentación técnica, con citas verificadas y sin alucinaciones.
+              Resumen, tarjetas interactivas, diagrama de arquitectura, video
+              narrado y evaluación formativa a partir de tu documentación
+              técnica, con citas verificadas y sin alucinaciones.
             </p>
 
             <div className={styles.heroCtaRow}>
@@ -532,274 +538,217 @@ export const Step1Ingestion = ({
             </div>
           </div>
 
-          {/* Columna Derecha: Ilustración animada con volumen */}
+          {/* Columna Derecha: Ilustración animada */}
           <div className={styles.heroVisualCol}>
             <HeroAnimacion />
           </div>
         </div>
 
-        {/* Indicador de scroll */}
-        <a
-          href="#workspace-ingesta"
-          className={styles.heroScrollIndicator}
-          aria-label="Bajar a la configuración"
-        >
-          <span className={styles.heroScrollDot} />
-        </a>
+        {/* Indicador de Scroll Refinado */}
+        <div className={styles.arrowScroll}>
+          <div className={styles.arrow}></div>
+          <div className={styles.arrow}></div>
+          <div className={styles.arrow}></div>
+        </div>
       </section>
 
       {/* Ancla para scroll suave */}
       <div id="workspace-ingesta" />
 
-      {/* Franja de Prueba Rápida */}
-      <div className={styles.demoBannerCard}>
-        <div className={styles.demoBannerRow}>
-          <div className={styles.demoBannerText}>
-            <div className={styles.demoBannerTitle}>
-              <Zap size={18} color="var(--color-violet-400)" />
-              ¿Quieres probar la plataforma en 1 solo clic?
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => void handleLoadDemoScenario()}
-            className={styles.demoButton}
-            disabled={isLoadingPreset || isProcessing || !demoDisponible}
-            title={
-              demoConMuestra
-                ? "Abre el recorrido ya generado de la Guía OCI Swap: no gasta cuota"
-                : demoDisponible
-                  ? undefined
-                  : "La muestra de la prueba rápida aún no está generada"
-            }
-          >
-            {isLoadingPreset ? (
-              <>
-                <Loader2 size={15} className={styles.spinningIcon} />
-                <span>Cargando documento...</span>
-              </>
-            ) : (
-              <>
-                <Zap size={15} />
-                <span>Prueba rápida</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Sección Selección de Biblioteca */}
-      <div className={styles.scenariosSection}>
+      {/* Formulario Principal de Ingesta */}
+      <form onSubmit={handleSubmit} className={styles.formContainer}>
         <h2 className={styles.tituloRuta}>Ruta de aprendizaje</h2>
 
-        <div className={styles.scenariosHeader}>
-          <div className={styles.scenariosLabel}>
-            <Database size={15} color="var(--color-violet-400)" />
-            <span>Documentos de ejemplo</span>
-          </div>
-          <span className={styles.scenariosHelp}>
-            {isLoadingPreset ? (
-              <span className={styles.inlineLoading}>
-                <Loader2 size={12} className={styles.spinningIcon} />{" "}
-                Cargando...
-              </span>
-            ) : sesionIniciada ? (
-              "Materiales preconfigurados o sube tu archivo abajo"
-            ) : (
-              "Recorridos y video pregenerados listos para explorar"
-            )}
-          </span>
-        </div>
-
-        {!sesionIniciada && !selectedDocId && (
-          <div className={styles.guiaContainer}>
-            <ol className={styles.guiaPasos}>
-              <li>
-                <span className={styles.guiaNumero}>1</span> Elige un documento de la lista
-              </li>
-              <li>
-                <span className={styles.guiaNumero}>2</span> Pulsa «Iniciar Aprendizaje»
-              </li>
-              <li>
-                <span className={styles.guiaNumero}>3</span> Explora las 5 estaciones pedagógicas
-              </li>
-            </ol>
-          </div>
-        )}
-
-        <div className={styles.selectorBiblioteca}>
-          <select
-            value={selectedDocId ?? ""}
-            onChange={(e) => {
-              const doc = REAL_DOCUMENTS_CATALOG.find(
-                (d) => d.id === e.target.value,
-              );
-              if (doc) handleSelectRealDocument(doc);
-            }}
-            disabled={isLoadingPreset}
-            className={styles.selectInput}
-            aria-label="Documento de la biblioteca"
-          >
-            <option value="" disabled>
-              Selecciona un documento: Don Quijote, Apache Kafka, Guía OCI...
-            </option>
-            {REAL_DOCUMENTS_CATALOG.map((doc) => (
-              <option key={doc.id} value={doc.id}>
-                {doc.titulo} · {doc.tipo.toUpperCase()} (
-                {doc.tamano_formato.split(" ").slice(0, 2).join(" ")})
-                {(muestras[doc.id]?.length ?? 0) > 1
-                  ? ` · ${muestras[doc.id].length} variantes`
-                  : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {documentoElegido && (
-          <div
-            className={`${styles.scenarioCard} ${styles.scenarioCardSelected}`}
-          >
-            <div className={styles.scenarioTopRow}>
-              <div className={styles.badgeRow}>
-                <span className={styles.nicheBadge}>
-                  {documentoElegido.nicho}
-                </span>
-                <span className={styles.formatTypeBadge}>
-                  {documentoElegido.tipo.toUpperCase()} ·{" "}
-                  {documentoElegido.tamano_formato
-                    .split(" ")
-                    .slice(0, 2)
-                    .join(" ")}
+        {/* ==========================================================
+            LAYOUT SPLIT (2 COLUMNAS): ENTRADA VS PREVISUALIZACIÓN
+        ========================================================== */}
+        <div className={styles.ingestaSplitGrid}>
+          
+          {/* COLUMNA IZQUIERDA: FUENTES DE ENTRADA */}
+          <div className={styles.columnaFuentes}>
+            
+            {/* 1. Biblioteca de Documentos */}
+            <div className={styles.scenariosSection}>
+              <div className={styles.scenariosHeader}>
+                <div className={styles.scenariosLabel}>
+                  <Database size={15} color="var(--color-violet-400)" />
+                  <span>Documentos de ejemplo</span>
+                </div>
+                <span className={styles.scenariosHelp}>
+                  {isLoadingPreset ? (
+                    <span className={styles.inlineLoading}>
+                      <Loader2 size={12} className={styles.spinningIcon} /> Cargando...
+                    </span>
+                  ) : sesionIniciada ? (
+                    "Materiales listos o sube tu archivo"
+                  ) : (
+                    "Recorridos listos para explorar"
+                  )}
                 </span>
               </div>
-              <CheckCircle2 size={16} color="var(--color-violet-400)" />
-            </div>
-            <div className={styles.scenarioSnippet}>
-              {documentoElegido.descripcion}
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Formulario de Ingestión */}
-      <form onSubmit={handleSubmit} className={styles.formContainer}>
-        <div className={styles.seccionSubidaHeader}>
-          <div className={styles.scenariosLabel}>
-            <UploadCloud size={15} color="var(--color-violet-400)" />
-            <span>O sube tu propio documento</span>
-          </div>
-        </div>
+              {!sesionIniciada && !selectedDocId && (
+                <div className={styles.guiaContainer}>
+                  <ol className={styles.guiaPasos}>
+                    <li><span className={styles.guiaNumero}>1</span> Elige un documento de la lista</li>
+                    <li><span className={styles.guiaNumero}>2</span> Pulsa «Iniciar Aprendizaje»</li>
+                    <li><span className={styles.guiaNumero}>3</span> Explora las 5 estaciones</li>
+                  </ol>
+                </div>
+              )}
 
-        <div className={styles.formCard}>
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>
-              Documento de entrada (PDF, MD, TXT o Imagen)
-            </label>
-            {!sesionIniciada ? (
-              <div className={styles.cargaBloqueada}>
-                <Lock
-                  size={16}
-                  className={styles.lockIcon}
-                  aria-hidden="true"
-                />
-                <span className={styles.bloqueoTexto}>
-                  Inicia sesión para subir archivos propios y personalizar
-                  sector, audiencia y nivel.
-                </span>
-                <button
-                  type="button"
-                  onClick={onIniciarSesion}
-                  className={styles.botonSecundario}
+              <div className={styles.selectorBiblioteca}>
+                <select
+                  value={selectedDocId ?? ""}
+                  onChange={(e) => {
+                    const doc = REAL_DOCUMENTS_CATALOG.find(
+                      (d) => d.id === e.target.value,
+                    );
+                    if (doc) handleSelectRealDocument(doc);
+                  }}
+                  disabled={isLoadingPreset}
+                  className={styles.selectInput}
+                  aria-label="Documento de la biblioteca"
                 >
-                  Iniciar sesión
-                </button>
+                  <option value="" disabled>
+                    Selecciona un documento: Don Quijote, Apache Kafka, Guía OCI...
+                  </option>
+                  {REAL_DOCUMENTS_CATALOG.map((doc) => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.titulo} · {doc.tipo.toUpperCase()} (
+                      {doc.tamano_formato.split(" ").slice(0, 2).join(" ")})
+                      {(muestras[doc.id]?.length ?? 0) > 1
+                        ? ` · ${muestras[doc.id].length} variantes`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ) : (
-              <label
-                className={[
-                  styles.fileDropzone,
-                  sinDocumento ? styles.fileDropzoneInvitacion : "",
-                  arrastrando ? styles.fileDropzoneActiva : "",
-                ].join(" ")}
-                onDragOver={handleDragOver}
-                onDragLeave={() => setArrastrando(false)}
-                onDrop={handleDrop}
-              >
-                <div className={styles.dropzoneIconWrapper}>
-                  <UploadCloud size={24} color="var(--color-violet-400)" />
-                </div>
-                <div className={styles.dropzoneTextWrapper}>
-                  <span className={styles.fileText}>
-                    {arrastrando
-                      ? "Suelta el archivo aquí"
-                      : sinDocumento
-                        ? "Arrastra un archivo aquí o haz clic para seleccionarlo"
-                        : "Arrastra o haz clic para sustituir el documento"}
-                  </span>
-                  <span className={styles.fileHint}>
-                    PDF, Markdown, TXT o imagen (PNG, JPG, WEBP) · Máx. 15 MB
-                  </span>
-                </div>
-                <input
-                  type="file"
-                  accept={ARCHIVOS_ACEPTADOS}
-                  onChange={handleFileUpload}
-                  disabled={extrayendo}
-                  style={{ display: "none" }}
-                />
-              </label>
-            )}
 
-            {fileName &&
-              (() => {
-                const tipo = tipoArchivo(fileName);
-                return (
-                  <div
-                    className={`${styles.fileCard} ${styles[`fileCard${tipo}`]}`}
-                  >
-                    <FileText
-                      size={16}
-                      className={styles.fileCardIcon}
-                      aria-hidden
-                    />
-                    <span className={styles.fileCardName} title={fileName}>
-                      {fileName}
-                    </span>
-                    <span
-                      className={`${styles.fileTypeBadge} ${styles[`fileTypeBadge${tipo}`]}`}
-                    >
-                      {tipo}
-                    </span>
-                    {bytesArchivo !== null && (
-                      <span className={styles.fileCardMeta}>
-                        {tamanoLegible(bytesArchivo)}
+              {documentoElegido && (
+                <div className={`${styles.scenarioCard} ${styles.scenarioCardSelected}`}>
+                  <div className={styles.scenarioTopRow}>
+                    <div className={styles.badgeRow}>
+                      <span className={styles.nicheBadge}>
+                        {documentoElegido.nicho}
                       </span>
-                    )}
+                      <span className={styles.formatTypeBadge}>
+                        {documentoElegido.tipo.toUpperCase()} ·{" "}
+                        {documentoElegido.tamano_formato.split(" ").slice(0, 2).join(" ")}
+                      </span>
+                    </div>
+                    <CheckCircle2 size={16} color="var(--color-violet-400)" />
+                  </div>
+                  <div className={styles.scenarioSnippet}>
+                    {documentoElegido.descripcion}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Carga de Archivo Propio */}
+            <div className={styles.seccionSubidaWrapper}>
+              <div className={styles.seccionSubidaHeader}>
+                <div className={styles.scenariosLabel}>
+                  <UploadCloud size={15} color="var(--color-violet-400)" />
+                  <span>O sube tu propio documento</span>
+                </div>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                {!sesionIniciada ? (
+                  <div className={styles.cargaBloqueada}>
+                    <Lock size={16} className={styles.lockIcon} aria-hidden="true" />
+                    <span className={styles.bloqueoTexto}>
+                      Inicia sesión para subir archivos propios y personalizar sector, audiencia y nivel.
+                    </span>
                     <button
                       type="button"
-                      className={styles.fileCardRemove}
-                      onClick={quitarArchivo}
-                      aria-label={`Quitar ${fileName}`}
-                      title="Quitar archivo"
+                      onClick={onIniciarSesion}
+                      className={styles.botonSecundario}
                     >
-                      <X size={14} />
+                      Iniciar sesión
                     </button>
                   </div>
-                );
-              })()}
+                ) : (
+                  <label
+                    className={[
+                      styles.fileDropzone,
+                      sinDocumento ? styles.fileDropzoneInvitacion : "",
+                      arrastrando ? styles.fileDropzoneActiva : "",
+                    ].join(" ")}
+                    onDragOver={handleDragOver}
+                    onDragLeave={() => setArrastrando(false)}
+                    onDrop={handleDrop}
+                  >
+                    <div className={styles.dropzoneIconWrapper}>
+                      <UploadCloud size={24} color="var(--color-violet-400)" />
+                    </div>
+                    <div className={styles.dropzoneTextWrapper}>
+                      <span className={styles.fileText}>
+                        {arrastrando
+                          ? "Suelta el archivo aquí"
+                          : sinDocumento
+                            ? "Arrastra un archivo aquí o haz clic para seleccionarlo"
+                            : "Arrastra o haz clic para sustituir el documento"}
+                      </span>
+                      <span className={styles.fileHint}>
+                        PDF, Markdown, TXT o imagen (PNG, JPG, WEBP) · Máx. 15 MB
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept={ARCHIVOS_ACEPTADOS}
+                      onChange={handleFileUpload}
+                      disabled={extrayendo}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                )}
+
+                {fileName &&
+                  (() => {
+                    const tipo = tipoArchivo(fileName);
+                    return (
+                      <div className={`${styles.fileCard} ${styles[`fileCard${tipo}`]}`}>
+                        <FileText size={16} className={styles.fileCardIcon} aria-hidden />
+                        <span className={styles.fileCardName} title={fileName}>
+                          {fileName}
+                        </span>
+                        <span className={`${styles.fileTypeBadge} ${styles[`fileTypeBadge${tipo}`]}`}>
+                          {tipo}
+                        </span>
+                        {bytesArchivo !== null && (
+                          <span className={styles.fileCardMeta}>
+                            {tamanoLegible(bytesArchivo)}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className={styles.fileCardRemove}
+                          onClick={quitarArchivo}
+                          aria-label={`Quitar ${fileName}`}
+                          title="Quitar archivo"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    );
+                  })()}
+              </div>
+            </div>
+
           </div>
 
-          {/* Previsualización del Documento */}
-          <div className={styles.fieldGroup}>
+          {/* COLUMNA DERECHA: PREVISUALIZACIÓN EN TIEMPO REAL */}
+          <div className={styles.columnaPreview}>
             <div className={styles.fieldLabelRow}>
-              <span className={styles.fieldLabel}>
-                Previsualización del Documento
-              </span>
+              <span className={styles.fieldLabel}>Previsualización del Documento</span>
               <div className={styles.previewBadgesRow}>
                 {esTranscripcion ? (
                   <span className={styles.transcriptionBadge}>
                     <ScanText size={12} />
-                    <span>Transcripción IA (editable)</span>
+                    <span>Transcripción IA</span>
                   </span>
                 ) : (
                   <span className={styles.readOnlyBadge}>
@@ -835,19 +784,18 @@ export const Step1Ingestion = ({
 
             <div className={styles.previewBoxWrapper}>
               <textarea
-                rows={esTranscripcion ? 9 : 5}
                 value={docContent}
                 readOnly={!esTranscripcion}
                 onChange={(e) => handleTranscripcionEditada(e.target.value)}
-                placeholder="El contenido del documento seleccionado o subido se visualizará aquí..."
+                placeholder="El contenido del documento seleccionado o subido se visualizará aquí en tiempo real..."
                 className={styles.previewTextArea}
               />
               <div className={styles.previewFooterNotice}>
                 {esTranscripcion ? <PenLine size={13} /> : <Lock size={13} />}
                 <span>
                   {esTranscripcion
-                    ? "Texto extraído por visión IA: puedes corregirlo. La fundamentación pedagógica citará este texto exacto."
-                    : "Documento protegido contra edición: el material fuente se procesará íntegro para garantizar citas exactas."}
+                    ? "Texto transcrito por visión IA: editable para asegurar citas fidedignas."
+                    : "Documento protegido: material procesado íntegro para garantizar citas exactas."}
                 </span>
               </div>
             </div>
@@ -860,307 +808,286 @@ export const Step1Ingestion = ({
               </ul>
             )}
           </div>
+        </div>
 
-          {/* Adaptación Pedagógica */}
-          {!sesionIniciada ? (
-            <div className={styles.escenariosContenedor} aria-live="polite">
-              {documentoElegido ? (
-                <div className={styles.escenariosBloque}>
-                  {escenariosDoc.length > 1 && (
-                    <div className={styles.escenariosFila}>
-                      <span className={styles.escenariosEtiqueta}>
-                        Escenarios didácticos precargados ({escenariosDoc.length})
-                      </span>
-                      <div
-                        className={styles.escenariosChipsGroup}
-                        role="radiogroup"
-                        aria-label="Escenarios de este documento"
-                      >
-                        {escenariosDoc.map((e) => {
-                          const esActivo =
-                            e.escenario ===
-                            (muestraElegida?.escenario ??
-                              escenariosDoc[0]?.escenario);
-                          return (
-                            <button
-                              key={e.escenario}
-                              type="button"
-                              role="radio"
-                              aria-checked={esActivo}
-                              onClick={() => setEscenarioId(e.escenario)}
-                              className={`${styles.escenarioBtn} ${esActivo ? styles.escenarioBtnActivo : ""}`}
-                            >
-                              <span>{e.etiqueta}</span>
-                              {e.modo === "clasico" && (
-                                <span className={styles.escenarioBadgeClasico}>
-                                  · modo clásico (RAG)
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className={styles.ajustesFila}>
-                    <span className={styles.ajustesEtiqueta}>
-                      AJUSTES DE ESTE ESCENARIO:
+        {/* ==========================================================
+            SECCIÓN INFERIOR: ADAPTACIÓN PEDAGÓGICA Y PARÁMETROS
+        ========================================================== */}
+        {!sesionIniciada ? (
+          <div className={styles.escenariosContenedor} aria-live="polite">
+            {documentoElegido ? (
+              <div className={styles.escenariosBloque}>
+                {escenariosDoc.length > 1 && (
+                  <div className={styles.escenariosFila}>
+                    <span className={styles.escenariosEtiqueta}>
+                      Escenarios didácticos precargados ({escenariosDoc.length})
                     </span>
-                    <div className={styles.ajustesChipsGroup}>
-                      <span className={styles.ajusteChip}>
-                        <strong>Perfil:</strong>{" "}
-                        {etiqueta(
-                          PERFILES,
-                          muestraElegida?.ajustes.perfil ??
-                            documentoElegido.perfil,
-                        )}
-                      </span>
-                      <span className={styles.ajusteChip}>
-                        <strong>Sector:</strong>{" "}
-                        {etiqueta(
-                          NICHOS,
-                          muestraElegida?.ajustes.nicho ??
-                            documentoElegido.nicho,
-                        )}
-                      </span>
-                      <span className={styles.ajusteChip}>
-                        <strong>Nivel:</strong>{" "}
-                        {etiqueta(
-                          NIVELES,
-                          muestraElegida?.ajustes.detalle ??
-                            documentoElegido.detalle,
-                        )}
-                      </span>
-                      {muestraElegida?.modo === "clasico" && (
-                        <span className={styles.ajusteChipModo}>
-                          RAG Vectorial (Cohere + LangGraph)
-                        </span>
-                      )}
+                    <div
+                      className={styles.escenariosChipsGroup}
+                      role="radiogroup"
+                      aria-label="Escenarios de este documento"
+                    >
+                      {escenariosDoc.map((e) => {
+                        const esActivo =
+                          e.escenario ===
+                          (muestraElegida?.escenario ??
+                            escenariosDoc[0]?.escenario);
+                        return (
+                          <button
+                            key={e.escenario}
+                            type="button"
+                            role="radio"
+                            aria-checked={esActivo}
+                            onClick={() => setEscenarioId(e.escenario)}
+                            className={`${styles.escenarioBtn} ${esActivo ? styles.escenarioBtnActivo : ""}`}
+                          >
+                            <span>{e.etiqueta}</span>
+                            {e.modo === "clasico" && (
+                              <span className={styles.escenarioBadgeClasico}>
+                                · modo clásico (RAG)
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className={styles.sinDocumentoAviso}>
-                  Elige un documento de la biblioteca para explorar sus
-                  escenarios precargados.
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className={styles.parametrizacionBloque}>
-              <div className={styles.parametrizacionHeader}>
-                <span className={styles.fieldLabel}>Adaptación pedagógica</span>
+                )}
 
-                <div
-                  className={styles.segmentedControl}
-                  role="radiogroup"
-                  aria-label="Modo de parametrización"
+                <div className={styles.ajustesFila}>
+                  <span className={styles.ajustesEtiqueta}>
+                    AJUSTES DE ESTE ESCENARIO:
+                  </span>
+                  <div className={styles.ajustesChipsGroup}>
+                    <span className={styles.ajusteChip}>
+                      <strong>Perfil:</strong>{" "}
+                      {etiqueta(
+                        PERFILES,
+                        muestraElegida?.ajustes.perfil ?? documentoElegido.perfil,
+                      )}
+                    </span>
+                    <span className={styles.ajusteChip}>
+                      <strong>Sector:</strong>{" "}
+                      {etiqueta(
+                        NICHOS,
+                        muestraElegida?.ajustes.nicho ?? documentoElegido.nicho,
+                      )}
+                    </span>
+                    <span className={styles.ajusteChip}>
+                      <strong>Nivel:</strong>{" "}
+                      {etiqueta(
+                        NIVELES,
+                        muestraElegida?.ajustes.detalle ?? documentoElegido.detalle,
+                      )}
+                    </span>
+                    {muestraElegida?.modo === "clasico" && (
+                      <span className={styles.ajusteChipModo}>
+                        RAG Vectorial (Cohere + LangGraph)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.sinDocumentoAviso}>
+                Elige un documento de la biblioteca para explorar sus escenarios precargados.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={styles.parametrizacionBloque}>
+            <div className={styles.parametrizacionHeader}>
+              <span className={styles.fieldLabel}>Adaptación pedagógica</span>
+
+              <div
+                className={styles.segmentedControl}
+                role="radiogroup"
+                aria-label="Modo de parametrización"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={modo === "personalizado"}
+                  onClick={() => elegirModo("personalizado")}
+                  className={`${styles.segmentedTab} ${modo === "personalizado" ? styles.segmentedTabActiva : ""}`}
                 >
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={modo === "personalizado"}
-                    onClick={() => elegirModo("personalizado")}
-                    className={`${styles.segmentedTab} ${modo === "personalizado" ? styles.segmentedTabActiva : ""}`}
-                  >
-                    <SlidersHorizontal size={14} />
-                    <span>Personalizado</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={modo === "sorpresa"}
-                    onClick={() => elegirModo("sorpresa")}
-                    className={`${styles.segmentedTab} ${modo === "sorpresa" ? styles.segmentedTabActiva : ""}`}
-                  >
-                    <Sparkles size={14} />
-                    <span>Sorpréndeme</span>
-                  </button>
-                </div>
+                  <SlidersHorizontal size={14} />
+                  <span>Personalizado</span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={modo === "sorpresa"}
+                  onClick={() => elegirModo("sorpresa")}
+                  className={`${styles.segmentedTab} ${modo === "sorpresa" ? styles.segmentedTabActiva : ""}`}
+                >
+                  <Sparkles size={14} />
+                  <span>Sorpréndeme</span>
+                </button>
               </div>
-
-              {modo === "sorpresa" ? (
-                <div className={styles.sorteo} aria-live="polite">
-                  <span className={styles.sorteoTitulo}>
-                    Configuración aleatoria:
-                  </span>
-                  <span className={styles.sorteoChip}>
-                    <strong>Perfil:</strong> {etiqueta(PERFILES, profile)}
-                  </span>
-                  <span className={styles.sorteoChip}>
-                    <strong>Sector:</strong> {etiqueta(NICHOS, niche)}
-                  </span>
-                  <span className={styles.sorteoChip}>
-                    <strong>Nivel:</strong> {etiqueta(NIVELES, detail)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={sortear}
-                    className={styles.sorteoBoton}
-                  >
-                    <Dices size={14} />
-                    <span>Reintentar</span>
-                  </button>
-                </div>
-              ) : (
-                <div className={styles.paramsGrid}>
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldSubLabel}>
-                      Perfil del Destinatario
-                    </label>
-                    <select
-                      value={profile}
-                      onChange={(e) =>
-                        setProfile(e.target.value as RecipientProfile)
-                      }
-                      className={styles.selectInput}
-                    >
-                      {PERFILES.map(([valor, texto]) => (
-                        <option key={valor} value={valor}>
-                          {texto}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldSubLabel}>
-                      Nicho / Sector
-                    </label>
-                    <select
-                      value={niche}
-                      onChange={(e) =>
-                        setNiche(e.target.value as IndustryNiche)
-                      }
-                      className={styles.selectInput}
-                    >
-                      {NICHOS.map(([valor, texto]) => (
-                        <option key={valor} value={valor}>
-                          {texto}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldSubLabel}>
-                      Nivel de Detalle
-                    </label>
-                    <select
-                      value={detail}
-                      onChange={(e) => setDetail(e.target.value as DetailLevel)}
-                      className={styles.selectInput}
-                    >
-                      {NIVELES.map(([valor, texto]) => (
-                        <option key={valor} value={valor}>
-                          {texto}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
             </div>
-          )}
 
-          {/* Directivas Prompt del Sistema */}
-          <details className={styles.promptPaquete}>
-            <summary className={styles.promptEtiqueta}>
-              <ChevronRight
-                size={13}
-                className={styles.promptChevron}
-                aria-hidden="true"
-              />
-              <Sparkles size={13} aria-hidden="true" />
-              <span>Instrucciones pedagógicas para los modelos</span>
-            </summary>
-            <p className={styles.promptTexto}>
-              {promptPaquete(profile, niche, detail)}
-            </p>
-          </details>
-
-          {/* Barra de Procesamiento / Botones Finales */}
-          {isProcessing ? (
-            <div
-              className={styles.processingCard}
-              ref={tarjetaProgresoRef}
-              role="status"
-              aria-live="polite"
-            >
-              <div className={styles.processingHeader}>
-                <Cpu size={22} className={styles.spinningIcon} />
-                <span className={styles.processingStageText}>
-                  {processingStage || "Orquestando agentes pedagógicos..."}
+            {modo === "sorpresa" ? (
+              <div className={styles.sorteo} aria-live="polite">
+                <span className={styles.sorteoTitulo}>Configuración aleatoria:</span>
+                <span className={styles.sorteoChip}>
+                  <strong>Perfil:</strong> {etiqueta(PERFILES, profile)}
                 </span>
+                <span className={styles.sorteoChip}>
+                  <strong>Sector:</strong> {etiqueta(NICHOS, niche)}
+                </span>
+                <span className={styles.sorteoChip}>
+                  <strong>Nivel:</strong> {etiqueta(NIVELES, detail)}
+                </span>
+                <button
+                  type="button"
+                  onClick={sortear}
+                  className={styles.sorteoBoton}
+                >
+                  <Dices size={14} />
+                  <span>Reintentar</span>
+                </button>
               </div>
-              <div className={styles.progressBarBg}>
-                <div className={styles.progressBarFill} />
-              </div>
-              <div className={styles.processingMeta}>
-                {esEtapaDeMuestra(processingStage)
-                  ? "Abriendo muestra pregenerada (sin consumo de cuota)"
-                  : "Procesamiento paralelo con Gemini · Fundamentación en documento · OCI Object Storage"}
-              </div>
-            </div>
-          ) : (
-            <div className={styles.submitBar}>
-              <MiniAnimacionRecursos />
+            ) : (
+              <div className={styles.paramsGrid}>
+                <div className={styles.fieldGroupParam}>
+                  <label className={styles.fieldSubLabel}>Perfil del Destinatario</label>
+                  <select
+                    value={profile}
+                    onChange={(e) => setProfile(e.target.value as RecipientProfile)}
+                    className={styles.selectInput}
+                  >
+                    {PERFILES.map(([valor, texto]) => (
+                      <option key={valor} value={valor}>{texto}</option>
+                    ))}
+                  </select>
+                </div>
 
-              {!sesionIniciada ? (
-                <div className={styles.accionesMuestra}>
-                  <span className={styles.notaInvitado}>
-                    {muestraElegida
-                      ? `Modo invitado: apertura de la muestra del ${muestraElegida.generado_el}. Inicia sesión para generar documentos nuevos.`
-                      : selectedDocId
-                        ? "Este documento aún no tiene una muestra precargada. Inicia sesión para crearlo."
-                        : "Elige un documento de ejemplo para previsualizar."}
-                  </span>
-                  <button
-                    type="submit"
-                    className={styles.submitButton}
-                    disabled={!muestraElegida || isLoadingPreset}
+                <div className={styles.fieldGroupParam}>
+                  <label className={styles.fieldSubLabel}>Nicho / Sector</label>
+                  <select
+                    value={niche}
+                    onChange={(e) => setNiche(e.target.value as IndustryNiche)}
+                    className={styles.selectInput}
                   >
-                    <Play size={16} fill="currentColor" />
-                    <span>Iniciar Aprendizaje</span>
-                    <ArrowRight size={16} />
-                  </button>
+                    {NICHOS.map(([valor, texto]) => (
+                      <option key={valor} value={valor}>{texto}</option>
+                    ))}
+                  </select>
                 </div>
-              ) : muestraElegida && selectedDocId ? (
-                <div className={styles.accionesMuestra}>
-                  <button
-                    type="button"
-                    className={styles.submitButton}
-                    onClick={() =>
-                      onAbrirMuestra(selectedDocId, muestraElegida.escenario)
-                    }
+
+                <div className={styles.fieldGroupParam}>
+                  <label className={styles.fieldSubLabel}>Nivel de Detalle</label>
+                  <select
+                    value={detail}
+                    onChange={(e) => setDetail(e.target.value as DetailLevel)}
+                    className={styles.selectInput}
                   >
-                    <Play size={15} fill="currentColor" />
-                    <span>Ver muestra precargada</span>
-                  </button>
-                  <button
-                    type="submit"
-                    className={styles.botonSecundario}
-                    disabled={extrayendo}
-                  >
-                    <Sparkles size={14} aria-hidden="true" />
-                    <span>Generar con mis parámetros</span>
-                  </button>
+                    {NIVELES.map(([valor, texto]) => (
+                      <option key={valor} value={valor}>{texto}</option>
+                    ))}
+                  </select>
                 </div>
-              ) : (
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Directivas Prompt del Sistema */}
+        <details className={styles.promptPaquete}>
+          <summary className={styles.promptEtiqueta}>
+            <ChevronRight size={13} className={styles.promptChevron} aria-hidden="true" />
+            <Sparkles size={13} aria-hidden="true" />
+            <span>Instrucciones pedagógicas para los modelos</span>
+          </summary>
+          <p className={styles.promptTexto}>
+            {promptPaquete(profile, niche, detail)}
+          </p>
+        </details>
+
+        {/* Barra de Procesamiento / Botones Finales */}
+        {isProcessing ? (
+          <div
+            className={styles.processingCard}
+            ref={tarjetaProgresoRef}
+            role="status"
+            aria-live="polite"
+          >
+            <div className={styles.processingHeader}>
+              <Cpu size={22} className={styles.spinningIcon} />
+              <span className={styles.processingStageText}>
+                {processingStage || "Orquestando agentes pedagógicos..."}
+              </span>
+            </div>
+            <div className={styles.progressBarBg}>
+              <div className={styles.progressBarFill} />
+            </div>
+            <div className={styles.processingMeta}>
+              {esEtapaDeMuestra(processingStage)
+                ? "Abriendo muestra pregenerada (sin consumo de cuota)"
+                : "Procesamiento paralelo con Gemini · Fundamentación en documento · OCI Object Storage"}
+            </div>
+          </div>
+        ) : (
+          <div className={styles.submitBar}>
+            <MiniAnimacionRecursos />
+
+            {!sesionIniciada ? (
+              <div className={styles.accionesMuestra}>
+                <span className={styles.notaInvitado}>
+                  {muestraElegida
+                    ? `Modo invitado: apertura de la muestra del ${muestraElegida.generado_el}. Inicia sesión para generar documentos nuevos.`
+                    : selectedDocId
+                      ? "Este documento aún no tiene una muestra precargada. Inicia sesión para crearlo."
+                      : "Elige un documento de ejemplo para previsualizar."}
+                </span>
                 <button
                   type="submit"
                   className={styles.submitButton}
-                  disabled={extrayendo}
+                  disabled={!hayDocumentoListo || !muestraElegida || isLoadingPreset}
+                  title={!hayDocumentoListo ? "Selecciona un documento de ejemplo para continuar" : undefined}
                 >
-                  <Sparkles size={16} />
+                  <Play size={16} fill="currentColor" />
                   <span>Iniciar Aprendizaje</span>
                   <ArrowRight size={16} />
                 </button>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            ) : muestraElegida && selectedDocId ? (
+              <div className={styles.accionesMuestra}>
+                <button
+                  type="button"
+                  className={styles.submitButton}
+                  onClick={() =>
+                    onAbrirMuestra(selectedDocId, muestraElegida.escenario)
+                  }
+                  disabled={!hayDocumentoListo || isLoadingPreset}
+                >
+                  <Play size={15} fill="currentColor" />
+                  <span>Ver muestra precargada</span>
+                </button>
+                <button
+                  type="submit"
+                  className={styles.botonSecundario}
+                  disabled={!hayDocumentoListo || extrayendo || isLoadingPreset}
+                >
+                  <Sparkles size={14} aria-hidden="true" />
+                  <span>Generar con mis parámetros</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                type="submit"
+                className={styles.submitButton}
+                disabled={!hayDocumentoListo || extrayendo || isLoadingPreset}
+                title={!hayDocumentoListo ? "Selecciona o sube un documento para comenzar" : undefined}
+              >
+                <Sparkles size={16} />
+                <span>Iniciar Aprendizaje</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );
