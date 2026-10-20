@@ -484,34 +484,72 @@ export const Step1Ingestion = ({
 
   return (
     <div className={styles.container}>
-      {/* Hero Banner */}
-      <div className={styles.heroBanner}>
-        <HeroAnimacion />
-        <div className={styles.heroContent}>
-          <div className={styles.tagRow}>
-            <span className={styles.pipelineTag}>
-              <Sparkles size={13} color="var(--color-violet-400)" />
-              Agentes Pedagógicos
-            </span>
-            <span className={styles.hackathonSign}>
-              Oracle Next Education · Hackathon ONE G10 ·{" "}
-              <strong>Equipo 10</strong>
-            </span>
+      {/* Hero Banner 100vh Awwwards */}
+      <section className={styles.heroBanner}>
+        <div className={styles.heroAuraGlow} aria-hidden="true" />
+
+        <div className={styles.heroGrid}>
+          {/* Columna Izquierda: Copy Editorial + CTAs */}
+          <div className={styles.heroContent}>
+            <div className={styles.tagRow}>
+              <span className={styles.pipelineTag}>
+                <Sparkles size={13} color="var(--color-violet-400)" />
+                Agentes Pedagógicos
+              </span>
+              <span className={styles.hackathonSign}>
+                Oracle Next Education · Hackathon ONE G10 ·{" "}
+                <strong>Equipo 10</strong>
+              </span>
+            </div>
+
+            <h1 className={styles.heroTitle}>
+              Convierte documentos{" "}
+              <span className={styles.heroTitleGradient}>
+                en rutas de aprendizaje
+              </span>
+            </h1>
+
+            <p className={styles.heroText}>
+              Resumen, tarjetas interactivas, diagrama de arquitectura, video narrado y evaluación formativa a partir de tu documentación técnica, con citas verificadas y sin alucinaciones.
+            </p>
+
+            <div className={styles.heroCtaRow}>
+              <button
+                type="button"
+                onClick={() => void handleLoadDemoScenario()}
+                className={styles.heroPrimaryBtn}
+                disabled={isLoadingPreset || isProcessing || !demoDisponible}
+              >
+                <Zap size={16} fill="currentColor" />
+                <span>Explorar Demostración</span>
+                <ArrowRight size={16} />
+              </button>
+
+              <a href="#workspace-ingesta" className={styles.heroSecondaryBtn}>
+                <UploadCloud size={16} />
+                <span>Configurar mi propio documento</span>
+              </a>
+            </div>
           </div>
 
-          <h2 className={styles.heroTitle}>
-            Convierte documentos{" "}
-            <span className={styles.heroTitleGradient}>
-              en rutas de aprendizaje
-            </span>
-          </h2>
-
-          <p className={styles.heroText}>
-            Resumen, tarjetas, diagrama, video narrado y quiz a partir de tu
-            documentación técnica, con citas comprobadas.
-          </p>
+          {/* Columna Derecha: Ilustración animada con volumen */}
+          <div className={styles.heroVisualCol}>
+            <HeroAnimacion />
+          </div>
         </div>
-      </div>
+
+        {/* Indicador de scroll */}
+        <a
+          href="#workspace-ingesta"
+          className={styles.heroScrollIndicator}
+          aria-label="Bajar a la configuración"
+        >
+          <span className={styles.heroScrollDot} />
+        </a>
+      </section>
+
+      {/* Ancla para scroll suave */}
+      <div id="workspace-ingesta" />
 
       {/* Franja de Prueba Rápida */}
       <div className={styles.demoBannerCard}>
@@ -573,21 +611,17 @@ export const Step1Ingestion = ({
           </span>
         </div>
 
-        {/* Guía de pasos compacta */}
         {!sesionIniciada && !selectedDocId && (
           <div className={styles.guiaContainer}>
             <ol className={styles.guiaPasos}>
               <li>
-                <span className={styles.guiaNumero}>1</span> Elige un documento
-                de la lista
+                <span className={styles.guiaNumero}>1</span> Elige un documento de la lista
               </li>
               <li>
-                <span className={styles.guiaNumero}>2</span> Pulsa «Iniciar
-                Aprendizaje»
+                <span className={styles.guiaNumero}>2</span> Pulsa «Iniciar Aprendizaje»
               </li>
               <li>
-                <span className={styles.guiaNumero}>3</span> Explora las 5
-                estaciones pedagógicas
+                <span className={styles.guiaNumero}>3</span> Explora las 5 estaciones pedagógicas
               </li>
             </ol>
           </div>
@@ -827,16 +861,14 @@ export const Step1Ingestion = ({
             )}
           </div>
 
-          {/* Sección de Personalización Pedagógica */}
+          {/* Adaptación Pedagógica */}
           {!sesionIniciada ? (
             <div className={styles.escenariosContenedor} aria-live="polite">
               {documentoElegido ? (
                 <div className={styles.escenariosBloque}>
-                  {/* SOLO SI HAY MÁS DE 1 ESCENARIO: se muestran las variantes para alternar */}
                   {escenariosDoc.length > 1 && (
                     <div className={styles.escenariosFila}>
                       <span className={styles.escenariosEtiqueta}>
-                        {/* MISMO DOCUMENTO, {escenariosDoc.length} ESCENARIOS: */}
                         Escenarios didácticos precargados ({escenariosDoc.length})
                       </span>
                       <div
@@ -871,7 +903,6 @@ export const Step1Ingestion = ({
                     </div>
                   )}
 
-                  {/* AJUSTES DEL ESCENARIO: se muestra SIEMPRE que haya un documento seleccionado */}
                   <div className={styles.ajustesFila}>
                     <span className={styles.ajustesEtiqueta}>
                       AJUSTES DE ESTE ESCENARIO:
@@ -921,7 +952,6 @@ export const Step1Ingestion = ({
               <div className={styles.parametrizacionHeader}>
                 <span className={styles.fieldLabel}>Adaptación pedagógica</span>
 
-                {/* Segmented Control */}
                 <div
                   className={styles.segmentedControl}
                   role="radiogroup"

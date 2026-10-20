@@ -1,14 +1,19 @@
 .lienzo {
-  position: absolute;
-  top: 50%;
-  right: 1.5rem;
-  height: 92%;
-  width: auto;
-  max-width: 48%;
-  translate: 0 -50%;
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
   pointer-events: none;
-  mask-image: linear-gradient(to right, transparent 0%, #000 24%);
   opacity: 0.95;
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.55));
+}
+
+@media (max-width: 1024px) {
+  .lienzo {
+    max-width: 440px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -67,6 +72,7 @@
   transform-box: fill-box;
   transform-origin: center;
   animation: respirar 8s ease-in-out infinite;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4));
 }
 
 .escaner {

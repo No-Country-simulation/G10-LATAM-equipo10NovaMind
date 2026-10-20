@@ -1,51 +1,81 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 2rem;
   width: 100%;
- }
+}
 
 .formContainer {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
   width: 100%;
 }
 
-/* Banner Superior Hero */
+/* ==========================================================
+   HERO BANNER AWWWARDS (100vh MONUMENTAL & LIMPIO)
+========================================================== */
 .heroBanner {
   position: relative;
+  width: 100%;
+  min-height: calc(100vh - 10rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 3.5rem 3.5rem 4.5rem;
+  margin-bottom: 2.5rem;
+
+  border-radius: var(--radius-2xl, 1.75rem);
+  background: radial-gradient(100% 120% at 85% 15%, rgba(139, 92, 246, 0.16) 0%, rgba(13, 17, 26, 0.88) 55%), #070a13;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
-  border-radius: var(--radius-xl, 1rem);
-  background: linear-gradient(135deg, rgba(14, 18, 32, 0.95) 0%, rgba(13, 17, 26, 0.98) 50%, rgba(18, 10, 34, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 1.75rem;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
-@media (min-width: 640px) {
+@media (max-width: 1024px) {
   .heroBanner {
-    padding: 2.25rem 2.5rem;
+    min-height: auto;
+    padding: 3rem 1.75rem;
+  }
+}
+
+.heroAuraGlow {
+  position: absolute;
+  top: -100px;
+  right: -80px;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.28) 0%, rgba(56, 189, 248, 0.14) 50%, transparent 75%);
+  filter: blur(75px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.heroGrid {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: center;
+  gap: 3.5rem;
+}
+
+@media (max-width: 1024px) {
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
   }
 }
 
 .heroContent {
-  position: relative;
-  z-index: 1;
-  max-width: 48rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-}
-
-@media (min-width: 901px) {
-  .heroBanner {
-    min-height: 14.5rem;
-  }
-  .heroContent {
-    max-width: 54%;
-  }
+  gap: 1.5rem;
 }
 
 .tagRow {
@@ -60,55 +90,160 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full, 9999px);
+  border-radius: 9999px;
   font-size: 0.725rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   background-color: rgba(139, 92, 246, 0.15);
   border: 1px solid rgba(139, 92, 246, 0.35);
   color: #c084fc;
-  letter-spacing: 0.02em;
 }
 
 .hackathonSign {
   font-size: 0.725rem;
-  color: var(--color-text-muted, #94a3b8);
+  color: #94a3b8;
   font-weight: 500;
 }
 
 .heroTitle {
-  font-family: var(--font-heading);
-  font-size: 1.75rem;
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  font-size: clamp(2.3rem, 3.8vw, 3.6rem);
   font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   color: #ffffff;
-  letter-spacing: -0.025em;
-  line-height: 1.2;
   margin: 0;
-}
-
-@media (min-width: 640px) {
-  .heroTitle {
-    font-size: 2.25rem;
-  }
 }
 
 .heroTitleGradient {
-  background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #818cf8 100%);
+  background: linear-gradient(135deg, #c084fc 0%, #e879f9 45%, #38bdf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
-  /* Resplandor sutil para que vibre sobre el fondo oscuro */
-  filter: drop-shadow(0 0 16px rgba(192, 132, 252, 0.35));
+  filter: drop-shadow(0 0 25px rgba(192, 132, 252, 0.45));
 }
 
 .heroText {
-  font-family: var(--font-body);
-  font-size: 0.925rem;
-  color: rgba(226, 232, 240, 0.8);
-  line-height: 1.6;
+  font-size: clamp(1rem, 1.15vw, 1.15rem);
+  line-height: 1.7;
+  color: #cbd5e1;
   margin: 0;
+  max-width: 42rem;
 }
 
-/* Banner de Prueba Rápida */
+.heroCtaRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.heroPrimaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 9999px;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 50%, #06b6d4 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 22px rgba(124, 58, 237, 0.45);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.heroPrimaryBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 30px rgba(147, 51, 234, 0.6);
+}
+
+.heroPrimaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.heroSecondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 9999px;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.heroSecondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: #ffffff;
+}
+
+.heroVisualCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  transform: scale(1.08);
+  transform-origin: center right;
+}
+
+@media (max-width: 1024px) {
+  .heroVisualCol {
+    transform: none;
+  }
+}
+
+.heroScrollIndicator {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 32px;
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  justify-content: center;
+  padding-top: 5px;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+.heroScrollIndicator:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+.heroScrollDot {
+  width: 3px;
+  height: 7px;
+  border-radius: 9999px;
+  background-color: #38bdf8;
+  animation: scrollPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(12px); opacity: 0; }
+}
+
+/* ==========================================================
+   FRANJA PRUEBA RÁPIDA
+========================================================== */
 .demoBannerCard {
   border-radius: var(--radius-lg, 0.75rem);
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.06) 100%);
@@ -173,7 +308,9 @@
   transform: none;
 }
 
-/* Biblioteca & Encabezados */
+/* ==========================================================
+   BIBLIOTECA & ENCABEZADOS
+========================================================== */
 .tituloRuta {
   margin: 0;
   font-family: var(--font-heading);
@@ -345,7 +482,9 @@
   line-height: 1.5;
 }
 
-/* Contenedor Principal del Formulario */
+/* ==========================================================
+   FORMULARIO PRINCIPAL
+========================================================== */
 .formCard {
   border-radius: var(--radius-xl, 1rem);
   background-color: rgba(13, 17, 26, 0.85);
@@ -505,7 +644,7 @@
   background-color: rgba(244, 63, 94, 0.1);
 }
 
-/* Área de Previsualización */
+/* Área de Previsualización (Scrollbar Modernizado) */
 .previewBadgesRow {
   display: flex;
   align-items: center;
@@ -570,14 +709,12 @@
   resize: vertical;
   outline: none;
 
-  /* Estándar CSS (Firefox) */
   scrollbar-width: thin;
   scrollbar-color: rgba(139, 92, 246, 0.35) rgba(6, 9, 17, 0.6);
 }
 
-/* WebKit (Chrome, Edge, Safari, Brave) */
 .previewTextArea::-webkit-scrollbar {
-  width: 6px; /* Barra delgada y discreta */
+  width: 6px;
 }
 
 .previewTextArea::-webkit-scrollbar-track {
@@ -586,13 +723,13 @@
 }
 
 .previewTextArea::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.3); /* Violeta tenue a tono con la paleta */
+  background: rgba(139, 92, 246, 0.3);
   border-radius: 9999px;
   transition: background 0.2s ease;
 }
 
 .previewTextArea::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.65); /* Se ilumina levemente al hacer hover */
+  background: rgba(139, 92, 246, 0.65);
 }
 
 .previewTextArea:focus {
@@ -613,7 +750,9 @@
   border-bottom-right-radius: var(--radius-md, 0.5rem);
 }
 
-/* Adaptación Pedagógica & Segmented Tabs */
+/* ==========================================================
+   ADAPTACIÓN PEDAGÓGICA & SEGMENTED TABS
+========================================================== */
 .parametrizacionBloque {
   display: flex;
   flex-direction: column;
@@ -726,10 +865,10 @@
   color: #ffffff;
 }
 
-/* Prompt Details (Instrucciones de la IA) */
+/* Prompt Details (Instrucciones) */
 .promptPaquete {
   display: block;
-  padding: 0; /* Padding cero en el contenedor para que el summary mande */
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-left: 3px solid rgba(139, 92, 246, 0.65);
   border-radius: var(--radius-md, 0.5rem);
@@ -737,19 +876,18 @@
   overflow: hidden;
 }
 
-/* Barra del summary: define la altura y centra al píxel */
 .promptEtiqueta {
   display: flex;
-  align-items: center; /* Centrado vertical matemático */
+  align-items: center;
   gap: 0.5rem;
-  padding: 0.65rem 0.85rem; /* El padding vive aquí adentro */
-  min-height: 2.35rem; /* Asegura una altura fija y uniforme */
+  padding: 0.65rem 0.85rem;
+  min-height: 2.35rem;
   font-family: var(--font-body);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  line-height: 1; /* Cero margen vertical tipográfico */
+  line-height: 1;
   color: #c084fc;
   cursor: pointer;
   list-style: none;
@@ -757,10 +895,7 @@
   outline: none;
 }
 
-/* Quita los marcadores nativos en todos los navegadores */
-.promptEtiqueta::-webkit-details-marker {
-  display: none;
-}
+.promptEtiqueta::-webkit-details-marker,
 .promptEtiqueta::marker {
   display: none;
   content: "";
@@ -768,7 +903,7 @@
 
 .promptChevron,
 .promptEtiqueta svg {
-  display: block; /* Evita baseline extra en elementos SVG inline */
+  display: block;
   flex-shrink: 0;
 }
 
@@ -780,11 +915,10 @@ details[open] .promptChevron {
   transform: rotate(90deg);
 }
 
-/* El texto interior */
 .promptEtiqueta > span {
   display: inline-block;
   line-height: 1;
-  transform: translateY(0.5px); /* Microajuste óptico contra el SVG */
+  transform: translateY(0.5px);
 }
 
 .promptTexto {
@@ -801,7 +935,9 @@ details[open] .promptChevron {
   color: #8b5cf6;
 }
 
-/* Barra de Submit & Acciones Finales */
+/* ==========================================================
+   BARRA DE SUBMIT & ACCIONES
+========================================================== */
 .submitBar {
   display: flex;
   flex-direction: column;
@@ -905,7 +1041,9 @@ details[open] .promptChevron {
   flex-shrink: 0;
 }
 
-/* Indicadores de Procesamiento */
+/* ==========================================================
+   ESTADO DE PROCESAMIENTO
+========================================================== */
 .processingCard {
   padding: 1.5rem;
   border-radius: var(--radius-lg, 0.75rem);
@@ -998,10 +1136,9 @@ details[open] .promptChevron {
   border-radius: var(--radius-md, 0.5rem);
 }
 
-/* ==========================================================================
-   ESENARIOS PRECARGADOS (Mismo documento, N escenarios) - Idéntico a Imagen 1
-   ========================================================================== */
-
+/* ==========================================================
+   ESCENARIOS PRECARGADOS
+========================================================== */
 .escenariosContenedor {
   margin-top: 1.25rem;
   width: 100%;
@@ -1040,7 +1177,6 @@ details[open] .promptChevron {
   gap: 0.6rem;
 }
 
-/* Botón individual de Escenario */
 .escenarioBtn {
   display: inline-flex;
   align-items: center;
@@ -1065,7 +1201,6 @@ details[open] .promptChevron {
   transform: translateY(-1px);
 }
 
-/* Escenario Activo (Seleccionado) */
 .escenarioBtnActivo {
   background: rgba(112, 97, 245, 0.22) !important;
   border-color: #8b5cf6 !important;
@@ -1079,7 +1214,6 @@ details[open] .promptChevron {
   font-weight: 500;
 }
 
-/* Píldoras de Ajustes de este escenario */
 .ajusteChip {
   display: inline-flex;
   align-items: center;
