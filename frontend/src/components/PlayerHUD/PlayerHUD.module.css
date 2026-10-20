@@ -1,6 +1,6 @@
 .hudWrapper {
   width: 100%;
-  background-color: rgba(13, 17, 26, 0.95);
+  background-color: rgba(26, 15, 13, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
