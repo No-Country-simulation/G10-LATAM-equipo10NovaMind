@@ -138,6 +138,12 @@ export default function App() {
     setAchievements(state.achievements.length ? state.achievements : INITIAL_ACHIEVEMENTS);
   };
 
+const [ajustesSeleccionados, setAjustesSeleccionados] = useState<{
+  perfil?: string;
+  sector?: string;
+  nivel?: string;
+}>({});
+
   useEffect(() => {
     if (!supabase) return;
     const versiones = accountVersion;
@@ -283,9 +289,17 @@ export default function App() {
    * recorre las mismas etapas que una generación, pero dice que es una muestra (regla 1).
    * Sin escenario se abre el primero del documento.
    */
-  const handleAbrirMuestra = async (documento: string, escenario?: string) => {
+const handleAbrirMuestra = async (documento: string, escenario?: string) => {
     const muestra = escenarioDe(muestras, documento, escenario);
     if (!muestra || isProcessing) return;
+
+    // 👇 Sincroniza los parámetros reales de la muestra seleccionada
+    setAjustesSeleccionados({
+      perfil: muestra.ajustes.perfil,
+      sector: muestra.ajustes.nicho,
+      nivel: muestra.ajustes.detalle,
+    });
+
     const version = accountVersion.current;
     setIsProcessing(true);
     setIsGenerating(true);
@@ -334,6 +348,14 @@ export default function App() {
     origenContenido?: OrigenContenido,
   ) => {
     if (isProcessing) return;
+
+// 👇 GUARDAR LOS PARÁMETROS REALES SELECCIONADOS POR EL USUARIO
+    setAjustesSeleccionados({
+      perfil: profile,
+      sector: niche,
+      nivel: detail,
+    });
+
     const version = accountVersion.current;
     const startingOwner = user?.id || '00000000-0000-0000-0000-000000000000';
     const priorState = { ...latestState.current };
@@ -556,7 +578,7 @@ export default function App() {
           />
         )}
 
-        {currentStep === 2 && (
+       {currentStep === 2 && (
           <Step2KnowledgeQuest
             key={`${user?.id || 'guest'}:${questKey}`}
             quizState={quizState}
@@ -581,6 +603,8 @@ export default function App() {
             isGenerating={isGenerating}
             unlockedStations={unlockedStations}
             generatingMessage={generatingMessage}
+            // 👇 CONEXIÓN AL COMPONENTE HIJO
+            ajustesSeleccionados={ajustesSeleccionados}
           />
         )}
 
