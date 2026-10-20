@@ -997,3 +997,122 @@ details[open] .promptChevron {
   border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: var(--radius-md, 0.5rem);
 }
+
+/* ==========================================================================
+   ESENARIOS PRECARGADOS (Mismo documento, N escenarios) - Idéntico a Imagen 1
+   ========================================================================== */
+
+.escenariosContenedor {
+  margin-top: 1.25rem;
+  width: 100%;
+}
+
+.escenariosBloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.escenariosFila,
+.ajustesFila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.escenariosEtiqueta,
+.ajustesEtiqueta {
+  font-family: var(--font-family-base, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #f1f5f9;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.escenariosChipsGroup,
+.ajustesChipsGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Botón individual de Escenario */
+.escenarioBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.escenarioBtn:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Escenario Activo (Seleccionado) */
+.escenarioBtnActivo {
+  background: rgba(112, 97, 245, 0.22) !important;
+  border-color: #8b5cf6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+}
+
+.escenarioBadgeClasico {
+  color: #38bdf8;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+/* Píldoras de Ajustes de este escenario */
+.ajusteChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: #e2e8f0;
+  font-size: 0.73rem;
+  white-space: nowrap;
+}
+
+.ajusteChip strong {
+  color: #a78bfa;
+  font-weight: 700;
+}
+
+.ajusteChipModo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  color: #67e8f9;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.sinDocumentoAviso {
+  font-size: 0.75rem;
+  color: var(--text-dim, #657087);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
