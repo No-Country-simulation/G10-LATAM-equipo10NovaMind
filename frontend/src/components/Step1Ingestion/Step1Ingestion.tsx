@@ -836,7 +836,8 @@ export const Step1Ingestion = ({
                   {escenariosDoc.length > 1 && (
                     <div className={styles.escenariosFila}>
                       <span className={styles.escenariosEtiqueta}>
-                        MISMO DOCUMENTO, {escenariosDoc.length} ESCENARIOS:
+                        {/* MISMO DOCUMENTO, {escenariosDoc.length} ESCENARIOS: */}
+                        Escenarios didácticos precargados ({escenariosDoc.length})
                       </span>
                       <div
                         className={styles.escenariosChipsGroup}
