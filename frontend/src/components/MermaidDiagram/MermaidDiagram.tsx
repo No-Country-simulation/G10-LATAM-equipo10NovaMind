@@ -7,6 +7,10 @@ import {
   Check,
   Eye,
   AlertTriangle,
+  ZoomIn,
+  ZoomOut,
+  // RotateCcw,
+  // Maximize2,
 } from 'lucide-react';
 import styles from './MermaidDiagram.module.css';
 
@@ -15,24 +19,62 @@ interface MermaidDiagramProps {
   title?: string;
 }
 
-// Configuración global singleton de Mermaid para tema oscuro
+// Configuración de Mermaid con tokens de arquitectura moderna / Dark Luxury
 mermaid.initialize({
   startOnLoad: false,
-  theme: 'dark',
-  securityLevel: 'strict',
+  theme: 'base',
+  securityLevel: 'loose',
   fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
   themeVariables: {
     darkMode: true,
-    background: '#090d16',
-    primaryColor: '#4f46e5',
+    background: 'transparent',
+    mainBkg: '#0e1422',
+    nodeBorder: '#38bdf8',
+    primaryColor: '#0e172a',
     primaryTextColor: '#f8fafc',
-    primaryBorderColor: '#6366f1',
+    primaryBorderColor: 'rgba(56, 189, 248, 0.4)',
     lineColor: '#38bdf8',
-    secondaryColor: '#0284c7',
-    tertiaryColor: '#1e293b',
-    edgeLabelBackground: '#0f172a',
+    secondaryColor: '#1e1b4b',
+    tertiaryColor: '#0f172a',
+    edgeLabelBackground: '#0b0f19',
+    clusterBkg: 'rgba(15, 23, 42, 0.65)',
+    clusterBorder: 'rgba(56, 189, 248, 0.25)',
+    titleColor: '#38bdf8',
     nodeTextColor: '#f8fafc',
   },
+  themeCSS: `
+    .node rect, .node circle, .node polygon {
+      stroke-width: 1.5px !important;
+      rx: 8px !important;
+      ry: 8px !important;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+    }
+    .edgePath .path {
+      stroke: #38bdf8 !important;
+      stroke-width: 1.8px !important;
+      filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.4));
+    }
+    .edgeLabel rect {
+      fill: #060911 !important;
+      stroke: rgba(255, 255, 255, 0.12) !important;
+      rx: 4px !important;
+      ry: 4px !important;
+    }
+    .edgeLabel span {
+      color: #94a3b8 !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+    }
+    .label text {
+      fill: #f1f5f9 !important;
+      font-weight: 600 !important;
+      font-size: 13px !important;
+    }
+    .cluster rect {
+      stroke-dasharray: 4 4 !important;
+      rx: 12px !important;
+    }
+  `,
 });
 
 export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
@@ -43,15 +85,15 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
   const safeId = `mermaid-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  // Resultado del último diagrama dibujado. Mientras no corresponda al diagrama actual, se está
-  // renderizando: así el efecto no tiene que poner estados de carga de forma síncrona.
-  const [resultado, setResultado] = useState<{ chart: string; svg: string; error: string | null }>(
-    { chart: '', svg: '', error: null },
-  );
+  const [resultado, setResultado] = useState<{ chart: string; svg: string; error: string | null }>({
+    chart: '',
+    svg: '',
+    error: null,
+  });
   const [showCode, setShowCode] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
 
-  // Sin diagrama no se dibuja uno genérico: el llamador decide si mostrar el componente.
   const cleanChart = (chart || '').trim();
   const isLoading = resultado.chart !== cleanChart;
   const svgHtml = isLoading ? '' : resultado.svg;
@@ -63,14 +105,17 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
 
     const renderChart = async () => {
       try {
-        // Limpiar sintaxis innecesaria como backticks markdown si vinieran incluidos
-        let code = cleanChart;
+       let code = cleanChart;
         if (code.startsWith('```mermaid')) {
           code = code.replace(/^```mermaid\s*/i, '').replace(/```\s*$/, '');
         } else if (code.startsWith('```')) {
           code = code.replace(/^```\s*/, '').replace(/```\s*$/, '');
         }
         code = code.trim();
+
+        // 🟢 FORZAR ORIENTACIÓN HORIZONTAL (LR) PARA APROVECHAR EL ANCHO PANORÁMICO
+        // Reemplaza graph TD, graph TB, flowchart TD, flowchart TB por LR
+        code = code.replace(/^(graph|flowchart)\s+(TD|TB)/im, '$1 LR');
 
         const { svg } = await mermaid.render(`${safeId}-svg`, code);
         if (isMounted) setResultado({ chart: cleanChart, svg, error: null });
@@ -99,9 +144,13 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Ignorar si clipboard falla
+      // Ignorar fallback
     }
   };
+
+  const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.15, 2));
+  const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 0.15, 0.5));
+  const handleResetZoom = () => setZoomLevel(1);
 
   if (!cleanChart) return null;
 
@@ -117,11 +166,43 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
           </div>
           <span className={styles.badgeLive}>
             <span className={styles.pulseDot} />
-            Mermaid.js Interactivo
+            Arquitectura Dinámica
           </span>
         </div>
 
         <div className={styles.headerActions}>
+          {/* Controles de Zoom */}
+          {!showCode && !renderError && (
+            <div className={styles.zoomControlsGroup}>
+              <button
+                type="button"
+                onClick={handleZoomOut}
+                className={styles.toolBtn}
+                title="Reducir zoom"
+                aria-label="Reducir zoom"
+              >
+                <ZoomOut size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={handleResetZoom}
+                className={styles.zoomResetBtn}
+                title="Restablecer tamaño (100%)"
+              >
+                {Math.round(zoomLevel * 100)}%
+              </button>
+              <button
+                type="button"
+                onClick={handleZoomIn}
+                className={styles.toolBtn}
+                title="Aumentar zoom"
+                aria-label="Aumentar zoom"
+              >
+                <ZoomIn size={13} />
+              </button>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setShowCode(!showCode)}
@@ -164,11 +245,17 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
           </pre>
         </div>
       ) : (
-        <div
-          ref={containerRef}
-          className={styles.chartContainer}
-          dangerouslySetInnerHTML={{ __html: svgHtml }}
-        />
+        <div className={styles.canvasViewport}>
+          <div
+            ref={containerRef}
+            className={styles.chartContainer}
+            style={{
+              transform: `scale(${zoomLevel})`,
+              transformOrigin: 'top center',
+            }}
+            dangerouslySetInnerHTML={{ __html: svgHtml }}
+          />
+        </div>
       )}
     </div>
   );
