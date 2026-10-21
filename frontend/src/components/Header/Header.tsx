@@ -122,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <UserIcon size={14} />
               </div>
               <div className={styles.userInfoText}>
-                <span className={styles.userNameText}>{user.name}</span>
+                <span className={styles.userNameText}>{user.name?.toLowerCase()}</span>
               </div>
               <button
                 type="button"
