@@ -171,11 +171,11 @@
 .cita {
   position: absolute;
   /* 🟢 Elevamos la cita: con 130px - 140px queda perfectamente por encima del subtítulo */
-  bottom: 135px;
+  bottom: 84px;
   left: 60px;
   right: 60px;
   margin: 0;
-  padding: 0.85rem 1.25rem;
+  padding: 0.55rem 1.25rem;
   border-radius: 8px;
   border-left: 3px solid #d946ef; /* o el color de acento fucsia/lila */
   background: rgba(10, 8, 20, 0.85); /* fondo oscuro semi-opaco para no chocar con la foto */
@@ -215,7 +215,7 @@
 .subtitulos {
   position: absolute;
   /* Justo por encima de la barra de controles (que suele medir ~50px) */
-  bottom: 60px;
+  bottom: 45px;
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
