@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { X, Award, CheckCircle2, Sparkles, Flame, Shield, Calendar, RotateCcw, Trophy } from 'lucide-react';
+import { 
+  X, 
+  Award, 
+  CheckCircle2, 
+  Sparkles, 
+  Flame, 
+  Shield, 
+  Calendar, 
+  RotateCcw, 
+  Trophy,
+  Zap,
+  Brain,
+  Terminal,
+  Clapperboard,
+  Crown,
+  Lock
+} from 'lucide-react';
 import type { Achievement } from '../../types/types';
 import styles from './BadgeModal.module.css';
 
@@ -10,12 +26,78 @@ interface BadgeModalProps {
   allBadges: Achievement[];
   xp: number;
   streakDays: number;
-  /** Con sesión, los logros se guardan en la cuenta (Supabase); como invitado, solo viven en memoria. */
   sesionIniciada: boolean;
   onContinueQuest?: () => void;
   onRestartToStation1?: () => void;
   onReviewStations?: () => void;
 }
+
+// Configuración de temas e iconos vectoriales de alta fidelidad según la medalla
+interface BadgeTheme {
+  icon: React.ReactNode;
+  accentColor: string;
+  glowColor: string;
+  borderGlow: string;
+  badgeStyleClass: string;
+}
+
+const getBadgeTheme = (id: string = '', title: string = ''): BadgeTheme => {
+  const normId = id.toLowerCase();
+  const normTitle = title.toLowerCase();
+
+  // Estación 2: Memoria de Acero (Cian Eléctrico)
+  if (normId.includes('station2') || normId.includes('flashcard') || normTitle.includes('memoria')) {
+    return {
+      icon: <Brain size={38} className={styles.vectorIcon} />,
+      accentColor: '#38bdf8',
+      glowColor: 'rgba(6, 182, 212, 0.45)',
+      borderGlow: 'rgba(56, 189, 248, 0.65)',
+      badgeStyleClass: styles.themeCyan,
+    };
+  }
+
+  // Estación 3: Ingeniero de Laboratorio (Esmeralda Neón)
+  if (normId.includes('station3') || normId.includes('tutorial') || normTitle.includes('ingeniero') || normTitle.includes('laboratorio')) {
+    return {
+      icon: <Terminal size={38} className={styles.vectorIcon} />,
+      accentColor: '#34d399',
+      glowColor: 'rgba(16, 185, 129, 0.45)',
+      borderGlow: 'rgba(52, 211, 153, 0.65)',
+      badgeStyleClass: styles.themeEmerald,
+    };
+  }
+
+  // Estación 4: Director Didáctico (Fucsia / Violeta de Estudio)
+  if (normId.includes('station4') || normId.includes('director') || normTitle.includes('director')) {
+    return {
+      icon: <Clapperboard size={38} className={styles.vectorIcon} />,
+      accentColor: '#f0abfc',
+      glowColor: 'rgba(217, 70, 239, 0.45)',
+      borderGlow: 'rgba(240, 171, 252, 0.65)',
+      badgeStyleClass: styles.themeFuchsia,
+    };
+  }
+
+  // Estación 5: Zero-Hallucination Master (Oro Cuántico / Capstone)
+  if (normId.includes('station5') || normId.includes('quiz') || normId.includes('zero') || normTitle.includes('zero') || normTitle.includes('master')) {
+    return {
+      icon: <Crown size={40} className={styles.vectorIcon} />,
+      accentColor: '#fbbf24',
+      glowColor: 'rgba(245, 158, 11, 0.55)',
+      borderGlow: 'rgba(251, 191, 36, 0.75)',
+      badgeStyleClass: styles.themeGold,
+    };
+  }
+
+  // Estación 1 / Defecto: Síntesis Cognitiva (Ámbar Refractario)
+  return {
+    icon: <Zap size={38} className={styles.vectorIcon} />,
+    accentColor: '#f59e0b',
+    glowColor: 'rgba(245, 158, 11, 0.45)',
+    borderGlow: 'rgba(245, 158, 11, 0.65)',
+    badgeStyleClass: styles.themeAmber,
+  };
+};
 
 export const BadgeModal: React.FC<BadgeModalProps> = ({
   isOpen,
@@ -28,10 +110,8 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
   onContinueQuest,
   onRestartToStation1,
 }) => {
-  // Estado para forzar la vista de vitrina cuando el usuario hace clic en el botón del capstone
   const [showcaseForced, setShowcaseForced] = useState<boolean>(false);
 
-  // Escuchar tecla Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -44,7 +124,6 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Derivamos la vista: si no hay medalla individual o el usuario forzó la vitrina, se muestra la vitrina
   const isDisplayingShowcase = !singleBadge || showcaseForced;
 
   const currentLevel = Math.floor(xp / 100) + 1;
@@ -57,7 +136,6 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   const unlockedCount = allBadges.filter((b) => b.desbloqueado).length;
 
-  // Detección estricta de la medalla Capstone/Quiz
   const badgeId = (singleBadge?.id || '').toLowerCase();
   const badgeTitle = (singleBadge?.titulo || '').toLowerCase();
 
@@ -70,20 +148,18 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
     badgeTitle.includes('evaluación final') ||
     badgeTitle.includes('quiz');
 
+  const activeTheme = getBadgeTheme(singleBadge?.id, singleBadge?.titulo);
+
   const handleContinue = () => {
     setShowcaseForced(false);
     onClose();
-    if (onContinueQuest) {
-      onContinueQuest();
-    }
+    if (onContinueQuest) onContinueQuest();
   };
 
   const handleRestartToStart = () => {
     setShowcaseForced(false);
     onClose();
-    if (onRestartToStation1) {
-      onRestartToStation1();
-    }
+    if (onRestartToStation1) onRestartToStation1();
   };
 
   const handleModalClose = () => {
@@ -93,7 +169,13 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   return (
     <div className={styles.overlay} onClick={handleModalClose}>
-      <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+      <div 
+        className={`${styles.modalCard} ${!isDisplayingShowcase ? activeTheme.badgeStyleClass : ''}`} 
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Halo volumétrico de fondo */}
+        <div className={styles.modalBacklight} aria-hidden="true" />
+
         {/* Botón de cierre */}
         <button
           type="button"
@@ -105,15 +187,18 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
         </button>
 
         {!isDisplayingShowcase && singleBadge ? (
-          /* Celebración de medalla individual recién desbloqueada */
+          /* Celebración de Medalla Individual */
           <div className={styles.celebrationWrapper}>
-            <div className={styles.badgeIconContainer}>
-              <span>{singleBadge.icono}</span>
-              <Sparkles size={20} className={styles.sparkleDecor} />
+            <div className={styles.badgeOrbContainer}>
+              <div className={styles.badgePulseRing} />
+              <div className={styles.badgeIconCenter}>
+                {activeTheme.icon}
+              </div>
+              <Sparkles size={22} className={styles.sparkleDecor} />
             </div>
 
-            <div>
-              <div className={styles.unlockedSubheader}>¡Medalla Desbloqueada!</div>
+            <div className={styles.celebrationTextContent}>
+              <div className={styles.unlockedSubheader}>¡MEDALLA DESBLOQUEADA!</div>
               <h3 className={styles.badgeCelebrationTitle}>{singleBadge.titulo}</h3>
               <p className={styles.badgeCelebrationDescription}>
                 {singleBadge.descripcion}
@@ -122,13 +207,13 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
             <div className={styles.ociNotice}>
               <div className={styles.ociNoticeTitle}>
-                <Shield size={14} />
+                <Shield size={15} />
                 <span>{sesionIniciada ? 'Logro guardado en tu cuenta' : 'Logro de esta sesión'}</span>
               </div>
               <p className={styles.ociNoticeText}>
                 {sesionIniciada
                   ? 'Se sincroniza con tu progreso y lo verás al volver a iniciar sesión.'
-                  : 'Estás como invitado: el logro se pierde al recargar la página. Inicia sesión para guardarlo.'}
+                  : 'Estás como invitado: el logro se sincroniza en memoria. Inicia sesión para conservarlo.'}
               </p>
             </div>
 
@@ -149,7 +234,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
                     onClick={handleRestartToStart}
                     className={styles.restartLinkButton}
                   >
-                    <RotateCcw size={13} />
+                    <RotateCcw size={14} />
                     <span>Reiniciar Recorrido desde la Estación 1</span>
                   </button>
                 )}
@@ -165,12 +250,12 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
             )}
           </div>
         ) : (
-          /* Vitrina completa de trofeos y medallas */
+          /* Vitrina Completa de Trofeos y Medallas */
           <div className={styles.showcaseWrapper}>
             <div className={styles.showcaseHeader}>
               <div className={styles.showcaseTitleGroup}>
                 <div className={styles.showcaseTrophyIconBox}>
-                  <Award size={18} />
+                  <Award size={20} />
                 </div>
                 <div>
                   <h3 className={styles.showcaseTitle}>Vitrina de Trofeos & Medallas</h3>
@@ -204,49 +289,52 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
               </div>
             </div>
 
-            {/* Listado de todas las medallas */}
+            {/* Listado de todas las medallas con iconos y estética premium */}
             <div className={styles.badgeList}>
-              {allBadges.map((badge) => (
-                <div
-                  key={badge.id}
-                  className={`${styles.badgeItem} ${
-                    badge.desbloqueado ? styles.badgeItemUnlocked : styles.badgeItemLocked
-                  }`}
-                >
-                  <div className={styles.badgeContentLeft}>
-                    <div
-                      className={`${styles.badgeItemIconBox} ${
-                        badge.desbloqueado
-                          ? styles.badgeItemIconBoxUnlocked
-                          : styles.badgeItemIconBoxLocked
-                      }`}
-                    >
-                      {badge.icono}
+              {allBadges.map((badge) => {
+                const bTheme = getBadgeTheme(badge.id, badge.titulo);
+                return (
+                  <div
+                    key={badge.id}
+                    className={`${styles.badgeItem} ${
+                      badge.desbloqueado ? styles.badgeItemUnlocked : styles.badgeItemLocked
+                    } ${badge.desbloqueado ? bTheme.badgeStyleClass : ''}`}
+                  >
+                    <div className={styles.badgeContentLeft}>
+                      <div
+                        className={`${styles.badgeItemIconBox} ${
+                          badge.desbloqueado
+                            ? styles.badgeItemIconBoxUnlocked
+                            : styles.badgeItemIconBoxLocked
+                        }`}
+                      >
+                        {badge.desbloqueado ? bTheme.icon : <Lock size={18} className={styles.lockIcon} />}
+                      </div>
+
+                      <div className={styles.badgeDetails}>
+                        <div className={styles.badgeItemTitle}>{badge.titulo}</div>
+                        <div className={styles.badgeItemDesc}>{badge.descripcion}</div>
+                        {badge.desbloqueado && badge.fecha && (
+                          <div className={styles.badgeItemDate}>
+                            <Calendar size={12} />
+                            <span>Obtenido en sesión</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className={styles.badgeDetails}>
-                      <div className={styles.badgeItemTitle}>{badge.titulo}</div>
-                      <div className={styles.badgeItemDesc}>{badge.descripcion}</div>
-                      {badge.desbloqueado && badge.fecha && (
-                        <div className={styles.badgeItemDate}>
-                          <Calendar size={12} />
-                          <span>Obtenido en sesión</span>
-                        </div>
+                    <div className={styles.badgeItemStatus}>
+                      {badge.desbloqueado ? (
+                        <span className={styles.statusUnlockedTag}>
+                          <CheckCircle2 size={14} /> Obtenida
+                        </span>
+                      ) : (
+                        <span className={styles.statusLockedTag}>Bloqueada</span>
                       )}
                     </div>
                   </div>
-
-                  <div className={styles.badgeItemStatus}>
-                    {badge.desbloqueado ? (
-                      <span className={styles.statusUnlockedTag}>
-                        <CheckCircle2 size={14} /> Obtenida
-                      </span>
-                    ) : (
-                      <span className={styles.statusLockedTag}>Bloqueada</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <button
