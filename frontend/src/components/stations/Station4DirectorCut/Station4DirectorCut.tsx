@@ -561,6 +561,8 @@ const DirectorStudio = ({
 
   return (
     <div className={estudio.stationWrapper}>
+      {/* Halo ambiental volumétrico fucsia/violeta */}
+    <div className={styles.ambientGlow} aria-hidden="true" />
       {/* Anuncios para lectores de pantalla: solo cambios significativos, nunca el reloj */}
       <div className={styles.srOnly} role="status" aria-live="polite" aria-atomic="true">
         {`${sceneLabel(currentSceneIndex)} de ${totalScenes}: ${currentScene.titulo}. ${
