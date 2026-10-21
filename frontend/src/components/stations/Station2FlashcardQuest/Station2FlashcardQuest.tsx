@@ -259,9 +259,9 @@ useEffect(() => {
         <div className={styles.progressBox}>
           <div className={styles.progressTexts}>
             <div className={styles.progressLabel}>Dominadas (Mín: {minRequired})</div>
-            <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
+            {/* <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
               {masteredCount} / {totalCards}
-            </div>
+            </div> */}
           </div>
           <div className={styles.cardIndexBadge}>
             {showCompletionCard ? '✓' : `#${currentIndex + 1}`}
