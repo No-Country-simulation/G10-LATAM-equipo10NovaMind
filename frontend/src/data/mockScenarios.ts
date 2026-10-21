@@ -301,7 +301,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'streak',
     titulo: 'Memoria de Acero',
-    descripcion: 'Supera la ronda de Active Recall dominando los conceptos clave.',
+    descripcion: 'Supera la ronda de evocación activa dominando los conceptos clave.',
     icono: '🧠',
     desbloqueado: false,
     categoria: 'streak',
@@ -309,7 +309,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'builder',
     titulo: 'Ingeniero de Laboratorio',
-    descripcion: 'Ejecuta y valida los checkpoints técnicos del entorno interactivo.',
+    descripcion: 'Ejecuta y valida cada paso técnico del entorno interactivo.',
     icono: '💻',
     desbloqueado: false,
     categoria: 'builder',
@@ -324,8 +324,8 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'master',
-    titulo: 'Zero-Hallucination Master',
-    descripcion: 'Supera el Examen Final Capstone conservando escudos cognitivos y anclaje RAG.',
+    titulo: 'Maestro Cero Alucinaciones',
+    descripcion: 'Supera el Examen Final conservando escudos cognitivos y anclaje RAG.',
     icono: '👑',
     desbloqueado: false,
     categoria: 'master',

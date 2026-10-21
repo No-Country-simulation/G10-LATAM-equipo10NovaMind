@@ -303,7 +303,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
           {isCompleted ? (
             <>
               <Award size={16} color="var(--color-amber-400)" />
-              <span>Ver Medalla Ninja Desbloqueada</span>
+              <span>Ver Medalla Desbloqueada</span>
             </>
           ) : (
             <>

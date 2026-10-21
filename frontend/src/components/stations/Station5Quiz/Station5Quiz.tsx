@@ -312,7 +312,7 @@ export const Station5FinalTrial = ({
               className={isSuccess ? styles.examApprovalPill : styles.dangerTag}
             >
               {isSuccess
-                ? "¡Evaluación Capstone Aprobada!"
+                ? "¡Evaluación Final Aprobada!"
                 : "Evaluación No Superada"}
             </span>
           </div>

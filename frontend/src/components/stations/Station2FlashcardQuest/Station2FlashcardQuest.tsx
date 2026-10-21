@@ -319,7 +319,7 @@ useEffect(() => {
                 </h3>
                 
                 <p className={styles.completionSubtitle}>
-                  Has dominado con éxito las <strong>{totalCards} tarjetas</strong> didácticas del material mediante active recall. Los conceptos ya quedaron registrados en tu ruta cognitiva.
+                  Has dominado con éxito las <strong>{totalCards} tarjetas</strong> didácticas del material mediante evocación activa. Los conceptos ya quedaron registrados en tu ruta cognitiva.
                 </p>
 
                 <div className={styles.completionActionRow}>
