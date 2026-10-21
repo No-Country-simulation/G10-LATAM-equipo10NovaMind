@@ -1,17 +1,30 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { Player, type PlayerRef } from '@remotion/player';
-import type { VideoJobSpec } from '../../../../types/types';
-import { MicroclaseVideo } from './MicroclaseVideo';
-import { FPS, TRANSICION_FRAMES, escenaEnFrame, frameDeEscena, lineaVideo } from './lineaVideo';
-import styles from './VideoMicroclase.module.css';
+import {
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import { Player, type PlayerRef } from "@remotion/player";
+import type { VideoJobSpec } from "../../../../types/types";
+import { MicroclaseVideo } from "./MicroclaseVideo";
+import {
+  FPS,
+  TRANSICION_FRAMES,
+  escenaEnFrame,
+  frameDeEscena,
+  lineaVideo,
+} from "./lineaVideo";
+import styles from "./VideoMicroclase.module.css";
 
-const CLAVE_SUBTITULOS = 'nuevamente.video.subtitulos';
+const CLAVE_SUBTITULOS = "nuevamente.video.subtitulos";
 // En la portada, el índice termina de aparecer hacia el fotograma 40 (3-4 escenas)
 const FRAME_PORTADA_ARMADA = 42;
 /** Preferencia de este navegador; por defecto, con subtítulos */
 const leerSubtitulos = () => {
   try {
-    return localStorage.getItem(CLAVE_SUBTITULOS) !== '0';
+    return localStorage.getItem(CLAVE_SUBTITULOS) !== "0";
   } catch {
     return true;
   }
@@ -38,9 +51,18 @@ interface VideoMicroclaseProps {
  * Con el foco en el video: Espacio pausa o reanuda y las flechas saltan de escena.
  */
 const VideoMicroclase = ({
-  spec, urls, duraciones, onEscena, onReproduciendo, autoPlay, pedidoReproducir = 0,
+  spec,
+  urls,
+  duraciones,
+  onEscena,
+  onReproduciendo,
+  autoPlay,
+  pedidoReproducir = 0,
 }: VideoMicroclaseProps) => {
-  const linea = useMemo(() => lineaVideo(spec, urls, duraciones), [spec, urls, duraciones]);
+  const linea = useMemo(
+    () => lineaVideo(spec, urls, duraciones),
+    [spec, urls, duraciones],
+  );
   const playerRef = useRef<PlayerRef>(null);
   const [indice, setIndice] = useState(-1);
   const [subtitulos, setSubtitulos] = useState(leerSubtitulos);
@@ -48,13 +70,15 @@ const VideoMicroclase = ({
     const nuevo = !subtitulos;
     setSubtitulos(nuevo);
     try {
-      localStorage.setItem(CLAVE_SUBTITULOS, nuevo ? '1' : '0');
+      localStorage.setItem(CLAVE_SUBTITULOS, nuevo ? "1" : "0");
     } catch {
       // sin almacenamiento la preferencia dura lo que la página
     }
   };
   const avisarEscena = useEffectEvent((i: number) => onEscena(i));
-  const avisarReproduccion = useEffectEvent((reproduciendo: boolean) => onReproduciendo(reproduciendo));
+  const avisarReproduccion = useEffectEvent((reproduciendo: boolean) =>
+    onReproduciendo(reproduciendo),
+  );
   const arrancar = useEffectEvent(() => {
     if (autoPlay) playerRef.current?.play();
   });
@@ -91,46 +115,40 @@ const VideoMicroclase = ({
     // autoplay tras «Generar» no tiene ese gesto y el navegador lo rechazaría: entonces no se pide.
     const alReproducir = () => {
       avisarReproduccion(true);
-      if (player.isFullscreen() || navigator.userActivation?.isActive === false) return;
-      try {
-        player.requestFullscreen();
-      } catch {
-        // sin permiso de pantalla completa el video sigue en la página
-      }
     };
     const alPausar = () => avisarReproduccion(false);
-    player.addEventListener('frameupdate', alFotograma);
-    player.addEventListener('play', alReproducir);
-    player.addEventListener('pause', alPausar);
-    player.addEventListener('ended', alTerminar);
+    player.addEventListener("frameupdate", alFotograma);
+    player.addEventListener("play", alReproducir);
+    player.addEventListener("pause", alPausar);
+    player.addEventListener("ended", alTerminar);
     return () => {
-      player.removeEventListener('frameupdate', alFotograma);
-      player.removeEventListener('play', alReproducir);
-      player.removeEventListener('pause', alPausar);
-      player.removeEventListener('ended', alTerminar);
+      player.removeEventListener("frameupdate", alFotograma);
+      player.removeEventListener("play", alReproducir);
+      player.removeEventListener("pause", alPausar);
+      player.removeEventListener("ended", alTerminar);
       avisarReproduccion(false);
     };
   }, [linea]);
 
   const alTeclear = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'c' || e.key === 'C') {
+    if (e.key === "c" || e.key === "C") {
       e.preventDefault();
       alternarSubtitulos();
       return;
     }
-    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
     const player = playerRef.current;
     if (!player) return;
     e.preventDefault();
     const actual = escenaEnFrame(linea, player.getCurrentFrame());
-    const destino = e.key === 'ArrowRight' ? actual + 1 : actual - 1;
+    const destino = e.key === "ArrowRight" ? actual + 1 : actual - 1;
     if (destino < 0) player.seekTo(0);
     else if (destino >= linea.escenas.length) player.seekTo(linea.desdeCierre);
     else player.seekTo(frameDeEscena(linea, destino));
   };
 
   const foto = linea.escenas[indice]?.scene.imagen;
-  const credito = foto?.tipo === 'foto' && foto.url ? foto : null;
+  const credito = foto?.tipo === "foto" && foto.url ? foto : null;
 
   return (
     <div className={styles.contenedor}>
@@ -140,21 +158,19 @@ const VideoMicroclase = ({
           component={MicroclaseVideo}
           inputProps={{ linea, subtitulos }}
           durationInFrames={linea.totalFrames}
-          // Antes del primer play se ve la portada ya armada (título e índice), no el fotograma 0 en negro
-          initialFrame={Math.min(FRAME_PORTADA_ARMADA, linea.portadaFrames - TRANSICION_FRAMES - 1)}
+          initialFrame={Math.min(
+            FRAME_PORTADA_ARMADA,
+            linea.portadaFrames - TRANSICION_FRAMES - 1,
+          )}
           fps={FPS}
           compositionWidth={1280}
           compositionHeight={720}
           controls
           allowFullscreen
           clickToPlay
-          doubleClickToFullscreen
           spaceKeyToPlayOrPause
           showVolumeControls
           acknowledgeRemotionLicense
-          // CC en la barra del Player, junto al tiempo: así también se ve en pantalla completa.
-          // Remotion lo pone tras un separador flex: 1; con flex 1000 este hueco se queda con casi
-          // todo el espacio libre y el botón, alineado a la izquierda, queda pegado al tiempo.
           renderCustomControls={() => (
             <div className={styles.huecoControles}>
               <button
@@ -163,39 +179,52 @@ const VideoMicroclase = ({
                 aria-pressed={subtitulos}
                 onClick={alternarSubtitulos}
                 title="Mostrar u ocultar los subtítulos (tecla C)"
-                aria-label={subtitulos ? 'Ocultar subtítulos' : 'Mostrar subtítulos'}
+                aria-label={
+                  subtitulos ? "Ocultar subtítulos" : "Mostrar subtítulos"
+                }
               >
                 CC
               </button>
             </div>
           )}
-          style={{ width: '100%', aspectRatio: '16 / 9' }}
+          style={{ width: "100%", aspectRatio: "16 / 9" }}
         />
       </div>
 
       <div className={styles.barra}>
-      {/* La licencia CC exige el crédito: aquí con enlaces al autor y a la licencia */}
-      {credito && (
-        <p className={styles.credito}>
-          Foto:{' '}
-          {credito.fuente_url ? (
-            <a href={credito.fuente_url} target="_blank" rel="noopener noreferrer">
-              {credito.autor}
-            </a>
-          ) : (
-            credito.autor
-          )}{' '}
-          ·{' '}
-          {credito.licencia_url ? (
-            <a href={credito.licencia_url} target="_blank" rel="noopener noreferrer license">
-              {credito.licencia}
-            </a>
-          ) : (
-            credito.licencia
-          )}{' '}
-          · vía {credito.proveedor === 'wikimedia' ? 'Wikimedia Commons' : 'Openverse'}
-        </p>
-      )}
+        {/* La licencia CC exige el crédito: aquí con enlaces al autor y a la licencia */}
+        {credito && (
+          <p className={styles.credito}>
+            Foto:{" "}
+            {credito.fuente_url ? (
+              <a
+                href={credito.fuente_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {credito.autor}
+              </a>
+            ) : (
+              credito.autor
+            )}{" "}
+            ·{" "}
+            {credito.licencia_url ? (
+              <a
+                href={credito.licencia_url}
+                target="_blank"
+                rel="noopener noreferrer license"
+              >
+                {credito.licencia}
+              </a>
+            ) : (
+              credito.licencia
+            )}{" "}
+            · vía{" "}
+            {credito.proveedor === "wikimedia"
+              ? "Wikimedia Commons"
+              : "Openverse"}
+          </p>
+        )}
       </div>
     </div>
   );

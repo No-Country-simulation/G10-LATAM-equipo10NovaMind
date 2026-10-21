@@ -169,27 +169,38 @@
 }
 
 .cita {
-  margin: auto 0 0;
-  padding-left: 28px;
-  border-left: 6px solid var(--s4-accent);
-  font-size: 28px;
-  line-height: 1.4;
-  color: var(--color-text-secondary);
+  position: absolute;
+  /* 🟢 Elevamos la cita: con 130px - 140px queda perfectamente por encima del subtítulo */
+  bottom: 135px;
+  left: 60px;
+  right: 60px;
+  margin: 0;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  border-left: 3px solid #d946ef; /* o el color de acento fucsia/lila */
+  background: rgba(10, 8, 20, 0.85); /* fondo oscuro semi-opaco para no chocar con la foto */
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  z-index: 2;
 }
 
 .citaTexto {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 1.15rem; /* Ajustado a la escala 1280x720 de Remotion */
+  line-height: 1.45;
+  color: #f1f5f9;
+  font-style: italic;
 }
 
 .cita cite {
   display: block;
-  margin-top: 8px;
-  font: normal 22px var(--font-code);
-  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-family: var(--font-code, monospace);
+  font-style: normal;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .credito {
@@ -203,17 +214,29 @@
 
 .subtitulos {
   position: absolute;
-  left: 60px;
-  right: 110px;
-  bottom: 26px;
-  margin: 0;
-  padding: 14px 24px;
-  border-radius: 14px;
-  background: rgb(3 7 18 / 78%);
-  color: var(--color-text-secondary);
-  font-size: 30px;
-  line-height: 1.45;
+  /* Justo por encima de la barra de controles (que suele medir ~50px) */
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 85%;
   text-align: center;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Caja de fondo para asegurar contraste absoluto */
+.subtitulosTexto {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  background: rgba(3, 7, 18, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 /* Video sin voz: el guion entero, fijo, sin resaltar palabras (no hay tiempos reales) */
