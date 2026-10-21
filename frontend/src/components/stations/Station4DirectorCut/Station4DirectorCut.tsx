@@ -387,10 +387,48 @@ const DirectorStudio = ({
   // y, si ya está listo, lo reproduce
   const videoRef = useRef<HTMLElement>(null);
   const [pedidoReproducir, setPedidoReproducir] = useState(0);
+// Desplazamiento cinematográfico suave con curva de desaceleración (easeOutCubic)
+  const animarScrollSuave = (destinoY: number, duracionMs = 850) => {
+    const inicioY = window.scrollY;
+    const distancia = destinoY - inicioY;
+    const inicioTiempo = performance.now();
+
+    const pasoAnimacion = (tiempoActual: number) => {
+      const tiempoTranscurrido = tiempoActual - inicioTiempo;
+      const progreso = Math.min(tiempoTranscurrido / duracionMs, 1);
+      
+      // Curva de desaceleración suave
+      const ease = 1 - Math.pow(1 - progreso, 3);
+      window.scrollTo(0, inicioY + distancia * ease);
+
+      if (progreso < 1) {
+        requestAnimationFrame(pasoAnimacion);
+      }
+    };
+
+    requestAnimationFrame(pasoAnimacion);
+  };
+
   const accionVideoDestacada = () => {
-    if (!videoListo) void handleVideo();
-    else setPedidoReproducir((n) => n + 1);
-    videoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!videoListo) {
+      void handleVideo();
+    } else {
+      setPedidoReproducir((n) => n + 1);
+    }
+
+    if (videoRef.current) {
+      // Tomamos en cuenta la barra superior fija (~100px) para que no tape el reproductor
+      const offsetHeader = 100;
+      const rect = videoRef.current.getBoundingClientRect();
+      const espacioUtil = window.innerHeight - offsetHeader;
+      
+      // Centro matemático exacto en la zona visible de la pantalla
+      const centroCalculado =
+        window.scrollY + rect.top - offsetHeader - Math.max(0, (espacioUtil - rect.height) / 2);
+
+      // Desplazamiento suave de 850 milisegundos
+      animarScrollSuave(Math.max(0, centroCalculado), 850);
+    }
   };
 
   // Patrón WAI-ARIA Tabs: flechas/Home/End mueven foco y selección
