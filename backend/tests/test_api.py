@@ -226,4 +226,40 @@ def test_adaptar_stream_emite_eventos_sse():
         assert resultado_final["datos"]["contenido_adaptado"]["titulo"] == "Flashcards de VCN"
 
 
+def test_exportar_pdf_endpoint():
+    """Verifica que el endpoint /api/v1/exportar/pdf compile y devuelva un PDF válido."""
+    payload = {
+        "titulo": "Kafka Fundamentos",
+        "perfil": "Desarrollador Junior",
+        "nicho": "Fintech",
+        "anclaje_score": 0.95,
+        "contenido": {
+            "titulo": "Kafka Fundamentos",
+            "introduccion_contextualizada": "Introducción didáctica a Kafka.",
+            "resumen_ninja": {
+                "analogia_central": "Kafka es una central de correos de alta velocidad.",
+                "conceptos_clave": [{"id": "c1", "texto": "Particiones y Topics"}],
+            },
+            "flashcards": [
+                {"id": "fc-1", "frente": "¿Qué es un Topic?", "dorso": "Un canal temático.", "pista_didactica": "Categoría"}
+            ],
+            "tutorial": [
+                {"id": "t-1", "paso": 1, "titulo": "Crear Topic", "descripcion": "Usar CLI", "cli_command": "kafka-topics.sh", "verificacion": "Topic creado"}
+            ],
+            "diagrama_mermaid": "graph LR\nProducer --> Topic --> Consumer",
+            "quiz": [
+                {"id": "q-1", "pregunta": "¿Cuál es la función?", "opciones": ["Eventos", "Planillas"], "respuesta_correcta": 0, "justificacion_rag": "Fuente oficial"}
+            ],
+        },
+    }
+
+    response = client.post("/api/v1/exportar/pdf", json=payload)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert "attachment; filename=" in response.headers["content-disposition"]
+    assert response.content.startswith(b"%PDF")
+    assert len(response.content) > 1000
+
+
+
 

@@ -35,7 +35,7 @@ from app.auth import rechazar_generacion_invitado, require_generador
 from app.auth import settings as supabase_settings
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
 from app.agentes.generacion_paralela import NOMBRES_RECURSO, GeneradorParalelo
@@ -75,7 +75,9 @@ from app.core.schemas import (
     VideoJobSpec,
 )
 from app.orquestador import OrquestadorNuevaMente, crear_orquestador
+from app.servicios.generador_pdf import GeneradorPDFEducativo
 from app.servicios.servicio_correo import ServicioCorreo
+from app.storage.oci_client import _slugify
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("nuevamente.backend")
@@ -903,6 +905,78 @@ async def descargar_archivo_narracion(ruta: str, principal: Principal = Depends(
     return Response(
         content=datos, media_type=_TIPOS_ARCHIVO_NARRACION[extension],
         headers={"Cache-Control": "private, max-age=86400"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Etapa 7 · Exportación de Dossier Pedagógico en PDF (ReportLab)
+# ---------------------------------------------------------------------------
+class SolicitudExportarPDF(BaseModel):
+    titulo: Optional[str] = Field(None, description="Título del documento")
+    perfil: Optional[str] = Field("General", description="Perfil pedagógico del estudiante")
+    nicho: Optional[str] = Field("General", description="Sector de contextualización")
+    contenido: Optional[Dict[str, Any]] = Field(None, description="Contenido adaptado (resumen, flashcards, tutorial, quiz, etc.)")
+    anclaje_score: Optional[float] = Field(None, description="Puntaje de fidelidad RAG auditado (0.0 a 1.0)")
+    paquete: Optional[Dict[str, Any]] = Field(None, description="Paquete pedagógico completo estructurado (AdaptedContentPackage)")
+
+
+@app.post("/api/v1/exportar/pdf", tags=["Exportación"])
+async def exportar_pdf(solicitud: SolicitudExportarPDF) -> Response:
+    """
+    Compila y descarga bajo demanda el Dossier Pedagógico oficial en formato PDF (ReportLab).
+    Acepta tanto {titulo, perfil, nicho, contenido, anclaje_score} como el paquete completo estructurado.
+    Disponible tanto para usuarios autenticados como para invitados / modo local.
+    """
+    contenido = solicitud.contenido
+    titulo = solicitud.titulo
+    perfil = solicitud.perfil or "General"
+    nicho = solicitud.nicho or "General"
+    anclaje = solicitud.anclaje_score
+
+    if solicitud.paquete:
+        pkg = solicitud.paquete
+        if not contenido:
+            contenido = pkg.get("contenido_adaptado") or {}
+        if not titulo:
+            contenido_titulo = contenido.get("titulo") if isinstance(contenido, dict) else None
+            titulo = contenido_titulo or pkg.get("metadatos", {}).get("titulo") or "Dossier Educativo"
+        if perfil == "General":
+            perfil = pkg.get("metadatos", {}).get("perfil_aplicado") or perfil
+        if anclaje is None:
+            anclaje = pkg.get("evaluacion_calidad", {}).get("anclaje_fuente_score")
+
+    if not isinstance(contenido, dict):
+        contenido = {}
+    if not titulo:
+        titulo = contenido.get("titulo", "Dossier Educativo")
+
+    generador = GeneradorPDFEducativo()
+    try:
+        pdf_bytes = await asyncio.to_thread(
+            generador.generar_pdf_estandarizado,
+            titulo=titulo,
+            perfil=perfil,
+            nicho=nicho,
+            contenido=contenido,
+            anclaje_score=anclaje,
+        )
+    except Exception as exc:
+        logger.exception("Error al compilar el dossier PDF: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"No se pudo compilar el PDF: {exc}",
+        ) from exc
+
+    slug = _slugify(titulo)[:25] if titulo else "educativo"
+    nombre_archivo = f"Dossier_{slug}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{nombre_archivo}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
     )
 
 

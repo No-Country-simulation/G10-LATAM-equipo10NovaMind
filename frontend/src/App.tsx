@@ -29,7 +29,7 @@ import type {
 import { triggerLevelUpConfetti, triggerSmallConfetti } from "./utils/confetti";
 import { sonar } from "./utils/sonidos";
 import { mazoAnkiCsv, nombreArchivoAnki } from "./utils/exportAnki";
-import { solicitarAdaptacion } from "./services/api";
+import { solicitarAdaptacion, exportarDossierPDF } from "./services/api";
 import { cargarMuestra, escenarioDe, indiceMuestras } from "./services/muestras";
 import { estacionesResueltas } from "./utils/paqueteIncremental";
 import styles from "./App.module.css";
@@ -107,6 +107,7 @@ export default function App() {
   }, []);
   // Sin Supabase no hay sesión que comprobar: se arranca listo y en modo local.
   const [ready, setReady] = useState(!supabase);
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState<boolean>(false);
   const [quizState, setQuizState] = useState<QuizState>(EMPTY_QUIZ);
   const [syncMessage, setSyncMessage] = useState(
     supabase ? 'Comprobando sesión…' : 'Modo local (sin Supabase). Tu trabajo se guardará en esta sesión.',
@@ -507,6 +508,31 @@ const handleAbrirMuestra = async (documento: string, escenario?: string) => {
     downloadAnchor.remove();
   };
 
+  const handleDownloadPDF = async () => {
+    try {
+      setIsDownloadingPDF(true);
+      const blob = await exportarDossierPDF(currentPackage);
+      const url = window.URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", url);
+      const baseName = (
+        currentPackage.almacenamiento_oci?.objeto_id ||
+        `dossier_${(currentPackage.contenido_adaptado.titulo || "educativo").toLowerCase().replace(/[^a-z0-9]/g, "_")}.json`
+      ).replace(/\.json$/i, "");
+      downloadAnchor.setAttribute("download", `${baseName}.pdf`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      console.error("Error al descargar PDF:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`⚠️ No se pudo generar el dossier en PDF: ${msg}`);
+    } finally {
+      setIsDownloadingPDF(false);
+    }
+  };
+
   // Reinicio pedagógico del circuito al agotar los 3 escudos
   const handleResetCircuit = () => {
     setQuizState(EMPTY_QUIZ);
@@ -614,6 +640,8 @@ const handleAbrirMuestra = async (documento: string, escenario?: string) => {
             onDownloadJSON={handleDownloadJSON}
             onDownloadMarkdown={handleDownloadMarkdown}
             onDownloadAnkiCSV={handleDownloadAnkiCSV}
+            onDownloadPDF={handleDownloadPDF}
+            isDownloadingPDF={isDownloadingPDF}
           />
         )}
       </main>

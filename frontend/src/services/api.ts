@@ -323,3 +323,27 @@ export async function urlsDeAudio(respuesta: RespuestaNarracion): Promise<Record
   );
   return Object.fromEntries(pares.map(([n, blob]) => [n, URL.createObjectURL(blob)]));
 }
+
+/**
+ * Solicita al backend FastAPI la generación y compilación del Dossier Pedagógico Oficial en PDF (ReportLab).
+ */
+export async function exportarDossierPDF(pkg: AdaptedContentPackage): Promise<Blob> {
+  const headers = await bearerHeaders();
+  const response = await fetch(`${BASE_URL}/api/v1/exportar/pdf`, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      titulo: pkg.contenido_adaptado?.titulo,
+      perfil: pkg.metadatos?.perfil_aplicado,
+      anclaje_score: pkg.evaluacion_calidad?.anclaje_fuente_score,
+      contenido: pkg.contenido_adaptado,
+      paquete: pkg,
+    }),
+  });
+  if (!response.ok) throw new Error(await detalleDeError(response));
+  return response.blob();
+}
+

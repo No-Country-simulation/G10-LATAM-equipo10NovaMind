@@ -22,6 +22,8 @@ interface Step3Props {
   onDownloadJSON: () => void;
   onDownloadMarkdown: () => void;
   onDownloadAnkiCSV: () => void;
+  onDownloadPDF?: () => void;
+  isDownloadingPDF?: boolean;
 }
 
 const ESTADO_OCI: Record<string, { texto: string; activo: boolean }> = {
@@ -38,6 +40,8 @@ export const Step3OCICloud = ({
   onDownloadJSON,
   onDownloadMarkdown,
   onDownloadAnkiCSV,
+  onDownloadPDF,
+  isDownloadingPDF = false,
 }: Step3Props) => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(true);
@@ -396,16 +400,32 @@ export const Step3OCICloud = ({
                   : 'Artefacto estructurado listo para exportar'}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={onDownloadJSON}
-              title="Descargar el paquete (JSON)"
-              aria-label="Descargar el paquete (JSON)"
-              className={styles.downloadIconBtn}
-            >
-              <Download size={14} />
-              <span>Descargar</span>
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {onDownloadPDF && (
+                <button
+                  type="button"
+                  onClick={onDownloadPDF}
+                  disabled={isDownloadingPDF}
+                  title="Descargar Dossier Pedagógico en PDF"
+                  aria-label="Descargar Dossier Pedagógico en PDF"
+                  className={styles.downloadIconBtn}
+                  style={{ background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(14, 165, 233, 0.25))', borderColor: 'var(--color-indigo-400)' }}
+                >
+                  <Download size={14} />
+                  <span>{isDownloadingPDF ? 'Generando…' : 'Descargar PDF'}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onDownloadJSON}
+                title="Descargar el paquete (JSON)"
+                aria-label="Descargar el paquete (JSON)"
+                className={styles.downloadIconBtn}
+              >
+                <Download size={14} />
+                <span>Descargar JSON</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -438,10 +458,23 @@ export const Step3OCICloud = ({
               <span>{isCopied ? '¡Copiado!' : 'Copiar JSON'}</span>
             </button>
 
+            {onDownloadPDF && (
+              <button
+                type="button"
+                onClick={onDownloadPDF}
+                disabled={isDownloadingPDF}
+                className={styles.actionBtnPrimary}
+                title="Descargar Dossier Pedagógico Oficial en PDF (ReportLab)"
+              >
+                <Download size={14} />
+                <span>{isDownloadingPDF ? 'Generando PDF...' : 'Dossier (.pdf)'}</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onDownloadJSON}
-              className={styles.actionBtnPrimary}
+              className={onDownloadPDF ? styles.actionBtnSecondary : styles.actionBtnPrimary}
             >
               <Download size={14} />
               <span>Descargar .JSON</span>
