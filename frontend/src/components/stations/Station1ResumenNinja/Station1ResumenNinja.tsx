@@ -36,28 +36,58 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
   onNextStation,
   resumen,
 }) => {
-  const [prevData, setPrevData] = useState(data);
-  const [checkedConcepts, setCheckedConcepts] = useState<
-    Record<string, boolean>
-  >({});
-
-  if (data !== prevData) {
-    setPrevData(data);
-    setCheckedConcepts({});
-  }
-
   const conceptos = data?.conceptos_clave || [];
   const totalConcepts = conceptos.length;
 
+  // 🟢 Huella digital única e inequívoca del documento para que no colisionen diferentes muestras
+  const docFingerprint = conceptos[0]?.texto
+    ? conceptos[0].texto.slice(0, 35).trim().toLowerCase().replace(/[^a-z0-9]/g, "_")
+    : (data?.titulo || "resumen_ninja").trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+
+  const storageKey = `novamind_s1_checks_${docFingerprint}`;
+
+  // 🟢 Inicialización perezosa: lee estrictamente la clave de este documento puntual
+  const [checkedConcepts, setCheckedConcepts] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback silencioso
+    }
+    return {};
+  });
+
+  const [prevFingerprint, setPrevFingerprint] = useState(docFingerprint);
+
+  // 🟢 Sincronización limpia en fase de render al cambiar de documento o variante
+  if (docFingerprint !== prevFingerprint) {
+    setPrevFingerprint(docFingerprint);
+    let initialMap: Record<string, boolean> = {};
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) initialMap = JSON.parse(saved);
+    } catch {
+      initialMap = {};
+    }
+    setCheckedConcepts(initialMap);
+  }
+
   const toggleConcept = (id: string) => {
-    setCheckedConcepts((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setCheckedConcepts((prev) => {
+      const next = {
+        ...prev,
+        [id]: !prev[id],
+      };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {
+        // Fallback silencioso
+      }
+      return next;
+    });
   };
 
   const checkedCount = Object.values(checkedConcepts).filter(Boolean).length;
-  // Validación estricta del 100% de conceptos asimilados
   const isAllChecked = totalConcepts > 0 && checkedCount === totalConcepts;
 
   const handleAssimilation = () => {
@@ -68,6 +98,18 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
     }
 
     if (!isAllChecked) return;
+
+    // Al asimilar, se aseguran y persisten los checks completos de este documento
+    const fullMap: Record<string, boolean> = {};
+    conceptos.forEach((item, idx) => {
+      fullMap[item.id || `concept-${idx}`] = true;
+    });
+    setCheckedConcepts(fullMap);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(fullMap));
+    } catch {
+      // Fallback
+    }
 
     onCompleteStation(50);
     triggerLevelUpConfetti();
@@ -80,45 +122,45 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
       <div className={styles.topBanner}>
         {/* Escenografía lumínica y sinapsis de fondo a la derecha */}
         <div className={styles.bannerBackdropGlow} aria-hidden="true" />
-<div className={styles.neuralArtBox} aria-hidden="true">
-  <svg viewBox="0 0 240 240" className={styles.neuralSvg}>
-    <defs>
-      <radialGradient id="neuralCoreGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.75" />
-        <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.25" />
-        <stop offset="100%" stopColor="transparent" stopOpacity="0" />
-      </radialGradient>
-      <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.7" />
-        <stop offset="50%" stopColor="#8b5cf6" stopOpacity="0.2" />
-        <stop offset="100%" stopColor="#c084fc" stopOpacity="0.8" />
-      </linearGradient>
-    </defs>
+        <div className={styles.neuralArtBox} aria-hidden="true">
+          <svg viewBox="0 0 240 240" className={styles.neuralSvg}>
+            <defs>
+              <radialGradient id="neuralCoreGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.75" />
+                <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+              </radialGradient>
+              <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.7" />
+                <stop offset="50%" stopColor="#8b5cf6" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#c084fc" stopOpacity="0.8" />
+              </linearGradient>
+            </defs>
 
-    {/* Núcleo radiante con respiración */}
-    <circle cx="120" cy="120" r="105" fill="url(#neuralCoreGlow)" className={styles.pulsingCore} />
+            {/* Núcleo radiante con respiración */}
+            <circle cx="120" cy="120" r="105" fill="url(#neuralCoreGlow)" className={styles.pulsingCore} />
 
-    {/* Órbita exterior punteada con rotación lenta */}
-    <circle cx="120" cy="120" r="88" fill="none" stroke="rgba(139, 92, 246, 0.35)" strokeWidth="1.2" strokeDasharray="5 7" className={styles.orbitSpinSlow} />
+            {/* Órbita exterior punteada con rotación lenta */}
+            <circle cx="120" cy="120" r="88" fill="none" stroke="rgba(139, 92, 246, 0.35)" strokeWidth="1.2" strokeDasharray="5 7" className={styles.orbitSpinSlow} />
 
-    {/* Órbita 3D elíptica inclinada (efecto giroscópico) */}
-    <ellipse cx="120" cy="120" rx="80" ry="32" fill="none" stroke="url(#orbitGrad)" strokeWidth="1.6" className={styles.orbitSpinReverse} />
+            {/* Órbita 3D elíptica inclinada (efecto giroscópico) */}
+            <ellipse cx="120" cy="120" rx="80" ry="32" fill="none" stroke="url(#orbitGrad)" strokeWidth="1.6" className={styles.orbitSpinReverse} />
 
-    {/* Anillo interior cerrado */}
-    <circle cx="120" cy="120" r="48" fill="none" stroke="rgba(56, 189, 248, 0.45)" strokeWidth="1.5" />
+            {/* Anillo interior cerrado */}
+            <circle cx="120" cy="120" r="48" fill="none" stroke="rgba(56, 189, 248, 0.45)" strokeWidth="1.5" />
 
-    {/* Centro de fusión cuántica */}
-    <circle cx="120" cy="120" r="14" fill="#8b5cf6" className={styles.pulsingNode} />
-    <circle cx="120" cy="120" r="6" fill="#ffffff" />
+            {/* Centro de fusión cuántica */}
+            <circle cx="120" cy="120" r="14" fill="#8b5cf6" className={styles.pulsingNode} />
+            <circle cx="120" cy="120" r="6" fill="#ffffff" />
 
-    {/* Satélites orbitales con luz propia */}
-    <circle cx="168" cy="120" r="5" fill="#38bdf8" className={styles.satelliteCyan} />
-    <circle cx="72" cy="120" r="4" fill="#a855f7" className={styles.satelliteViolet} />
-    <g className={styles.greenOrbitGroup}>
-  <circle cx="120" cy="32" r="4.5" fill="#34d399" className={styles.satelliteGreen} />
-</g>
-  </svg>
-</div>
+            {/* Satélites orbitales con luz propia */}
+            <circle cx="168" cy="120" r="5" fill="#38bdf8" className={styles.satelliteCyan} />
+            <circle cx="72" cy="120" r="4" fill="#a855f7" className={styles.satelliteViolet} />
+            <g className={styles.greenOrbitGroup}>
+              <circle cx="120" cy="32" r="4.5" fill="#34d399" className={styles.satelliteGreen} />
+            </g>
+          </svg>
+        </div>
 
         <div className={styles.bannerContent}>
           <div className={styles.bannerInfo}>
@@ -144,7 +186,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
         </div>
       </div>
 
-      {/* Sección Resumen: un solo contenedor elegante (CERO caja dentro de caja) */}
+      {/* Sección Resumen */}
       {resumen && <div className={styles.resumenSectionWrapper}>{resumen}</div>}
 
       {/* Puntos Clave para Validación */}
@@ -166,6 +208,7 @@ export const Station1ResumenNinja: React.FC<Station1Props> = ({
         <div className={styles.conceptsList}>
           {conceptos.map((item, idx) => {
             const conceptId = item.id || `concept-${idx}`;
+            // 🟢 Solo tildado si el usuario lo marcó en el estado de este documento
             const isChecked = !!checkedConcepts[conceptId];
 
             return (
