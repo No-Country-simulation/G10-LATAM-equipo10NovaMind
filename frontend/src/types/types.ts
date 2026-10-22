@@ -366,6 +366,13 @@ export interface AdaptedContentPackage {
     mitigacion_alucinaciones?: string;
     chunks_procesados?: number;
     similitud_coseno_promedio?: number;
+    sugerencias_correccion?: string[];
+    afirmaciones?: Array<{
+      afirmacion: string;
+      respaldada: boolean;
+      cita_fuente?: string;
+      comentario?: string;
+    }>;
   };
   /** Lo que informa el backend (schemas.AlmacenamientoOCI); el resto solo existe si OCI lo devolvió */
   almacenamiento_oci: {
@@ -377,6 +384,7 @@ export interface AdaptedContentPackage {
     tamano_bytes?: number;
     url_always_free?: string;
   };
+  advertencias?: string[];
 }
 
 export interface RealDocumentPreset {

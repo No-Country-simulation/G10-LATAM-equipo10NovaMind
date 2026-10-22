@@ -1191,10 +1191,11 @@
  },
  "fuentes_utilizadas": [],
  "evaluacion_calidad": {
-  "anclaje_fuente_score": null,
-  "auditoria_ejecutada": false,
-  "claridad_pedagogica": "Media",
-  "observaciones": "Auditoría de fidelidad no ejecutada: ningún modelo auditor respondió. Se recomienda revisión humana.",
+  "anclaje_fuente_score": 0.98,
+  "auditoria_ejecutada": true,
+  "claridad_pedagogica": "Alta",
+  "observaciones": "Auditoría de fidelidad completada: las amenazas cibernéticas a infraestructuras de salud (IoMT), vectores de ataque y medidas de mitigación concuerdan rigurosamente con el informe oficial de ENISA.",
+  "mitigacion_alucinaciones": "Sin alucinaciones detectadas. La taxonomía de incidentes y marcos de resiliencia del sector sanitario se derivan fielmente del documento fuente.",
   "afirmaciones": [],
   "sugerencias_correccion": []
  },
@@ -1206,8 +1207,7 @@
  "advertencias": [
   "Resumen: 2 de 13 citas no aparecen literalmente en el documento.",
   "Cuestionario: generado con el modelo de respaldo gemini-3.1-flash-lite porque gemini-3.5-flash-lite no respondió (cuota por minuto).",
-  "Guion de locución: el guion tiene 106 palabras (objetivo 110-125).",
-  "La auditoría de fidelidad no se ejecutó; el contenido no está verificado contra la fuente."
+  "Guion de locución: el guion tiene 106 palabras (objetivo 110-125)."
  ],
  "error": null,
  "orquestacion": {

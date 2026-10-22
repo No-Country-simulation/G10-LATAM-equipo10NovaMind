@@ -9,8 +9,9 @@ import {
   HardDrive,
   ChevronDown,
   ChevronUp,
-  Sparkles,
   FileCheck2,
+  Bot,
+  AlertTriangle,
 } from 'lucide-react';
 import type { AdaptedContentPackage } from '../../types/types';
 import styles from './Step3OCICloud.module.css';
@@ -39,6 +40,14 @@ export const Step3OCICloud = ({
 }: Step3Props) => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(true);
+  const [openReviewerItems, setOpenReviewerItems] = useState<Record<string, boolean>>({});
+
+  const toggleReviewerItem = (key: string) => {
+    setOpenReviewerItems((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   const jsonString = JSON.stringify(contentPackage, null, 2);
   const realBytesCount = new Blob([jsonString]).size;
@@ -52,12 +61,46 @@ export const Step3OCICloud = ({
   const evaluacion = contentPackage?.evaluacion_calidad;
   const almacenamiento = contentPackage?.almacenamiento_oci;
   const metadatos = contentPackage?.metadatos;
+  const orquestacion = contentPackage?.orquestacion;
 
   const groundingScore = evaluacion?.anclaje_fuente_score;
   const isAudited = evaluacion?.auditoria_ejecutada !== false && typeof groundingScore === 'number';
-  // 🟢 Corregido el operador de multiplicación
-  const groundingLabel = isAudited ? `${Math.round(groundingScore * 100)}%` : '96%';
+  const groundingLabel = isAudited ? `${Math.round(groundingScore * 100)}%` : 'N/D';
 
+  // Identificación del modo RAG y arquitectura real
+  const esModoVectorial = typeof evaluacion?.chunks_procesados === 'number' && evaluacion.chunks_procesados > 0;
+  const arquitecturaRAG = esModoVectorial
+    ? `${evaluacion.chunks_procesados} fragmentos`
+    : contentPackage.muestra?.modo === 'clasico'
+      ? 'RAG Clásico (Vectorial)'
+      : 'In-Context RAG (Directo)';
+
+  // Tiempo real de orquestación / proceso
+  const tiempoOrquestacion = typeof orquestacion?.duracion_segundos === 'number' && orquestacion.duracion_segundos > 0
+    ? `${orquestacion.duracion_segundos} s`
+    : typeof evaluacion?.similitud_coseno_promedio === 'number'
+      ? `${evaluacion.similitud_coseno_promedio}`
+      : 'Tiempo real';
+
+  // Identificación honesta del motor LLM usado
+  const modelosRecursos = Array.from(
+    new Set(
+      Object.values(contentPackage.contenido_adaptado?.estado_recursos ?? {})
+        .map((r) => r.modelo)
+        .filter((m): m is string => Boolean(m))
+    )
+  );
+  const modeloDisplay =
+    metadatos?.modelo_llm && metadatos.modelo_llm !== 'N/D' && metadatos.modelo_llm.trim() !== ''
+      ? metadatos.modelo_llm
+      : modelosRecursos.length > 0
+        ? modelosRecursos.join(' · ')
+        : contentPackage.muestra?.modo === 'clasico'
+          ? 'LangGraph + Gemini'
+          : 'Gemini 2.5 Flash + Groq LPU';
+
+  // Sin credenciales de OCI el backend guarda en su disco y responde «completado» con este bucket
+  // (storage/local_storage.py): está guardado, pero no en OCI.
   const enDiscoLocal = almacenamiento?.status_upload === 'completado' && almacenamiento.bucket === BUCKET_LOCAL;
   const enOCI = almacenamiento?.status_upload === 'completado' && !enDiscoLocal;
   const estadoOCI = enDiscoLocal
@@ -91,7 +134,7 @@ export const Step3OCICloud = ({
 
       {/* Grid: 2 Tarjetas Primarias */}
       <div className={styles.dualGrid}>
-        {/* TARJETA 1: Auditoría de Grounding */}
+        {/* TARJETA 1: Auditoría de Grounding & Agente Revisor */}
         <div className={styles.auditCard}>
           <div className={styles.cardHeaderRow}>
             <div className={styles.cardHeaderTitleGroup}>
@@ -99,13 +142,19 @@ export const Step3OCICloud = ({
                 <ShieldCheck size={18} color="var(--color-emerald-400)" />
               </div>
               <div>
-                <h3 className={styles.cardHeaderTitle}>Auditoría de Grounding & Fidelidad</h3>
-                <span className={styles.cardHeaderSubtitle}>Métricas de anclaje RAG contra fuentes</span>
+                <h3 className={styles.cardHeaderTitle}>
+                  Auditoría de Grounding & Fidelidad
+                </h3>
+                <span className={styles.cardHeaderSubtitle}>
+                  Dictamen técnico emitido por el Agente Revisor
+                </span>
               </div>
             </div>
-            <span className={styles.verifiedPill}>
-              <Sparkles size={11} /> Cero Alucinaciones
-            </span>
+            {isAudited && typeof groundingScore === 'number' && groundingScore >= 0.9 && (
+              <span className={styles.verifiedPill}>
+                <Sparkles size={11} /> Cero Alucinaciones
+              </span>
+            )}
           </div>
 
           {/* Medidor de Score */}
@@ -119,8 +168,12 @@ export const Step3OCICloud = ({
               </div>
               <p className={styles.gaugeSubtext}>
                 {isAudited
-                  ? 'Proporción de afirmaciones verificadas mediante similitud semántica contra los chunks del documento original.'
-                  : 'Fidelidad calculada mediante similitud semántica contra los chunks del documento procesado.'}
+                  ? (typeof groundingScore === 'number' && groundingScore >= 0.9)
+                    ? 'Excelente anclaje en fuente: el contenido generado deriva rigurosamente del documento analizado, sin inconsistencias técnicas.'
+                    : (typeof groundingScore === 'number' && groundingScore >= 0.7)
+                      ? 'Buen anclaje en fuente: conceptos respaldados con adaptaciones didácticas válidas para el aprendizaje.'
+                      : 'Anclaje moderado: algunas afirmaciones requieren contrastación manual con el documento fuente.'
+                  : 'La auditoría de fidelidad no se ejecutó para este paquete. Revisa las citas directas de cada estación.'}
               </p>
             </div>
           </div>
@@ -130,39 +183,156 @@ export const Step3OCICloud = ({
             <div className={styles.metricTile}>
               <span className={styles.metricTileLabel}>Claridad Pedagógica</span>
               <span className={styles.metricTileValue}>
-                {evaluacion?.claridad_pedagogica || 'Sobresaliente'}
+                {isAudited ? evaluacion?.claridad_pedagogica || 'Alta' : 'N/D'}
               </span>
             </div>
 
             <div className={styles.metricTile}>
-              <span className={styles.metricTileLabel}>Chunks Procesados</span>
+              <span className={styles.metricTileLabel}>
+                {esModoVectorial ? 'Chunks Procesados' : 'Arquitectura RAG'}
+              </span>
               <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
-                {evaluacion?.chunks_procesados ? `${evaluacion.chunks_procesados} fragmentos` : '8 fragmentos'}
+                {arquitecturaRAG}
               </span>
             </div>
 
             <div className={styles.metricTile}>
-              <span className={styles.metricTileLabel}>Similitud Coseno Media</span>
+              <span className={styles.metricTileLabel}>
+                {typeof evaluacion?.similitud_coseno_promedio === 'number'
+                  ? 'Similitud Coseno Media'
+                  : 'Tiempo de Orquestación'}
+              </span>
               <span
                 className={styles.metricTileValue}
                 style={{ color: 'var(--color-emerald-400)', fontFamily: 'var(--font-code)' }}
               >
-                {evaluacion?.similitud_coseno_promedio || '0.94'}
+                {tiempoOrquestacion}
               </span>
             </div>
 
             <div className={styles.metricTile}>
-              <span className={styles.metricTileLabel}>Modelo LLM</span>
+              <span className={styles.metricTileLabel}>Motor Generador</span>
               <span className={styles.metricTileValue} style={{ color: 'var(--color-violet-300)' }}>
-                {metadatos?.modelo_llm || 'gemini-2.5-flash'}
+                {modeloDisplay}
+              </span>
+              <span className={styles.metricTileSubtext}>
+                Auditor: <strong style={{ color: 'var(--color-cyan-300)' }}>{isAudited ? 'Groq LPU (Revisor)' : 'Sin auditar'}</strong>
               </span>
             </div>
           </div>
 
-          {/* Observaciones del Agente */}
-          <div className={styles.agentObservationBox}>
-            <strong>Observación del Auditor Crítico:</strong>{' '}
-            {evaluacion?.observaciones || 'No se registraron desvíos conceptuales respecto al material técnico.'}
+          {/* Resultados y Dictamen del Agente Revisor */}
+          <div className={styles.reviewerSection}>
+            {evaluacion?.observaciones && (
+              <div className={styles.collapsibleBoxEmerald}>
+                <button
+                  type="button"
+                  className={styles.collapsibleTrigger}
+                  onClick={() => toggleReviewerItem('observacion')}
+                  aria-expanded={Boolean(openReviewerItems.observacion)}
+                >
+                  <div className={styles.collapsibleTitleGroup}>
+                    <Bot size={14} color="var(--color-emerald-300)" />
+                    <span className={styles.collapsibleTitle}>
+                      {isAudited ? 'Observación del Agente Revisor:' : 'Nota de auditoría:'}
+                    </span>
+                  </div>
+                  <span className={styles.chevronIcon}>
+                    {openReviewerItems.observacion ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </span>
+                </button>
+                {openReviewerItems.observacion && (
+                  <div className={styles.collapsibleContent}>
+                    <p className={styles.observationText}>{evaluacion.observaciones}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {evaluacion?.mitigacion_alucinaciones && (
+              <div className={styles.collapsibleBoxCyan}>
+                <button
+                  type="button"
+                  className={styles.collapsibleTrigger}
+                  onClick={() => toggleReviewerItem('alucinaciones')}
+                  aria-expanded={Boolean(openReviewerItems.alucinaciones)}
+                >
+                  <div className={styles.collapsibleTitleGroup}>
+                    <ShieldCheck size={14} color="var(--color-cyan-400)" />
+                    <span className={styles.collapsibleTitle}>
+                      Mitigación de Alucinaciones:
+                    </span>
+                  </div>
+                  <span className={styles.chevronIcon}>
+                    {openReviewerItems.alucinaciones ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </span>
+                </button>
+                {openReviewerItems.alucinaciones && (
+                  <div className={styles.collapsibleContent}>
+                    <p className={styles.mitigationText}>{evaluacion.mitigacion_alucinaciones}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {evaluacion?.sugerencias_correccion && evaluacion.sugerencias_correccion.length > 0 && (
+              <div className={styles.collapsibleBoxViolet}>
+                <button
+                  type="button"
+                  className={styles.collapsibleTrigger}
+                  onClick={() => toggleReviewerItem('sugerencias')}
+                  aria-expanded={Boolean(openReviewerItems.sugerencias)}
+                >
+                  <div className={styles.collapsibleTitleGroup}>
+                    <span className={styles.collapsibleTitle}>
+                      Recomendaciones de mejora del auditor ({evaluacion.sugerencias_correccion.length}):
+                    </span>
+                  </div>
+                  <span className={styles.chevronIcon}>
+                    {openReviewerItems.sugerencias ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </span>
+                </button>
+                {openReviewerItems.sugerencias && (
+                  <div className={styles.collapsibleContent}>
+                    <ul className={styles.suggestionsList}>
+                      {evaluacion.sugerencias_correccion.map((sug, idx) => (
+                        <li key={idx}>{sug}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {contentPackage?.advertencias && contentPackage.advertencias.length > 0 && (
+              <div className={styles.collapsibleBoxAmber}>
+                <button
+                  type="button"
+                  className={styles.collapsibleTrigger}
+                  onClick={() => toggleReviewerItem('advertencias')}
+                  aria-expanded={Boolean(openReviewerItems.advertencias)}
+                >
+                  <div className={styles.collapsibleTitleGroup}>
+                    <AlertTriangle size={14} color="var(--color-amber-400)" />
+                    <span className={styles.collapsibleTitle}>
+                      Avisos de consistencia ({contentPackage.advertencias.length}):
+                    </span>
+                  </div>
+                  <span className={styles.chevronIcon}>
+                    {openReviewerItems.advertencias ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </span>
+                </button>
+                {openReviewerItems.advertencias && (
+                  <div className={styles.collapsibleContent}>
+                    <ul className={styles.warningsList}>
+                      {contentPackage.advertencias.map((adv, idx) => (
+                        <li key={idx}>{adv}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
