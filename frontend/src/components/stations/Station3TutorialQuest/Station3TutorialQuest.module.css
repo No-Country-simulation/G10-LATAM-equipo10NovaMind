@@ -241,9 +241,8 @@
 }
 
 .metaItemHecho {
-  color: #64748b;
-  text-decoration: line-through;
-  text-decoration-color: rgba(52, 211, 153, 0.6);
+  text-decoration: none;
+  color: #e2e8f0; /* Blanco suave nítido */
 }
 
 /* ==========================================================

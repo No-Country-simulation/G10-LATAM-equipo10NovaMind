@@ -35,18 +35,6 @@ export const Station3TutorialQuest = ({
   onOpenBuilderBadge,
   onNextStation,
 }: Station3Props) => {
-  const [prevSteps, setPrevSteps] = useState(steps);
-  const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
-  const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-
-  if (steps !== prevSteps) {
-    setPrevSteps(steps);
-    setActiveStepIndex(0);
-    setCompletedSteps({});
-    setCopiedIndex(null);
-  }
-
   const safeSteps =
     steps.length > 0
       ? steps
@@ -64,6 +52,45 @@ export const Station3TutorialQuest = ({
 
   const totalSteps = safeSteps.length;
   const minRequired = Math.max(1, totalSteps);
+
+  // 🟢 Huella digital única del tutorial basada en el primer paso y cantidad de pasos
+  const tutorialFingerprint = safeSteps[0]?.titulo
+    ? `${safeSteps[0].titulo.slice(0, 30).trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_${totalSteps}`
+    : (tituloDocumento || 'default_tutorial').trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+  const storageKey = `novamind_s3_steps_${tutorialFingerprint}`;
+
+  // 🟢 Inicialización perezosa: lee estrictamente los pasos validados de este tutorial puntual
+  const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // Fallback
+    }
+    return {};
+  });
+
+  const [prevFingerprint, setPrevFingerprint] = useState(tutorialFingerprint);
+  const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // 🟢 Sincronización limpia en fase de render al cambiar de documento
+  if (tutorialFingerprint !== prevFingerprint) {
+    setPrevFingerprint(tutorialFingerprint);
+    setActiveStepIndex(0);
+    setCopiedIndex(null);
+
+    let initialMap: Record<string, boolean> = {};
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) initialMap = JSON.parse(saved);
+    } catch {
+      initialMap = {};
+    }
+    setCompletedSteps(initialMap);
+  }
+
   const currentStep = safeSteps[activeStepIndex] || safeSteps[0];
   const stepId = currentStep.id || `step-${activeStepIndex}`;
   const clave = (currentStep.cli_command || '').trim();
@@ -81,6 +108,13 @@ export const Station3TutorialQuest = ({
     const newCompleted = { ...completedSteps, [stepId]: true };
     setCompletedSteps(newCompleted);
 
+    // Guardado directo en localStorage para este documento específico
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(newCompleted));
+    } catch {
+      // Fallback silencioso
+    }
+
     const count = Object.values(newCompleted).filter(Boolean).length;
     if (count >= minRequired) {
       if (!isCompleted) {
@@ -97,9 +131,10 @@ export const Station3TutorialQuest = ({
     }
   };
 
+  // Conteo derivado: solo cuenta los pasos realmente completados por el usuario
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
   const isCurrentStepCompleted = !!completedSteps[stepId];
-  const isPassed = completedCount >= minRequired;
+  const isPassed = isCompleted || completedCount >= minRequired;
   const metas = (objetivos ?? []).map((o) => o.trim()).filter(Boolean);
   const titulo = tituloDocumento?.trim();
 
@@ -116,7 +151,7 @@ export const Station3TutorialQuest = ({
               <Target size={12} color="#34d399" />
               Estación 03 · Guía paso a paso
             </span>
-            {isCompleted && (
+            {isPassed && (
               <span className={styles.completedTag}>
                 <CheckCircle2 size={14} /> Aprobada (+75 XP)
               </span>
