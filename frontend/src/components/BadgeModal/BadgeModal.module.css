@@ -83,9 +83,6 @@
 }
 
 
-
-
-
 /* LUZ VOLUMÉTRICA DE FONDO */
 .modalBacklight {
   position: absolute;
@@ -395,14 +392,25 @@
 }
 
 .showcaseStatsRatio {
-  font-family: var(--font-code);
-  font-size: 0.8rem;
-  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-family: var(--font-code, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-amber-300, #fcd34d);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* Si quieres que el número se destaque sutilmente */
+.showcaseStatsRatio strong {
   color: #fbbf24;
-  background: rgba(245, 158, 11, 0.12);
-  padding: 0.25rem 0.65rem;
-  border-radius: var(--radius-full);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  font-weight: 700;
 }
 
 /* Cuadrícula de Resumen XP / Racha */
@@ -451,13 +459,24 @@
 }
 
 /* Listado de Badges */
+/* Lista base de medallas */
 .badgeList {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  max-height: 25rem; /* Permite navegar todas las medallas con scroll suave y prolijo */
+}
+
+/* 🟢 SOLO si es vitrina (.showcaseWrapper): quitamos el scroll interno y el tope de 25rem */
+.modalCard:has(.showcaseWrapper) .badgeList {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.modalCard:has(.showcaseWrapper) {
+  max-width: 39rem;
+  max-height: 94vh;
   overflow-y: auto;
-  padding-right: 0.35rem;
 }
 
 .badgeItem {

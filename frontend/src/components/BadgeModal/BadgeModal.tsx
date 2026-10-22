@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Award, 
-  CheckCircle2, 
-  Sparkles, 
-  Flame, 
-  Shield, 
-  Calendar, 
-  RotateCcw, 
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Award,
+  CheckCircle2,
+  Sparkles,
+  Flame,
+  Shield,
+  Calendar,
+  RotateCcw,
   Trophy,
   Zap,
   Brain,
   Terminal,
   Clapperboard,
   Crown,
-  Lock
-} from 'lucide-react';
-import type { Achievement } from '../../types/types';
-import styles from './BadgeModal.module.css';
+  Lock,
+} from "lucide-react";
+import type { Achievement } from "../../types/types";
+import styles from "./BadgeModal.module.css";
 
 interface BadgeModalProps {
   isOpen: boolean;
@@ -41,50 +41,69 @@ interface BadgeTheme {
   badgeStyleClass: string;
 }
 
-const getBadgeTheme = (id: string = '', title: string = ''): BadgeTheme => {
+const getBadgeTheme = (id: string = "", title: string = ""): BadgeTheme => {
   const normId = id.toLowerCase();
   const normTitle = title.toLowerCase();
 
   // Estación 2: Memoria de Acero (Cian Eléctrico)
-  if (normId.includes('station2') || normId.includes('flashcard') || normTitle.includes('memoria')) {
+  if (
+    normId.includes("station2") ||
+    normId.includes("flashcard") ||
+    normTitle.includes("memoria")
+  ) {
     return {
       icon: <Brain size={38} className={styles.vectorIcon} />,
-      accentColor: '#38bdf8',
-      glowColor: 'rgba(6, 182, 212, 0.45)',
-      borderGlow: 'rgba(56, 189, 248, 0.65)',
+      accentColor: "#38bdf8",
+      glowColor: "rgba(6, 182, 212, 0.45)",
+      borderGlow: "rgba(56, 189, 248, 0.65)",
       badgeStyleClass: styles.themeCyan,
     };
   }
 
   // Estación 3: Ingeniero de Laboratorio (Esmeralda Neón)
-  if (normId.includes('station3') || normId.includes('tutorial') || normTitle.includes('ingeniero') || normTitle.includes('laboratorio')) {
+  if (
+    normId.includes("station3") ||
+    normId.includes("tutorial") ||
+    normTitle.includes("ingeniero") ||
+    normTitle.includes("laboratorio")
+  ) {
     return {
       icon: <Terminal size={38} className={styles.vectorIcon} />,
-      accentColor: '#34d399',
-      glowColor: 'rgba(16, 185, 129, 0.45)',
-      borderGlow: 'rgba(52, 211, 153, 0.65)',
+      accentColor: "#34d399",
+      glowColor: "rgba(16, 185, 129, 0.45)",
+      borderGlow: "rgba(52, 211, 153, 0.65)",
       badgeStyleClass: styles.themeEmerald,
     };
   }
 
   // Estación 4: Director Didáctico (Fucsia / Violeta de Estudio)
-  if (normId.includes('station4') || normId.includes('director') || normTitle.includes('director')) {
+  if (
+    normId.includes("station4") ||
+    normId.includes("director") ||
+    normTitle.includes("director")
+  ) {
     return {
       icon: <Clapperboard size={38} className={styles.vectorIcon} />,
-      accentColor: '#f0abfc',
-      glowColor: 'rgba(217, 70, 239, 0.45)',
-      borderGlow: 'rgba(240, 171, 252, 0.65)',
+      accentColor: "#f0abfc",
+      glowColor: "rgba(217, 70, 239, 0.45)",
+      borderGlow: "rgba(240, 171, 252, 0.65)",
       badgeStyleClass: styles.themeFuchsia,
     };
   }
 
   // Estación 5: Zero-Hallucination Master (Oro Cuántico / Capstone)
-  if (normId.includes('station5') || normId.includes('quiz') || normId.includes('zero') || normTitle.includes('zero') || normTitle.includes('master')) {
+  if (
+    normId.includes("station5") ||
+    normId.includes("quiz") ||
+    normId.includes("zero") ||
+    normTitle.includes("zero") ||
+    normTitle.includes("master")
+  ) {
     return {
       icon: <Crown size={40} className={styles.vectorIcon} />,
-      accentColor: '#fbbf24',
-      glowColor: 'rgba(245, 158, 11, 0.55)',
-      borderGlow: 'rgba(251, 191, 36, 0.75)',
+      accentColor: "#fbbf24",
+      glowColor: "rgba(245, 158, 11, 0.55)",
+      borderGlow: "rgba(251, 191, 36, 0.75)",
       badgeStyleClass: styles.themeGold,
     };
   }
@@ -92,9 +111,9 @@ const getBadgeTheme = (id: string = '', title: string = ''): BadgeTheme => {
   // Estación 1 / Defecto: Síntesis Cognitiva (Ámbar Refractario)
   return {
     icon: <Zap size={38} className={styles.vectorIcon} />,
-    accentColor: '#f59e0b',
-    glowColor: 'rgba(245, 158, 11, 0.45)',
-    borderGlow: 'rgba(245, 158, 11, 0.65)',
+    accentColor: "#f59e0b",
+    glowColor: "rgba(245, 158, 11, 0.45)",
+    borderGlow: "rgba(245, 158, 11, 0.65)",
     badgeStyleClass: styles.themeAmber,
   };
 };
@@ -114,12 +133,12 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -128,25 +147,25 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   const currentLevel = Math.floor(xp / 100) + 1;
   const getRankTitle = (lvl: number) => {
-    if (lvl >= 4) return 'Máster de Dominio Cognitivo';
-    if (lvl === 3) return 'Especialista en Arquitectura';
-    if (lvl === 2) return 'Explorador Técnico';
-    return 'Iniciado en Infraestructura';
+    if (lvl >= 4) return "Máster de Dominio Cognitivo";
+    if (lvl === 3) return "Especialista en Arquitectura";
+    if (lvl === 2) return "Explorador Técnico";
+    return "Iniciado en Infraestructura";
   };
 
   const unlockedCount = allBadges.filter((b) => b.desbloqueado).length;
 
-  const badgeId = (singleBadge?.id || '').toLowerCase();
-  const badgeTitle = (singleBadge?.titulo || '').toLowerCase();
+  const badgeId = (singleBadge?.id || "").toLowerCase();
+  const badgeTitle = (singleBadge?.titulo || "").toLowerCase();
 
   const isCapstoneFinalBadge =
-    badgeId.includes('station5') ||
-    badgeId.includes('quiz') ||
-    badgeId.includes('evaluacion') ||
-    badgeId.includes('zero') ||
-    badgeTitle.includes('zero-hallucination') ||
-    badgeTitle.includes('evaluación final') ||
-    badgeTitle.includes('quiz');
+    badgeId.includes("station5") ||
+    badgeId.includes("quiz") ||
+    badgeId.includes("evaluacion") ||
+    badgeId.includes("zero") ||
+    badgeTitle.includes("zero-hallucination") ||
+    badgeTitle.includes("evaluación final") ||
+    badgeTitle.includes("quiz");
 
   const activeTheme = getBadgeTheme(singleBadge?.id, singleBadge?.titulo);
 
@@ -169,8 +188,8 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
 
   return (
     <div className={styles.overlay} onClick={handleModalClose}>
-      <div 
-        className={`${styles.modalCard} ${!isDisplayingShowcase ? activeTheme.badgeStyleClass : ''}`} 
+      <div
+        className={`${styles.modalCard} ${!isDisplayingShowcase ? activeTheme.badgeStyleClass : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Halo volumétrico de fondo */}
@@ -191,15 +210,17 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
           <div className={styles.celebrationWrapper}>
             <div className={styles.badgeOrbContainer}>
               <div className={styles.badgePulseRing} />
-              <div className={styles.badgeIconCenter}>
-                {activeTheme.icon}
-              </div>
+              <div className={styles.badgeIconCenter}>{activeTheme.icon}</div>
               <Sparkles size={22} className={styles.sparkleDecor} />
             </div>
 
             <div className={styles.celebrationTextContent}>
-              <div className={styles.unlockedSubheader}>¡MEDALLA DESBLOQUEADA!</div>
-              <h3 className={styles.badgeCelebrationTitle}>{singleBadge.titulo}</h3>
+              <div className={styles.unlockedSubheader}>
+                ¡MEDALLA DESBLOQUEADA!
+              </div>
+              <h3 className={styles.badgeCelebrationTitle}>
+                {singleBadge.titulo}
+              </h3>
               <p className={styles.badgeCelebrationDescription}>
                 {singleBadge.descripcion}
               </p>
@@ -208,12 +229,16 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
             <div className={styles.ociNotice}>
               <div className={styles.ociNoticeTitle}>
                 <Shield size={15} />
-                <span>{sesionIniciada ? 'Logro guardado en tu cuenta' : 'Logro de esta sesión'}</span>
+                <span>
+                  {sesionIniciada
+                    ? "Logro guardado en tu cuenta"
+                    : "Logro de esta sesión"}
+                </span>
               </div>
               <p className={styles.ociNoticeText}>
                 {sesionIniciada
-                  ? 'Se sincroniza con tu progreso y lo verás al volver a iniciar sesión.'
-                  : 'Estás como invitado: el logro se sincroniza en memoria. Inicia sesión para conservarlo.'}
+                  ? "Se sincroniza con tu progreso y lo verás al volver a iniciar sesión."
+                  : "Estás como invitado: el logro se sincroniza en memoria. Inicia sesión para conservarlo."}
               </p>
             </div>
 
@@ -258,7 +283,9 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
                   <Award size={20} />
                 </div>
                 <div>
-                  <h3 className={styles.showcaseTitle}>Vitrina de Trofeos & Medallas</h3>
+                  <h3 className={styles.showcaseTitle}>
+                    Vitrina de Trofeos & Medallas
+                  </h3>
                   <div className={styles.showcaseRank}>
                     Nivel {currentLevel} · {getRankTitle(currentLevel)}
                   </div>
@@ -266,7 +293,10 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
               </div>
 
               <span className={styles.showcaseStatsRatio}>
-                {unlockedCount} / {allBadges.length} Obtenidas
+                <strong>
+                  {unlockedCount} / {allBadges.length}
+                </strong>{" "}
+                Medallas
               </span>
             </div>
 
@@ -297,8 +327,10 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
                   <div
                     key={badge.id}
                     className={`${styles.badgeItem} ${
-                      badge.desbloqueado ? styles.badgeItemUnlocked : styles.badgeItemLocked
-                    } ${badge.desbloqueado ? bTheme.badgeStyleClass : ''}`}
+                      badge.desbloqueado
+                        ? styles.badgeItemUnlocked
+                        : styles.badgeItemLocked
+                    } ${badge.desbloqueado ? bTheme.badgeStyleClass : ""}`}
                   >
                     <div className={styles.badgeContentLeft}>
                       <div
@@ -308,12 +340,20 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
                             : styles.badgeItemIconBoxLocked
                         }`}
                       >
-                        {badge.desbloqueado ? bTheme.icon : <Lock size={18} className={styles.lockIcon} />}
+                        {badge.desbloqueado ? (
+                          bTheme.icon
+                        ) : (
+                          <Lock size={18} className={styles.lockIcon} />
+                        )}
                       </div>
 
                       <div className={styles.badgeDetails}>
-                        <div className={styles.badgeItemTitle}>{badge.titulo}</div>
-                        <div className={styles.badgeItemDesc}>{badge.descripcion}</div>
+                        <div className={styles.badgeItemTitle}>
+                          {badge.titulo}
+                        </div>
+                        <div className={styles.badgeItemDesc}>
+                          {badge.descripcion}
+                        </div>
                         {badge.desbloqueado && badge.fecha && (
                           <div className={styles.badgeItemDate}>
                             <Calendar size={12} />
@@ -329,7 +369,9 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
                           <CheckCircle2 size={14} /> Obtenida
                         </span>
                       ) : (
-                        <span className={styles.statusLockedTag}>Bloqueada</span>
+                        <span className={styles.statusLockedTag}>
+                          Bloqueada
+                        </span>
                       )}
                     </div>
                   </div>
