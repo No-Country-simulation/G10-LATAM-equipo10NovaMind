@@ -32,7 +32,7 @@ interface BadgeModalProps {
   onReviewStations?: () => void;
 }
 
-// Configuración de temas e iconos vectoriales de alta fidelidad según la medalla
+// Configuración de temas e iconos vectoriales según la medalla
 interface BadgeTheme {
   icon: React.ReactNode;
   accentColor: string;
@@ -45,11 +45,14 @@ const getBadgeTheme = (id: string = "", title: string = ""): BadgeTheme => {
   const normId = id.toLowerCase();
   const normTitle = title.toLowerCase();
 
-  // Estación 2: Memoria de Acero (Cian Eléctrico)
+  // 1. Estación 2: Memoria de Acero (Cian Eléctrico / Cerebro)
+  // Se evalúa antes para evitar colisiones con palabras como "acero"
   if (
     normId.includes("station2") ||
     normId.includes("flashcard") ||
-    normTitle.includes("memoria")
+    normId.includes("streak") ||
+    normTitle.includes("memoria") ||
+    normTitle.includes("acero")
   ) {
     return {
       icon: <Brain size={38} className={styles.vectorIcon} />,
@@ -60,10 +63,11 @@ const getBadgeTheme = (id: string = "", title: string = ""): BadgeTheme => {
     };
   }
 
-  // Estación 3: Ingeniero de Laboratorio (Esmeralda Neón)
+  // 2. Estación 3: Ingeniero de Laboratorio (Esmeralda Neón / Terminal)
   if (
     normId.includes("station3") ||
     normId.includes("tutorial") ||
+    normId.includes("builder") ||
     normTitle.includes("ingeniero") ||
     normTitle.includes("laboratorio")
   ) {
@@ -76,11 +80,12 @@ const getBadgeTheme = (id: string = "", title: string = ""): BadgeTheme => {
     };
   }
 
-  // Estación 4: Director Didáctico (Fucsia / Violeta de Estudio)
+  // 3. Estación 4: Director Didáctico (Fucsia / Claqueta)
   if (
     normId.includes("station4") ||
     normId.includes("director") ||
-    normTitle.includes("director")
+    normTitle.includes("director") ||
+    normTitle.includes("audiovisual")
   ) {
     return {
       icon: <Clapperboard size={38} className={styles.vectorIcon} />,
@@ -91,13 +96,15 @@ const getBadgeTheme = (id: string = "", title: string = ""): BadgeTheme => {
     };
   }
 
-  // Estación 5: Zero-Hallucination Master (Oro Cuántico / Capstone)
+  // 4. Estación 5: Maestro Cero Alucinaciones / Examen Final (Corona Dorada)
   if (
     normId.includes("station5") ||
     normId.includes("quiz") ||
-    normId.includes("zero") ||
-    normTitle.includes("zero") ||
-    normTitle.includes("master")
+    normId.includes("master") ||
+    normTitle.includes("alucinacion") ||
+    normTitle.includes("cero alucinaciones") ||
+    normTitle.includes("maestro") ||
+    normTitle.includes("examen final")
   ) {
     return {
       icon: <Crown size={40} className={styles.vectorIcon} />,
@@ -108,7 +115,7 @@ const getBadgeTheme = (id: string = "", title: string = ""): BadgeTheme => {
     };
   }
 
-  // Estación 1 / Defecto: Síntesis Cognitiva (Ámbar Refractario)
+  // 5. Estación 1 / Defecto: Resumen Ninja (Ámbar / Rayo)
   return {
     icon: <Zap size={38} className={styles.vectorIcon} />,
     accentColor: "#f59e0b",
@@ -158,14 +165,19 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
   const badgeId = (singleBadge?.id || "").toLowerCase();
   const badgeTitle = (singleBadge?.titulo || "").toLowerCase();
 
+  // 🟢 Detección estricta de la Estación 5 (no confunde "Memoria de Acero")
   const isCapstoneFinalBadge =
-    badgeId.includes("station5") ||
-    badgeId.includes("quiz") ||
-    badgeId.includes("evaluacion") ||
-    badgeId.includes("zero") ||
-    badgeTitle.includes("zero-hallucination") ||
-    badgeTitle.includes("evaluación final") ||
-    badgeTitle.includes("quiz");
+    !badgeTitle.includes("memoria") &&
+    !badgeTitle.includes("acero") &&
+    !badgeId.includes("station2") &&
+    !badgeId.includes("flashcard") &&
+    (badgeId.includes("station5") ||
+      badgeId.includes("quiz") ||
+      badgeId.includes("master") ||
+      badgeTitle.includes("alucinacion") ||
+      badgeTitle.includes("cero alucinaciones") ||
+      badgeTitle.includes("maestro") ||
+      badgeTitle.includes("examen final"));
 
   const activeTheme = getBadgeTheme(singleBadge?.id, singleBadge?.titulo);
 
@@ -243,6 +255,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
             </div>
 
             {isCapstoneFinalBadge ? (
+              /* Acciones al culminar la Estación 5: Vitrina de Logros o Repaso */
               <div className={styles.finalActionsContainer}>
                 <button
                   type="button"
@@ -250,7 +263,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
                   className={styles.ctaContinueButton}
                 >
                   <Trophy size={16} />
-                  <span>Finalizar y Ver Vitrina de Trofeos</span>
+                  <span>Ver Vitrina de Trofeos</span>
                 </button>
 
                 {onRestartToStation1 && (
@@ -265,6 +278,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
                 )}
               </div>
             ) : (
+              /* Estaciones 1 a 4: Continuar a la siguiente estación */
               <button
                 type="button"
                 onClick={handleContinue}
@@ -319,7 +333,7 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
               </div>
             </div>
 
-            {/* Listado de todas las medallas con iconos y estética premium */}
+            {/* Listado de todas las medallas con iconos y estética coherente */}
             <div className={styles.badgeList}>
               {allBadges.map((badge) => {
                 const bTheme = getBadgeTheme(badge.id, badge.titulo);
