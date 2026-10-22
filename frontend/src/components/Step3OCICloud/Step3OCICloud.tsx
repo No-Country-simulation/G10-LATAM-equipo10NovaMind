@@ -12,6 +12,7 @@ import {
   FileCheck2,
   Bot,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 import type { AdaptedContentPackage } from '../../types/types';
 import styles from './Step3OCICloud.module.css';

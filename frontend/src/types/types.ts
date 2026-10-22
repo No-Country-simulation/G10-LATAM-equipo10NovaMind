@@ -384,7 +384,6 @@ export interface AdaptedContentPackage {
     tamano_bytes?: number;
     url_always_free?: string;
   };
-  advertencias?: string[];
 }
 
 export interface RealDocumentPreset {
