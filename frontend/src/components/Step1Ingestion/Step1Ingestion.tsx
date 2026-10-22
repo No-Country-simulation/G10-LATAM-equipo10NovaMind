@@ -693,7 +693,7 @@ export const Step1Ingestion = ({
                             : "Arrastra o haz clic para sustituir el documento"}
                       </span>
                       <span className={styles.fileHint}>
-                        PDF, Markdown, TXT o imagen (PNG, JPG, WEBP) · Máx. 15 MB
+                        PDF, Markdown o TXT · Máx. 15 MB
                       </span>
                     </div>
                     <input
