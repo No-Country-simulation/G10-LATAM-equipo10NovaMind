@@ -386,6 +386,16 @@ export const Station5FinalTrial = ({
 
           {isSuccess && (
             <>
+              {/* 🟢 Botón Ver Medalla Desbloqueada */}
+              <button
+                type="button"
+                onClick={onOpenMasterBadge}
+                className={styles.badgeShowcaseBtn}
+              >
+                <Award size={15} color="var(--color-amber-400)" />
+                <span>Ver Medalla Desbloqueada</span>
+              </button>
+
               <button type="button" onClick={onDownloadArtifact} className={styles.downloadArtifactBtn}>
                 <Download size={14} />
                 Descargar Artefacto JSON
@@ -416,6 +426,7 @@ export const Station5FinalTrial = ({
               alignItems: 'center',
               gap: '0.5rem',
               marginBottom: '0.25rem',
+              flexWrap: 'wrap',
             }}
           >
             <span className={styles.examTitleTag}>
@@ -425,23 +436,41 @@ export const Station5FinalTrial = ({
             <span className={styles.examApprovalPill}>
               Aprobación: {minRequiredToPass}/{totalQuestions} (100 %)
             </span>
+            {isSuccess && (
+              <span className={styles.completedTag}>
+                <CheckCircle2 size={13} /> Dominada (+100 XP)
+              </span>
+            )}
           </div>
           <h3 className={styles.lockedTitle} style={{ fontSize: '1.5rem', textAlign: 'left' }}>
             Cuestionario
           </h3>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>Pregunta</div>
-          <div
-            style={{
-              fontSize: '0.875rem',
-              fontFamily: 'var(--font-code)',
-              fontWeight: 700,
-              color: 'var(--color-amber-400)',
-            }}
-          >
-            {currentQuestionIndex + 1} de {totalQuestions}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {isSuccess && (
+            <button
+              type="button"
+              onClick={onOpenMasterBadge}
+              className={styles.badgeShowcaseBtn}
+            >
+              <Award size={15} color="var(--color-amber-400)" />
+              <span>Ver Medalla</span>
+            </button>
+          )}
+
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>Pregunta</div>
+            <div
+              style={{
+                fontSize: '0.875rem',
+                fontFamily: 'var(--font-code)',
+                fontWeight: 700,
+                color: 'var(--color-amber-400)',
+              }}
+            >
+              {currentQuestionIndex + 1} de {totalQuestions}
+            </div>
           </div>
         </div>
       </div>
