@@ -164,3 +164,43 @@ img {
 .trophyLink:hover {
   color: var(--color-amber-400);
 }
+
+/* ==========================================================
+   SCROLLBAR GLOBAL CYBERPUNK / DARK-GLASS (SUTIL)
+========================================================== */
+
+/* Ancho estilizado para WebKit (Chrome, Edge, Safari, Brave) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Pista de fondo: totalmente transparente para no generar franjas */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* El tirador (thumb): translúcido, discreto y con bordes redondeados */
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.25); /* Violeta muy tenue */
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.25s ease;
+}
+
+/* Al pasar el cursor por encima: se ilumina suavemente */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.55);
+}
+
+/* Al arrastrar el scroll */
+::-webkit-scrollbar-thumb:active {
+  background: rgba(192, 132, 252, 0.75);
+}
+
+/* Soporte nativo estándar para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(147, 51, 234, 0.28) transparent;
+}
