@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { QuizState } from '../../../services/persistence';
 import {
   Lock,
@@ -11,14 +12,14 @@ import {
   AlertTriangle,
   ShieldAlert,
   Compass,
-} from "lucide-react";
-import type { QuizQuestion } from "../../../types/types";
-import { triggerCelebrationConfetti } from "../../../utils/confetti";
-import { sonar } from "../../../utils/sonidos";
-import { FuenteChip } from "../../RecursoEstado/RecursoEstado";
-import { puntosDeRepaso } from "../../../utils/repasoQuiz";
-import { RepasoGuiado } from "./RepasoGuiado";
-import styles from "./Station5Quiz.module.css";
+} from 'lucide-react';
+import type { QuizQuestion } from '../../../types/types';
+import { triggerCelebrationConfetti } from '../../../utils/confetti';
+import { sonar } from '../../../utils/sonidos';
+import { FuenteChip } from '../../RecursoEstado/RecursoEstado';
+import { puntosDeRepaso } from '../../../utils/repasoQuiz';
+import { RepasoGuiado } from './RepasoGuiado';
+import styles from './Station5Quiz.module.css';
 
 interface Station5Props {
   quizState: QuizState;
@@ -49,35 +50,105 @@ export const Station5FinalTrial = ({
   onOpenMasterBadge,
   onDownloadArtifact,
 }: Station5Props) => {
-  const { currentQuestionIndex, selectedOption, isEvaluated, userAnswers, isQuizCompleted } = quizState;
-  const setCurrentQuestionIndex = (value: number | ((previous: number) => number)) =>
-    onQuizChange(prev => ({ ...prev, currentQuestionIndex: typeof value === 'function' ? value(prev.currentQuestionIndex) : value }));
-  const setSelectedOption = (value: number | null) => onQuizChange(prev => ({ ...prev, selectedOption: value,
-    selectedAnswers: value === null ? prev.selectedAnswers : { ...prev.selectedAnswers, [prev.currentQuestionIndex]: value } }));
-  const setIsEvaluated = (value: boolean) => onQuizChange(prev => ({ ...prev, isEvaluated: value }));
-  const setUserAnswers = (value: Record<number, boolean> | ((previous: Record<number, boolean>) => Record<number, boolean>)) =>
-    onQuizChange(prev => ({ ...prev, userAnswers: typeof value === 'function' ? value(prev.userAnswers) : value,
-      selectedAnswers: typeof value === 'function' ? prev.selectedAnswers : {} }));
-  const setIsQuizCompleted = (value: boolean) => onQuizChange(prev => ({ ...prev, isQuizCompleted: value }));
-
-  // Sin preguntas no se inventa ninguna: Step2 muestra «no disponible» antes de llegar aquí.
   const safeQuestions = questions;
-
   const totalQuestions = safeQuestions.length;
-  // Como todas las estaciones, el quiz exige el 100 %.
   const minRequiredToPass = totalQuestions;
+
+  // 🟢 Huella digital única del cuestionario de este documento
+  const quizFingerprint = safeQuestions[0]?.pregunta
+    ? `${safeQuestions[0].pregunta.slice(0, 30).trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_${totalQuestions}`
+    : 'default_quiz';
+  const storageQuizKey = `novamind_s5_state_${quizFingerprint}`;
+
+  // Sincronización perezosa al cargar el cuestionario de este documento específico
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageQuizKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        onQuizChange((prev) => ({
+          ...prev,
+          ...parsed,
+        }));
+      }
+    } catch {
+      // fallback
+    }
+  }, [storageQuizKey]);
+
+  const { currentQuestionIndex, selectedOption, isEvaluated, userAnswers, isQuizCompleted } = quizState;
+
+  const persistState = (patch: Partial<QuizState>) => {
+    try {
+      const current = {
+        currentQuestionIndex,
+        userAnswers,
+        isQuizCompleted,
+        failedOptions: quizState.failedOptions ?? {},
+        ...patch,
+      };
+      localStorage.setItem(storageQuizKey, JSON.stringify(current));
+    } catch {
+      // fallback
+    }
+  };
+
+  const setCurrentQuestionIndex = (value: number | ((previous: number) => number)) => {
+    onQuizChange((prev) => {
+      const nextIdx = typeof value === 'function' ? value(prev.currentQuestionIndex) : value;
+      persistState({ currentQuestionIndex: nextIdx });
+      return { ...prev, currentQuestionIndex: nextIdx };
+    });
+  };
+
+  const setSelectedOption = (value: number | null) =>
+    onQuizChange((prev) => {
+      const nextAnswers =
+        value === null
+          ? prev.selectedAnswers
+          : { ...prev.selectedAnswers, [prev.currentQuestionIndex]: value };
+      persistState({ selectedOption: value, selectedAnswers: nextAnswers });
+      return {
+        ...prev,
+        selectedOption: value,
+        selectedAnswers: nextAnswers,
+      };
+    });
+
+  const setIsEvaluated = (value: boolean) =>
+    onQuizChange((prev) => {
+      persistState({ isEvaluated: value });
+      return { ...prev, isEvaluated: value };
+    });
+
+  const setUserAnswers = (
+    value: Record<number, boolean> | ((previous: Record<number, boolean>) => Record<number, boolean>)
+  ) =>
+    onQuizChange((prev) => {
+      const nextMap = typeof value === 'function' ? value(prev.userAnswers) : value;
+      persistState({ userAnswers: nextMap });
+      return {
+        ...prev,
+        userAnswers: nextMap,
+        selectedAnswers: typeof value === 'function' ? prev.selectedAnswers : {},
+      };
+    });
+
+  const setIsQuizCompleted = (value: boolean) =>
+    onQuizChange((prev) => {
+      persistState({ isQuizCompleted: value });
+      return { ...prev, isQuizCompleted: value };
+    });
+
   const currentQ = safeQuestions[currentQuestionIndex] || safeQuestions[0];
-  // Alternativas ya falladas en esta pregunta: se marcan y no se pueden volver a elegir.
   const fallidas = quizState.failedOptions?.[currentQuestionIndex] ?? [];
-  // Tras acertar se explica por qué fallaban las descartadas, si el backend lo generó (modo paralelo).
-  // Antes no: la explicación de una incorrecta puede delatar la correcta.
+
   const explicacionesFallidas = isEvaluated
     ? fallidas
         .map((idx) => ({ opcion: currentQ?.opciones[idx], texto: currentQ?.explicaciones_opciones?.[idx] }))
         .filter((e) => e.opcion && e.texto)
     : [];
 
-  // Repaso guiado: preguntas falladas con su cita y página reales, sin llamar a ningún modelo.
   const puntosRepaso = puntosDeRepaso(safeQuestions, quizState.failedOptions);
 
   if (!currentQ) return null;
@@ -94,28 +165,22 @@ export const Station5FinalTrial = ({
           </div>
 
           <div>
-            <span className={styles.lockedTag}>
-              Estación 05 · Examen final
-            </span>
+            <span className={styles.lockedTag}>Estación 05 · Examen final</span>
             <h3 className={styles.lockedTitle}>Estación 05 Bloqueada</h3>
             <p className={styles.lockedDesc}>
-              Completa al menos{" "}
-              <strong style={{ color: "var(--color-amber-300)" }}>
-                2 estaciones previas
-              </strong>{" "}
-              para desbloquear la prueba de dominio sin alucinaciones.
+              Completa al menos{' '}
+              <strong style={{ color: 'var(--color-amber-300)' }}>2 estaciones previas</strong> para
+              desbloquear la prueba de dominio sin alucinaciones.
             </p>
           </div>
 
           <div className={styles.lockedProgressBox}>
             <div className={styles.lockedProgressLabels}>
-              <span style={{ color: "var(--color-text-muted)" }}>
-                Requisito de Desbloqueo:
-              </span>
+              <span style={{ color: 'var(--color-text-muted)' }}>Requisito de Desbloqueo:</span>
               <strong
                 style={{
-                  color: "var(--color-amber-300)",
-                  fontFamily: "var(--font-code)",
+                  color: 'var(--color-amber-300)',
+                  fontFamily: 'var(--font-code)',
                 }}
               >
                 {completedStationsCount} de 2 Estaciones Completadas
@@ -132,25 +197,13 @@ export const Station5FinalTrial = ({
           </div>
 
           <div className={styles.lockedStationNavGroup}>
-            <button
-              type="button"
-              onClick={() => onSelectStation(0)}
-              className={styles.lockedNavBtn}
-            >
+            <button type="button" onClick={() => onSelectStation(0)} className={styles.lockedNavBtn}>
               Ir a Estación 1 (Resumen)
             </button>
-            <button
-              type="button"
-              onClick={() => onSelectStation(1)}
-              className={styles.lockedNavBtn}
-            >
+            <button type="button" onClick={() => onSelectStation(1)} className={styles.lockedNavBtn}>
               Ir a Estación 2 (Flashcards)
             </button>
-            <button
-              type="button"
-              onClick={() => onSelectStation(2)}
-              className={styles.lockedNavBtn}
-            >
+            <button type="button" onClick={() => onSelectStation(2)} className={styles.lockedNavBtn}>
               Ir a Estación 3 (Tutorial)
             </button>
           </div>
@@ -169,47 +222,42 @@ export const Station5FinalTrial = ({
 
         <div
           style={{
-            maxWidth: "32rem",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.75rem",
+            maxWidth: '32rem',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
           }}
         >
           <div>
-            <span className={styles.dangerTag}>
-              Escudos Cognitivos Agotados (0/3)
-            </span>
+            <span className={styles.dangerTag}>Escudos Cognitivos Agotados (0/3)</span>
           </div>
 
           <h3 className={styles.dangerTitle}>El error es parte del aprendizaje</h3>
 
           <p
             style={{
-              color: "var(--color-text-secondary)",
-              fontSize: "0.875rem",
+              color: 'var(--color-text-secondary)',
+              fontSize: '0.875rem',
               lineHeight: 1.6,
             }}
           >
-            Cada intento es una oportunidad para fortalecer lo aprendido.
-            En lugar de adivinar, la clave para dominar conceptos complejos
-            está en dar un paso atrás y repasar a tu propio ritmo.
-            Reconstruyamos las bases para que vuelvas al desafío con total seguridad.
+            Cada intento es una oportunidad para fortalecer lo aprendido. En lugar de adivinar, la clave
+            para dominar conceptos complejos está en dar un paso atrás y repasar a tu propio ritmo.
           </p>
 
           <div className={styles.dangerNotice}>
             <Compass
               size={20}
               style={{
-                color: "var(--color-amber-400)",
+                color: 'var(--color-amber-400)',
                 flexShrink: 0,
-                marginTop: "2px",
+                marginTop: '2px',
               }}
             />
             <p>
-              Restauraremos tus <strong>3 escudos al 100%</strong> y
-              recorreremos la ruta desde la <strong>Estación 01</strong> para
-              fijar cada concepto clave antes de volver a intentarlo.
+              Restauraremos tus <strong>3 escudos al 100%</strong> y recorreremos la ruta desde la{' '}
+              <strong>Estación 01</strong> para fijar cada concepto clave antes de volver a intentarlo.
             </p>
           </div>
         </div>
@@ -217,11 +265,7 @@ export const Station5FinalTrial = ({
         <RepasoGuiado puntos={puntosRepaso} revelarRespuestas={false} />
 
         <div>
-          <button
-            type="button"
-            onClick={onResetCircuit}
-            className={styles.restartCircuitBtn}
-          >
+          <button type="button" onClick={onResetCircuit} className={styles.restartCircuitBtn}>
             <RotateCcw size={16} />
             <span>Restaurar Escudos y Reforzar Conceptos</span>
           </button>
@@ -242,15 +286,18 @@ export const Station5FinalTrial = ({
       return;
     }
 
-    // Incorrecta: cuesta un escudo y se puede reintentar sin revelar la correcta.
     sonar('error');
-    onQuizChange((prev) => ({
-      ...prev,
-      failedOptions: {
+    onQuizChange((prev) => {
+      const nextFailed = {
         ...prev.failedOptions,
         [prev.currentQuestionIndex]: [...(prev.failedOptions?.[prev.currentQuestionIndex] ?? []), index],
-      },
-    }));
+      };
+      persistState({ failedOptions: nextFailed });
+      return {
+        ...prev,
+        failedOptions: nextFailed,
+      };
+    });
     onDeductShield();
   };
 
@@ -272,6 +319,11 @@ export const Station5FinalTrial = ({
   };
 
   const handleRestartQuiz = () => {
+    try {
+      localStorage.removeItem(storageQuizKey);
+    } catch {
+      // fallback
+    }
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setIsEvaluated(false);
@@ -281,51 +333,40 @@ export const Station5FinalTrial = ({
   };
 
   const correctAnswersCount = Object.values(userAnswers).filter(Boolean).length;
-  const userScorePercentage = Math.round(
-    (correctAnswersCount / totalQuestions) * 100,
-  );
+  const userScorePercentage = Math.round((correctAnswersCount / totalQuestions) * 100);
   const isSuccess = totalQuestions > 0 && correctAnswersCount === minRequiredToPass;
 
   // 4. Pantalla: Resultado Final
   if (isQuizCompleted) {
     return (
-      <div
-        className={`${styles.resultCard} ${isSuccess ? styles.resultSuccess : styles.resultFailed}`}
-      >
-        <div
-          className={`${styles.resultIconBox} ${isSuccess ? styles.resultIconSuccess : styles.resultIconFailed}`}
-        >
+      <div className={`${styles.resultCard} ${isSuccess ? styles.resultSuccess : styles.resultFailed}`}>
+        <div className={`${styles.resultIconBox} ${isSuccess ? styles.resultIconSuccess : styles.resultIconFailed}`}>
           {isSuccess ? <Award size={40} /> : <AlertTriangle size={40} />}
         </div>
 
         <div
           style={{
-            maxWidth: "28rem",
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
+            maxWidth: '28rem',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
           }}
         >
           <div>
-            <span
-              className={isSuccess ? styles.examApprovalPill : styles.dangerTag}
-            >
-              {isSuccess
-                ? "¡Evaluación Final Aprobada!"
-                : "Evaluación No Superada"}
+            <span className={isSuccess ? styles.examApprovalPill : styles.dangerTag}>
+              {isSuccess ? '¡Evaluación Final Aprobada!' : 'Evaluación No Superada'}
             </span>
           </div>
 
           <h3 className={styles.lockedTitle}>
-            {correctAnswersCount} de {totalQuestions} Aciertos (
-            {userScorePercentage}%)
+            {correctAnswersCount} de {totalQuestions} Aciertos ({userScorePercentage}%)
           </h3>
 
           <p
             style={{
-              color: "var(--color-text-secondary)",
-              fontSize: "0.875rem",
+              color: 'var(--color-text-secondary)',
+              fontSize: '0.875rem',
               lineHeight: 1.6,
             }}
           >
@@ -338,32 +379,20 @@ export const Station5FinalTrial = ({
         <RepasoGuiado puntos={puntosRepaso} revelarRespuestas={isSuccess} />
 
         <div className={styles.resultButtonsGroup}>
-          <button
-            type="button"
-            onClick={handleRestartQuiz}
-            className={styles.lockedNavBtn}
-          >
-            <RotateCcw size={14} style={{ marginRight: "0.25rem" }} />
+          <button type="button" onClick={handleRestartQuiz} className={styles.lockedNavBtn}>
+            <RotateCcw size={14} style={{ marginRight: '0.25rem' }} />
             Reintentar Examen
           </button>
 
           {isSuccess && (
             <>
-              <button
-                type="button"
-                onClick={onDownloadArtifact}
-                className={styles.downloadArtifactBtn}
-              >
+              <button type="button" onClick={onDownloadArtifact} className={styles.downloadArtifactBtn}>
                 <Download size={14} />
                 Descargar Artefacto JSON
               </button>
 
-              <button
-                type="button"
-                onClick={() => onSelectStation(0)}
-                className={styles.lockedNavBtn}
-              >
-                <BookOpen size={14} style={{ marginRight: "0.25rem" }} />
+              <button type="button" onClick={() => onSelectStation(0)} className={styles.lockedNavBtn}>
+                <BookOpen size={14} style={{ marginRight: '0.25rem' }} />
                 Repasar desde Estación 1
               </button>
             </>
@@ -376,14 +405,17 @@ export const Station5FinalTrial = ({
   // 5. Vista de Pregunta Activa
   return (
     <div className={styles.stationWrapper}>
+      {/* Halo ambiental dorado/ámbar característico de la prueba final */}
+      <div className={styles.lockedAmbientGlow} aria-hidden="true" />
+
       <div className={styles.headerContainer}>
         <div>
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              marginBottom: "0.25rem",
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.25rem',
             }}
           >
             <span className={styles.examTitleTag}>
@@ -394,26 +426,19 @@ export const Station5FinalTrial = ({
               Aprobación: {minRequiredToPass}/{totalQuestions} (100 %)
             </span>
           </div>
-          <h3
-            className={styles.lockedTitle}
-            style={{ fontSize: "1.5rem", textAlign: "left" }}
-          >
+          <h3 className={styles.lockedTitle} style={{ fontSize: '1.5rem', textAlign: 'left' }}>
             Cuestionario
           </h3>
         </div>
 
-        <div style={{ textAlign: "right" }}>
-          <div
-            style={{ fontSize: "0.6875rem", color: "var(--color-text-muted)" }}
-          >
-            Pregunta
-          </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>Pregunta</div>
           <div
             style={{
-              fontSize: "0.875rem",
-              fontFamily: "var(--font-code)",
+              fontSize: '0.875rem',
+              fontFamily: 'var(--font-code)',
               fontWeight: 700,
-              color: "var(--color-amber-400)",
+              color: 'var(--color-amber-400)',
             }}
           >
             {currentQuestionIndex + 1} de {totalQuestions}
@@ -425,11 +450,11 @@ export const Station5FinalTrial = ({
         <div>
           <div
             style={{
-              fontSize: "0.75rem",
-              fontFamily: "var(--font-code)",
-              color: "var(--color-violet-400)",
-              textTransform: "uppercase",
-              marginBottom: "0.25rem",
+              fontSize: '0.75rem',
+              fontFamily: 'var(--font-code)',
+              color: 'var(--color-violet-400)',
+              textTransform: 'uppercase',
+              marginBottom: '0.25rem',
             }}
           >
             Desafío 0{currentQuestionIndex + 1}
@@ -466,9 +491,13 @@ export const Station5FinalTrial = ({
               >
                 <span>{op}</span>
                 {isFailed ? (
-                  <span><XCircle size={20} color="var(--color-rose-400)" /></span>
+                  <span>
+                    <XCircle size={20} color="var(--color-rose-400)" />
+                  </span>
                 ) : isEvaluated && isSelected ? (
-                  <span><CheckCircle2 size={20} color="var(--color-emerald-400)" /></span>
+                  <span>
+                    <CheckCircle2 size={20} color="var(--color-emerald-400)" />
+                  </span>
                 ) : null}
               </button>
             );
@@ -495,23 +524,14 @@ export const Station5FinalTrial = ({
 
             {currentQ.cita_fuente && (
               <div className={styles.ragCitation}>
-                <strong style={{ color: "var(--color-violet-300)" }}>
-                  Cita textual fuente:
-                </strong>{" "}
-                {currentQ.cita_fuente}{" "}
-                <FuenteChip fuente={currentQ.fuente} />
+                <strong style={{ color: 'var(--color-violet-300)' }}>Cita textual fuente:</strong>{' '}
+                {currentQ.cita_fuente} <FuenteChip fuente={currentQ.fuente} />
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleNextQuestion}
-              className={styles.nextQuestionBtn}
-            >
+            <button type="button" onClick={handleNextQuestion} className={styles.nextQuestionBtn}>
               <span>
-                {currentQuestionIndex < totalQuestions - 1
-                  ? "Siguiente Pregunta"
-                  : "Finalizar Examen"}
+                {currentQuestionIndex < totalQuestions - 1 ? 'Siguiente Pregunta' : 'Finalizar Examen'}
               </span>
               <ArrowRight size={14} />
             </button>
