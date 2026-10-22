@@ -152,13 +152,65 @@ const DirectorStudio = ({
   const totalScenes = safeScenes.length;
   const wpm = BASE_WPM;
 
+  // 🟢 Huella digital única del estudio para evitar colisiones con 'doc-novamind'
+  const studioFingerprint = safeScenes[0]?.titulo
+    ? `${safeScenes[0].titulo.slice(0, 30).trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_${totalScenes}`
+    : (documentId || videoJobSpec?.document_id || 'default_director').trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+  const storageVideoVistoKey = `novamind_s4_visto_${studioFingerprint}`;
+  const storageEscenasKey = `novamind_s4_escenas_${studioFingerprint}`;
+
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
-  // Se aprueba al ver el video hasta el cierre (decisión del usuario, 15/10)
-  const [videoVisto, setVideoVisto] = useState(false);
+
+  // 🟢 Inicialización de escenas vistas leyendo del localStorage de este documento
+  const [viewedScenes, setViewedScenes] = useState<Record<number, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(storageEscenasKey);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return { 0: true };
+  });
+
+  // 🟢 Inicialización de video visto
+  const [videoVisto, setVideoVisto] = useState<boolean>(() => {
+    if (isCompleted) return true;
+    try {
+      return localStorage.getItem(storageVideoVistoKey) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [prevFingerprint, setPrevFingerprint] = useState(studioFingerprint);
+
+  // 🟢 Sincronización limpia en fase de render al cambiar de documento
+  if (studioFingerprint !== prevFingerprint) {
+    setPrevFingerprint(studioFingerprint);
+    setCurrentSceneIndex(0);
+
+    let initialEscenas: Record<number, boolean> = { 0: true };
+    let initialVisto = isCompleted;
+
+    try {
+      const savedEscenas = localStorage.getItem(storageEscenasKey);
+      if (savedEscenas) initialEscenas = JSON.parse(savedEscenas);
+      const savedVisto = localStorage.getItem(storageVideoVistoKey);
+      if (savedVisto === 'true') initialVisto = true;
+    } catch {
+      initialEscenas = { 0: true };
+      initialVisto = false;
+    }
+
+    setViewedScenes(initialEscenas);
+    setVideoVisto(initialVisto);
+  }
+
   // Lo informa el video: mientras suena, el teleprompter no habla
   const [isPlaying, setIsPlaying] = useState(false);
   const [promptCopyState, setPromptCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
-  // Plegada por defecto (decisión del usuario, 14/10): se abre con "Mostrar"
+  // Plegada por defecto: se abre con "Mostrar"
   const [showRagDetails, setShowRagDetails] = useState(false);
   const [narracion, setNarracion] = useState<EstadoNarracion>(() =>
     narracionMuestra ? { fase: 'generando', mensaje: 'Cargando el video de la muestra…' } : { fase: 'inactiva' },
@@ -216,7 +268,6 @@ const DirectorStudio = ({
       setVozElegida((prev) => prev || elegirVozNavegador(es)?.name || '');
       setCargandoVoces(false);
     });
-    // Algunos navegadores entregan más voces después (p. ej. las voces en línea de Edge)
     const alCambiar = () => {
       const es = vocesEnEspanol(window.speechSynthesis.getVoices());
       if (es.length === 0) return;
@@ -244,18 +295,17 @@ const DirectorStudio = ({
   const respuestaVideo = narracion.fase === 'lista' || narracion.fase === 'mudo' ? narracion.respuesta : null;
   const narrada = respuestaVideo?.video_job_spec.escenas[currentSceneIndex];
   const viewScene = narrada ?? currentScene;
-  // El teleprompter reutiliza el audio del video de la escena (sin gastar cuota)
   const audioUrl = narracion.fase === 'lista' && narrada?.audio ? narracion.urls[narrada.escena] : undefined;
   const videoListo = narracion.fase === 'lista' || narracion.fase === 'mudo';
 
-  // Modelo de tiempo único (mismo que VideoJobSpec en el backend): palabras reales del guion,
-  // nunca estimacion_palabras ni duracion_segundos declarados por el LLM.
+  // Modelo de tiempo único (mismo que VideoJobSpec en el backend)
   const microclass = useMemo(
     () => microclassTiming(safeScenes.map((sc) => sc.guion_locutor), wpm),
     [safeScenes, wpm],
   );
   const templateScenes = hasRealScenes ? safeScenes.filter((sc) => sc.origen === 'plantilla').length : 0;
 
+  // 🟢 Estado derivado reactivo y consistente
   const isPassed = isCompleted || videoVisto;
 
   useEffect(() => () => window.clearTimeout(promptTimeoutRef.current), []);
@@ -276,6 +326,12 @@ const DirectorStudio = ({
   /** El video llegó al cierre: la estación se aprueba una sola vez. */
   const aprobarVideo = () => {
     setVideoVisto(true);
+    try {
+      localStorage.setItem(storageVideoVistoKey, 'true');
+    } catch {
+      // Fallback
+    }
+
     if (!hasRealScenes || isCompleted || completionFiredRef.current) return;
     completionFiredRef.current = true;
     triggerSmallConfetti();
@@ -285,35 +341,57 @@ const DirectorStudio = ({
   };
 
   const goToScene = (index: number) => {
-    if (index < 0 || index >= totalScenes || index === currentSceneIndex) return;
+    if (index < 0 || index >= totalScenes) return;
     callarTeleprompter();
     setCurrentSceneIndex(index);
+
+    // Marcar la escena como explorada
+    setViewedScenes((prev) => {
+      if (prev[index]) return prev;
+      const next = { ...prev, [index]: true };
+      try {
+        localStorage.setItem(storageEscenasKey, JSON.stringify(next));
+      } catch {
+        // fallback
+      }
+      return next;
+    });
   };
 
   /** El video avisa de lo que se ve (-1 portada, totalScenes cierre): el guion de abajo lo sigue. */
   const alCambiarEscenaVideo = (index: number) => {
-    if (index >= totalScenes) aprobarVideo();
-    else if (index >= 0) setCurrentSceneIndex(index);
+    if (index >= totalScenes) {
+      aprobarVideo();
+    } else if (index >= 0) {
+      setCurrentSceneIndex(index);
+      setViewedScenes((prev) => {
+        if (prev[index]) return prev;
+        const next = { ...prev, [index]: true };
+        try {
+          localStorage.setItem(storageEscenasKey, JSON.stringify(next));
+        } catch {
+          // fallback
+        }
+        return next;
+      });
+    }
   };
 
   const alReproducirVideo = (reproduciendo: boolean) => {
-    if (reproduciendo) callarTeleprompter(); // una sola voz a la vez
+    if (reproduciendo) callarTeleprompter();
     setIsPlaying(reproduciendo);
   };
 
   const contratoActual = (): VideoJobSpec => ({
-    video_job_id: videoJobSpec?.video_job_id || `vjob-${documentId || 'doc-novamind'}`,
-    // El id del guion (doc-<huella>) es el que permite al backend asociar la narración al documento
+    video_job_id: videoJobSpec?.video_job_id || `vjob-${studioFingerprint}`,
     document_id: videoJobSpec?.document_id || documentId || 'doc-novamind',
     target_duration: 50,
     max_duration: MAX_MICROCLASS_SECONDS,
     aspect_ratio: '9:16',
     idioma: 'es',
     estado: 'contract_ready',
-    // Duraciones, tramos y totales al MISMO wpm que se serializa (el backend recalcula igual)
     escenas: safeScenes.map((sc, i) => ({
       ...sc,
-      // La palabra clave de la foto viaja en el guion del backend aunque `scenes` venga de director_cut
       imagen: sc.imagen ?? videoJobSpec?.escenas?.[i]?.imagen ?? null,
       estimacion_palabras: microclass.scenes[i].words,
       duracion_segundos: microclass.scenes[i].seconds,
@@ -331,7 +409,6 @@ const DirectorStudio = ({
       const r = await solicitarNarracion({ ...contratoActual(), wpm: BASE_WPM }, 'Kore', { vozServidor: false });
       return r.status === 'exito' ? { respuesta: r } : { respuesta: null, aviso: r.advertencias[0] };
     } catch (err) {
-      // Sin fotos el video se ve igual: las diapositivas se dibujan desde el guion
       return {
         respuesta: null,
         aviso: `No se pudieron traer las fotos (${err instanceof Error ? err.message : String(err)}): se muestran las diapositivas solas.`,
@@ -339,10 +416,7 @@ const DirectorStudio = ({
     }
   };
 
-  /**
-   * Último recurso, cuando ninguna voz funciona: el video sin voz, con fotos y el guion en
-   * pantalla, avanzando al ritmo estimado.
-   */
+  /** Último recurso si no hay voz disponible: el video sin voz avanzando al ritmo estimado. */
   const videoSinVoz = async (motivo: string) => {
     setNarracion({ fase: 'generando', mensaje: 'Preparando el video sin voz…' });
     const { respuesta, aviso } = await diapositivasConFotos();
@@ -350,7 +424,7 @@ const DirectorStudio = ({
     setNarracion({ fase: 'mudo', respuesta, motivo: aviso ? `${motivo} ${aviso}` : motivo });
   };
 
-  /** Voz del servidor (ElevenLabs y, si no puede, Gemini); si tampoco, el video sin voz. */
+  /** Voz del servidor (ElevenLabs o Gemini). */
   const generarConVozServidor = async () => {
     setIsPlaying(false);
     setNarracion({ fase: 'generando', mensaje: 'Generando la voz en el servidor (ElevenLabs y, si no, Gemini)…' });
@@ -375,7 +449,7 @@ const DirectorStudio = ({
     }
   };
 
-  /** Botón «Generar video»: el video aparece en la página y arranca solo. */
+  /** Botón «Generar video». */
   const handleVideo = async () => {
     if (!hasRealScenes || narracion.fase === 'generando' || videoListo) return;
     callarTeleprompter();
@@ -383,11 +457,9 @@ const DirectorStudio = ({
     await generarConVozServidor();
   };
 
-  // Botón destacado junto a las escenas: genera el video si falta y lleva al reproductor
-  // y, si ya está listo, lo reproduce
   const videoRef = useRef<HTMLElement>(null);
   const [pedidoReproducir, setPedidoReproducir] = useState(0);
-// Desplazamiento cinematográfico suave con curva de desaceleración (easeOutCubic)
+
   const animarScrollSuave = (destinoY: number, duracionMs = 850) => {
     const inicioY = window.scrollY;
     const distancia = destinoY - inicioY;
@@ -396,8 +468,6 @@ const DirectorStudio = ({
     const pasoAnimacion = (tiempoActual: number) => {
       const tiempoTranscurrido = tiempoActual - inicioTiempo;
       const progreso = Math.min(tiempoTranscurrido / duracionMs, 1);
-      
-      // Curva de desaceleración suave
       const ease = 1 - Math.pow(1 - progreso, 3);
       window.scrollTo(0, inicioY + distancia * ease);
 
@@ -417,21 +487,16 @@ const DirectorStudio = ({
     }
 
     if (videoRef.current) {
-      // Tomamos en cuenta la barra superior fija (~100px) para que no tape el reproductor
       const offsetHeader = 100;
       const rect = videoRef.current.getBoundingClientRect();
       const espacioUtil = window.innerHeight - offsetHeader;
-      
-      // Centro matemático exacto en la zona visible de la pantalla
       const centroCalculado =
         window.scrollY + rect.top - offsetHeader - Math.max(0, (espacioUtil - rect.height) / 2);
 
-      // Desplazamiento suave de 850 milisegundos
       animarScrollSuave(Math.max(0, centroCalculado), 850);
     }
   };
 
-  // Patrón WAI-ARIA Tabs: flechas/Home/End mueven foco y selección
   const handleTablistKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     const targets: Record<string, number> = {
       ArrowRight: Math.min(totalScenes - 1, currentSceneIndex + 1),
@@ -449,9 +514,7 @@ const DirectorStudio = ({
   };
 
   const handleExportContractJson = () => {
-    // Con narración, el guion exportado ya incluye fotos, rutas de audio y duraciones medidas
     const contract: VideoJobSpec = respuestaVideo ? respuestaVideo.video_job_spec : contratoActual();
-
     const blob = new Blob([JSON.stringify(contract, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -463,8 +526,6 @@ const DirectorStudio = ({
     URL.revokeObjectURL(url);
   };
 
-  // Prompt para un generador de imágenes externo: lo genera el usuario con su herramienta,
-  // NuevaMente no gasta cuota ni presenta la imagen como propia.
   const promptVisual = promptVisualEscena(currentScene);
   const handleCopyPrompt = async () => {
     try {
@@ -477,20 +538,18 @@ const DirectorStudio = ({
     promptTimeoutRef.current = window.setTimeout(() => setPromptCopyState('idle'), 2000);
   };
 
-  // ------------------------------------------------------------------ ampliaciones con IA
+  // Ampliaciones con IA
   const claveGuion = `guion-${currentSceneIndex}`;
   const claveVisual = `visual-${currentSceneIndex}`;
   const guionAmpliado = ampliados[claveGuion] && !verOriginal[claveGuion] ? ampliados[claveGuion] : null;
   const visualEnriquecida = ampliados[claveVisual] && !verOriginal[claveVisual] ? ampliados[claveVisual] : null;
   const guionTele = guionAmpliado ?? currentScene.guion_locutor;
-  // El audio del video solo sirve si dice exactamente el texto que se ve (no el ampliado por IA)
   const audioTele = audioUrl && narrada?.guion_locutor?.trim() === guionTele.trim() ? audioUrl : undefined;
   const vozVideo = audioTele && narrada?.audio ? narrada.audio.voz : undefined;
 
   const handleAmpliar = async (tipo: 'guion' | 'visual') => {
     const clave = `${tipo}-${currentSceneIndex}`;
     if (ampliados[clave]) {
-      // Ya se pidió: se vuelve a mostrar sin gastar otra llamada
       setVerOriginal((prev) => ({ ...prev, [clave]: false }));
       return;
     }
@@ -516,7 +575,7 @@ const DirectorStudio = ({
         setAmpliados((prev) => ({ ...prev, [clave]: r.texto as string }));
         setVerOriginal((prev) => ({ ...prev, [clave]: false }));
         setEstadosAmpliacion((prev) => ({ ...prev, [clave]: { fase: 'inactiva' } }));
-        if (tipo === 'guion' && teleRef.current) callarTeleprompter(); // el texto que sonaba ya no es el que se ve
+        if (tipo === 'guion' && teleRef.current) callarTeleprompter();
         triggerSmallConfetti();
       } else {
         setEstadosAmpliacion((prev) => ({
@@ -533,13 +592,13 @@ const DirectorStudio = ({
     }
   };
 
-  // ------------------------------------------------------------------ teleprompter con voz
+  // Teleprompter con voz
   const locutar = () => {
     if (hablandoTele) {
       callarTeleprompter();
       return;
     }
-    if (isPlaying) return; // el video está sonando
+    if (isPlaying) return;
     if (audioTele) {
       const audio = new Audio(audioTele);
       audio.playbackRate = velocidadLocucion;
@@ -584,7 +643,7 @@ const DirectorStudio = ({
   const cambiarVelocidad = () => {
     const i = VELOCIDADES_LOCUCION.indexOf(velocidadLocucion);
     setVelocidadLocucion(VELOCIDADES_LOCUCION[(i + 1) % VELOCIDADES_LOCUCION.length]);
-    callarTeleprompter(); // la nueva velocidad se aplica al volver a locutar
+    callarTeleprompter();
   };
 
   const cambiarVoz = (nombre: string) => {
@@ -600,8 +659,9 @@ const DirectorStudio = ({
   return (
     <div className={estudio.stationWrapper}>
       {/* Halo ambiental volumétrico fucsia/violeta */}
-    <div className={styles.ambientGlow} aria-hidden="true" />
-      {/* Anuncios para lectores de pantalla: solo cambios significativos, nunca el reloj */}
+      <div className={styles.ambientGlow} aria-hidden="true" />
+      
+      {/* Anuncios para lectores de pantalla */}
       <div className={styles.srOnly} role="status" aria-live="polite" aria-atomic="true">
         {`${sceneLabel(currentSceneIndex)} de ${totalScenes}: ${currentScene.titulo}. ${
           isPlaying ? 'Video en reproducción.' : ''
@@ -616,7 +676,7 @@ const DirectorStudio = ({
               <Clapperboard size={13} color="#f0abfc" aria-hidden="true" />
               Estación 04 · Videos
             </span>
-            {isCompleted && (
+            {isPassed && (
               <span className={estudio.completedTag}>
                 <CheckCircle2 size={14} aria-hidden="true" /> Aprobada (+{COMPLETION_XP} XP)
               </span>
@@ -652,7 +712,7 @@ const DirectorStudio = ({
         </div>
       </div>
 
-      {/* Procedencia: el docente debe saber qué generó el sistema y qué no está verificado */}
+      {/* Procedencia */}
       {(templateScenes > 0 || degradaciones.length > 0) && (
         <div className={styles.provenanceNotice} role="note">
           <AlertTriangle size={14} aria-hidden="true" />
@@ -668,69 +728,79 @@ const DirectorStudio = ({
         </div>
       )}
 
-      {/* Primero el guion escena a escena; el video va debajo, a lo ancho (decisión del usuario, 15/10) */}
-      {/* Tira de Escenas / Strip de Navegación, con el botón del video a la derecha */}
+      {/* Tira de Escenas / Strip de Navegación con botón destacado */}
       <div className={styles.filaEscenas}>
-      <div
-        className={estudio.sceneStrip}
-        role="tablist"
-        aria-label="Escenas de la microclase"
-        onKeyDown={handleTablistKeyDown}
-      >
-        {safeScenes.map((sc, idx) => {
-          const isCurrent = currentSceneIndex === idx;
-
-          return (
-            <button
-              key={sc.id || idx}
-              ref={(el) => {
-                tabRefs.current[idx] = el;
-              }}
-              id={`s4-tab-${idx}`}
-              type="button"
-              role="tab"
-              aria-selected={isCurrent}
-              aria-controls="s4-studio-panel"
-              tabIndex={isCurrent ? 0 : -1}
-              onClick={() => goToScene(idx)}
-              className={`${estudio.sceneButton} ${isCurrent ? estudio.sceneButtonActive : ''}`}
-            >
-              <span className={estudio.sceneMeta}>
-                <span className={estudio.sceneTag}>
-                  {sceneLabel(idx)} · {microclass.scenes[idx]?.span ?? sc.tiempo}
-                </span>
-                <span className={estudio.sceneTitleText}>{sc.titulo}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      {hasRealScenes && (
-        <button
-          type="button"
-          onClick={accionVideoDestacada}
-          disabled={narracion.fase === 'generando'}
-          className={`${estudio.videoBtn} ${styles.botonVideoDestacado} ${videoListo ? styles.botonVideoListo : ''}`}
-          title={videoListo ? 'Ir al video de la microclase' : 'Genera el video narrado con la voz del servidor'}
+        <div
+          className={estudio.sceneStrip}
+          role="tablist"
+          aria-label="Escenas de la microclase"
+          onKeyDown={handleTablistKeyDown}
         >
-          {narracion.fase === 'generando' ? (
-            <LoaderCircle size={18} className={styles.spin} aria-hidden="true" />
-          ) : videoListo ? (
-            <Play size={18} fill="currentColor" aria-hidden="true" />
-          ) : (
-            <Clapperboard size={18} aria-hidden="true" />
-          )}
-          <span>
-            {narracion.fase === 'generando'
-              ? 'Generando video…'
-              : videoListo
-                ? 'Ver la microclase'
-                : narracion.fase === 'error'
-                  ? 'Reintentar video'
-                  : 'Generar video narrado'}
-          </span>
-        </button>
-      )}
+          {safeScenes.map((sc, idx) => {
+            const isCurrent = currentSceneIndex === idx;
+            const isViewed = isPassed || !!viewedScenes[idx];
+
+            return (
+              <button
+                key={sc.id || idx}
+                ref={(el) => {
+                  tabRefs.current[idx] = el;
+                }}
+                id={`s4-tab-${idx}`}
+                type="button"
+                role="tab"
+                aria-selected={isCurrent}
+                aria-controls="s4-studio-panel"
+                tabIndex={isCurrent ? 0 : -1}
+                onClick={() => goToScene(idx)}
+                className={`${estudio.sceneButton} ${isCurrent ? estudio.sceneButtonActive : ''}`}
+              >
+                <span className={estudio.sceneMeta}>
+                  <span className={estudio.sceneTag}>
+                    {sceneLabel(idx)} · {microclass.scenes[idx]?.span ?? sc.tiempo}
+                  </span>
+                  <span className={estudio.sceneTitleText}>{sc.titulo}</span>
+                </span>
+
+                {/* Check de escena vista */}
+                <span className={estudio.sceneCheckIcon}>
+                  {isViewed ? (
+                    <CheckCircle2 size={16} color="#34d399" aria-label="Escena vista" />
+                  ) : (
+                    <span className={estudio.sceneIndexCircle}>{idx + 1}</span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {hasRealScenes && (
+          <button
+            type="button"
+            onClick={accionVideoDestacada}
+            disabled={narracion.fase === 'generando'}
+            className={`${estudio.videoBtn} ${styles.botonVideoDestacado} ${videoListo ? styles.botonVideoListo : ''}`}
+            title={videoListo ? 'Ir al video de la microclase' : 'Genera el video narrado con la voz del servidor'}
+          >
+            {narracion.fase === 'generando' ? (
+              <LoaderCircle size={18} className={styles.spin} aria-hidden="true" />
+            ) : videoListo ? (
+              <Play size={18} fill="currentColor" aria-hidden="true" />
+            ) : (
+              <Clapperboard size={18} aria-hidden="true" />
+            )}
+            <span>
+              {narracion.fase === 'generando'
+                ? 'Generando video…'
+                : videoListo
+                  ? 'Ver la microclase'
+                  : narracion.fase === 'error'
+                    ? 'Reintentar video'
+                    : 'Generar video narrado'}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Estudio Principal (Doble Panel: Teleprompter + Pizarra Didáctica) */}
@@ -763,7 +833,7 @@ const DirectorStudio = ({
           hayVozNavegador={hayVozNavegador}
           vozVideo={vozVideo}
         >
-          {/* Trazabilidad RAG: las citas del documento y si están verificadas */}
+          {/* Trazabilidad RAG */}
           {fuentes.length > 0 && (
             <div className={styles.ragSection}>
               <button
@@ -863,7 +933,7 @@ const DirectorStudio = ({
         </PizarraDidactica>
       </div>
 
-      {/* La estación es el video, debajo del estudio: se aprueba al verlo hasta el cierre */}
+      {/* La estación es el video: se aprueba al verlo hasta el cierre */}
       <section ref={videoRef} className={styles.videoSeccion} aria-label="Microclase audiovisual">
         {videoListo ? (
           <Suspense
@@ -887,7 +957,6 @@ const DirectorStudio = ({
         ) : (
           <div className={styles.videoEspera}>
             {narracion.fase === 'generando' ? (
-              // Onda de voz animada mientras se graba la locución (sin significado de progreso real)
               <div className={styles.ondaCarga} aria-hidden="true">
                 {Array.from({ length: 7 }, (_, i) => (
                   <span key={i} style={{ animationDelay: `${i * 0.11}s` }} />
@@ -943,7 +1012,7 @@ const DirectorStudio = ({
   );
 };
 
-/** Estado honesto del video: qué voz suena, qué se midió y qué falló. */
+/** Estado honesto del video */
 const EstadoVideo = ({ estado }: { estado: EstadoNarracion }) => {
   const lista = estado.fase === 'lista' ? estado.respuesta : null;
   const avisos =
