@@ -41,29 +41,6 @@ export const Station2FlashcardQuest = ({
   onOpenStreakBadge,
   onNextStation,
 }: Station2Props) => {
-  const [prevCards, setPrevCards] = useState(cards);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isFlipped, setIsFlipped] = useState<boolean>(false);
-  const [showHint, setShowHint] = useState<boolean>(false);
-  const [masteredCards, setMasteredCards] = useState<Record<string, boolean>>({});
-  const [tilt, setTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  
-  // Estado para mostrar la tarjeta final de maestría una vez completadas todas
-  const [showCompletionCard, setShowCompletionCard] = useState<boolean>(false);
-
-  const frontFaceRef = useRef<HTMLDivElement>(null);
-  const backFaceRef = useRef<HTMLDivElement>(null);
-  const [dynamicHeight, setDynamicHeight] = useState<number | undefined>(undefined);
-
-  if (cards !== prevCards) {
-    setPrevCards(cards);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setShowHint(false);
-    setMasteredCards({});
-    setShowCompletionCard(false);
-  }
-
   const safeCards =
     cards.length > 0
       ? cards
@@ -78,19 +55,90 @@ export const Station2FlashcardQuest = ({
 
   const totalCards = safeCards.length;
   const minRequired = totalCards;
+
+  // 🟢 Huella digital única del mazo de este documento específico
+  const deckFingerprint = safeCards[0]?.frente
+    ? `${safeCards[0].frente.slice(0, 30).trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}_${totalCards}`
+    : 'default_deck';
+
+  const storageCardsKey = `novamind_s2_mastered_${deckFingerprint}`;
+  const storageCompletedKey = `novamind_s2_completed_${deckFingerprint}`;
+
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isFlipped, setIsFlipped] = useState<boolean>(false);
+  const [showHint, setShowHint] = useState<boolean>(false);
+  const [tilt, setTilt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [repitiendoMazo, setRepitiendoMazo] = useState<boolean>(false);
+
+  // 🟢 Estado de tarjetas dominadas inicializado por documento
+  const [masteredCards, setMasteredCards] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(storageCardsKey);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return {};
+  });
+
+  // 🟢 Tarjeta de felicitación inicializada solo si este documento específico ya se completó
+  const [showCompletionCard, setShowCompletionCard] = useState<boolean>(() => {
+    if (isCompleted) return true;
+    try {
+      return localStorage.getItem(storageCompletedKey) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [prevFingerprint, setPrevFingerprint] = useState(deckFingerprint);
+
+  // 🟢 Sincronización limpia en render al cambiar de documento
+  if (deckFingerprint !== prevFingerprint) {
+    setPrevFingerprint(deckFingerprint);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setShowHint(false);
+    setRepitiendoMazo(false);
+
+    let initialCards: Record<string, boolean> = {};
+    let initialCompleted = isCompleted;
+    try {
+      const savedCards = localStorage.getItem(storageCardsKey);
+      if (savedCards) initialCards = JSON.parse(savedCards);
+      const savedComp = localStorage.getItem(storageCompletedKey);
+      if (savedComp === 'true') initialCompleted = true;
+    } catch {
+      initialCards = {};
+      initialCompleted = false;
+    }
+
+    setMasteredCards(initialCards);
+    setShowCompletionCard(initialCompleted);
+  }
+
+  const frontFaceRef = useRef<HTMLDivElement>(null);
+  const backFaceRef = useRef<HTMLDivElement>(null);
+  const [dynamicHeight, setDynamicHeight] = useState<number | undefined>(undefined);
+
   const currentCard = safeCards[currentIndex] || safeCards[0];
   const cardId = currentCard.id || `card-${currentIndex}`;
 
   const remainingInStack = Math.max(0, totalCards - 1 - currentIndex);
 
+  const masteredCount = Object.values(masteredCards).filter(Boolean).length;
+  // 🟢 Estado derivado reactivo y limpio
+  const debeMostrarCompletado =
+    !repitiendoMazo &&
+    (isCompleted || showCompletionCard || (totalCards > 0 && masteredCount === minRequired));
+
   const stackLayers = useMemo(() => {
-    // Si ya está en la tarjeta de completado, el mazo de fondo queda en reposo sin capas
-    if (showCompletionCard) return [];
+    if (debeMostrarCompletado) return [];
     return Array.from({ length: remainingInStack }).map((_, idx) => {
       const preset = STACK_PRESETS[idx % STACK_PRESETS.length];
       return { ...preset, index: idx };
     });
-  }, [remainingInStack, showCompletionCard]);
+  }, [remainingInStack, debeMostrarCompletado]);
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -104,7 +152,7 @@ export const Station2FlashcardQuest = ({
   const handleMouseLeave = () => setTilt({ x: 0, y: 0 });
 
   const handleFlip = () => {
-    if (showCompletionCard) return;
+    if (debeMostrarCompletado) return;
     sonar('giro');
     setIsFlipped((prev) => !prev);
   };
@@ -129,7 +177,7 @@ export const Station2FlashcardQuest = ({
   };
 
   const handleNext = () => {
-    if (showCompletionCard) return;
+    if (debeMostrarCompletado) return;
     if (currentIndex < totalCards - 1) {
       setIsFlipped(false);
       setShowHint(false);
@@ -138,9 +186,9 @@ export const Station2FlashcardQuest = ({
   };
 
   const handlePrev = () => {
-    if (showCompletionCard) {
-      // Salir de la pantalla de completado y volver a la última tarjeta
+    if (debeMostrarCompletado) {
       setShowCompletionCard(false);
+      setRepitiendoMazo(true);
       setIsFlipped(false);
       setShowHint(false);
       setCurrentIndex(totalCards - 1);
@@ -158,6 +206,12 @@ export const Station2FlashcardQuest = ({
     setMasteredCards(newMastered);
     triggerSmallConfetti();
 
+    try {
+      localStorage.setItem(storageCardsKey, JSON.stringify(newMastered));
+    } catch {
+      // fallback
+    }
+
     const totalMastered = Object.values(newMastered).filter(Boolean).length;
 
     if (totalMastered >= minRequired) {
@@ -168,8 +222,14 @@ export const Station2FlashcardQuest = ({
       if (onOpenStreakBadge) {
         onOpenStreakBadge();
       }
-      // Mostrar la tarjeta final de asimilación completa
+      setRepitiendoMazo(false);
       setShowCompletionCard(true);
+
+      try {
+        localStorage.setItem(storageCompletedKey, 'true');
+      } catch {
+        // fallback
+      }
     } else {
       if (currentIndex < totalCards - 1) {
         handleNext();
@@ -179,18 +239,25 @@ export const Station2FlashcardQuest = ({
 
   const handleRestartDeck = () => {
     setShowCompletionCard(false);
+    setRepitiendoMazo(true);
+    setMasteredCards({});
     setIsFlipped(false);
     setShowHint(false);
     setCurrentIndex(0);
+
+    try {
+      localStorage.removeItem(storageCardsKey);
+      localStorage.removeItem(storageCompletedKey);
+    } catch {
+      // fallback
+    }
   };
 
-  const isCurrentMastered = !!masteredCards[cardId];
-  const masteredCount = Object.values(masteredCards).filter(Boolean).length;
-  const isPassed = totalCards > 0 && masteredCount === minRequired;
+  const isCurrentMastered = !debeMostrarCompletado && !!masteredCards[cardId];
 
   // Medición dinámica: SOLO para la tarjeta frontal activa
-useEffect(() => {
-    if (showCompletionCard) return;
+  useEffect(() => {
+    if (debeMostrarCompletado) return;
 
     const computeHeight = () => {
       const activeFace = isFlipped ? backFaceRef.current : frontFaceRef.current;
@@ -231,7 +298,7 @@ useEffect(() => {
       clearTimeout(timer);
       window.removeEventListener('resize', computeHeight);
     };
-  }, [currentIndex, isFlipped, showHint, currentCard, showCompletionCard]);
+  }, [currentIndex, isFlipped, showHint, currentCard, debeMostrarCompletado]);
 
   return (
     <div className={styles.stationWrapper}>
@@ -259,12 +326,9 @@ useEffect(() => {
         <div className={styles.progressBox}>
           <div className={styles.progressTexts}>
             <div className={styles.progressLabel}>Dominadas (Mín: {minRequired})</div>
-            {/* <div className={`${styles.progressRatio} ${isPassed ? styles.progressRatioPassed : ''}`}>
-              {masteredCount} / {totalCards}
-            </div> */}
           </div>
           <div className={styles.cardIndexBadge}>
-            {showCompletionCard ? '✓' : `#${currentIndex + 1}`}
+            {debeMostrarCompletado ? '✓' : `#${currentIndex + 1}`}
           </div>
         </div>
       </div>
@@ -292,7 +356,7 @@ useEffect(() => {
           })}
 
           {/* VISTA 1: TARJETA FINAL DE COMPLETADO */}
-          {showCompletionCard ? (
+          {debeMostrarCompletado ? (
             <div
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
@@ -304,7 +368,7 @@ useEffect(() => {
             >
               <div className={styles.completionCard}>
                 <div className={styles.completionGlowSphere} aria-hidden="true" />
-                
+
                 <div className={styles.completionIconBox}>
                   <Trophy size={36} color="#fbbf24" />
                 </div>
@@ -317,7 +381,7 @@ useEffect(() => {
                 <h3 className={styles.completionTitle}>
                   ¡Asimilaste todos los conceptos!
                 </h3>
-                
+
                 <p className={styles.completionSubtitle}>
                   Has dominado con éxito las <strong>{totalCards} tarjetas</strong> didácticas del material mediante evocación activa. Los conceptos ya quedaron registrados en tu ruta cognitiva.
                 </p>
@@ -465,26 +529,26 @@ useEffect(() => {
             onClick={handlePrev}
             className={styles.navButton}
             title="Tarjeta anterior"
-            disabled={currentIndex === 0 && !showCompletionCard}
+            disabled={currentIndex === 0 && !debeMostrarCompletado}
           >
             <ChevronLeft size={16} />
           </button>
           <span className={styles.paginationCount}>
-            {showCompletionCard ? 'Completado' : `${currentIndex + 1} de ${totalCards}`}
+            {debeMostrarCompletado ? 'Completado' : `${currentIndex + 1} de ${totalCards}`}
           </span>
           <button
             type="button"
             onClick={handleNext}
             className={styles.navButton}
             title="Siguiente tarjeta"
-            disabled={currentIndex === totalCards - 1 || showCompletionCard}
+            disabled={currentIndex === totalCards - 1 || debeMostrarCompletado}
           >
             <ChevronRight size={16} />
           </button>
         </div>
 
         <div className={styles.actionsGroup}>
-          {isPassed || showCompletionCard ? (
+          {debeMostrarCompletado ? (
             <button
               type="button"
               onClick={handleRestartDeck}
