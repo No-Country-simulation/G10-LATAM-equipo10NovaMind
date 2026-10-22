@@ -374,7 +374,7 @@ export const Step3OCICloud = ({
               <div className={styles.metricTile}>
                 <span className={styles.metricTileLabel}>Región de Despliegue</span>
                 <span className={styles.metricTileValue} style={{ fontFamily: 'var(--font-code)' }}>
-                  {almacenamiento?.region || 'us-ashburn-1 (Always Free)'}
+                  {almacenamiento?.region || 'sa-santiago-1 (Always Free)'}
                 </span>
               </div>
 
