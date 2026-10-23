@@ -15,6 +15,7 @@ import { Step1Ingestion } from "./components/Step1Ingestion/Step1Ingestion";
 import { Step2KnowledgeQuest } from "./components/Step2KnowledgeQuest/Step2KnowledgeQuest";
 import { Step3OCICloud } from "./components/Step3OCICloud/Step3OCICloud";
 import { BadgeModal } from "./components/BadgeModal/BadgeModal";
+import { CreditosModal } from "./creditos/CreditosModal";
 import { SCENARIOS, INITIAL_ACHIEVEMENTS } from "./data/mockScenarios";
 import type {
   AdaptedContentPackage,
@@ -78,6 +79,7 @@ export default function App() {
   const [selectedBadgeForModal, setSelectedBadgeForModal] =
     useState<Achievement | null>(null);
   const [isTrophyModalOpen, setIsTrophyModalOpen] = useState<boolean>(false);
+  const [isCreditosModalOpen, setIsCreditosModalOpen] = useState<boolean>(false);
 
   // Estado del Pipeline y sus 5 micro-etapas
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -274,6 +276,26 @@ const [ajustesSeleccionados, setAjustesSeleccionados] = useState<{
         return b;
       }),
     );
+  };
+
+  // Apertura y navegación del Reproductor de Créditos Cinematográficos (Modal Fullscreen)
+  const handleOpenCreditos = () => {
+    setIsTrophyModalOpen(false); // Evita competencia de foco o z-index con BadgeModal
+    setIsCreditosModalOpen(true);
+  };
+
+  const handleCloseCreditos = () => {
+    setIsCreditosModalOpen(false);
+  };
+
+  const handleVolverResultados = () => {
+    setIsCreditosModalOpen(false);
+    setCurrentStep(2);
+    setActiveStationIndex(4);
+  };
+
+  const handleExplorarNuevaMente = () => {
+    setIsCreditosModalOpen(false);
   };
 
   // Avanza automáticamente a la siguiente estación o al paso 3 si culminó el circuito
@@ -626,6 +648,7 @@ const handleAbrirMuestra = async (documento: string, escenario?: string) => {
             onOpenMasterBadge={() => handleUnlockBadge("master")}
             onDownloadArtifact={handleDownloadJSON}
             onGoToOCIInspect={() => setCurrentStep(3)}
+            onOpenCreditos={handleOpenCreditos}
             isGenerating={isGenerating}
             unlockedStations={unlockedStations}
             generatingMessage={generatingMessage}
@@ -707,6 +730,15 @@ const handleAbrirMuestra = async (documento: string, escenario?: string) => {
           setCurrentStep(2);
           setActiveStationIndex(0);
         }}
+        onOpenCreditos={handleOpenCreditos}
+      />
+
+      {/* Reproductor Cinematográfico Superpuesto (Modal Fullscreen) */}
+      <CreditosModal
+        isOpen={isCreditosModalOpen}
+        onClose={handleCloseCreditos}
+        onVolverResultados={handleVolverResultados}
+        onExplorarNuevaMente={handleExplorarNuevaMente}
       />
     </div>
   );

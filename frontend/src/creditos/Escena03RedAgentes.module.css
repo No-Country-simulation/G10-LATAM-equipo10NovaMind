@@ -1,0 +1,213 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * Estilos para Escena 03: Red de Agentes Pedagógicos de NuevaMente
+ */
+
+.contenedor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #07090e;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+}
+
+.fondoGrid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+.glowAmbient {
+  position: absolute;
+  width: 900px;
+  height: 900px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(6, 182, 212, 0.08) 50%, transparent 75%);
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+/* Telemetría superior */
+.headerHud {
+  position: absolute;
+  top: 36px;
+  left: 48px;
+  right: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding-bottom: 12px;
+  z-index: 10;
+}
+
+.headerTitle {
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.subtituloTag {
+  font-family: var(--font-code, monospace);
+  font-size: 0.6875rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.telemetriaRight {
+  font-family: var(--font-code, monospace);
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* Escenario Central */
+.networkStage {
+  position: relative;
+  width: 1200px;
+  height: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svgLinesOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Núcleo Central */
+.coreContainer {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 80%);
+  border: 2px solid rgba(56, 189, 248, 0.6);
+  border-radius: 50%;
+  box-shadow: 0 0 45px rgba(56, 189, 248, 0.45), inset 0 0 25px rgba(139, 92, 246, 0.35);
+  z-index: 5;
+  text-align: center;
+}
+
+.coreIcon {
+  width: 52px;
+  height: 52px;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.8));
+}
+
+.coreLabel {
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #38bdf8;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+.coreSub {
+  font-family: var(--font-code, monospace);
+  font-size: 0.5625rem;
+  color: #94a3b8;
+}
+
+/* Tarjetas de Agentes */
+.agentCard {
+  position: absolute;
+  width: 270px;
+  padding: 14px 16px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  z-index: 4;
+  transition: border-color 0.3s ease;
+}
+
+.agentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.agentNumber {
+  font-family: var(--font-code, monospace);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.agentBadge {
+  font-family: var(--font-code, monospace);
+  font-size: 0.5625rem;
+  color: #38bdf8;
+  text-transform: uppercase;
+}
+
+.agentTitle {
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 4px 0;
+  line-height: 1.25;
+}
+
+.agentDesc {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  margin: 0 0 8px 0;
+  line-height: 1.35;
+}
+
+.agentFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  padding-top: 6px;
+  font-family: var(--font-code, monospace);
+  font-size: 0.5625rem;
+  color: #cbd5e1;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}

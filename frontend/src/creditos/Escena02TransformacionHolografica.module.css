@@ -1,0 +1,282 @@
+/* ==========================================================================
+   Escena 02: Transformación 8-Bit a Núcleo Holográfico Tridimensional (JARVIS)
+   ========================================================================== */
+
+.contenedor {
+  width: 1920px;
+  height: 1080px;
+  background-color: #07090e;
+  position: relative;
+  overflow: hidden;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Rejilla espacial holográfica con gradiente radial */
+.fondoHolografico {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.14) 0%, rgba(6, 182, 212, 0.05) 45%, transparent 75%),
+    linear-gradient(rgba(34, 211, 238, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  z-index: 1;
+}
+
+/* Líneas de escaneo y viñeteado sutil de proyección */
+.scanlinesOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.2) 0px,
+      rgba(0, 0, 0, 0.2) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 60%,
+      rgba(4, 5, 8, 0.75) 100%
+    );
+}
+
+/* Escenario 3D con Perspectiva Cinemática */
+.escenario3D {
+  position: relative;
+  width: 1000px;
+  height: 1000px;
+  perspective: 1400px;
+  perspective-origin: center center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.gimbal3D {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Capas volumétricas en Z del Isotipo (Tomografía Holográfica) */
+.capaVolumetrica {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  transition: transform 0.1s linear;
+}
+
+.isotipoSvg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Haz de escaneo láser holográfico */
+.hazLaser {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(6, 182, 212, 0.2) 15%,
+    #22d3ee 50%,
+    rgba(139, 92, 246, 0.2) 85%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 15px #22d3ee,
+    0 0 30px rgba(6, 182, 212, 0.8);
+  pointer-events: none;
+  z-index: 35;
+}
+
+/* Capa de partículas de Canvas */
+.canvasParticulas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Anillos HUD Holográficos */
+.hudRingsContainer {
+  position: absolute;
+  width: 900px;
+  height: 900px;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ringSvg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform-style: preserve-3d;
+}
+
+/* Indicadores de telemetría flotantes estilo JARVIS */
+.telemetriaHud {
+  position: absolute;
+  inset: 50px 80px;
+  pointer-events: none;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hudFilaSuperior {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.hudFilaInferior {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.hudTarjeta {
+  background: rgba(13, 17, 26, 0.75);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  backdrop-filter: blur(8px);
+  padding: 12px 18px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.5),
+    0 0 15px rgba(6, 182, 212, 0.15);
+}
+
+.hudHeaderTag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #22d3ee;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.tagDot {
+  width: 6px;
+  height: 6px;
+  background-color: #22d3ee;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #22d3ee;
+}
+
+.hudDatoFila {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.hudDatoValor {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.hudStatusOk {
+  color: #34d399;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+
+/* Retículas angulares tipo mira táctica */
+.reticulaCentro {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  pointer-events: none;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reticulaEjeX {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: rgba(6, 182, 212, 0.3);
+}
+
+.reticulaEjeY {
+  position: absolute;
+  height: 100%;
+  width: 1px;
+  background: rgba(6, 182, 212, 0.3);
+}
+
+/* Contenedor volumétrico 3D de píxeles y nodos */
+.pixelContainer3D {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.pixelNode {
+  position: absolute;
+  transform-style: preserve-3d;
+  box-sizing: border-box;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.sparkNode {
+  position: absolute;
+  transform-style: preserve-3d;
+  box-sizing: border-box;
+  transform-origin: center center;
+  border-radius: 50%;
+  will-change: transform, opacity;
+}
+
+.vectorContainer {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  z-index: 20;
+}

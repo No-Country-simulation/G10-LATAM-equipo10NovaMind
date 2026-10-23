@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   ShieldAlert,
   Compass,
+  Sparkles,
 } from 'lucide-react';
 import type { QuizQuestion } from '../../../types/types';
 import { triggerCelebrationConfetti } from '../../../utils/confetti';
@@ -34,6 +35,7 @@ interface Station5Props {
   onCompleteStation: (xp: number) => void;
   onOpenMasterBadge: () => void;
   onDownloadArtifact: () => void;
+  onOpenCreditos?: () => void;
 }
 
 export const Station5FinalTrial = ({
@@ -49,6 +51,7 @@ export const Station5FinalTrial = ({
   onCompleteStation,
   onOpenMasterBadge,
   onDownloadArtifact,
+  onOpenCreditos,
 }: Station5Props) => {
   const safeQuestions = questions;
   const totalQuestions = safeQuestions.length;
@@ -376,6 +379,30 @@ export const Station5FinalTrial = ({
           </p>
         </div>
 
+        {/* 🟢 TARJETA DESTACADA: SORPRESA DEL EQUIPO NUEVAMENTE */}
+        {isSuccess && onOpenCreditos && (
+          <div className={styles.surpriseBox}>
+            <div className={styles.surpriseTag}>
+              <Sparkles size={12} />
+              <span>Experiencia Exclusiva</span>
+            </div>
+            <h4 className={styles.surpriseTitle}>El equipo NuevaMente tiene una sorpresa para ti</h4>
+            <p className={styles.surpriseDesc}>
+              Has demostrado dominio conceptual absoluto sin alucinaciones. Como reconocimiento a tu esfuerzo, hemos preparado una experiencia cinematográfica interactiva inspirada en la demoscene y el HUD holográfico de JARVIS.
+            </p>
+            <button
+              type="button"
+              onClick={onOpenCreditos}
+              className={styles.surpriseCtaBtn}
+              aria-label="Descubrir la sorpresa cinematográfica"
+            >
+              <Sparkles size={16} />
+              <span>Descubrir la sorpresa</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        )}
+
         <RepasoGuiado puntos={puntosRepaso} revelarRespuestas={isSuccess} />
 
         <div className={styles.resultButtonsGroup}>
@@ -395,6 +422,23 @@ export const Station5FinalTrial = ({
                 <Award size={15} color="var(--color-amber-400)" />
                 <span>Ver Medalla Desbloqueada</span>
               </button>
+
+              {onOpenCreditos && (
+                <button
+                  type="button"
+                  onClick={onOpenCreditos}
+                  className={styles.badgeShowcaseBtn}
+                  style={{
+                    borderColor: 'rgba(56, 189, 248, 0.45)',
+                    color: '#38bdf8',
+                    background: 'rgba(56, 189, 248, 0.12)',
+                  }}
+                  title="Reproducir créditos cinematográficos"
+                >
+                  <Sparkles size={15} color="#38bdf8" />
+                  <span>Descubrir sorpresa</span>
+                </button>
+              )}
 
               <button type="button" onClick={onDownloadArtifact} className={styles.downloadArtifactBtn}>
                 <Download size={14} />

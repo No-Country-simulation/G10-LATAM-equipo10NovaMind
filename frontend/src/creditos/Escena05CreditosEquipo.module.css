@@ -1,0 +1,160 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * Estilos para Escena 05: Créditos Cinematográficos del Equipo 10
+ */
+
+.contenedor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #07090e;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+}
+
+.fondoPolvo {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 50% 20%, rgba(139, 92, 246, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 50% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.015) 0px,
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+}
+
+/* Cabecera de Créditos */
+.topHeader {
+  position: absolute;
+  top: 36px;
+  text-align: center;
+  z-index: 10;
+}
+
+.tagline {
+  font-family: var(--font-code, monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.25em;
+  color: #38bdf8;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.mainTitle {
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #f8fafc;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* Contenedor central de tarjetas de créditos */
+.creditsStage {
+  position: relative;
+  width: 1100px;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+  width: 100%;
+}
+
+.creditCard {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  padding: 24px 22px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.creditAccentBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.creditRole {
+  font-family: var(--font-code, monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.creditName {
+  font-family: var(--font-heading, 'Syne', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 10px 0;
+  line-height: 1.25;
+}
+
+.creditNamesList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.creditDetail {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  padding-top: 10px;
+}
+
+/* Pie de escena de créditos */
+.footerBadge {
+  position: absolute;
+  bottom: 36px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-code, monospace);
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+  padding: 6px 16px;
+  border-radius: 9999px;
+}

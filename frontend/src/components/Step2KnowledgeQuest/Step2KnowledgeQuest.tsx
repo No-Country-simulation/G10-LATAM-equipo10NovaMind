@@ -52,6 +52,7 @@ interface Step2Props {
   onOpenMasterBadge: () => void;
   onDownloadArtifact: () => void;
   onGoToOCIInspect: () => void;
+  onOpenCreditos?: () => void;
   isGenerating?: boolean;
   unlockedStations?: number[];
   generatingMessage?: string;
@@ -93,6 +94,7 @@ export const Step2KnowledgeQuest = ({
   onOpenMasterBadge,
   onDownloadArtifact,
   onGoToOCIInspect,
+  onOpenCreditos,
   isGenerating = false,
   unlockedStations = [0, 1, 2, 3, 4],
   generatingMessage = '',
@@ -546,6 +548,7 @@ export const Step2KnowledgeQuest = ({
                 onCompleteStation={(xp) => onCompleteStation(4, xp)}
                 onOpenMasterBadge={onOpenMasterBadge}
                 onDownloadArtifact={onDownloadArtifact}
+                onOpenCreditos={onOpenCreditos}
               />
             )}
           </>
