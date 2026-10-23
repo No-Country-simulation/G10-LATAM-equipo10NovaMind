@@ -7,6 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/versión-2.0.0-0A84FF" alt="Versión 2.0.0">
   <img src="https://visitor-badge.laobi.icu/badge?page_id=No-Country-simulation.G10-LATAM-equipo10NovaMind&left_text=visitas&left_color=%23555555&right_color=%230A84FF" alt="Visitas al repositorio">
+  <img src="https://img.shields.io/badge/Seguridad%20TLS-Parche%20eMudhra%20(Oct%202026)-10B981?logo=shieldsdotio&logoColor=white" alt="Seguridad TLS">
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
   <img src="https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white" alt="Backend FastAPI">
   <img src="https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61DAFB?logo=react&logoColor=black" alt="Frontend React 19 y Vite">
@@ -21,6 +22,21 @@
 <p align="center">
   <img src="docs/flujo-nuevamente.svg" alt="Flujo de NuevaMente: el documento se ingiere, Gemini genera en paralelo el resumen, las tarjetas y la producción y después el cuestionario, se verifican las citas, el paquete llega por SSE a las 5 estaciones y el video narrado se genera bajo demanda" width="960">
 </p>
+
+---
+
+## 🛡️ Seguridad TLS y Auditoría de Certificados (Octubre 2026)
+
+Ante el incidente de seguridad de octubre de 2026 relativo a claves intermedias comprometidas asociadas a la raíz **`emSign ECC Root CA - G3`** (eMudhra), todo el entorno, dependencias y la cadena de certificados de NuevaMente fueron auditados y saneados:
+
+<p align="center">
+  <img src="docs/auditoria-seguridad-tls-oct2026.svg" alt="Auditoría de Seguridad TLS y mitigación de eMudhra en NuevaMente" width="960">
+</p>
+
+* **Python & Virtualenv:** `certifi >= 2026.10.19` (instalado `2026.10.23`), `pip >= 26.2.2` y `uv >= 0.13.4` (instalado `0.13.5`).
+* **Capa gRPC:** Almacén interno `roots.pem` de `grpcio` sincronizado y depurado en disco sin la raíz revocada.
+* **Frontend & Runtime:** Node.js actualizado a `v24.22.1` con la biblioteca NSS `3.131.1` libre de certificados afectados.
+* **Integridad del código:** 356 pruebas de backend y 72 pruebas de frontend en verde con 0 regresiones.
 
 ---
 

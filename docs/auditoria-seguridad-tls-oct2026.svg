@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img" aria-labelledby="titulo desc">
+  <title id="titulo">NuevaMente · Auditoría de Seguridad TLS y Parche eMudhra Octubre 2026</title>
+  <desc id="desc">Certificación de seguridad TLS y mitigación de certificados comprometidos de eMudhra emSign ECC Root CA G3 en todo el stack: certifi, pip, uv, grpcio y Node.js.</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; fill: #e5e7eb; }
+    .mono { font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", Consolas, monospace; }
+    .title { font-size: 20px; font-weight: 800; fill: #ffffff; letter-spacing: -0.01em; }
+    .subtitle { font-size: 13px; fill: #94a3b8; }
+    .tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .label { font-size: 12px; fill: #94a3b8; font-weight: 600; }
+    .val { font-size: 14px; font-weight: 700; fill: #f8fafc; }
+    .badge-ok { fill: #10b981; font-weight: 800; font-size: 11px; }
+    .card { fill: #0f172a; stroke: #1e293b; stroke-width: 1.5; rx: 12px; }
+    .card-inner { fill: #1e293b; stroke: #334155; stroke-width: 1; rx: 8px; }
+    .glow-green { filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.35)); }
+    .glow-cyan { filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.3)); }
+    .pulse { animation: pulso 2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes pulso { 0%, 100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+  </style>
+
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#070a13"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#080e1a"/>
+    </linearGradient>
+    <linearGradient id="shield-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="accent-cyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="accent-emerald" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo Principal -->
+  <rect width="960" height="480" rx="16" fill="url(#bg-grad)" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Encabezado con Icono Escudo -->
+  <g transform="translate(36, 32)">
+    <!-- Icono de Escudo de Seguridad -->
+    <g class="glow-green">
+      <circle cx="28" cy="28" r="28" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1.5"/>
+      <path d="M28 14 L39 19 C39 28 34 35 28 39 C22 35 17 28 17 19 Z" fill="url(#shield-grad)"/>
+      <path d="M24 26 L27 29 L33 22" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- Títulos -->
+    <text x="70" y="24" class="title">Auditoría de Seguridad TLS · Incidente eMudhra / emSign Root CA</text>
+    <text x="70" y="44" class="subtitle">Cadena criptográfica y almacenes de certificados depurados en el ecosistema completo (Octubre 2026)</text>
+    
+    <!-- Píldora de Estado Global -->
+    <g transform="translate(680, 8)" class="pulse glow-green">
+      <rect width="180" height="34" rx="17" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+      <circle cx="18" cy="17" r="5" fill="#34d399"/>
+      <text x="32" y="22" class="tag" fill="#34d399">100% PROTEGIDO</text>
+    </g>
+  </g>
+
+  <!-- Línea Divisoria -->
+  <line x1="36" y1="104" x2="924" y2="104" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Cuadrícula de 6 Tarjetas de Componentes Saneados -->
+  <g transform="translate(36, 120)">
+    
+    <!-- TARJETA 1: Python .venv certifi -->
+    <g transform="translate(0, 0)">
+      <rect width="280" height="100" class="card"/>
+      <text x="16" y="28" class="label">PYTHON VENV (.venv)</text>
+      <text x="16" y="52" class="val mono">certifi 2026.10.23</text>
+      <text x="16" y="74" class="xs">cacert.pem libre de emSign G3</text>
+      <g transform="translate(160, 14)">
+        <rect width="104" height="22" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+        <text x="12" y="15" class="badge-ok">✓ CUMPLE MÍN</text>
+      </g>
+    </g>
+
+    <!-- TARJETA 2: pip (Proyecto y Global) -->
+    <g transform="translate(304, 0)">
+      <rect width="280" height="100" class="card"/>
+      <text x="16" y="28" class="label">GESTOR PIP (VENV + GLOBAL)</text>
+      <text x="16" y="52" class="val mono">pip 26.2.2</text>
+      <text x="16" y="74" class="xs">Bundles vendored actualizados</text>
+      <g transform="translate(160, 14)">
+        <rect width="104" height="22" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+        <text x="12" y="15" class="badge-ok">✓ CUMPLE MÍN</text>
+      </g>
+    </g>
+
+    <!-- TARJETA 3: Node.js (Frontend) -->
+    <g transform="translate(608, 0)">
+      <rect width="280" height="100" class="card"/>
+      <text x="16" y="28" class="label">NODE.JS RUNTIME (FRONTEND)</text>
+      <text x="16" y="52" class="val mono">Node v24.22.1</text>
+      <text x="16" y="74" class="xs">NSS 3.131.1 sin raíz revocada</text>
+      <g transform="translate(160, 14)">
+        <rect width="104" height="22" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+        <text x="12" y="15" class="badge-ok">✓ SANEADO</text>
+      </g>
+    </g>
+
+    <!-- TARJETA 4: grpcio roots.pem -->
+    <g transform="translate(0, 116)">
+      <rect width="280" height="100" class="card"/>
+      <text x="16" y="28" class="label">GRPCIO (CHROMADB / GOOGLE)</text>
+      <text x="16" y="52" class="val mono">grpc roots.pem</text>
+      <text x="16" y="74" class="xs">Sincronizado en disco con certifi</text>
+      <g transform="translate(160, 14)">
+        <rect width="104" height="22" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+        <text x="10" y="15" class="badge-ok">✓ SINCRONIZADO</text>
+      </g>
+    </g>
+
+    <!-- TARJETA 5: uv CLI Global -->
+    <g transform="translate(304, 116)">
+      <rect width="280" height="100" class="card"/>
+      <text x="16" y="28" class="label">RESOLVEDOR UV (CLI)</text>
+      <text x="16" y="52" class="val mono">uv 0.13.5</text>
+      <text x="16" y="74" class="xs">Mínimo seguro: 0.13.4</text>
+      <g transform="translate(160, 14)">
+        <rect width="104" height="22" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+        <text x="12" y="15" class="badge-ok">✓ CUMPLE MÍN</text>
+      </g>
+    </g>
+
+    <!-- TARJETA 6: Variables TLS de Entorno -->
+    <g transform="translate(608, 116)">
+      <rect width="280" height="100" class="card"/>
+      <text x="16" y="28" class="label">VARIABLES DE ENTORNO TLS</text>
+      <text x="16" y="52" class="val mono">SSL_CERT_FILE / PIP</text>
+      <text x="16" y="74" class="xs">Sin desvíos ni anulaciones inseguras</text>
+      <g transform="translate(160, 14)">
+        <rect width="104" height="22" rx="6" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+        <text x="18" y="15" class="badge-ok">✓ LIMPIO</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Banner Inferior: Resultados de Validación y Cero Regresiones -->
+  <g transform="translate(36, 360)">
+    <rect width="888" height="84" class="card" fill="#0a101f" stroke="#10b981" stroke-width="1.2"/>
+    
+    <g transform="translate(24, 24)">
+      <text x="0" y="14" class="tag" fill="#10b981">VERIFICACIÓN EMPÍRICA Y REGRESIONES</text>
+      <text x="0" y="38" class="val">356/356 Backend tests (pytest) ✓ · 83/83 Frontend tests ✓ · TypeScript: 0 errores ✓</text>
+    </g>
+
+    <g transform="translate(680, 26)">
+      <rect width="180" height="32" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <text x="14" y="21" class="mono xs" fill="#38bdf8">pip check: 0 broken reqs</text>
+    </g>
+  </g>
+
+</svg>
