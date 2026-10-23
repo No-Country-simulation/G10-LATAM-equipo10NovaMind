@@ -665,6 +665,7 @@ const handleAbrirMuestra = async (documento: string, escenario?: string) => {
             onDownloadAnkiCSV={handleDownloadAnkiCSV}
             onDownloadPDF={handleDownloadPDF}
             isDownloadingPDF={isDownloadingPDF}
+            onOpenCreditos={handleOpenCreditos}
           />
         )}
       </main>

@@ -601,6 +601,30 @@
   border-color: #22d3ee;
 }
 
+.sorpresaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.28), rgba(168, 85, 247, 0.28));
+  border: 1px solid rgba(244, 114, 182, 0.65);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
+  flex-shrink: 0;
+}
+
+.sorpresaBtn:hover {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.45), rgba(168, 85, 247, 0.45));
+  border-color: #f472b6;
+  box-shadow: 0 0 18px rgba(236, 72, 153, 0.5);
+  transform: translateY(-1px);
+}
+
 /* ==========================================================
    INSPECTOR DE PAYLOAD JSON
 ========================================================== */

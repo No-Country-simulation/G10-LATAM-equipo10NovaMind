@@ -24,6 +24,7 @@ interface Step3Props {
   onDownloadAnkiCSV: () => void;
   onDownloadPDF?: () => void;
   isDownloadingPDF?: boolean;
+  onOpenCreditos?: () => void;
 }
 
 const ESTADO_OCI: Record<string, { texto: string; activo: boolean }> = {
@@ -42,6 +43,7 @@ export const Step3OCICloud = ({
   onDownloadAnkiCSV,
   onDownloadPDF,
   isDownloadingPDF = false,
+  onOpenCreditos,
 }: Step3Props) => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isJsonOpen, setIsJsonOpen] = useState<boolean>(true);
@@ -400,7 +402,19 @@ export const Step3OCICloud = ({
                   : 'Artefacto estructurado listo para exportar'}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {onOpenCreditos && (
+                <button
+                  type="button"
+                  onClick={onOpenCreditos}
+                  title="Descubrir la sorpresa cinematográfica de créditos de NuevaMente"
+                  aria-label="Descubrir la sorpresa cinematográfica de créditos"
+                  className={styles.sorpresaBtn}
+                >
+                  <Sparkles size={14} color="#f472b6" />
+                  <span>Ver Sorpresa ✨</span>
+                </button>
+              )}
               {onDownloadPDF && (
                 <button
                   type="button"
@@ -449,6 +463,21 @@ export const Step3OCICloud = ({
 
           {/* Botonera de Exportación Multi-formato */}
           <div className={styles.exportButtonsGroup}>
+            {onOpenCreditos && (
+              <button
+                type="button"
+                onClick={onOpenCreditos}
+                className={styles.actionBtnSecondary}
+                title="Descubrir la sorpresa cinematográfica de créditos de NuevaMente"
+                style={{
+                  borderColor: 'rgba(236, 72, 153, 0.5)',
+                  color: '#f472b6',
+                }}
+              >
+                <Sparkles size={14} color="#f472b6" />
+                <span>Ver Sorpresa ✨</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handleCopyJSON}
