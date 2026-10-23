@@ -59,7 +59,7 @@ Las secciones siguientes detallan la arquitectura, los flujos y la puesta en mar
 | 4 · Contenido AudioVisual | Microclase narrada de hasta 60 s, dibujada en el navegador con Remotion Player (sin MP4 en el servidor) |
 | 5 · Cuestionario | Examen final sobre lo que enseñaron las estaciones 1 a 4 |
 
-3. **Métricas & OCI Cloud.** Auditoría de fidelidad y dónde quedó guardado el paquete.
+3. **Métricas & OCI Cloud.** Auditoría de fidelidad, persistencia en Object Storage y exportación multiformato (JSON estructurado, Markdown didáctico, mazo Anki en CSV y descarga del Dossier Pedagógico Oficial en PDF compilado con ReportLab).
 
 **Base de datos (Supabase).** Las migraciones de `supabase/migrations/` se aplican en orden; la última, `202610160001_tarea_cuestionario.sql`, admite la tarea `C` en `generation_tasks`.
 
@@ -179,6 +179,7 @@ El umbral (`MIN_ANCLAJE_FUENTE_SCORE`, 0,75) y los reintentos (`MAX_REDACCION_RE
 | `POST /api/v1/documentos/extraer` | Texto de un archivo; imágenes y PDF escaneados se transcriben con Gemini |
 | `POST /api/v1/adaptar` · `/adaptar/stream` | Genera el paquete (JSON completo, o por SSE recurso a recurso) |
 | `POST /api/v1/narracion/generar` · `/narracion/ampliar` | Voz y fotos del video; ampliar una escena |
+| `POST /api/v1/exportar/pdf` | Genera y descarga el Dossier Pedagógico Oficial en PDF (ReportLab) |
 | `GET /api/v1/paquetes` · `/paquetes/{id}` | Historial privado de la cuenta |
 | `GET /api/v1/documentos/ejemplos…` | Documentos de la biblioteca |
 
@@ -217,7 +218,7 @@ Todo lo que gasta cuota exige sesión. El invitado recibe 403: solo abre las mue
 
 ## 🚀 6. Puesta en marcha local
 
-**Requisitos:** Python 3.12 y Node.js 22 o superior.
+**Requisitos:** Python 3.12 y Node.js 22 o superior (parcheados contra el incidente TLS eMudhra: `certifi >= 2026.10.19`, `pip >= 26.2.2`).
 
 **Claves** (en `.env`, a partir de `.env.example`; nunca en variables `VITE_*`):
 
