@@ -40,17 +40,18 @@ Ante el incidente de seguridad de octubre de 2026 relativo a claves intermedias 
 
 ---
 
-**🌐 Demo en vivo:** _próximamente_
+**🌐 Demo en vivo:** [https://novamind.techgk.cl](https://novamind.techgk.cl)
 
 <table>
   <tr>
     <td width="33%"><img src="docs/capturas/inicio.png" alt="Pantalla de inicio: biblioteca de documentos de ejemplo y botón Prueba rápida"></td>
     <td width="33%"><img src="docs/capturas/resumen-citas.png" alt="Estación 1: conceptos clave, cada uno con su fuente verificada en el documento"></td>
-      </tr>
+    <td width="33%"><img src="docs/capturas/creditos-escena01-8bit.png" alt="Secuencia de créditos: Apertura 8-bit & Demoscene"></td>
+  </tr>
   <tr>
     <td align="center"><sub>Biblioteca y prueba rápida, sin iniciar sesión</sub></td>
     <td align="center"><sub>Cada concepto con su cita verificada</sub></td>
-    
+    <td align="center"><sub>Experiencia cinematográfica de créditos (Modo 8-bit)</sub></td>
   </tr>
 </table>
 
@@ -308,9 +309,34 @@ cd frontend && npm test && npx tsc --noEmit -p .
 
 ---
 
-## 👥 9. Créditos
+## 👥 9. Créditos del Equipo y Acceso a la Plataforma
 
-* **Equipo Backend**: API REST en FastAPI, ingesta multiformato, cliente de OCI Object Storage y despliegue en Oracle Cloud; motor multiagente en LangGraph, RAG vectorial con Cohere y ChromaDB, contratos con Pydantic v2 y pruebas automatizadas.
-* **Equipo Frontend**: aplicación en React 19, TypeScript y Vite, cliente HTTP y SSE, las 5 estaciones y el panel de métricas.
-* **Project Manager**: requerimientos funcionales, cronograma, actas de acuerdos y alineación con los objetivos del Hackathon ONE G10.
-* **Equipo NuevaMente**: integración, contratos compartidos entre backend y frontend, scripts de ejecución local y entrega final.
+<p align="center">
+  <img src="docs/capturas/creditos-escena01-8bit.png" alt="Apertura de la secuencia cinematográfica de créditos (Modo 8-bit Kernel & Demoscene)" width="960">
+</p>
+
+### 🎖️ Equipo 10 · Hackathon ONE G10 (Oracle Next Education & Alura · No-Country)
+
+| Rol / Área | Miembros | Responsabilidades y Contribuciones Técnicas |
+| :--- | :--- | :--- |
+| **Facilitación & Project Management** | **Silvia** | Gestión ágil, gobernanza de requerimientos pedagógicos y alineación de entregables del Hackathon. |
+| **Liderazgo Técnico Backend & Arquitectura** | **Gabriel** | Orquestación RAG multiagente (LangGraph / FastAPI), motor de verificación de citas y cliente OCI Object Storage Always Free. |
+| **Liderazgo Técnico Frontend & UI/UX** | **Carina** | Experiencia de usuario inmersiva en React 19, navegación de las 5 estaciones, sistema visual y componentes interactivos. |
+| **Backend & Cloud Integration** | **Emanuel, Pedro, Tomás** | Contratos Pydantic v2, persistencia vectorial en ChromaDB, endpoints REST y scripts de infraestructura en la nube. |
+| **Frontend, QA & Diseño de Producto** | **Harumi** | Aseguramiento de calidad, suite de pruebas automatizadas, accesibilidad y diseño de interfaces reactivas. |
+| **Colaboración Técnica & Documentación** | **Wilson, Alex** | Validación de contratos, pruebas de integración y documentación técnica de arquitectura. |
+
+---
+
+### 📱 Acceso Directo a la Demo en Vivo
+
+Escanea este código QR con tu móvil o accede a través del enlace oficial para explorar NuevaMente en tiempo real:
+
+<p align="center">
+  <a href="https://novamind.techgk.cl" target="_blank">
+    <img src="docs/qr-novamind.svg" alt="Código QR de acceso a NuevaMente (novamind.techgk.cl)" width="200" height="200">
+  </a>
+  <br>
+  <strong>🔗 Enlace oficial:</strong> <a href="https://novamind.techgk.cl">https://novamind.techgk.cl</a>
+</p>
+
