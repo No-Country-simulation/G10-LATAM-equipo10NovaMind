@@ -36,22 +36,22 @@ Ante el incidente de seguridad de octubre de 2026 relativo a claves intermedias 
 * **Python & Virtualenv:** `certifi >= 2026.10.19` (instalado `2026.10.23`), `pip >= 26.2.2` y `uv >= 0.13.4` (instalado `0.13.5`).
 * **Capa gRPC:** Almacén interno `roots.pem` de `grpcio` sincronizado y depurado en disco sin la raíz revocada.
 * **Frontend & Runtime:** Node.js actualizado a `v24.22.1` con la biblioteca NSS `3.131.1` libre de certificados afectados.
-* **Integridad del código:** 356 pruebas de backend y 72 pruebas de frontend en verde con 0 regresiones.
+* **Integridad del código:** 356 pruebas de backend y 73 pruebas de frontend en verde con 0 regresiones.
 
 ---
 
-**🌐 Demo en vivo:** [https://novamind.techgk.cl](https://novamind.techgk.cl)
+**🌐 Demo en vivo:** próximamente...
 
 <table>
   <tr>
-    <td width="33%"><img src="docs/capturas/inicio.png" alt="Pantalla de inicio: biblioteca de documentos de ejemplo y botón Prueba rápida"></td>
+    <td width="33%"><img src="docs/capturas/inicio.png" alt="Pantalla de inicio: biblioteca de documentos de ejemplo y botón Explorar Demostración"></td>
     <td width="33%"><img src="docs/capturas/resumen-citas.png" alt="Estación 1: conceptos clave, cada uno con su fuente verificada en el documento"></td>
-    <td width="33%"><img src="docs/capturas/creditos-escena01-8bit.png" alt="Secuencia de créditos: Apertura 8-bit & Demoscene"></td>
+    <td width="33%"><img src="docs/capturas/oci-object-storage.png" alt="Consola de OCI Object Storage: persistencia en la nube Always Free"></td>
   </tr>
   <tr>
-    <td align="center"><sub>Biblioteca y prueba rápida, sin iniciar sesión</sub></td>
-    <td align="center"><sub>Cada concepto con su cita verificada</sub></td>
-    <td align="center"><sub>Experiencia cinematográfica de créditos (Modo 8-bit)</sub></td>
+    <td align="center"><sub>Biblioteca y «Explorar Demostración», sin iniciar sesión</sub></td>
+    <td align="center"><sub>Los conceptos clave de un documento y su fuente verificada</sub></td>
+    <td align="center"><sub>Persistencia y custodia en OCI Object Storage (Always Free)</sub></td>
   </tr>
 </table>
 
@@ -64,7 +64,7 @@ Las secciones siguientes detallan la arquitectura, los flujos y la puesta en mar
 **Recorrido del estudiante**
 
 1. **Configuración e ingesta.** Dos formas de entrar:
-   - **Sin cuenta (invitado):** se exploran muestras ya generadas de cinco documentos reales (Don Quijote I y II, Apache Kafka, ENISA Threat Landscape y una guía de OCI), sin coste de IA. Kafka muestra cómo cambia el mismo documento según el perfil, el sector y el motor de generación. «Prueba rápida 😊» abre un ejemplo en un clic.
+   - **Sin cuenta (invitado):** se exploran muestras ya generadas de cinco documentos reales (Don Quijote I y II, Apache Kafka, ENISA Threat Landscape y una guía de OCI), sin coste de IA. Kafka muestra cómo cambia el mismo documento según el perfil, el sector y el motor de generación. «Explorar Demostración ⚡» abre un ejemplo en un clic.
    - **Con cuenta:** se sube un documento propio (PDF, MD, TXT o imagen), se elige perfil, sector y nivel, y el paquete queda guardado en la cuenta.
 2. **Visualizar Resultados: cinco estaciones.**
 
@@ -76,7 +76,28 @@ Las secciones siguientes detallan la arquitectura, los flujos y la puesta en mar
 | 4 · Contenido AudioVisual | Microclase narrada de hasta 60 s, dibujada en el navegador con Remotion Player (sin MP4 en el servidor) |
 | 5 · Cuestionario | Examen final sobre lo que enseñaron las estaciones 1 a 4 |
 
-3. **Métricas & OCI Cloud.** Auditoría de fidelidad, persistencia en Object Storage y exportación multiformato (JSON estructurado, Markdown didáctico, mazo Anki en CSV y descarga del Dossier Pedagógico Oficial en PDF compilado con ReportLab).
+3. **Métricas & OCI Cloud.** Auditoría de fidelidad, persistencia en Object Storage, exportación multiformato (JSON estructurado, Markdown didáctico, mazo Anki en CSV, descarga del Dossier Pedagógico Oficial en PDF compilado con ReportLab) y acceso a la experiencia cinematográfica de créditos interactivos mediante el botón **«Ver Sorpresa ✨»**.
+
+#### ☁️ Persistencia en la Nube: OCI Object Storage (Always Free)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/capturas/oci-object-storage.png" alt="Consola de OCI Object Storage: particiones raíz del bucket"></td>
+    <td width="50%"><img src="docs/capturas/oci-contenidos-generados.png" alt="Detalle de contenidos generados almacenados en OCI"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Estructura raíz: contenidos-generados/, documentos-originales/ y users/</sub></td>
+    <td align="center"><sub>Archivos JSON pedagógicos persistidos por documento y perfil en nivel Standard</sub></td>
+  </tr>
+</table>
+
+NuevaMente implementa persistencia en la nube utilizando un bucket privado de **Oracle Cloud Infrastructure (OCI) Object Storage** bajo el nivel **Always Free**:
+
+* **Consumo medido en la consola oficial:** El sistema utiliza actualmente **~20.18 MiB** del límite gratuito combinado de **20 GiB** (apenas un ~0.1% de la cuota disponible a coste $0).
+* **Particiones y estructura del Bucket:**
+  * 📁 **`documentos-originales/`**: Custodia inmutable de los archivos fuente ingresados (PDF, TXT, Markdown o imágenes escaneadas transcritas con IA).
+  * 📁 **`contenidos-generados/`**: Paquetes de estudio completos generados por las 5 estaciones. Cada recurso se guarda como un archivo JSON independiente identificado por el hash del documento y el perfil del estudiante (ej. `doc-127d8cb...-flashcards.json`, `...-guia-practica-...-tutorial.json`), almacenados en nivel *Standard* de alta disponibilidad.
+  * 📁 **`users/`**: Partición privada y aislada por identificador de usuario (`users/<UUID>/`), garantizando multitenancy seguro y privacidad por diseño.
 
 **Base de datos (Supabase).** Las migraciones de `supabase/migrations/` se aplican en orden; la última, `202610160001_tarea_cuestionario.sql`, admite la tarea `C` en `generation_tasks`.
 
@@ -242,7 +263,7 @@ Todo lo que gasta cuota exige sesión. El invitado recibe 403: solo abre las mue
 | Variable | ¿Hace falta? | Para qué |
 |---|---|---|
 | `GEMINI_API_KEY` | Sí | Generación, transcripción de imágenes y voz de respaldo |
-| `SUPABASE_URL` · `SUPABASE_PUBLISHABLE_KEY` | Sí (ya vienen en `.env.example`, son públicas) | Inicio de sesión y persistencia |
+| `SUPABASE_URL` · `SUPABASE_PUBLISHABLE_KEY` | NO | Inicio de sesión y persistencia |
 | `ELEVENLABS_API_KEY` | No | Voz del video; sin ella, Gemini TTS y, si tampoco, la voz del navegador |
 | `GROQ_API_KEY` | No | Auditoría de fidelidad |
 | `COHERE_API_KEY` | No | Modos cadena colaborativa y clásico |
@@ -267,21 +288,11 @@ npm run dev
 
 Abrir **http://localhost:5173**: con `localhost` y no `127.0.0.1`, porque es el origen autorizado para el inicio de sesión.
 
-Las muestras de `frontend/public/ejemplos/` se regeneran con un script local que llama a un backend arrancado con `PERMITIR_GENERACION_INVITADO=true`. Ese permiso no debe ir nunca en un servidor público.
-
-### Configurar el inicio de sesión (Supabase y Google)
-
-- El backend verifica la sesión con HTTPX y la clave publicable: no necesita un secreto JWT ni una clave administrativa. El navegador usa `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`; el backend, `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`.
-- El esquema `supabase/migrations/202610080001_auth_and_persistence.sql` **ya está aplicado en el proyecto NuevaMente**: no se vuelve a ejecutar sobre las tablas existentes. En un proyecto nuevo, se aplican las migraciones en orden y se configura Google. Para usar la CLI en el proyecto actual, hay que reconciliar el historial de migraciones antes de `db push`.
-- **Google Cloud:** `http://localhost:5173` va en **Orígenes autorizados de JavaScript**, y la URI de redirección autorizada es la callback de Supabase: `https://pvgafxwsmatjebklmqlc.supabase.co/auth/v1/callback`.
-- **Supabase Dashboard:** en Authentication → URL Configuration se permite `http://localhost:5173/auth/callback`. El Client ID y el Client Secret de Google se guardan en Authentication → Providers → Google; nunca en el frontend ni en variables `VITE_*`.
-- El login con Google no necesita SMTP. El registro con correo y contraseña sí, si la confirmación de email está activada: para escribir a direcciones fuera del equipo hay que configurar un SMTP propio en Supabase Auth. El SMTP del backend (`SMTP_*`) es independiente y solo envía los dossiers en PDF.
-
 ---
 
 ## ⚙️ 7. Decisiones técnicas
 
-El detalle de cada decisión (qué se descartó, por qué y qué cuesta) está en [docs/DECISIONES.md](docs/DECISIONES.md).
+El detalle de cada decisión (qué se descartó, por qué y qué cuesta)
 
 1. **Procedencia honesta.** Nada se presenta como verificado si no lo está. Las citas se buscan literalmente en el documento y la página sale de ahí; un recurso que falla se muestra como fallido; si el texto lo transcribió la IA, se dice.
 2. **Solo cuota gratuita.** El modo invitado no gasta cuota: el backend rechaza sus generaciones con 403 y las muestras son archivos estáticos. Las fotos son de bancos libres con licencias que permiten adaptarlas, y se muestran con autor y licencia.
@@ -294,7 +305,7 @@ El detalle de cada decisión (qué se descartó, por qué y qué cuesta) está e
 6. **Claves solo en el backend.** En el navegador solo hay valores públicos (`VITE_API_URL`, `VITE_SUPABASE_*`).
 7. **Aislamiento por usuario.** El backend verifica el token con Supabase, consulta Postgres con el JWT del usuario (RLS) y guarda en OCI bajo `users/<UUID>/` en un bucket privado. ChromaDB también tiene una colección por usuario.
 8. **CORS.** Se admiten `localhost` y `127.0.0.1` en cualquier puerto. En producción hay que agregar el dominio público a `allow_origins` en `backend/app/main.py`.
-9. **Repositorio.** Este README y [docs/DECISIONES.md](docs/DECISIONES.md) son la documentación publicada: en GitHub están el código, las pruebas, las migraciones y las muestras. La documentación por área, las bitácoras y el historial de cambios se conservan en local.
+9. **Repositorio.** Este README es la documentación publicada: en GitHub están el código, las pruebas, las migraciones y las muestras.
 
 ---
 
@@ -307,13 +318,9 @@ cd backend && ../.venv/Scripts/python -m pytest -q
 cd frontend && npm test && npx tsc --noEmit -p .
 ```
 
----
+--- 
 
-## 👥 9. Créditos del Equipo y Acceso a la Plataforma
-
-<p align="center">
-  <img src="docs/capturas/creditos-escena01-8bit.png" alt="Apertura de la secuencia cinematográfica de créditos (Modo 8-bit Kernel & Demoscene)" width="960">
-</p>
+## 👥 9. Equipo 10, Créditos y Reconocimientos
 
 ### 🎖️ Equipo 10 · Hackathon ONE G10 (Oracle Next Education & Alura · No-Country)
 
@@ -328,15 +335,10 @@ cd frontend && npm test && npx tsc --noEmit -p .
 
 ---
 
-### 📱 Acceso Directo a la Demo en Vivo
+### 🎬 Sorpresa agregada por completar el quiz
+---
 
-Escanea este código QR con tu móvil o accede a través del enlace oficial para explorar NuevaMente en tiempo real:
+### 🌟 Agradecimientos Institucionales
 
-<p align="center">
-  <a href="https://novamind.techgk.cl" target="_blank">
-    <img src="docs/qr-novamind.svg" alt="Código QR de acceso a NuevaMente (novamind.techgk.cl)" width="200" height="200">
-  </a>
-  <br>
-  <strong>🔗 Enlace oficial:</strong> <a href="https://novamind.techgk.cl">https://novamind.techgk.cl</a>
-</p>
+> *"El equipo de **NuevaMente** extiende su más sincero agradecimiento a **Oracle Cloud Infrastructure (OCI)**, **Alura Latam** y **No-Country** por impulsar el talento tecnológico en Latinoamérica, brindando infraestructura en la nube de nivel mundial y un ecosistema de aprendizaje colaborativo de excelencia."*
 
