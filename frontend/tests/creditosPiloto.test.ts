@@ -11,28 +11,22 @@ import { CREDITOS_CONFIG, ESCENA_01_TIMING, ESCENA_02_TIMING } from '../src/cred
 import { ISOTIPO_PATHS, ISOTIPO_VIEWBOX } from '../src/creditos/isotipoPaths.ts';
 import rawPixelData from '../src/creditos/isotipo8bitData.json' with { type: 'json' };
 
-test('Configuración de Remotion: 1920x1080 @ 30fps y 1350 frames completos (45.0s)', () => {
+test('Configuración de Remotion: 1920x1080 @ 30fps y 660 frames completos (22.0s)', () => {
   assert.equal(CREDITOS_CONFIG.width, 1920, 'Ancho debe ser 1920');
   assert.equal(CREDITOS_CONFIG.height, 1080, 'Alto debe ser 1080');
   assert.equal(CREDITOS_CONFIG.fps, 30, 'FPS debe ser 30');
-  assert.equal(CREDITOS_CONFIG.pilotoFrames, 90, 'Duración de la escena piloto debe ser 90 fotogramas (3.0s)');
-  assert.equal(CREDITOS_CONFIG.escena01Frames, 90, 'Escena 01 debe ser 90 frames');
-  assert.equal(CREDITOS_CONFIG.escena02Frames, 150, 'Escena 02 debe ser 150 frames (5.0s)');
-  assert.equal(CREDITOS_CONFIG.escena03Frames, 300, 'Escena 03 debe ser 300 frames (10.0s)');
-  assert.equal(CREDITOS_CONFIG.escena04Frames, 300, 'Escena 04 debe ser 300 frames (10.0s)');
-  assert.equal(CREDITOS_CONFIG.escena05Frames, 330, 'Escena 05 debe ser 330 frames (11.0s)');
-  assert.equal(CREDITOS_CONFIG.escena06Frames, 180, 'Escena 06 debe ser 180 frames (6.0s)');
-  assert.equal(CREDITOS_CONFIG.faseActualFrames, 1350, 'Fase actual acumulada debe ser 1350 frames (45.0s)');
-  assert.equal(CREDITOS_CONFIG.totalFrames, 1350, 'Total objetivo debe ser 1350 frames (45.0s)');
+  assert.equal(CREDITOS_CONFIG.pilotoFrames, 210, 'Duración de la escena de apertura debe ser 210 fotogramas (7.0s)');
+  assert.equal(CREDITOS_CONFIG.escena01Frames, 210, 'Escena 01 debe ser 210 frames (7.0s)');
+  assert.equal(CREDITOS_CONFIG.escena02Frames, 240, 'Escena 02 debe ser 240 frames (8.0s)');
+  assert.equal(CREDITOS_CONFIG.escena03Frames, 210, 'Escena 03 debe ser 210 frames (7.0s)');
+  assert.equal(CREDITOS_CONFIG.faseActualFrames, 660, 'Fase actual acumulada debe ser 660 frames (22.0s)');
+  assert.equal(CREDITOS_CONFIG.totalFrames, 660, 'Total objetivo debe ser 660 frames (22.0s)');
 
   const sumaEscenas =
     CREDITOS_CONFIG.escena01Frames +
     CREDITOS_CONFIG.escena02Frames +
-    CREDITOS_CONFIG.escena03Frames +
-    CREDITOS_CONFIG.escena04Frames +
-    CREDITOS_CONFIG.escena05Frames +
-    CREDITOS_CONFIG.escena06Frames;
-  assert.equal(sumaEscenas, 1350, 'La suma exacta de las 6 escenas debe ser 1350 fotogramas');
+    CREDITOS_CONFIG.escena03Frames;
+  assert.equal(sumaEscenas, 660, 'La suma exacta de las 3 escenas debe ser 660 fotogramas (22.0s)');
 });
 
 test('Datos de píxeles 8-bit del Isotipo: cuadrícula 32x32 y colores válidos', () => {
@@ -88,38 +82,20 @@ test('Determinismo de fase Glitch & Partículas: inactiva antes del frame 75 y a
   assert.equal(calcGlitch(89), 1, 'Glitch al 100% en frame final (89)');
 });
 
-test('Escena 02 Timing & Determinismo: Desprendimiento, Convergencia y Núcleo Holográfico', () => {
-  assert.equal(ESCENA_02_TIMING.totalSceneFrames, 150, 'La escena 2 dura 150 frames (5s)');
-  assert.equal(ESCENA_02_TIMING.desprendimientoStartFrame, 0, 'Desprendimiento inicia en frame relativo 0');
-  assert.equal(ESCENA_02_TIMING.desprendimientoPeakFrame, 35, 'Pico de desprendimiento en frame 35');
-  assert.equal(ESCENA_02_TIMING.convergenciaEndFrame, 75, 'Convergencia finaliza en frame 75');
-  assert.ok(
-    ESCENA_02_TIMING.anillosHudStartFrame < ESCENA_02_TIMING.hologramaRevealStartFrame,
-    'Los anillos HUD aparecen gradualmente en el fondo antes del revelado vectorial completo'
-  );
+test('Escena 02 Timing: Créditos de Contribuidores en Igualdad', () => {
+  assert.equal(ESCENA_02_TIMING.totalSceneFrames, 240, 'La escena 2 dura 240 frames (8s)');
+  assert.equal(ESCENA_02_TIMING.fadeInFrames, 20, 'Fade in dura 20 frames');
+});
 
-  // Verificación de curvas deterministas de interpolación
+test('Curvas deterministas de interpolación matemática', () => {
   const interpolateClamp = (f: number, inRange: [number, number], outRange: [number, number]) => {
     if (f <= inRange[0]) return outRange[0];
     if (f >= inRange[1]) return outRange[1];
     return outRange[0] + ((f - inRange[0]) / (inRange[1] - inRange[0])) * (outRange[1] - outRange[0]);
   };
 
-  // Desprendimiento: relativo 0 a 35
-  assert.equal(interpolateClamp(0, [0, 35], [0, 1]), 0, 'Desprendimiento en f0 debe ser 0');
-  assert.equal(interpolateClamp(35, [0, 35], [0, 1]), 1, 'Desprendimiento en f35 debe ser 1');
-  assert.equal(interpolateClamp(70, [0, 35], [0, 1]), 1, 'Desprendimiento en f70 debe estar clamped a 1');
-
-  // Convergencia: relativo 35 a 75
-  assert.equal(interpolateClamp(20, [35, 75], [0, 1]), 0, 'Convergencia antes de f35 debe ser 0');
-  assert.equal(interpolateClamp(55, [35, 75], [0, 1]), 0.5, 'Convergencia en f55 debe ser 0.5');
-  assert.equal(interpolateClamp(75, [35, 75], [0, 1]), 1, 'Convergencia en f75 debe ser 1');
-
-  // Rotaciones 3D finitas y continuas
-  for (const f of [0, 35, 75, 120, 149]) {
-    const rotY = Math.sin(f * 0.04) * 22;
-    const rotX = Math.cos(f * 0.03) * 14;
-    assert.ok(Number.isFinite(rotY), `Rotación Y en f${f} debe ser finita`);
-    assert.ok(Number.isFinite(rotX), `Rotación X en f${f} debe ser finita`);
-  }
+  assert.equal(interpolateClamp(0, [0, 35], [0, 1]), 0, 'Interpolación en inicio debe ser 0');
+  assert.equal(interpolateClamp(35, [0, 35], [0, 1]), 1, 'Interpolación en final debe ser 1');
+  assert.equal(interpolateClamp(70, [0, 35], [0, 1]), 1, 'Interpolación clamped debe ser 1');
 });
+

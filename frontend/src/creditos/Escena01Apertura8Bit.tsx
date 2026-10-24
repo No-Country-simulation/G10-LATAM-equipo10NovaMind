@@ -37,27 +37,38 @@ export const Escena01Apertura8Bit: React.FC = () => {
     extrapolateRight: 'clamp',
   });
 
-  // 2. Líneas de Terminal progresivas (Efecto Typewriter determinista)
+  // Transición de salida suave hacia la escena de contribuidores (segundo 6.6 a 7.0)
+  const escenaFadeOut = interpolate(frame, [198, 210], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  // 2. Líneas de Terminal progresivas (Efecto Typewriter determinista para 7s / 210f)
   const l1Total = 'NUEVAMENTE BIOS v2.0.0 (G10 LATAM)';
   const l2Prefijo = 'INITIALIZING NEURAL SUBSYSTEMS... ';
-  const l3Prefijo = 'OCI OBJECT STORAGE INTERFACE... ';
-  const l4Prefijo = 'LOADING CREDITS PROTOCOL... ';
+  const l3Prefijo = 'OCI SA-SANTIAGO-1 CLOUD STORAGE... ';
+  const l4Prefijo = 'CHROMADB VECTOR RETRIEVER... ';
+  const l5Prefijo = 'EQUIPO 10 MATRIX (9 CONTRIBUTORS)... ';
+  const l6Prefijo = 'ALL SYSTEMS ARMED // READY FOR BEAT... ';
 
-  // Caracteres revelados por fotograma
-  const l1Chars = Math.max(0, Math.min(l1Total.length, Math.floor((frame - 8) * 2.2)));
-  const l2Chars = Math.max(0, Math.min(l2Prefijo.length, Math.floor((frame - 22) * 2.4)));
-  const l2Ok = frame >= 36;
-  const l3Chars = Math.max(0, Math.min(l3Prefijo.length, Math.floor((frame - 38) * 2.4)));
-  const l3Ok = frame >= 50;
-  const l4Chars = Math.max(0, Math.min(l4Prefijo.length, Math.floor((frame - 52) * 2.0)));
-  const l4Ready = frame >= 66;
+  const l1Chars = Math.max(0, Math.min(l1Total.length, Math.floor((frame - 8) * 2.0)));
+  const l2Chars = Math.max(0, Math.min(l2Prefijo.length, Math.floor((frame - 24) * 2.2)));
+  const l2Ok = frame >= 40;
+  const l3Chars = Math.max(0, Math.min(l3Prefijo.length, Math.floor((frame - 44) * 2.2)));
+  const l3Ok = frame >= 62;
+  const l4Chars = Math.max(0, Math.min(l4Prefijo.length, Math.floor((frame - 66) * 2.2)));
+  const l4Ok = frame >= 86;
+  const l5Chars = Math.max(0, Math.min(l5Prefijo.length, Math.floor((frame - 90) * 2.0)));
+  const l5Ok = frame >= 115;
+  const l6Chars = Math.max(0, Math.min(l6Prefijo.length, Math.floor((frame - 120) * 2.0)));
+  const l6Ready = frame >= 145;
 
   // Cursor parpadeante (período 10 fotogramas)
   const cursorVisible = Math.floor(frame / 6) % 2 === 0;
 
-  // 3. Barra de carga (0% a 100% entre fotogramas 20 y 72)
+  // 3. Barra de carga (0% a 100% entre fotogramas 20 y 130)
   const progresoPorcentaje = Math.round(
-    interpolate(frame, [20, 72], [0, 100], {
+    interpolate(frame, [20, 130], [0, 100], {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
     }),
@@ -72,7 +83,7 @@ export const Escena01Apertura8Bit: React.FC = () => {
   const hexVal = Math.min(
     0xffff,
     Math.floor(
-      interpolate(frame, [20, 72], [0x1200, 0xffff], {
+      interpolate(frame, [20, 130], [0x1200, 0xffff], {
         extrapolateLeft: 'clamp',
         extrapolateRight: 'clamp',
       }),
@@ -82,14 +93,14 @@ export const Escena01Apertura8Bit: React.FC = () => {
     .toUpperCase()
     .padStart(4, '0');
 
-  // 4. Barrido de píxeles del Isotipo (de arriba a abajo entre fotogramas 16 y 54)
-  const sweepRow = interpolate(frame, [16, 54], [0, 32], {
+  // 4. Barrido de píxeles del Isotipo (de arriba a abajo entre fotogramas 16 y 75)
+  const sweepRow = interpolate(frame, [16, 75], [0, 32], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // 5. Vibración, Glitch y Partículas (fotogramas 75 a 90)
-  const glitchIntensity = interpolate(frame, [75, 89], [0, 1], {
+  // 5. Vibración, Glitch y Partículas (fotogramas 185 a 210 antes del beat)
+  const glitchIntensity = interpolate(frame, [185, 209], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -122,7 +133,7 @@ export const Escena01Apertura8Bit: React.FC = () => {
       className={styles.contenedor}
       style={{
         transform: `scaleX(${crtScaleX}) scaleY(${crtScaleY})`,
-        opacity: contenidoOpacity,
+        opacity: contenidoOpacity * escenaFadeOut,
         filter: crtFlash > 0 ? `brightness(${1 + crtFlash * 1.5})` : 'none',
       }}
     >
@@ -162,46 +173,70 @@ export const Escena01Apertura8Bit: React.FC = () => {
                 <div className={styles.terminalLinea}>
                   <span className={styles.promptSymbol}>&gt;</span>
                   <span className={styles.lineaTexto}>{l1Total.slice(0, l1Chars)}</span>
-                  {frame < 22 && cursorVisible && <span className={styles.cursorBlink} />}
+                  {frame < 24 && cursorVisible && <span className={styles.cursorBlink} />}
                 </div>
               )}
 
               {/* Línea 2 */}
-              {frame >= 22 && (
+              {frame >= 24 && (
                 <div className={styles.terminalLinea}>
                   <span className={styles.promptSymbol}>&gt;</span>
                   <span className={styles.lineaTexto}>{l2Prefijo.slice(0, l2Chars)}</span>
                   {l2Ok && <span className={styles.estadoOk}>[OK]</span>}
-                  {frame >= 22 && frame < 38 && cursorVisible && (
+                  {frame >= 24 && frame < 44 && cursorVisible && (
                     <span className={styles.cursorBlink} />
                   )}
                 </div>
               )}
 
               {/* Línea 3 */}
-              {frame >= 38 && (
+              {frame >= 44 && (
                 <div className={styles.terminalLinea}>
                   <span className={styles.promptSymbol}>&gt;</span>
                   <span className={styles.lineaTexto}>{l3Prefijo.slice(0, l3Chars)}</span>
                   {l3Ok && <span className={styles.estadoOk}>[OK]</span>}
-                  {frame >= 38 && frame < 52 && cursorVisible && (
+                  {frame >= 44 && frame < 66 && cursorVisible && (
                     <span className={styles.cursorBlink} />
                   )}
                 </div>
               )}
 
               {/* Línea 4 */}
-              {frame >= 52 && (
+              {frame >= 66 && (
                 <div className={styles.terminalLinea}>
                   <span className={styles.promptSymbol}>&gt;</span>
                   <span className={styles.lineaTexto}>{l4Prefijo.slice(0, l4Chars)}</span>
-                  {l4Ready && <span className={styles.estadoWarn}>[ACTIVE]</span>}
-                  {frame >= 52 && cursorVisible && <span className={styles.cursorBlink} />}
+                  {l4Ok && <span className={styles.estadoOk}>[OK]</span>}
+                  {frame >= 66 && frame < 90 && cursorVisible && (
+                    <span className={styles.cursorBlink} />
+                  )}
+                </div>
+              )}
+
+              {/* Línea 5 */}
+              {frame >= 90 && (
+                <div className={styles.terminalLinea}>
+                  <span className={styles.promptSymbol}>&gt;</span>
+                  <span className={styles.lineaTexto}>{l5Prefijo.slice(0, l5Chars)}</span>
+                  {l5Ok && <span className={styles.estadoOk}>[SYNC]</span>}
+                  {frame >= 90 && frame < 120 && cursorVisible && (
+                    <span className={styles.cursorBlink} />
+                  )}
+                </div>
+              )}
+
+              {/* Línea 6 */}
+              {frame >= 120 && (
+                <div className={styles.terminalLinea}>
+                  <span className={styles.promptSymbol}>&gt;</span>
+                  <span className={styles.lineaTexto}>{l6Prefijo.slice(0, l6Chars)}</span>
+                  {l6Ready && <span className={styles.estadoWarn}>[ACTIVE]</span>}
+                  {frame >= 120 && cursorVisible && <span className={styles.cursorBlink} />}
                 </div>
               )}
 
               <div className={styles.simuladoDisclaimer}>
-                * Secuencia de inicio y procesos simulados para maqueta de créditos *
+                * Secuencia de inicio del kernel retro para créditos audiovisuales *
               </div>
             </div>
           </div>

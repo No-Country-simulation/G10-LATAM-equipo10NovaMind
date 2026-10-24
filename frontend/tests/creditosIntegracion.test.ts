@@ -31,8 +31,8 @@ test('Recursos audiovisuales oficiales: archivo de música Midnight High Score e
 
 test('Configuración de Remotion para reproducción sincronizada', () => {
   assert.equal(CREDITOS_CONFIG.fps, 30, 'FPS debe ser 30');
-  assert.equal(CREDITOS_CONFIG.faseActualFrames, 1350, 'Duración total de la composición debe ser 1350 frames (45s)');
-  assert.equal(CREDITOS_CONFIG.totalFrames, 1350, 'Duración objetivo total debe ser 1350 frames (45s)');
+  assert.equal(CREDITOS_CONFIG.faseActualFrames, 660, 'Duración total de la composición debe ser 660 frames (22s)');
+  assert.equal(CREDITOS_CONFIG.totalFrames, 660, 'Duración objetivo total debe ser 660 frames (22s)');
   assert.equal(CREDITOS_CONFIG.width, 1920, 'Ancho 1080p');
   assert.equal(CREDITOS_CONFIG.height, 1080, 'Alto 1080p');
 });
@@ -88,25 +88,19 @@ test('CreditosModal: controles accesibles, atajos de teclado y adaptación respo
   assert.ok(cssContent.includes('@media (max-width: 640px)'), 'Debe incluir estilos adaptados a pantallas móviles');
 });
 
-test('Estructura de 6 escenas cinematográficas montadas en secuencia (45.0s)', () => {
+test('Estructura de 3 actos cinematográficos montados en secuencia (22.0s)', () => {
   const videoPath = path.join(frontendDir, 'src', 'creditos', 'CreditosVideo.tsx');
   const videoContent = fs.readFileSync(videoPath, 'utf-8');
 
-  assert.ok(videoContent.includes('Escena01Apertura8Bit'), 'Debe montar Escena 01');
-  assert.ok(videoContent.includes('Escena02TransformacionHolografica'), 'Debe montar Escena 02');
-  assert.ok(videoContent.includes('Escena03RedAgentes'), 'Debe montar Escena 03');
-  assert.ok(videoContent.includes('Escena04ArquitecturaNube'), 'Debe montar Escena 04');
-  assert.ok(videoContent.includes('Escena05CreditosEquipo'), 'Debe montar Escena 05');
-  assert.ok(videoContent.includes('Escena06ClimaxAgradecimiento'), 'Debe montar Escena 06');
+  assert.ok(videoContent.includes('Escena01Apertura8Bit'), 'Debe montar Escena 01 (Apertura 8-Bit)');
+  assert.ok(videoContent.includes('Escena02CreditosIgualdad'), 'Debe montar Escena 02 (Contribuidores en Igualdad)');
+  assert.ok(videoContent.includes('Escena03AgradecimientoQR'), 'Debe montar Escena 03 (QR y Agradecimiento OCI y Alura)');
 
-  // Comprobar que los archivos de las 6 escenas existen en disco
+  // Comprobar que los archivos de escenas existen en disco
   const escenas = [
     'Escena01Apertura8Bit.tsx',
-    'Escena02TransformacionHolografica.tsx',
-    'Escena03RedAgentes.tsx',
-    'Escena04ArquitecturaNube.tsx',
-    'Escena05CreditosEquipo.tsx',
-    'Escena06ClimaxAgradecimiento.tsx',
+    'Escena02CreditosIgualdad.tsx',
+    'Escena03AgradecimientoQR.tsx',
   ];
   for (const esc of escenas) {
     const escPath = path.join(frontendDir, 'src', 'creditos', esc);

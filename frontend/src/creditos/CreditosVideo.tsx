@@ -2,32 +2,29 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * Composición Principal de Remotion: Vídeo de Créditos Cinematográficos de NuevaMente
- * Fase actual: Escena Piloto (0 a 3 segundos / 90 fotogramas a 30 fps)
+ * Edición Sincronizada de 3 Actos (22.0s / 660 fotogramas a 30 fps)
+ * Acto 1 (0 a 7s): Apertura 8-Bit & Boot Terminal
+ * Acto 2 (7 a 15s): Créditos de Contribuidores en Igualdad de Importancia
+ * Acto 3 (15 a 22s): Código QR de la plataforma y Agradecimiento a OCI y ALURA LATAM
  */
 
 import React from 'react';
 import { AbsoluteFill, Audio, Composition, Sequence, interpolate } from 'remotion';
 import { Escena01Apertura8Bit } from './Escena01Apertura8Bit';
-import { Escena02TransformacionHolografica } from './Escena02TransformacionHolografica';
-import { Escena03RedAgentes } from './Escena03RedAgentes';
-import { Escena04ArquitecturaNube } from './Escena04ArquitecturaNube';
-import { Escena05CreditosEquipo } from './Escena05CreditosEquipo';
-import { Escena06ClimaxAgradecimiento } from './Escena06ClimaxAgradecimiento';
+import { Escena02CreditosIgualdad } from './Escena02CreditosIgualdad';
+import { Escena03AgradecimientoQR } from './Escena03AgradecimientoQR';
 import { CREDITOS_CONFIG } from './config';
 export { CREDITOS_CONFIG } from './config';
 
 /**
- * Componente ejecutable del vídeo: monta las 6 secuencias narrativas completas.
- * Total: 1350 fotogramas (45.00 segundos a 30 fps).
- * Banda sonora: Midnight High Score sincronizada con fade-out al cierre.
+ * Componente ejecutable del vídeo: monta las 3 secuencias sincronizadas con la música.
+ * Total: 660 fotogramas (22.00 segundos a 30 fps).
+ * Banda sonora: Midnight High Score sincronizada con el beat drop en el segundo 7 y fade-out al cierre.
  */
 export const CreditosVideo: React.FC = () => {
   const f01 = 0;
-  const f02 = CREDITOS_CONFIG.escena01Frames; // 90
-  const f03 = f02 + CREDITOS_CONFIG.escena02Frames; // 240
-  const f04 = f03 + CREDITOS_CONFIG.escena03Frames; // 540
-  const f05 = f04 + CREDITOS_CONFIG.escena04Frames; // 840
-  const f06 = f05 + CREDITOS_CONFIG.escena05Frames; // 1170
+  const f02 = CREDITOS_CONFIG.escena01Frames; // 210 (7.0s)
+  const f03 = f02 + CREDITOS_CONFIG.escena02Frames; // 450 (15.0s)
 
   return (
     <AbsoluteFill style={{ backgroundColor: '#07090e' }}>
@@ -53,7 +50,7 @@ export const CreditosVideo: React.FC = () => {
         />
       </Sequence>
 
-      {/* Escena 01: Apertura 8-Bit & Boot Terminal (0 a 3s / 90f) */}
+      {/* Escena 01: Apertura 8-Bit & Boot Terminal (0 a 7s / 210f) */}
       <Sequence
         from={f01}
         durationInFrames={CREDITOS_CONFIG.escena01Frames}
@@ -62,49 +59,22 @@ export const CreditosVideo: React.FC = () => {
         <Escena01Apertura8Bit />
       </Sequence>
 
-      {/* Escena 02: Transformación a Núcleo Holográfico 3D (3 a 8s / 150f) */}
+      {/* Escena 02: Créditos de Contribuidores en Igualdad (7 a 15s / 240f) */}
       <Sequence
         from={f02}
         durationInFrames={CREDITOS_CONFIG.escena02Frames}
-        name="Escena 02 - Núcleo Holográfico"
+        name="Escena 02 - Contribuidores en Igualdad"
       >
-        <Escena02TransformacionHolografica />
+        <Escena02CreditosIgualdad />
       </Sequence>
 
-      {/* Escena 03: Red de Agentes Pedagógicos (8 a 18s / 300f) */}
+      {/* Escena 03: Código QR & Agradecimiento OCI y ALURA LATAM (15 a 22s / 210f) */}
       <Sequence
         from={f03}
         durationInFrames={CREDITOS_CONFIG.escena03Frames}
-        name="Escena 03 - Red de Agentes Pedagógicos"
+        name="Escena 03 - QR Demo & Agradecimiento OCI y Alura"
       >
-        <Escena03RedAgentes />
-      </Sequence>
-
-      {/* Escena 04: Arquitectura de Nube OCI & Stack Técnico (18 a 28s / 300f) */}
-      <Sequence
-        from={f04}
-        durationInFrames={CREDITOS_CONFIG.escena04Frames}
-        name="Escena 04 - Arquitectura OCI & Stack"
-      >
-        <Escena04ArquitecturaNube />
-      </Sequence>
-
-      {/* Escena 05: Créditos Cinematográficos del Equipo 10 (28 a 39s / 330f) */}
-      <Sequence
-        from={f05}
-        durationInFrames={CREDITOS_CONFIG.escena05Frames}
-        name="Escena 05 - Créditos del Equipo 10"
-      >
-        <Escena05CreditosEquipo />
-      </Sequence>
-
-      {/* Escena 06: Clímax Audiovisual & Agradecimiento Institucional (39 a 45s / 180f) */}
-      <Sequence
-        from={f06}
-        durationInFrames={CREDITOS_CONFIG.escena06Frames}
-        name="Escena 06 - Clímax & Agradecimiento"
-      >
-        <Escena06ClimaxAgradecimiento />
+        <Escena03AgradecimientoQR />
       </Sequence>
     </AbsoluteFill>
   );
