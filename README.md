@@ -59,7 +59,7 @@ Ante el incidente de seguridad de octubre de 2026 relativo a claves intermedias 
 
 ## Cómo funciona
 
-Las secciones siguientes detallan la arquitectura, los flujos y la puesta en marcha.
+Las secciones siguientes detallan la arquitectura, los flujos y la puesta en marcha. Para un directorio navegable de todas las especificaciones por área, consulta el [**Índice General (INDEX.md)**](INDEX.md).
 
 **Recorrido del estudiante**
 
@@ -305,7 +305,7 @@ El detalle de cada decisión (qué se descartó, por qué y qué cuesta)
 6. **Claves solo en el backend.** En el navegador solo hay valores públicos (`VITE_API_URL`, `VITE_SUPABASE_*`).
 7. **Aislamiento por usuario.** El backend verifica el token con Supabase, consulta Postgres con el JWT del usuario (RLS) y guarda en OCI bajo `users/<UUID>/` en un bucket privado. ChromaDB también tiene una colección por usuario.
 8. **CORS.** Se admiten `localhost` y `127.0.0.1` en cualquier puerto. En producción hay que agregar el dominio público a `allow_origins` en `backend/app/main.py`.
-9. **Repositorio.** Este README es la documentación publicada: en GitHub están el código, las pruebas, las migraciones y las muestras.
+9. **Repositorio y Documentación.** Este README, el [**Índice General (INDEX.md)**](INDEX.md) y [**docs/DECISIONES.md**](docs/DECISIONES.md) son la referencia de documentación publicada: en GitHub están el código, las pruebas, las migraciones, las muestras y las especificaciones técnicas por área.
 
 ---
 

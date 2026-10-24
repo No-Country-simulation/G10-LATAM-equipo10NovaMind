@@ -56,7 +56,6 @@ __pycache__/
 # Chroma local del Agente 1
 chroma_db/
 data/chroma/
-backend/data/
 **/outputs/
 
 # Documentos locales usados para pruebas
@@ -102,14 +101,10 @@ CLAUDE.md
 # Documentación histórica: solo en local, no se sube a GitHub
 historial_progreso/
 legado/
-backend/docs/CHANGELOG.md
-backend/docs/PROJECT_AUDIT.md
 
-# Solo el README principal y la página de decisiones se publican; el resto de la documentación queda en local.
-# Los .md de data/documents/ son documentos de entrada de la biblioteca, no documentación.
-*.md
+
+
 !/README.md
-!/docs/DECISIONES.md
 !/data/documents/apache_kafka_introduction.md
 !/data/documents/guia_optimizacion_swap_oci.md
 !/data/documents/quijote_primera_parte_resumen.md
@@ -120,5 +115,5 @@ scripts/resultado_*.json
 scripts/modelgroq.py
 frontend/docs/
 
-# Documentación modular interna y análisis estático
-backend/docs/modulos/
+
+temp/
