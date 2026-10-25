@@ -63,11 +63,11 @@ Plataforma que convierte documentación técnica compleja en un recorrido pedag�
 El sistema opera bajo una arquitectura desacoplada donde el frontend gestiona la experiencia interactiva y el backend orquesta la ingesta, modelos de IA y persistencia en la nube:
 
 ```mermaid
-flowchart LR
+flowchart TD
     FE["Frontend<br/>React 19 + Vite"] -->|"SSE / REST"| BE
 
     subgraph BE["Backend FastAPI"]
-        direction TB
+        direction LR
         P1["1. Ingesta & Contexto"] --> P2["2. Generación en Paralelo<br/>(Estaciones de Aprendizaje)"] --> P3["3. Verificación & Auditoría"]
     end
 
@@ -94,6 +94,7 @@ flowchart LR
     BE <--> IA
     BE <--> EXT
     BE <--> BD
+
 ```
 
 ### Stack Principal
