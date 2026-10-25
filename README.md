@@ -5,7 +5,8 @@ Plataforma que convierte documentación técnica compleja en un recorrido pedag�
 
 <p align="center">
   <a href="https://novamind.techgk.cl/"><strong>🌐 Demo en Vivo</strong></a> &nbsp;•&nbsp;
-  <a href="https://youtu.be/TzeztU1YXLk"><strong>▶️ Video Demo (YouTube)</strong></a>
+  <a href="https://youtu.be/TzeztU1YXLk"><strong>▶️ Video Demo (YouTube)</strong></a> &nbsp;•&nbsp;
+  <a href="README_EN.md"><strong>🇺🇸 English Version</strong></a>
 </p>
 
 
@@ -87,6 +88,28 @@ flowchart TD
 
 ```
 
+### Estructura del Proyecto
+
+```text
+.
+├── backend/
+│   ├── app/
+│   │   ├── main.py          # Endpoints REST, SSE y conmutación de modos
+│   │   ├── auth.py          # Autenticación y control de acceso con Supabase
+│   │   ├── agentes/         # Generación paralela, colaborativa y agentes LangGraph
+│   │   ├── core/            # Contratos Pydantic, verificación de fuentes y configuración
+│   │   ├── servicios/       # Integraciones con Gemini, Groq, Cohere, ElevenLabs
+│   │   └── storage/         # Clientes de OCI Object Storage y almacenamiento local
+│   └── tests/               # Pruebas automatizadas de backend con pytest
+├── frontend/
+│   ├── src/                 # Componentes React 19, navegación de estaciones y hooks
+│   ├── public/ejemplos/     # Muestras pregeneradas para modo invitado
+│   └── tests/               # Pruebas automatizadas de frontend
+├── docs/                    # Diagramas técnicos y capturas de la aplicación
+├── scripts/                 # Scripts de diagnóstico, limpieza y pruebas de carga
+└── setup.bat · iniciar_local.bat · reestablecer_local.bat
+```
+
 ### Stack Principal
 * **Frontend:** [React 19](https://react.dev/), [TypeScript 6.0](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/), [Remotion Player](https://www.remotion.dev/) y CSS Modules.
 * **Backend:** [FastAPI](https://fastapi.tiangolo.com/), [Uvicorn](https://www.uvicorn.org/) y [Pydantic v2](https://docs.pydantic.dev/).
@@ -114,6 +137,10 @@ flowchart TD
 ### 🛠️ Puesta en Marcha Manual
 
 ```bash
+# 0. Clonar el repositorio
+git clone https://github.com/No-Country-simulation/G10-LATAM-equipo10NovaMind.git
+cd G10-LATAM-equipo10NovaMind
+
 # 1. Backend (FastAPI)
 python -m venv .venv
 # Activar: .venv\Scripts\activate (Windows) o source .venv/bin/activate (Linux/macOS)
