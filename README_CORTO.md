@@ -81,7 +81,7 @@ flowchart TD
     subgraph EXT["Servicios y Componentes"]
         direction TB
         VOZ["ElevenLabs<br/>(Voz / TTS)"]
-        CITAS["Servicio de Citas<br/>(Text Grounding)<br/>openverse / wikimedia"]
+        CITAS["Servicio de Citas<br/>Text Grounding<br/>openverse<br/>wikimedia"]
     end
 
     subgraph BD["Bases de Datos & Almacenamiento"]
