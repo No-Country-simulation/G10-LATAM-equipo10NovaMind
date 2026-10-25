@@ -3,9 +3,11 @@
 Desarrollado por el **Equipo 10** para **No-Country** (*Hackathon ONE G10 · Oracle Next Education & Alura Latam*).  
 Plataforma que convierte documentación técnica compleja en un recorrido pedagógico interactivo de 5 estaciones adaptado al perfil del estudiante, con citas verificadas y video narrado.
 
-[🌐 Demo en Vivo](https://novamind.techgk.cl/) • [▶️ Video Demo (YouTube)](https://youtu.be/TzeztU1YXLk) • [🇺🇸 English Version](https://github.com/No-Country-simulation/G10-LATAM-equipo10NovaMind/blob/main/README_EN.md)
+[🌐 Demo en Vivo](https://novamind.techgk.cl/) • [▶️ Video Demo (YouTube)](https://youtu.be/TzeztU1YXLk) • [🇺🇸 English Version](https://github.com/No-Country-simulation/G10-LATAM-equipo10NovaMind/blob/main/README_EN.md)  
 
 ![Badges](https://proxy-badges.vercel.app/12)  
+
+![](https://img.shields.io/badge/versión-2.0.0-0A84FF) ![](https://img.shields.io/badge/licencia-MIT-green) ![](https://visitor-badge.laobi.icu/badge?page_id=No-Country-simulation.G10-LATAM-equipo10NovaMind&left_text=visitas&left_color=%23555555&right_color=%230A84FF)
 
 ## 🎯 Introducción y Objetivos
 
