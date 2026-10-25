@@ -30,39 +30,7 @@ Plataforma que convierte documentación técnica compleja en un recorrido pedag�
 
 El sistema opera bajo una arquitectura desacoplada donde el frontend gestiona la experiencia interactiva y el backend orquesta la ingesta, modelos de IA y persistencia en la nube:
 
-```mermaid
-flowchart TD
-    FE["Frontend<br/>React 19 + Vite"] -->|"SSE / REST"| BE
-
-    subgraph BE["Backend FastAPI"]
-        direction LR
-        P1["1. Ingesta & Contexto"] --> P2["2. Generación en Paralelo<br/>(Estaciones de Aprendizaje)"] --> P3["3. Verificación & Auditoría"]
-    end
-
-    subgraph IA["Modelos de IA"]
-        direction TB
-        GEM["Google Gemini"]
-        GROQ["Groq<br/>openai/gpt-oss-120b"]
-        COH["Cohere<br/>Embeddings"]
-    end
-
-    subgraph EXT["Servicios y Componentes"]
-        direction TB
-        VOZ["ElevenLabs<br/>(Voz / TTS)"]
-        CITAS["Servicio de Citas<br/>Text Grounding<br/>openverse<br/>wikimedia"]
-    end
-
-    subgraph BD["Bases de Datos & Almacenamiento"]
-        direction TB
-        SUP[("Supabase")]
-        OCI[("OCI Object Storage")]
-        CHR[("ChromaDB")]
-    end
-
-    BE <--> IA
-    BE <--> EXT
-    BE <--> BD
-```
+![Arquitectura](https://raw.githubusercontent.com/No-Country-simulation/G10-LATAM-equipo10NovaMind/main/docs/capturas/arquitectura.png)
 
 ### Estructura del Proyecto
 
