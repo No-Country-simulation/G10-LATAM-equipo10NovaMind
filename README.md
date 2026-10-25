@@ -24,9 +24,9 @@ Verificar y actualizar esta lista con el equipo antes de publicar.
 
 🔗 Enlaces clave
 
-Prototipo de diseño: [Agregar enlace a Figma, si corresponde]
+Prototipo de diseño: https://www.figma.com/design/yAe7qwryCC26g69ujCZnPl/NuevaMente?node-id=0-1&t=nKwqc78X7ZEbihKN-1
 
-Demo desplegada: [Agregar URL de la aplicación]
+Demo desplegada: https://www.youtube.com/watch?v=TzeztU1YXLk&t=103s
 
 Tablero de gestión: https://trello.com/b/XfUm5umW/nuevamente-seguimiento-de-equipo
 
