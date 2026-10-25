@@ -34,7 +34,8 @@ from app.auth import Principal, ensure_document, persist_result, private_query, 
 from app.auth import rechazar_generacion_invitado, require_generador
 from app.auth import settings as supabase_settings
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from pydantic import BaseModel, Field, ValidationError
 
 from app.agentes.cadena_colaborativa import CadenaColaborativaMultiModelo
@@ -352,6 +353,24 @@ def _ejecutar_tareas_segundo_plano(
 def health() -> Dict[str, str]:
     """Healthcheck consumido por Docker Compose y frontend."""
     return {"status": "ok", "service": "nuevamente-backend"}
+
+
+# # Alias de la documentación bajo /api/... para despliegues cuyo proxy inverso solo
+# # publica ese prefijo (p. ej. Nginx con `location /api/`). Las rutas canónicas
+# # /docs, /redoc y /openapi.json siguen activas.
+# @app.get("/api/docs", include_in_schema=False)
+# def documentacion_api_swagger() -> HTMLResponse:
+#     return get_swagger_ui_html(openapi_url="/api/openapi.json", title=f"{app.title} · Swagger UI")
+
+
+# @app.get("/api/redoc", include_in_schema=False)
+# def documentacion_api_redoc() -> HTMLResponse:
+#     return get_redoc_html(openapi_url="/api/openapi.json", title=f"{app.title} · ReDoc")
+
+
+# @app.get("/api/openapi.json", include_in_schema=False)
+# def esquema_openapi_api() -> JSONResponse:
+#     return JSONResponse(app.openapi())
 
 
 @app.get("/api/v1/config/opciones", tags=["Configuración"])

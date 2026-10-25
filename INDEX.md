@@ -8,6 +8,7 @@ Mapa completo y navegable de toda la documentación del proyecto **NuevaMente** 
 - [🌐 Documentación General del Proyecto](#general)
 - [⚙️ Documentación Técnica del Backend](#back)
 - [🎨 Documentación del Frontend](#frontend)
+- [📂 Estructura del Repositorio](#estructura)
 - [🗺️ Diagramas y Recursos Visuales](#recursos)
 
 
@@ -54,6 +55,30 @@ Recursos y guías de la interfaz web desarrollada en **React 19 + Vite + TypeScr
 | 🎮 [**Circuito de 5 Estaciones**](docs/ARCHITECTURE.md#1-capa-de-presentación-frontend-react-19-spa) | Estación 1 (Resumen), Estación 2 (Tarjetas 3D), Estación 3 (Guía Paso a Paso), Estación 4 (Microclase con Remotion Player) y Estación 5 (Cuestionario Final). |
 | 🎬 [**Créditos Cinematográficos**](frontend/creditos.html) | Experiencia audiovisual retro de 8-bit con banda sonora chiptune y agradecimientos oficiales. |
 | 🧪 [**Pruebas Frontend**](backend/docs/TESTING.md) | Suite de 26 pruebas en Vitest que validan el plegado de eventos SSE, duraciones de locución y renderizado. |
+
+
+<a id="estructura"></a>
+## 📂 Estructura del Repositorio
+
+```text
+.
+├── backend/
+│   ├── app/
+│   │   ├── main.py          # Endpoints REST, SSE y conmutación de modos
+│   │   ├── auth.py          # Autenticación y control de acceso con Supabase
+│   │   ├── agentes/         # Generación paralela, colaborativa y agentes LangGraph
+│   │   ├── core/            # Contratos Pydantic, verificación de fuentes y configuración
+│   │   ├── servicios/       # Integraciones con Gemini, Groq, Cohere, ElevenLabs
+│   │   └── storage/         # Clientes de OCI Object Storage y almacenamiento local
+│   └── tests/               # Pruebas automatizadas de backend con pytest
+├── frontend/
+│   ├── src/                 # Componentes React 19, navegación de estaciones y hooks
+│   ├── public/ejemplos/     # Muestras pregeneradas para modo invitado
+│   └── tests/               # Pruebas automatizadas de frontend
+├── docs/                    # Diagramas técnicos y capturas de la aplicación
+├── scripts/                 # Scripts de diagnóstico, limpieza y pruebas de carga
+└── setup.bat · iniciar_local.bat · reestablecer_local.bat
+```
 
 
 <a id="recursos"></a>

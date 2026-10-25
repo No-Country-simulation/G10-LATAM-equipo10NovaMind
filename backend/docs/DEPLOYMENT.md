@@ -166,20 +166,63 @@ El archivo `.env` del proyecto (basado en `.env.example`) contiene **38 variable
     WantedBy=multi-user.target
     ```
 - **VM 2 (Proxy Inverso Nginx y Frontend):**
-  - Proxy Nginx configurado para Server-Sent Events (SSE) y streaming sin búfer:
+  - Configuración completa de referencia (`/etc/nginx/sites-available/novamind.conf`). Ajusta `root` a la ruta del build de Vite (`frontend/dist`) y `proxy_pass` a la IP privada de la VM 1:
     ```nginx
-    location /api/ {
-        proxy_pass http://10.0.0.2:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Connection '';
-        proxy_buffering off;
-        proxy_cache off;
-        proxy_read_timeout 180s;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+    server {
+        listen 80;
+        server_name novamind.techgk.cl;
+
+        # Subidas de hasta 15 MB (+ margen para multipart)
+        client_max_body_size 20m;
+
+        # Build de React/Vite (npm run build -> frontend/dist)
+        root /var/www/novamind;
+        index index.html;
+
+        # SPA: cualquier ruta del frontend resuelve a index.html
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Documentación interactiva: Swagger UI, ReDoc y esquema OpenAPI.
+        # Sin estos bloques, /docs cae en el SPA y devuelve index.html (Swagger parece "apagado").
+        location ~ ^/(docs|redoc|openapi\.json)$ {
+            proxy_pass http://10.0.0.2:8000;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # API REST + Server-Sent Events (SSE) con streaming sin búfer
+        location /api/ {
+            proxy_pass http://10.0.0.2:8000;   # sin barra final: conserva el prefijo /api/
+            proxy_http_version 1.1;
+            proxy_set_header Connection '';
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_read_timeout 180s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
     }
     ```
+  - Aplicar el cambio y recargar el proxy:
+    ```bash
+    sudo nginx -t && sudo systemctl reload nginx
+    ```
+  - Verificación rápida en producción:
+    ```bash
+    curl -I https://novamind.techgk.cl/docs          # 200 · text/html
+    curl -s https://novamind.techgk.cl/openapi.json | head
+    ```
+  - **Alternativa sin tocar Nginx:** el backend también expone la documentación bajo el prefijo ya publicado: `/api/docs`, `/api/redoc` y `/api/openapi.json`. Así, con solo redesplegar el backend, `https://novamind.techgk.cl/api/docs` queda operativo aunque el proxy únicamente reenvíe `location /api/`.
+  - Si se prefiere no publicar la documentación, se puede proteger con autenticación básica o limitar el acceso por IP en esos tres `location`.
 - **Cloudflare Tunnel:** Enlaza el dominio público `novamind.techgk.cl` con el proxy de Nginx sin abrir puertos en el firewall público.
+  > El túnel debe apuntar al Nginx (VM 2), no directamente al backend: Nginx sirve el frontend y enruta tanto el SPA como `/api/` y `/docs`.
 
 ---
 
