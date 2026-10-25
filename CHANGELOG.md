@@ -5,6 +5,17 @@ Todas las modificaciones notables del proyecto **NuevaMente** se documentan en e
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 
+## [2.8.1] - 2026-10-23
+
+### Seguridad y Auditoría TLS
+- **Auditoría de Certificados y Mitigación eMudhra:** Ante el incidente de seguridad de octubre de 2026 relativo a claves intermedias revocadas asociadas a la raíz `emSign ECC Root CA - G3`, se auditó y saneó la cadena de certificados y el árbol de dependencias:
+  - **Python & Virtualenv:** `certifi >= 2026.10.19`, `pip >= 26.2.2` y `uv >= 0.13.4`.
+  - **Capa gRPC:** Almacén interno `roots.pem` de `grpcio` sincronizado y depurado en disco sin la raíz afectada.
+  - **Frontend & Runtime:** Node.js actualizado a `v24.22.1` con la biblioteca NSS `3.131.1` libre de certificados afectados.
+  - **Integridad:** 356 pruebas de backend y 73 pruebas de frontend ejecutadas con 0 regresiones.
+  - *Diagrama de mitigación documentado en [docs/auditoria-seguridad-tls-oct2026.svg](docs/auditoria-seguridad-tls-oct2026.svg).*
+
+
 ## [2.8.0] - 2026-10-16
 
 ### Generación y Backend

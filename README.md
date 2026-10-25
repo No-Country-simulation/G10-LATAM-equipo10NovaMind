@@ -1,52 +1,35 @@
 # 🧠 NuevaMente — Sistema Inteligente de Adaptación y Generación de Contenido Educativo
 
-> **Desarrollado por el Equipo 10 (G10 - NuevaMente) para No-Country**  
-> **Hackathon ONE G10 · Oracle Next Education & Alura · Proyecto 1**  
-> Convierte un documento técnico en un recorrido de aprendizaje de 5 estaciones adaptado al perfil del estudiante, con citas verificadas contra el documento y un video narrado.
+Desarrollado por el **Equipo 10** para **No-Country** (*Hackathon ONE G10 · Oracle Next Education & Alura Latam*).  
+Convierte documentos técnicos en un recorrido de aprendizaje adaptativo de 5 estaciones según el perfil del estudiante, con citas verificadas y video narrado.
+
+<p align="center">
+  <a href="https://novamind.techgk.cl/"><strong>🌐 Demo en Vivo</strong></a> &nbsp;•&nbsp;
+  <a href="https://www.youtube.com/watch?v=TU_VIDEO_AQUI"><strong>▶️ Video Demo (YouTube)</strong></a>
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/versión-2.0.0-0A84FF" alt="Versión 2.0.0">
+  <img src="https://img.shields.io/badge/licencia-MIT-green" alt="Licencia MIT">
   <img src="https://visitor-badge.laobi.icu/badge?page_id=No-Country-simulation.G10-LATAM-equipo10NovaMind&left_text=visitas&left_color=%23555555&right_color=%230A84FF" alt="Visitas al repositorio">
-  <img src="https://img.shields.io/badge/Seguridad%20TLS-Parche%20eMudhra%20(Oct%202026)-10B981?logo=shieldsdotio&logoColor=white" alt="Seguridad TLS">
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
   <img src="https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white" alt="Backend FastAPI">
-  <img src="https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61DAFB?logo=react&logoColor=black" alt="Frontend React 19 y Vite">
+  <img src="https://img.shields.io/badge/Docs-Swagger-85EA2D?logo=swagger&logoColor=black" alt="Documentación Swagger">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React 19">
   <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white" alt="TypeScript 6.0">
   <img src="https://img.shields.io/badge/IA-Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white" alt="IA Google Gemini">
   <img src="https://img.shields.io/badge/Video-Remotion%20Player-4B4BF5" alt="Video con Remotion Player">
-  <img src="https://img.shields.io/badge/Datos-Supabase-3FCF8E?logo=supabase&logoColor=white" alt="Datos en Supabase">
+  <img src="https://img.shields.io/badge/Database-PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="Base de datos PostgreSQL">
+  <img src="https://img.shields.io/badge/Supabase-Cloud-3FCF8E?logo=supabase&logoColor=white" alt="Supabase Cloud">
   <img src="https://img.shields.io/badge/Almacenamiento-OCI%20Object%20Storage-F80000?logo=oracle&logoColor=white" alt="Almacenamiento en un bucket de OCI Object Storage">
-  <img src="https://img.shields.io/badge/Despliegue-OCI%20Compute%20Always%20Free-F80000?logo=oracle&logoColor=white" alt="Despliegue en máquinas virtuales OCI Compute Always Free">
+  <img src="https://img.shields.io/badge/Despliegue-OCI%20Compute-F80000?logo=oracle&logoColor=white" alt="Despliegue en máquinas virtuales OCI Compute">
 </p>
-
-<p align="center">
-  <img src="docs/flujo-nuevamente.svg" alt="Flujo de NuevaMente: el documento se ingiere, Gemini genera en paralelo el resumen, las tarjetas y la producción y después el cuestionario, se verifican las citas, el paquete llega por SSE a las 5 estaciones y el video narrado se genera bajo demanda" width="960">
-</p>
-
----
-
-## 🛡️ Seguridad TLS y Auditoría de Certificados (Octubre 2026)
-
-Ante el incidente de seguridad de octubre de 2026 relativo a claves intermedias comprometidas asociadas a la raíz **`emSign ECC Root CA - G3`** (eMudhra), todo el entorno, dependencias y la cadena de certificados de NuevaMente fueron auditados y saneados:
-
-<p align="center">
-  <img src="docs/auditoria-seguridad-tls-oct2026.svg" alt="Auditoría de Seguridad TLS y mitigación de eMudhra en NuevaMente" width="960">
-</p>
-
-* **Python & Virtualenv:** `certifi >= 2026.10.19` (instalado `2026.10.23`), `pip >= 26.2.2` y `uv >= 0.13.4` (instalado `0.13.5`).
-* **Capa gRPC:** Almacén interno `roots.pem` de `grpcio` sincronizado y depurado en disco sin la raíz revocada.
-* **Frontend & Runtime:** Node.js actualizado a `v24.22.1` con la biblioteca NSS `3.131.1` libre de certificados afectados.
-* **Integridad del código:** 356 pruebas de backend y 73 pruebas de frontend en verde con 0 regresiones.
-
----
-
-**🌐 Demo en vivo:** próximamente...
 
 <table>
   <tr>
-    <td width="33%"><img src="docs/capturas/inicio.png" alt="Pantalla de inicio: biblioteca de documentos de ejemplo y botón Explorar Demostración"></td>
-    <td width="33%"><img src="docs/capturas/resumen-citas.png" alt="Estación 1: conceptos clave, cada uno con su fuente verificada en el documento"></td>
-    <td width="33%"><img src="docs/capturas/oci-object-storage.png" alt="Consola de OCI Object Storage: persistencia en la nube Always Free"></td>
+    <td width="33%"><img src="docs/capturas/inicio.png" alt="Pantalla de inicio: biblioteca de documentos"></td>
+    <td width="33%"><img src="docs/capturas/resumen-citas.png" alt="Estación 1: conceptos clave con citas verificadas"></td>
+    <td width="33%"><img src="docs/capturas/oci-object-storage.png" alt="Consola de OCI Object Storage: persistencia en la nube"></td>
   </tr>
   <tr>
     <td align="center"><sub>Biblioteca y «Explorar Demostración», sin iniciar sesión</sub></td>
@@ -55,290 +38,244 @@ Ante el incidente de seguridad de octubre de 2026 relativo a claves intermedias 
   </tr>
 </table>
 
----
 
-## Cómo funciona
 
-Las secciones siguientes detallan la arquitectura, los flujos y la puesta en marcha. Para un directorio navegable de todas las especificaciones por área, consulta el [**Índice General (INDEX.md)**](INDEX.md).
+## 🎯 Plataforma Educativa y Propuesta de Valor
 
-**Recorrido del estudiante**
+**NuevaMente** convierte documentación técnica densa (manuales de arquitectura, reportes, guías y PDFs) en una experiencia formativa interactiva estructurada en **5 estaciones de aprendizaje**. 
 
-1. **Configuración e ingesta.** Dos formas de entrar:
-   - **Sin cuenta (invitado):** se exploran muestras ya generadas de cinco documentos reales (Don Quijote I y II, Apache Kafka, ENISA Threat Landscape y una guía de OCI), sin coste de IA. Kafka muestra cómo cambia el mismo documento según el perfil, el sector y el motor de generación. «Explorar Demostración ⚡» abre un ejemplo en un clic.
-   - **Con cuenta:** se sube un documento propio (PDF, MD, TXT o imagen), se elige perfil, sector y nivel, y el paquete queda guardado en la cuenta.
-2. **Visualizar Resultados: cinco estaciones.**
+A diferencia de un visor pasivo o un resumen genérico por IA, la experiencia se fundamenta en material didáctico progresivo diseñado para la comprensión y la práctica, sumando como valor agregado elementos diferenciadores clave:
 
-| Estación | Qué enseña |
-|---|---|
-| 1 · Resumen | Analogía central, conceptos con su cita verificada, resumen por secciones y diagrama Mermaid |
-| 2 · Tarjetas didácticas | Pregunta y respuesta con pista |
-| 3 · Guía paso a paso | «¿Cuál es la meta de leer "‹título›"?»: objetivos de aprendizaje y pasos con qué hacer y cómo comprobarlo; el comando en terminal solo si el documento es técnico |
-| 4 · Contenido AudioVisual | Microclase narrada de hasta 60 s, dibujada en el navegador con Remotion Player (sin MP4 en el servidor) |
-| 5 · Cuestionario | Examen final sobre lo que enseñaron las estaciones 1 a 4 |
+### 🌟 Elementos Diferenciadores
+- **Verificación Estricta de Citas (RAG Grounding):** Cada concepto clave y respuesta del cuestionario se ancla literalmente al documento original indicando la página real, erradicando alucinaciones.
+- **Progresión Gamificada:** Sistema de aprendizaje interactivo con **325 XP acumulables** a lo largo de las estaciones y vitrina de **5 medallas de maestría**, con acceso a una experiencia cinematográfica interactiva mediante el botón **«Ver Sorpresa ✨»**.
+- **Cabina de Dirección Audiovisual:** Teleprompter técnico sincronizado para el docente o relator, storyboard didáctico y microclases narradas renderizadas en el navegador con Remotion Player (sin procesamiento de video pesado en el servidor).
+- **Aprendizaje Adaptativo Tridimensional:** Adaptación dinámica del contenido en 3 dimensiones para ajustarse con precisión al contexto de cada estudiante:
 
-3. **Métricas & OCI Cloud.** Auditoría de fidelidad, persistencia en Object Storage, exportación multiformato (JSON estructurado, Markdown didáctico, mazo Anki en CSV, descarga del Dossier Pedagógico Oficial en PDF compilado con ReportLab) y acceso a la experiencia cinematográfica de créditos interactivos mediante el botón **«Ver Sorpresa ✨»**.
+| Dimensión | Opciones Disponibles | Impacto en el Aprendizaje |
+| :--- | :--- | :--- |
+| **Perfil del Destinatario** | • **Principiante / Transición:** Conceptos base y analogías progresivas.<br/>• **Junior / Semi Senior:** Implementación práctica y buenas prácticas.<br/>• **Líder Técnico / Arquitecto:** Decisiones de diseño, SLA y resiliencia.<br/>• **Gestor / Ejecutivo:** Impacto en negocio, costos y mitigación de riesgos. | Modula el tono, el vocabulario técnico y la curva de dificultad según el rol. |
+| **Nicho / Sector (11 áreas)** | Finanzas & Fintech, Medicina & Salud, E-commerce & Retail, Tecnología, Legal, Educación, Industria, entre otros. | Contextualiza las analogías, metáforas y casos prácticos a la realidad de la industria. |
+| **Nivel de Detalle** | • **Didáctico:** Modelos mentales intuitivos y comandos esenciales.<br/>• **Técnico Profundo:** Sintaxis CLI con flags, topología de red y configuraciones avanzadas. | Adapta la exigencia práctica de los laboratorios y comandos en terminal. |
 
-#### ☁️ Persistencia en la Nube: OCI Object Storage (Always Free)
+### Las 5 Estaciones de Aprendizaje
 
-<table>
-  <tr>
-    <td width="50%"><img src="docs/capturas/oci-object-storage.png" alt="Consola de OCI Object Storage: particiones raíz del bucket"></td>
-    <td width="50%"><img src="docs/capturas/oci-contenidos-generados.png" alt="Detalle de contenidos generados almacenados en OCI"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>Estructura raíz: contenidos-generados/, documentos-originales/ y users/</sub></td>
-    <td align="center"><sub>Archivos JSON pedagógicos persistidos por documento y perfil en nivel Standard</sub></td>
-  </tr>
-</table>
+| Estación | Nombre | Contenido pedagógico |
+| :---: | :--- | :--- |
+| **1** | **Resumen** | Analogía central, conceptos clave con **citas textuales verificadas** en el documento original, resumen por secciones y mapa conceptual. |
+| **2** | **Tarjetas Didácticas** | Preguntas y respuestas interactivas con pistas reflexivas (formato *flashcards* exportable a Anki). |
+| **3** | **Guía Paso a Paso** | Tutorial práctico con metas de aprendizaje, instrucciones paso a paso y comprobaciones de éxito. |
+| **4** | **Contenido Audiovisual** | Microclase narrada en video dinámico renderizado en el navegador con Remotion Player (sin procesamiento de video en el servidor). |
+| **5** | **Cuestionario** | Examen de autoevaluación adaptado exactamente al temario enseñado en las estaciones previas. |
 
-NuevaMente implementa persistencia en la nube utilizando un bucket privado de **Oracle Cloud Infrastructure (OCI) Object Storage** bajo el nivel **Always Free**:
+### Ingesta y Custodia en la Nube
+- **Modo Invitado (sin cuenta):** Permite explorar de inmediato muestras pregeneradas de documentos reales (Apache Kafka, Don Quijote, ENISA, Snowflake, OCI Swap) con cero consumo de cuota de IA.
+- **Con cuenta:** Permite subir documentos propios (PDF, Markdown, texto o imágenes escaneadas transcritas con IA).
+- **Persistencia Cloud:** Documentos originales y paquetes JSON custodiados en un bucket privado de **OCI Object Storage** con exportación multiformato (Markdown, JSON estructurado, Anki CSV y PDF compilado con ReportLab).
 
-* **Consumo medido en la consola oficial:** El sistema utiliza actualmente **~20.18 MiB** del límite gratuito combinado de **20 GiB** (apenas un ~0.1% de la cuota disponible a coste $0).
-* **Particiones y estructura del Bucket:**
-  * 📁 **`documentos-originales/`**: Custodia inmutable de los archivos fuente ingresados (PDF, TXT, Markdown o imágenes escaneadas transcritas con IA).
-  * 📁 **`contenidos-generados/`**: Paquetes de estudio completos generados por las 5 estaciones. Cada recurso se guarda como un archivo JSON independiente identificado por el hash del documento y el perfil del estudiante (ej. `doc-127d8cb...-flashcards.json`, `...-guia-practica-...-tutorial.json`), almacenados en nivel *Standard* de alta disponibilidad.
-  * 📁 **`users/`**: Partición privada y aislada por identificador de usuario (`users/<UUID>/`), garantizando multitenancy seguro y privacidad por diseño.
 
-**Base de datos (Supabase).** Las migraciones de `supabase/migrations/` se aplican en orden; la última, `202610160001_tarea_cuestionario.sql`, admite la tarea `C` en `generation_tasks`.
 
----
+## 🚀 1. Instalación y Ejecución
 
-## 🏛️ 1. Arquitectura
+### Requisitos Previos
+- **Python 3.12**
+- **Node.js 18 o superior**
 
-El navegador dibuja el recorrido y el video; el backend ingiere, genera, verifica y guarda. Todos los servicios externos se usan en su capa gratuita.
+### 🔑 Variables de Entorno (.env)
+Configura tus claves creando un archivo `.env` en la raíz (a partir de `.env.example`):
+
+| Variable | ¿Obligatoria? | Propósito Técnico & Mecanismo de Respaldo |
+| :--- | :---: | :--- |
+| `GEMINI_API_KEY` | **Sí** | Generación pedagógica paralela, transcripción multimodal y TTS de respaldo. |
+| `SUPABASE_URL` · `SUPABASE_PUBLISHABLE_KEY` | No | Autenticación y persistencia de progreso (el modo invitado no lo requiere). |
+| `GROQ_API_KEY` | No | Auditoría ultrarrápida de fidelidad de afirmaciones contra el documento (>250 t/s). |
+| `COHERE_API_KEY` | No | Adaptación de tono en cadena colaborativa y embeddings en modo clásico. |
+| `ELEVENLABS_API_KEY` | No | Síntesis de voz para video (fallback a Gemini TTS o Web Speech del navegador). |
+| `OCI_*` | No | Custodia en OCI Object Storage Always Free (fallback local a `data/outputs/`). |
+
+> **Aviso de Seguridad:** Las claves secretas residen exclusivamente en el backend; el frontend solo expone variables públicas de configuración (`VITE_API_URL`, `VITE_SUPABASE_*`).
+
+### En Windows (Automatizado en 1 clic)
+1. Ejecuta `setup.bat` para crear automáticamente el entorno virtual `.venv` e instalar dependencias.
+2. Abre el archivo `.env` generado y coloca tus claves de API (`GEMINI_API_KEY`).
+3. Ejecuta `iniciar_local.bat` para levantar concurrentemente Backend (puerto 8000), Frontend (puerto 5173) y abrir el navegador.
+
+
+### Puesta en Marcha Manual
+
+#### 1. Backend (FastAPI)
+```bash
+# Crear entorno virtual
+python -m venv .venv
+
+# Activar entorno virtual
+# En Windows:
+.venv\Scripts\activate
+# En Linux / macOS:
+source .venv/bin/activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Configurar variables de entorno
+cp .env.example .env
+
+# Iniciar servidor Uvicorn
+uvicorn app.main:app --app-dir backend --reload --port 8000
+```
+*API y documentación OpenAPI / Swagger activa en:* `http://localhost:8000/docs`
+
+#### 2. Frontend (React 19 + TypeScript + Vite)
+```bash
+# Navegar a la carpeta frontend
+cd frontend
+
+# Instalar dependencias
+npm install
+
+# Configurar variables locales
+cp .env.example .env.local
+
+# Iniciar servidor de desarrollo
+npm run dev
+```
+
+Abre tu navegador en **`http://localhost:5173/`** *(emplear `localhost` en lugar de `127.0.0.1` para habilitar el redireccionamiento de inicio de sesión con Supabase OAuth)*.
+
+
+## 🏛️ 2. Arquitectura y Modos RAG
+
+El frontend (React 19 + Vite) dibuja el recorrido y el reproductor de video; el backend (FastAPI) orquesta la ingesta, los modelos de lenguaje, la verificación estricta de citas y la persistencia en la nube.
+
+<p align="center">
+  <img src="docs/flujo-nuevamente.svg" alt="Flujo general de NuevaMente" width="960">
+</p>
 
 ```mermaid
 flowchart LR
-    subgraph NAV["Navegador · React 19 + Vite"]
-        UI["Paso 1 · Ingesta<br/>Paso 2 · 5 estaciones<br/>Paso 3 · Métricas y OCI"]
-        VID["Video narrado<br/>Remotion Player"]
-        MUE["Muestras pregeneradas<br/>public/ejemplos/<br/>(modo invitado)"]
-    end
-    subgraph API["Backend FastAPI · backend/app"]
-        AUTH["auth.py<br/>sesión Supabase<br/>el invitado no genera"]
-        ING["Ingesta<br/>PDF · MD · TXT · imagen"]
-        GEN["Generación<br/>paralelo → cadena → clásico"]
-        VER["Verificación de citas<br/>core/fuentes.py"]
-        NAR["Narración<br/>voz y fotos libres"]
-    end
-    subgraph EXT["Servicios externos"]
-        GEM["Gemini"]
-        GROQ["Groq · auditoría"]
-        COH["Cohere · cadena y clásico"]
-        VOZ["ElevenLabs · Gemini TTS"]
-        IMG["Openverse · Wikimedia"]
-    end
-    subgraph DAT["Persistencia"]
-        SUP[("Supabase<br/>Auth, documentos,<br/>paquetes y progreso")]
-        OCI[("OCI Object Storage<br/>bucket privado por usuario")]
-        CHR[("ChromaDB<br/>solo modo clásico")]
+    FE["Frontend<br/>React 19 + Vite"] -->|"SSE / REST"| BE
+
+    subgraph BE["Backend FastAPI"]
+        direction TB
+        P1["1. Ingesta & Contexto"] --> P2["2. Generación en Paralelo<br/>(Estaciones de Aprendizaje)"] --> P3["3. Verificación & Auditoría"]
     end
 
-    UI -->|"SSE /adaptar/stream"| AUTH --> ING --> GEN --> VER
-    GEN --> GEM & GROQ & COH
-    GEN --> SUP & OCI
-    GEN -.-> CHR
-    VID -->|"/narracion/generar"| NAR --> VOZ & IMG
+    subgraph IA["Modelos de IA"]
+        direction TB
+        GEM["Google Gemini"]
+        GROQ["Groq<br/>Auditoría"]
+        COH["Cohere<br/>Embeddings"]
+    end
+
+    subgraph EXT["Servicios y Componentes"]
+        direction TB
+        VOZ["ElevenLabs<br/>(Voz / TTS)"]
+        CITAS["Servicio de Citas<br/>(Text Grounding)<br/>openverse / wikimedia"]
+    end
+
+    subgraph BD["Bases de Datos & Almacenamiento"]
+        direction TB
+        SUP[("Supabase")]
+        OCI[("OCI Object Storage")]
+        CHR[("ChromaDB")]
+    end
+
+    BE <--> IA
+    BE <--> EXT
+    BE <--> BD
 ```
 
-**Los tres modos de generación (`modo_rag`)** y el relevo entre ellos (`backend/app/main.py`, `_generar_segun_modo`):
+### Modos de Generación
 
-| Modo | Cuándo se usa | Qué hace | Código |
-|---|---|---|---|
-| `paralelo` | Siempre, desde la aplicación (`VITE_MODO_RAG`) | Gemini genera los recursos en paralelo y después el cuestionario; cada cita se busca en el documento, cada recurso llega por SSE apenas está listo y Groq audita una muestra (sección 2). Caché por huella en `generation_tasks`. | `agentes/generacion_paralela.py` |
-| `vectorless` · cadena colaborativa | Si el paralelo no produce ningún recurso. Es el valor por defecto de la API si no se envía `modo_rag` | RAG sin vectores: el documento entra completo en el contexto. Gemini genera, Cohere adapta el tono al perfil y al sector, y Groq audita las afirmaciones (`anclaje_fuente_score`). | `agentes/cadena_colaborativa.py` |
-| `clasico` · RAG vectorial | Si la cadena también falla, o pedido explícito | Fragmentos, embeddings de Cohere, búsqueda en ChromaDB y tres agentes en LangGraph (sección 3). | `core/orchestrator.py`, `agentes/agente{1,2,3}_*.py` |
-
-Si un modo no da resultado, se pasa al siguiente y el paquete lo advierte: **paralelo → cadena colaborativa → clásico**. El modo paralelo solo conmuta si ninguna tarea produjo recursos; un recurso suelto que falla queda marcado como fallido y no se inventa. Dentro de la cadena, si Gemini falla, genera Groq; Cohere no genera, solo adapta el tono.
+| Modo | Estrategia | Descripción | Implementación |
+| :--- | :--- | :--- | :--- |
+| **`paralelo`** *(Predeterminado)* | **In-Context Grounding** | Gemini procesa el documento en paralelo y luego genera el cuestionario. Respuestas en tiempo real vía SSE con verificación determinista de citas. | `agentes/generacion_paralela.py` |
+| **`vectorless`** | **Cadena Colaborativa** | Fallback cuando se agota cuota: Gemini genera, Cohere adapta el tono pedagógico y Groq audita la fidelidad. | `agentes/cadena_colaborativa.py` |
+| **`clasico`** | **RAG Vectorial con Agentes** | Chunking, embeddings de Cohere, ChromaDB y ciclo reflexivo (*Investigador ➔ Productor ➔ Crítico*) con LangGraph. | `core/orchestrator.py` |
 
 ---
 
-## 🔄 2. Flujo del modo paralelo (el que usa la aplicación)
+## 🔌 3. API REST Principal
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor E as Estudiante
-    participant UI as Frontend
-    participant API as FastAPI
-    participant G as Gemini
-    participant V as Verificador de citas
-    participant P as Supabase y OCI
+| Método y Ruta | Descripción |
+| :--- | :--- |
+| `GET /health` | Chequeo de estado de los servicios |
+| `GET /api/v1/config/opciones` | Lista de perfiles, sectores y niveles disponibles |
+| `POST /api/v1/documentos/extraer` | Extracción de texto y transcripción OCR con IA |
+| `POST /api/v1/adaptar/stream` | Generación del paquete educativo en tiempo real (SSE) |
+| `POST /api/v1/narracion/generar` | Generación de audio TTS y activos para el video |
+| `POST /api/v1/exportar/pdf` | Compilación y descarga del Dossier Pedagógico en PDF |
+| `GET /api/v1/paquetes` | Consulta del historial de paquetes del usuario |
 
-    E->>UI: Sube un documento y elige perfil, sector y nivel
-    UI->>API: POST /api/v1/adaptar/stream (SSE con heartbeats cada 15 s)
-    API->>API: Ingesta y huella del documento (caché en generation_tasks)
-    par Tres tareas en paralelo
-        API->>G: A · Resumen
-        API->>G: B1 · Tarjetas, glosario y objetivos
-        API->>G: B2 · Guion del video, diapositivas, guía y diagrama
-    end
-    G-->>V: Cada recurso
-    V-->>UI: Evento «recurso»: citas buscadas literalmente, página real
-    API->>G: C · Cuestionario con el temario de A, B1 y B2
-    G-->>V: Cuestionario
-    V-->>UI: Evento «recurso»
-    Note over API: Groq audita una muestra de afirmaciones contra el documento
-    API->>P: Guarda el documento y el paquete en la cuenta
-    API-->>UI: Evento «resultado»
-    E->>UI: Pide el video de la estación 4
-    UI->>API: POST /api/v1/narracion/generar
-    API-->>UI: Audio por escena (ElevenLabs o Gemini TTS) y fotos libres
-```
+> 📖 La documentación interactiva Swagger se encuentra disponible en `http://127.0.0.1:8000/docs`.
 
-Si un recurso falla, se marca como fallido y no se rellena. La página de cada cita sale del documento, nunca del modelo.
 
----
-
-## 🧠 3. Flujo RAG y agentes (modo clásico)
-
-Es el respaldo final y el que demuestra la ruta RAG con base vectorial. En la biblioteca, uno de los 5 escenarios de Apache Kafka está generado con este modo y lo indica.
-
-```mermaid
-flowchart TD
-    D["Documento"] --> A1["Agente 1 · Investigador<br/>fragmentos con solapamiento<br/>embeddings de Cohere"]
-    A1 <--> CH[("ChromaDB<br/>colección por usuario")]
-    A1 -->|"fragmentos más relevantes"| A2["Agente 2 · Productor<br/>rol según el perfil<br/>ejemplo few-shot del formato"]
-    A2 --> A3["Agente 3 · Crítico<br/>contrasta cada afirmación con los fragmentos<br/>calcula anclaje_fuente_score"]
-    A3 -->|"anclaje menor que 0,75 y quedan intentos"| A2
-    A3 -->|"aprobado, o el mejor intento con aviso"| R["Paquete"]
-```
-
-El umbral (`MIN_ANCLAJE_FUENTE_SCORE`, 0,75) y los reintentos (`MAX_REDACCION_RETRIES`, 2) se configuran en `.env`. El grafo está en `backend/app/core/orchestrator.py` y los agentes en `backend/app/agentes/agente{1,2,3}_*.py`.
-
----
-
-## 🔌 4. API
-
-| Método y ruta | Para qué |
-|---|---|
-| `GET /health` | Estado del servicio |
-| `GET /api/v1/config/opciones` | Perfiles, sectores, niveles y formatos |
-| `POST /api/v1/documentos/extraer` | Texto de un archivo; imágenes y PDF escaneados se transcriben con Gemini |
-| `POST /api/v1/adaptar` · `/adaptar/stream` | Genera el paquete (JSON completo, o por SSE recurso a recurso) |
-| `POST /api/v1/narracion/generar` · `/narracion/ampliar` | Voz y fotos del video; ampliar una escena |
-| `POST /api/v1/exportar/pdf` | Genera y descarga el Dossier Pedagógico Oficial en PDF (ReportLab) |
-| `GET /api/v1/paquetes` · `/paquetes/{id}` | Historial privado de la cuenta |
-| `GET /api/v1/documentos/ejemplos…` | Documentos de la biblioteca |
-
-Todo lo que gasta cuota exige sesión. El invitado recibe 403: solo abre las muestras pregeneradas. La documentación interactiva está en `http://127.0.0.1:8000/docs`.
-
----
-
-## 📂 5. Estructura del repositorio
+## 📂 4. Estructura del Repositorio
 
 ```text
 .
 ├── backend/
 │   ├── app/
-│   │   ├── main.py          # endpoints, relevo entre modos y SSE
-│   │   ├── auth.py          # sesión de Supabase; el invitado no genera
-│   │   ├── agentes/         # generacion_paralela.py (por defecto), cadena_colaborativa.py, agente1-3 (clásico)
-│   │   ├── core/            # schemas.py (contratos), fuentes.py (citas), ingestion.py, config.py, orchestrator.py, prompts.py
-│   │   ├── servicios/       # Gemini, voz, imágenes, narración, transcripción, registro de tareas
-│   │   ├── storage/         # OCI, disco local y almacén de narraciones, separados por usuario
-│   │   └── integration/     # adaptadores privados por usuario
-│   └── tests/               # pytest; los modelos se simulan
+│   │   ├── main.py          # Endpoints REST, SSE y conmutación de modos
+│   │   ├── auth.py          # Autenticación y control de acceso con Supabase
+│   │   ├── agentes/         # Generación paralela, colaborativa y agentes LangGraph
+│   │   ├── core/            # Contratos Pydantic, verificación de fuentes y configuración
+│   │   ├── servicios/       # Integraciones con Gemini, Groq, Cohere, ElevenLabs
+│   │   └── storage/         # Clientes de OCI Object Storage y almacenamiento local
+│   └── tests/               # Pruebas automatizadas de backend con pytest
 ├── frontend/
-│   ├── src/                 # App.tsx, components/ (pasos y estaciones), services/, utils/, types/
-│   ├── public/ejemplos/     # muestras pregeneradas: paquete, voz y fotos con su licencia
-│   └── tests/               # node --test
-├── contracts/fixtures/      # caso de referencia del modelo de tiempo, compartido por backend y frontend
-├── supabase/                # migraciones y prueba de propiedad (RLS)
-├── data/documents/          # documentos de la biblioteca
-├── docs/                    # diagrama del flujo (SVG) y capturas de la app
-├── scripts/                 # diagnóstico de OCI, prueba de estrés y restablecimiento local
-├── tests/                   # pruebas del orquestador clásico
+│   ├── src/                 # Componentes React 19, navegación de estaciones y hooks
+│   ├── public/ejemplos/     # Muestras pregeneradas para modo invitado
+│   └── tests/               # Pruebas automatizadas de frontend
+├── docs/                    # Diagramas técnicos y capturas de la aplicación
+├── scripts/                 # Scripts de diagnóstico, limpieza y pruebas de carga
 └── setup.bat · iniciar_local.bat · reestablecer_local.bat
 ```
 
----
 
-## 🚀 6. Puesta en marcha local
 
-**Requisitos:** Python 3.12 y Node.js 22 o superior (parcheados contra el incidente TLS eMudhra: `certifi >= 2026.10.19`, `pip >= 26.2.2`).
+## 🧪 5. Pruebas y Documentación
 
-**Claves** (en `.env`, a partir de `.env.example`; nunca en variables `VITE_*`):
-
-| Variable | ¿Hace falta? | Para qué |
-|---|---|---|
-| `GEMINI_API_KEY` | Sí | Generación, transcripción de imágenes y voz de respaldo |
-| `SUPABASE_URL` · `SUPABASE_PUBLISHABLE_KEY` | NO | Inicio de sesión y persistencia |
-| `ELEVENLABS_API_KEY` | No | Voz del video; sin ella, Gemini TTS y, si tampoco, la voz del navegador |
-| `GROQ_API_KEY` | No | Auditoría de fidelidad |
-| `COHERE_API_KEY` | No | Modos cadena colaborativa y clásico |
-| `OCI_*` | No | Bucket de OCI; sin ellas, el paquete se guarda en disco (`data/outputs/`) |
-
-**En Windows:** `setup.bat` crea `.venv` e instala todo; `iniciar_local.bat` levanta el backend (puerto 8000) y el frontend (puerto 5173).
-
-**A mano:**
+### Pruebas Automatizadas
+Las pruebas unitarias y de integración son deterministas y utilizan mocks para los proveedores de IA:
 
 ```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt     # Linux/macOS: .venv/bin/python
-cp .env.example .env                                        # y completar las claves
-.venv/Scripts/python -m uvicorn app.main:app --app-dir backend --port 8000
-
-# en otra terminal
-cd frontend
-npm ci
-cp .env.example .env.local
-npm run dev
-```
-
-Abrir **http://localhost:5173**: con `localhost` y no `127.0.0.1`, porque es el origen autorizado para el inicio de sesión.
-
----
-
-## ⚙️ 7. Decisiones técnicas
-
-El detalle de cada decisión (qué se descartó, por qué y qué cuesta)
-
-1. **Procedencia honesta.** Nada se presenta como verificado si no lo está. Las citas se buscan literalmente en el documento y la página sale de ahí; un recurso que falla se muestra como fallido; si el texto lo transcribió la IA, se dice.
-2. **Solo cuota gratuita.** El modo invitado no gasta cuota: el backend rechaza sus generaciones con 403 y las muestras son archivos estáticos. Las fotos son de bancos libres con licencias que permiten adaptarlas, y se muestran con autor y licencia.
-3. **VM de OCI con 1 vCPU y 1 GB.** No hay MP4 ni FFmpeg en el servidor: el video son diapositivas narradas que dibuja el navegador. Las generaciones simultáneas se limitan con un semáforo (5 a la vez).
-4. **Tres modos de RAG por los límites de cómputo y de cuota.** El orden de los modos responde a lo que la VM puede sostener:
-   - **Paralelo y cadena colaborativa (RAG en contexto, sin vectores).** El documento completo, hasta 350.000 caracteres, viaja en la ventana de contexto del modelo, que lo lee entero sin una recuperación previa. El servidor solo orquesta llamadas HTTP asíncronas y verifica las citas con búsqueda de texto en Python: no genera embeddings, no carga un modelo y no mantiene un índice en memoria. Por eso son los modos principales.
-   - **Clásico (RAG vectorial).** Fragmenta el documento (220 palabras por fragmento, con solapamiento) y pide los embeddings a Cohere por API, pero el índice vive en el propio proceso: ChromaDB `PersistentClient`, con SQLite en disco y el índice HNSW en RAM. En una VM de 1 GB, ese índice compite por memoria con FastAPI y las generaciones en curso. Por eso queda como último respaldo, solo cuando los otros dos modos fallan.
-   - **Varios proveedores por la cuota gratuita.** Cada capa gratuita tiene límites por minuto y por día. Los errores 429 se clasifican en cuota por minuto o cuota diaria, los modelos agotados se recuerdan y se pasa al modelo de respaldo o al siguiente modo, en lugar de reintentar sobre un proveedor sin cuota.
-5. **Cloudflare corta a los 100 s.** La generación va por SSE con heartbeats cada 15 s.
-6. **Claves solo en el backend.** En el navegador solo hay valores públicos (`VITE_API_URL`, `VITE_SUPABASE_*`).
-7. **Aislamiento por usuario.** El backend verifica el token con Supabase, consulta Postgres con el JWT del usuario (RLS) y guarda en OCI bajo `users/<UUID>/` en un bucket privado. ChromaDB también tiene una colección por usuario.
-8. **CORS.** Se admiten `localhost` y `127.0.0.1` en cualquier puerto. En producción hay que agregar el dominio público a `allow_origins` en `backend/app/main.py`.
-9. **Repositorio y Documentación.** Este README, el [**Índice General (INDEX.md)**](INDEX.md) y [**docs/DECISIONES.md**](docs/DECISIONES.md) son la referencia de documentación publicada: en GitHub están el código, las pruebas, las migraciones, las muestras y las especificaciones técnicas por área.
-
----
-
-## 🧪 8. Pruebas automatizadas
-
-Las pruebas son deterministas: Gemini, Groq, ElevenLabs y los bancos de imágenes se simulan, así que no gastan cuota.
-
-```bash
+# Pruebas de Backend (pytest)
 cd backend && ../.venv/Scripts/python -m pytest -q
+
+# Pruebas de Frontend (TypeScript y test runner)
 cd frontend && npm test && npx tsc --noEmit -p .
 ```
 
---- 
+### Documentación Adicional
+- 📡 **Referencia de la API REST:** Consulta [backend/docs/API.md](backend/docs/API.md) para el catálogo de endpoints, schemas de solicitud/respuesta y streaming SSE.
+- ⚙️ **Decisiones Técnicas y de Arquitectura:** Consulta [docs/DECISIONES.md](docs/DECISIONES.md) para conocer las alternativas descartadas, compromisos técnicos (*trade-offs*) y justificaciones de diseño.
+- 📜 **Historial de Cambios y Auditorías:** Consulta [CHANGELOG.md](CHANGELOG.md) para el detalle de versiones y saneamiento de dependencias/certificados TLS.
+- 🗺️ **Índice General del Proyecto:** Consulta [INDEX.md](INDEX.md) para un mapa exhaustivo de todos los documentos y especificaciones.
 
-## 👥 9. Equipo 10, Créditos y Reconocimientos
 
-### 🎖️ Equipo 10 · Hackathon ONE G10 (Oracle Next Education & Alura · No-Country)
 
-| Rol / Área | Miembros | Responsabilidades y Contribuciones Técnicas |
-| :--- | :--- | :--- |
-| **Facilitación & Project Management** | **Silvia** | Gestión ágil, gobernanza de requerimientos pedagógicos y alineación de entregables del Hackathon. |
-| **Liderazgo Técnico Backend & Arquitectura** | **Gabriel** | Orquestación RAG multiagente (LangGraph / FastAPI), motor de verificación de citas y cliente OCI Object Storage Always Free. |
-| **Liderazgo Técnico Frontend & UI/UX** | **Carina** | Experiencia de usuario inmersiva en React 19, navegación de las 5 estaciones, sistema visual y componentes interactivos. |
-| **Backend & Cloud Integration** | **Emanuel, Pedro, Tomás** | Contratos Pydantic v2, persistencia vectorial en ChromaDB, endpoints REST y scripts de infraestructura en la nube. |
-| **Frontend, QA & Diseño de Producto** | **Harumi** | Aseguramiento de calidad, suite de pruebas automatizadas, accesibilidad y diseño de interfaces reactivas. |
-| **Colaboración Técnica & Documentación** | **Wilson, Alex** | Validación de contratos, pruebas de integración y documentación técnica de arquitectura. |
+## 👥 6. Equipo 10, Créditos y Reconocimientos
 
----
+### 🎖️ Hackathon ONE G10 (Oracle Next Education & Alura Latam · No-Country)
 
-### 🎬 Sorpresa agregada por completar el quiz
+> **Muchas banderas y una misma meta.**  
+> *Unidos para demostrar lo que el talento de nuestra región es capaz de construir. NovaMind nace de esta unión, y esto apenas comienza.* 💜
+
+| Integrante | Rol / Responsabilidad Técnica | Redes / Perfiles |
+| :--- | :--- | :---: |
+| **Silvia Zamora** | Facilitación & Project Management | [LinkedIn](https://www.linkedin.com/in/silvia-zamora-valverde-3775a72ab) · [GitHub](https://github.com/silvet005-cpu) |
+| **Gabriel Quineo** | Liderazgo Técnico Backend & Arquitectura RAG | [GitHub](https://github.com/gadeq) |
+| **Carina Bosio** | Liderazgo Técnico Frontend & UI/UX | [LinkedIn](https://www.linkedin.com/in/carina-susana-bosio/) · [GitHub](https://github.com/CariBosio) |
+| **Tomás Encina** | Backend & Cloud Integration | [LinkedIn](https://www.linkedin.com/in/tomas-encina-bugueno/) · [GitHub](https://github.com/toencina) |
+| **Emanuel Lopez** | Backend & Cloud Integration | [LinkedIn](https://www.linkedin.com/in/emanuel-lopez-f/) · [GitHub](https://github.com/ema28pro) |
+| **Pedro Ruiz** | Backend & Cloud Integration | [LinkedIn](https://www.linkedin.com/in/pedro-ruiz-307576398/) · [GitHub](https://github.com/pedroruizguerrero240-lab) |
+| **Harumi Pereda Pascal** | Frontend, QA & Diseño de Producto | [LinkedIn](https://www.linkedin.com/in/harumi-pereda-pascal) · [GitHub](https://github.com/harumipereda) |
+| **Alejandro Cárdenas** | Colaboración Técnica & Documentación | [LinkedIn](https://www.linkedin.com/in/alejandro-alfredo-cardenas/) · [GitHub](https://github.com/Al3x4nDr0s) |
+| **Wilson Ignao** | Colaboración Técnica & Documentación | [LinkedIn](https://www.linkedin.com/in/wilsonignao/) · [GitHub](https://github.com/JuanWilson70) |
+
 ---
 
 ### 🌟 Agradecimientos Institucionales
 
 > *"El equipo de **NuevaMente** extiende su más sincero agradecimiento a **Oracle Cloud Infrastructure (OCI)**, **Alura Latam** y **No-Country** por impulsar el talento tecnológico en Latinoamérica, brindando infraestructura en la nube de nivel mundial y un ecosistema de aprendizaje colaborativo de excelencia."*
-
