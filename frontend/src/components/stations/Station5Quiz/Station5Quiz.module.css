@@ -328,6 +328,25 @@
   padding-top: 0.5rem;
 }
 
+.secondaryBtn {
+ padding: 0.625rem 1.5rem;
+  border-radius: var(--radius-md);
+  /* background: linear-gradient(135deg, var(--color-violet-500) 0%, var(--color-emerald-500) 100%); */
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.secondaryBtn:hover {
+  box-shadow: 0 6px 26px rgba(124, 58, 237, 0.7);
+}
+
 .downloadArtifactBtn {
   padding: 0.625rem 1.5rem;
   border-radius: var(--radius-md);
@@ -784,4 +803,5 @@
 .surpriseCtaBtn:hover {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 6px 25px rgba(6, 182, 212, 0.55);
-}
+}
+

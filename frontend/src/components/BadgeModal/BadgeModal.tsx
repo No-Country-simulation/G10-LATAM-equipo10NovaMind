@@ -136,7 +136,6 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
   sesionIniciada,
   onContinueQuest,
   onRestartToStation1,
-  onOpenCreditos,
 }) => {
   const [showcaseForced, setShowcaseForced] = useState<boolean>(false);
 
@@ -259,26 +258,6 @@ export const BadgeModal: React.FC<BadgeModalProps> = ({
             {isCapstoneFinalBadge ? (
               /* Acciones al culminar la Estación 5: Vitrina de Logros, Repaso o Sorpresa */
               <div className={styles.finalActionsContainer}>
-                {onOpenCreditos && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onOpenCreditos();
-                    }}
-                    className={styles.ctaContinueButton}
-                    style={{
-                      background: 'linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%)',
-                      boxShadow: '0 4px 20px rgba(124, 58, 237, 0.45)',
-                      marginBottom: '0.25rem',
-                    }}
-                    aria-label="Descubrir la sorpresa cinematográfica del equipo"
-                  >
-                    <Sparkles size={16} />
-                    <span>Descubrir la sorpresa</span>
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => setShowcaseForced(true)}
