@@ -602,20 +602,24 @@
 }
 
 .sorpresaBtn {
-  display: inline-flex;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.85rem;
+  height: px;
+  padding: 0.8rem 0.85rem;
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, rgba(236, 72, 153, 0.28), rgba(168, 85, 247, 0.28));
   border: 1px solid rgba(244, 114, 182, 0.65);
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: 0 0 12px rgba(236, 72, 153, 0.25);
   flex-shrink: 0;
+  cursor: pointer;
+  margin-top: 3rem;
 }
 
 .sorpresaBtn:hover {

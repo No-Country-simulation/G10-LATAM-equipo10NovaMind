@@ -290,8 +290,7 @@ const [ajustesSeleccionados, setAjustesSeleccionados] = useState<{
 
   const handleVolverResultados = () => {
     setIsCreditosModalOpen(false);
-    setCurrentStep(2);
-    setActiveStationIndex(4);
+    setCurrentStep(3);
   };
 
   const handleExplorarNuevaMente = () => {

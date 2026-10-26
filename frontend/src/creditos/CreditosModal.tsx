@@ -269,10 +269,10 @@ export const CreditosModal: React.FC<CreditosModalProps> = ({
                   type="button"
                   onClick={onVolverResultados}
                   className={styles.endPrimaryBtn}
-                  aria-label="Volver a los resultados del examen"
+                  aria-label="Ir a resultados en OCI Cloud"
                 >
                   <Award size={16} />
-                  <span>Volver a mis resultados</span>
+                  <span>Volver atrás</span>
                 </button>
 
                 <button
@@ -360,10 +360,10 @@ export const CreditosModal: React.FC<CreditosModalProps> = ({
               type="button"
               onClick={onVolverResultados}
               className={styles.skipButton}
-              title="Volver a los resultados del cuestionario"
-              aria-label="Volver a mis resultados"
+              title="Ir a resultados y métricas OCI Cloud"
+              aria-label="Ir a resultados"
             >
-              <span>Resultados</span>
+              <span>Volver atrás</span>
               <ChevronRight size={14} />
             </button>
           </div>

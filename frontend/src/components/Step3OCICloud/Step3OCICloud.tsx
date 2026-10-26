@@ -9,8 +9,7 @@ import {
   HardDrive,
   ChevronDown,
   ChevronUp,
-  FileCheck2,
-  Bot,
+   Bot,
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
@@ -109,7 +108,7 @@ export const Step3OCICloud = ({
   // Sin credenciales de OCI el backend guarda en su disco y responde «completado» con este bucket
   // (storage/local_storage.py): está guardado, pero no en OCI.
   const enDiscoLocal = almacenamiento?.status_upload === 'completado' && almacenamiento.bucket === BUCKET_LOCAL;
-  const enOCI = almacenamiento?.status_upload === 'completado' && !enDiscoLocal;
+  // const enOCI = almacenamiento?.status_upload === 'completado' && !enDiscoLocal;
   const estadoOCI = enDiscoLocal
     ? ESTADO_OCI.local
     : ESTADO_OCI[almacenamiento?.status_upload ?? 'omitido'] ?? ESTADO_OCI.omitido;
@@ -393,7 +392,7 @@ export const Step3OCICloud = ({
             </div>
           </div>
 
-          <div className={styles.ociUrlDownloadRow}>
+          {/* <div className={styles.ociUrlDownloadRow}>
             <div className={styles.ociUrlInfo}>
               <FileCheck2 size={16} color="var(--color-cyan-400)" />
               <span className={styles.ociUrlText}>
@@ -440,7 +439,20 @@ export const Step3OCICloud = ({
                 <span>Descargar JSON</span>
               </button>
             </div>
-          </div>
+          </div> */}
+
+           {onOpenCreditos && (
+                <button
+                  type="button"
+                  onClick={onOpenCreditos}
+                  title="Descubrir la sorpresa cinematográfica de créditos de NuevaMente"
+                  aria-label="Descubrir la sorpresa cinematográfica de créditos"
+                  className={styles.sorpresaBtn}
+                >
+                  <Sparkles size={14} color="#f472b6" />
+                  <span>¿Cómo se construyó el proyecto NuevaMente? ✨</span>
+                </button>
+              )}
         </div>
       </div>
 
@@ -463,7 +475,7 @@ export const Step3OCICloud = ({
 
           {/* Botonera de Exportación Multi-formato */}
           <div className={styles.exportButtonsGroup}>
-            {onOpenCreditos && (
+            {/* {onOpenCreditos && (
               <button
                 type="button"
                 onClick={onOpenCreditos}
@@ -477,7 +489,7 @@ export const Step3OCICloud = ({
                 <Sparkles size={14} color="#f472b6" />
                 <span>Ver Sorpresa ✨</span>
               </button>
-            )}
+            )} */}
             <button
               type="button"
               onClick={handleCopyJSON}
