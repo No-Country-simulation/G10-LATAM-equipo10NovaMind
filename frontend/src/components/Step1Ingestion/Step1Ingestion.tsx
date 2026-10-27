@@ -226,9 +226,19 @@ export const Step1Ingestion = ({
     ? escenarioDe(muestras, selectedDocId, escenarioId)
     : undefined;
 
-  // Validación de estado habilitado para el CTA final
+  // Validación activa: Permite continuar si hay texto, archivo o preset válido
+// const esArchivoImagen = rawFile
+//   ? esImagen(rawFile)
+//   : fileName
+//   ? tipoArchivo(fileName) === "IMG"
+//   : false;
+
+// Se considera listo si hay un preset de biblioteca, si hay texto, O si hay un archivo cargado (incluso imagen)
   const hayDocumentoListo = Boolean(
-    docContent.trim() || rawFile || fileName || (selectedDocId && (muestraElegida || sesionIniciada))
+    (selectedDocId && (muestraElegida || sesionIniciada)) ||
+    rawFile !== null ||
+    fileName !== null ||
+    docContent.trim().length > 0
   );
 
   const [modo, setModo] = useState<"personalizado" | "sorpresa">(
@@ -403,11 +413,11 @@ export const Step1Ingestion = ({
     const turno = turnoSubida.current;
     setSelectedDocId(null);
     setFileName(file.name);
+    setRawFile(file); // Mantenemos el archivo cargado en memoria desde el inicio
     setBytesArchivo(file.size);
     setDocTitle(file.name.replace(/\.[^/.]+$/, ""));
 
     if (!esImagen(file) && !esPdf(file)) {
-      setRawFile(file);
       const reader = new FileReader();
       reader.onload = (event) => {
         const text = event.target?.result as string;
@@ -417,7 +427,6 @@ export const Step1Ingestion = ({
       return;
     }
 
-    setRawFile(null);
     setDocContent("");
     setExtraccion({
       estado: "cargando",
@@ -433,12 +442,10 @@ export const Step1Ingestion = ({
       setExtraccion({ estado: "inactiva" });
       if (doc.origen === "transcripcion_ia") {
         setOrigen("transcripcion_ia");
-      } else {
-        setRawFile(file);
       }
     } catch (err) {
       if (turno !== turnoSubida.current) return;
-      setFileName(null);
+      // No reseteamos fileName para permitir corrección sin cerrar la selección
       setExtraccion({
         estado: "error",
         mensaje: err instanceof Error ? err.message : String(err),
@@ -460,7 +467,7 @@ export const Step1Ingestion = ({
     if (esTranscripcion) setDocContent(texto);
   };
 
-  const handleSubmit = (e: FormEvent) => {
+const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (extrayendo || isLoadingPreset || !hayDocumentoListo) return;
 
@@ -471,17 +478,29 @@ export const Step1Ingestion = ({
       return;
     }
 
-    if (!docContent.trim() && !rawFile) return;
+    const textoLimpio = docContent.trim();
+    const esImg = rawFile ? esImagen(rawFile) : (fileName ? tipoArchivo(fileName) === "IMG" : false);
+
+    // Si es una imagen pero la transcripción no produjo texto, no dejamos avanzar al backend
+    if (esImg && !textoLimpio) {
+      alert("La imagen no contiene texto legible que pueda procesarse. Sube una foto de un apunte, libro o diagrama con texto.");
+      return;
+    }
+
+    if (!textoLimpio && !rawFile) return;
+
+    // Si es imagen o transcripción, rawFile va en null y viaja docContent como texto directo
+    const archivoParaEnviar = esImg || esTranscripcion ? null : rawFile;
 
     onStartPipeline(
       docTitle.trim() || "Documento sin título",
-      docContent,
+      textoLimpio,
       profile,
       format,
       niche,
       detail,
       selectedDocId || undefined,
-      esTranscripcion ? null : rawFile,
+      archivoParaEnviar,
       origen,
     );
   };
@@ -559,14 +578,10 @@ export const Step1Ingestion = ({
       <form onSubmit={handleSubmit} className={styles.formContainer}>
         <h2 className={styles.tituloRuta}>Ruta de aprendizaje</h2>
 
-        {/* ==========================================================
-            LAYOUT SPLIT (2 COLUMNAS): ENTRADA VS PREVISUALIZACIÓN
-        ========================================================== */}
+        {/* LAYOUT SPLIT: ENTRADA VS PREVISUALIZACIÓN */}
         <div className={styles.ingestaSplitGrid}>
-          
           {/* COLUMNA IZQUIERDA: FUENTES DE ENTRADA */}
           <div className={styles.columnaFuentes}>
-            
             {/* 1. Biblioteca de Documentos */}
             <div className={styles.scenariosSection}>
               <div className={styles.scenariosHeader}>
@@ -693,7 +708,7 @@ export const Step1Ingestion = ({
                             : "Arrastra o haz clic para sustituir el documento"}
                       </span>
                       <span className={styles.fileHint}>
-                        PDF, Markdown o TXT · Máx. 15 MB
+                        PDF, Markdown, TXT o imagen (PNG, JPG, WEBP) · Máx. 15 MB
                       </span>
                     </div>
                     <input
@@ -737,10 +752,9 @@ export const Step1Ingestion = ({
                   })()}
               </div>
             </div>
-
           </div>
 
-          {/* COLUMNA DERECHA: PREVISUALIZACIÓN EN TIEMPO REAL */}
+          {/* COLUMNA DERECHA: PREVISUALIZACIÓN */}
           <div className={styles.columnaPreview}>
             <div className={styles.fieldLabelRow}>
               <span className={styles.fieldLabel}>Previsualización del Documento</span>
@@ -810,9 +824,7 @@ export const Step1Ingestion = ({
           </div>
         </div>
 
-        {/* ==========================================================
-            SECCIÓN INFERIOR: ADAPTACIÓN PEDAGÓGICA Y PARÁMETROS
-        ========================================================== */}
+        {/* SECCIÓN INFERIOR: ADAPTACIÓN PEDAGÓGICA Y PARÁMETROS */}
         {!sesionIniciada ? (
           <div className={styles.escenariosContenedor} aria-live="polite">
             {documentoElegido ? (
@@ -1075,16 +1087,16 @@ export const Step1Ingestion = ({
                 </button>
               </div>
             ) : (
-              <button
-                type="submit"
-                className={styles.submitButton}
-                disabled={!hayDocumentoListo || extrayendo || isLoadingPreset}
-                title={!hayDocumentoListo ? "Selecciona o sube un documento para comenzar" : undefined}
-              >
-                <Sparkles size={16} />
-                <span>Iniciar Aprendizaje</span>
-                <ArrowRight size={16} />
-              </button>
+             <button
+  type="submit"
+  className={styles.submitButton}
+  disabled={!hayDocumentoListo || isLoadingPreset}
+  title={!hayDocumentoListo ? "Selecciona o sube un documento para comenzar" : undefined}
+>
+  <Sparkles size={16} />
+  <span>Iniciar Aprendizaje</span>
+  <ArrowRight size={16} />
+</button>
             )}
           </div>
         )}
