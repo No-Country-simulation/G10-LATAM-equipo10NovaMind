@@ -1,4 +1,4 @@
-# 🧠 NovaMind — Sistema Inteligente de Adaptación y Generación de Contenido Educativo
+# 🧠 NuevaMente — Sistema Inteligente de Adaptación y Generación de Contenido Educativo
 
 Desarrollado por el **Equipo 10** para **No-Country** (*Hackathon ONE G10 · Oracle Next Education & Alura Latam*).  
 Plataforma que convierte documentación técnica compleja en un recorrido pedagógico interactivo de 5 estaciones adaptado al perfil del estudiante, con citas verificadas y video narrado.
