@@ -1,19 +1,33 @@
-import React, { useSyncExternalStore } from 'react';
-import { Check, LogIn, User as UserIcon, LogOut, Volume2, VolumeX } from 'lucide-react';
-import type { AuthUser } from '../AuthModal/AuthModal';
-import { cambiarSonido, sonar, sonidoActivo, suscribirSonido } from '../../utils/sonidos';
-import styles from './Header.module.css';
+import React, { useSyncExternalStore } from "react";
+import {
+  Check,
+  LogIn,
+  User as UserIcon,
+  LogOut,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import type { AuthUser } from "../AuthModal/AuthModal";
+import {
+  cambiarSonido,
+  sonar,
+  sonidoActivo,
+  suscribirSonido,
+} from "../../utils/sonidos";
+import styles from "./Header.module.css";
 
 /** Activa o silencia los efectos de sonido; la preferencia se recuerda en este navegador. */
 const BotonSonido: React.FC = () => {
   const activo = useSyncExternalStore(suscribirSonido, sonidoActivo);
-  const etiqueta = activo ? 'Silenciar los efectos de sonido' : 'Activar los efectos de sonido';
+  const etiqueta = activo
+    ? "Silenciar los efectos de sonido"
+    : "Activar los efectos de sonido";
   return (
     <button
       type="button"
       onClick={() => {
         cambiarSonido(!activo);
-        if (!activo) sonar('acierto');
+        if (!activo) sonar("acierto");
       }}
       className={styles.sonidoBtn}
       title={etiqueta}
@@ -43,9 +57,9 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
 }) => {
   const steps = [
-    { num: 1, title: 'Configuración e Ingesta' },
-    { num: 2, title: 'Visualizar Resultados' },
-    { num: 3, title: 'Métricas & OCI Cloud' },
+    { num: 1, title: "Configuración e Ingesta" },
+    { num: 2, title: "Visualizar Resultados" },
+    { num: 3, title: "Métricas & OCI Cloud" },
   ];
 
   return (
@@ -53,24 +67,24 @@ export const Header: React.FC<HeaderProps> = ({
       <div className={styles.container}>
         {/* Columna Izquierda: Marca */}
         {/* Columna Izquierda: Marca */}
-<div className={styles.leftCol}>
-  <button
-    type="button"
-    onClick={() => onSelectStep(1)}
-    className={styles.brand}
-  >
-    <div className={styles.brandIcon}>
-      <img src="/Isotipo.svg" alt="" className={styles.brandLetter} />
-    </div>
-    <div className={styles.brandInfo}>
-      <span className={styles.brandTitle}>
-        <span className={styles.brandLight}>Nueva</span>
-        <span className={styles.brandBold}>Mente</span>
-      </span>
-      <span className={styles.brandTagline}>IA & OCI EdTech</span>
-    </div>
-  </button>
-</div>
+        <div className={styles.leftCol}>
+          <button
+            type="button"
+            onClick={() => onSelectStep(1)}
+            className={styles.brand}
+          >
+            <div className={styles.brandIcon}>
+              <img src="/Isotipo.svg" alt="" className={styles.brandLetter} />
+            </div>
+            <div className={styles.brandInfo}>
+              <span className={styles.brandTitle}>
+                <span className={styles.brandLight}>Nueva</span>
+                <span className={styles.brandBold}>Mente</span>
+              </span>
+              <span className={styles.brandTagline}>IA & OCI EdTech</span>
+            </div>
+          </button>
+        </div>
 
         {/* Columna Central: Stepper Encapsulado (Progreso Sutil) */}
         <nav className={styles.centerCol} aria-label="Progreso del flujo">
@@ -95,7 +109,11 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={() => onSelectStep(s.num as 1 | 2 | 3)}
                     className={buttonClass}
                     disabled={bloqueado}
-                    title={bloqueado ? 'Carga un documento o abre una muestra en el paso 1 para continuar' : undefined}
+                    title={
+                      bloqueado
+                        ? "Carga un documento o abre una muestra en el paso 1 para continuar"
+                        : undefined
+                    }
                   >
                     <span className={badgeClass}>
                       {isPassed ? <Check size={10} strokeWidth={3} /> : s.num}
@@ -115,14 +133,16 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Columna Derecha: Auth / Perfil */}
         <div className={styles.rightCol}>
           <BotonSonido />
-          
+
           {user ? (
             <div className={styles.userProfileWrapper}>
               <div className={styles.userAvatarCircle} title={user.email}>
                 <UserIcon size={14} />
               </div>
               <div className={styles.userInfoText}>
-                <span className={styles.userNameText}>{user.name?.toLowerCase()}</span>
+                <span className={styles.userNameText}>
+                  {user.name?.toLowerCase()}
+                </span>
               </div>
               <button
                 type="button"

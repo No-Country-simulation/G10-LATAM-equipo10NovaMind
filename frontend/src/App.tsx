@@ -16,6 +16,7 @@ import { Step2KnowledgeQuest } from "./components/Step2KnowledgeQuest/Step2Knowl
 import { Step3OCICloud } from "./components/Step3OCICloud/Step3OCICloud";
 import { BadgeModal } from "./components/BadgeModal/BadgeModal";
 import { CreditosModal } from "./creditos/CreditosModal";
+import { SplashScreen } from './components/SplashScreen/SplashScreen';
 import { SCENARIOS, INITIAL_ACHIEVEMENTS } from "./data/mockScenarios";
 import type {
   AdaptedContentPackage,
@@ -50,6 +51,9 @@ export default function App() {
   // Autenticación
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
+
+  //Screen Splash
+  const [showSplash, setShowSplash] = useState(true);
 
   // Stepper workflow principal: 1 = Ingesta, 2 = Knowledge Quest, 3 = Métricas & OCI
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -564,6 +568,11 @@ const handleAbrirMuestra = async (documento: string, escenario?: string) => {
 
   return (
     <div className={styles.appWrapper}>
+{/* 0. Splash Screen Cinemática (Awwwards) */}
+      {showSplash && (
+        <SplashScreen onFinish={() => setShowSplash(false)} />
+      )}
+
       {/* 1. Global Stepper Workflow Header */}
       <Header
         currentStep={currentStep}
@@ -670,42 +679,40 @@ const handleAbrirMuestra = async (documento: string, escenario?: string) => {
       </main>
 
       {/* Footer */}
-      <footer className={styles.footer}>
-        <div className={styles.footerContainer}>
-          <div className={styles.footerBrand}>
-            <div className={styles.isologoFooter}>
-              <img
-                src="/IsotipoMonocromo.svg"
-                alt=""
-                className={styles.brandLetter}
-              />
-            </div>
-            <span className={styles.brandSign}>NuevaMente</span>
-            <span> · Hackathon ONE G10 (Oracle Next Education & Alura) · <strong>Equipo 10</strong></span>
-          </div>
+     <footer className={styles.footer}>
+  <div className={styles.footerContainer}>
+    <div className={styles.footerBrand}>
+      <div className={styles.isologoFooter}>
+        <img
+          src="/IsotipoMonocromo.svg"
+          alt=""
+          className={styles.brandLetter}
+        />
+      </div>
+      <div className={styles.brandDetails}>
+        <span className={styles.brandSign}>NuevaMente</span>
+        <span className={styles.brandSubtext}>
+          Hackathon ONE G10 (Oracle Next Education & Alura) · <strong>Equipo 10</strong>
+        </span>
+      </div>
+    </div>
 
-          <div className={styles.footerLinks}>
-            <span>Capa Always Free OCI (Cero Costos)</span>
-            <span>·</span>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedBadgeForModal(null);
-                setIsTrophyModalOpen(true);
-              }}
-              className={styles.trophyLink}
-              style={{
-                background: "none",
-                border: "none",
-                font: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              Medallas ({unlockedBadgesCount}/{achievements.length})
-            </button>
-          </div>
-        </div>
-      </footer>
+    <div className={styles.footerLinks}>
+      <span className={styles.ociLink}>Capa Always Free OCI (Cero Costos)</span>
+      <span className={styles.dotDivider}>·</span>
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedBadgeForModal(null);
+          setIsTrophyModalOpen(true);
+        }}
+        className={styles.trophyLink}
+      >
+        Medallas ({unlockedBadgesCount}/{achievements.length})
+      </button>
+    </div>
+  </div>
+</footer>
 
       {/* Badges / Trophy Modal */}
       <BadgeModal

@@ -1,32 +1,40 @@
 .appWrapper {
-  min-height: 100vh;
-  background-color: var(--color-bg-base);
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip; /* Corta el desbordamiento sin romper position: sticky o fixed */
+  background-color: var(--color-bg-base, #06080d);
   color: var(--color-text-primary);
   display: flex;
   flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .mainContent {
   flex: 1;
-  max-width: 90%;
+  /* En mobile toma el 100% real; en pantallas anchas escala hasta un máximo seguro */
   width: 100%;
+  max-width: 90%;
   margin: 0 auto;
-  padding: 0 1.5rem 3rem;
+  /* Padding fluido: 1rem (16px) en 360px -> 2.5rem en desktop */
+  padding: clamp(1rem, 0.65rem + 1.5vw, 2.5rem) clamp(0.75rem, 0.45rem + 1.2vw, 2rem) clamp(2rem, 1.5rem + 2vw, 3.5rem);
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
 }
 
-/* Luces difusas en esquinas que eliminan el negro plano de los laterales */
+/* Luces difusas en esquinas: limitadas en ancho/offset para no desbordar en mobile */
 .mainContent::before {
   content: '';
   position: fixed;
   top: 10%;
-  left: -150px;
-  width: 600px;
-  height: 600px;
+  left: clamp(-150px, -10vw, -40px);
+  width: clamp(18rem, 35vw, 37.5rem);
+  height: clamp(18rem, 35vw, 37.5rem);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(139, 92, 246, 0.16) 0%, rgba(99, 102, 241, 0.05) 50%, transparent 75%);
-  filter: blur(100px);
+  filter: blur(clamp(50px, 6vw, 100px));
   pointer-events: none;
   z-index: -1;
 }
@@ -35,46 +43,34 @@
   content: '';
   position: fixed;
   top: 20%;
-  right: -150px;
-  width: 650px;
-  height: 650px;
+  right: clamp(-150px, -10vw, -40px);
+  width: clamp(18rem, 38vw, 40rem);
+  height: clamp(18rem, 38vw, 40rem);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(6, 182, 212, 0.14) 0%, rgba(139, 92, 246, 0.04) 55%, transparent 75%);
-  filter: blur(110px);
+  filter: blur(clamp(55px, 6vw, 110px));
   pointer-events: none;
   z-index: -1;
 }
 
-
-@media (min-width: 640px) {
-  .mainContent {
-    padding: 2rem 0;
-  }
-}
-
-@media (min-width: 1024px) {
-  .mainContent {
-    padding: 2.5rem 0;
-  }
-}
-
 /* Placeholder temporal para steps no modularizados */
 .previewPlaceholder {
-  border-radius: var(--radius-xl);
-  background: var(--color-card);
-  border: 1px dashed var(--border-default);
-  padding: 3rem 1.5rem;
+  border-radius: var(--radius-xl, 1rem);
+  background: var(--color-card, rgba(13, 17, 26, 0.7));
+  border: 1px dashed var(--border-default, rgba(255, 255, 255, 0.12));
+  padding: clamp(1.75rem, 1.4rem + 1.5vw, 3rem) clamp(1rem, 0.8rem + 1vw, 1.5rem);
   text-align: center;
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .placeholderTag {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  background: var(--color-violet-bg);
-  color: var(--color-violet-300);
-  border: 1px solid var(--color-violet-border);
+  border-radius: var(--radius-full, 9999px);
+  background: var(--color-violet-bg, rgba(139, 92, 246, 0.15));
+  color: var(--color-violet-300, #c084fc);
+  border: 1px solid var(--color-violet-border, rgba(139, 92, 246, 0.35));
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -83,16 +79,16 @@
 }
 
 .placeholderTitle {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
+  font-family: var(--font-heading, "Syne", sans-serif);
+  font-size: clamp(1.2rem, 1.05rem + 0.65vw, 1.5rem);
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary, #ffffff);
   margin-bottom: 0.5rem;
 }
 
 .placeholderText {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
+  color: var(--color-text-muted, #94a3b8);
+  font-size: clamp(0.8rem, 0.77rem + 0.15vw, 0.875rem);
   max-width: 32rem;
   margin: 0 auto;
 }
@@ -100,106 +96,152 @@
 /* Footer Global */
 .footer {
   width: 100%;
-  border-top: 1px solid var(--border-subtle);
-  background-color: var(--color-bg-base);
-  padding: 1.5rem 0;
-  font-size: 0.75rem;
-  color: var(--color-text-subtle);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(6, 9, 17, 0.7);
+  padding: 1.25rem 0;
 }
 
 .footerContainer {
-  max-width: 90%;
+  width: 100%;
+  max-width: clamp(20rem, -0.077rem + 89.23vw, 107rem);
   margin: 0 auto;
-  padding: 0;
+  padding: 0 clamp(0.75rem, 0.45rem + 1.2vw, 2rem);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
- }
+  gap: 3rem;
+  box-sizing: border-box;
+}
 
-.footerBrand{
+.footerBrand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
 .isologoFooter {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
-img {
+.footer img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
-@media (min-width: 640px) {
-  .footerContainer {
-    flex-direction: row;
-    padding: 0;
-  }
+.brandDetails {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #e1cbcb);
+  line-height: 1.4;
 }
 
 .brandSign {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading, "Syne", sans-serif);
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--color-text-secondary);
+  color: #94A3B8;
+}
+
+.brandSubtext {
+  color: var(--color-text-muted, #94a3b8);
+  font-size: 0.75rem;
+}
+
+.brandSubtext strong {
+  color: #ffffff;
 }
 
 .footerLinks {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.dotDivider {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .trophyLink {
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, #cbd5e1);
   cursor: pointer;
-  transition: color var(--transition-fast);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  transition: color var(--transition-fast, 0.15s ease);
 }
 
 .trophyLink:hover {
-  color: var(--color-amber-400);
+  color: var(--color-amber-400, #fbbf24);
 }
 
 /* ==========================================================
-   SCROLLBAR GLOBAL CYBERPUNK / DARK-GLASS (SUTIL)
+   ADAPTACIÓN MOBILE (< 1045px)
 ========================================================== */
+@media (max-width: 1045px) {
+  .footerContainer {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 0.875rem;
+  }
 
-/* Ancho estilizado para WebKit (Chrome, Edge, Safari, Brave) */
+  .footerBrand {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .brandDetails {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .footerLinks {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 0.65rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* ==========================================================
+   SCROLLBAR GLOBAL
+========================================================== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-/* Pista de fondo: totalmente transparente para no generar franjas */
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* El tirador (thumb): translúcido, discreto y con bordes redondeados */
 ::-webkit-scrollbar-thumb {
-  background: rgba(147, 51, 234, 0.25); /* Violeta muy tenue */
+  background: rgba(147, 51, 234, 0.25);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
   transition: background 0.25s ease;
 }
 
-/* Al pasar el cursor por encima: se ilumina suavemente */
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(168, 85, 247, 0.55);
 }
 
-/* Al arrastrar el scroll */
 ::-webkit-scrollbar-thumb:active {
   background: rgba(192, 132, 252, 0.75);
 }
 
-/* Soporte nativo estándar para Firefox */
+/* Selector corregido para Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(147, 51, 234, 0.28) transparent;
