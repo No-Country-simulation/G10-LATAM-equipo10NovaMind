@@ -1,31 +1,22 @@
+/* ==========================================================
+   HERO ANIMACIÓN · SVG PIPELINE FLUIDO
+   Arquitectura clamp (1920px -> 360px) · Visibilidad nítida
+========================================================== */
+
 .lienzo {
   position: relative;
   width: 100%;
-  max-width: 520px;
+  max-width: clamp(19rem, 88vw, 32.5rem); /* Escala armónica entre 304px y 520px */
   height: auto;
   display: block;
   margin: 0 auto;
   pointer-events: none;
-  opacity: 0.95;
-  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.55));
-}
-
-@media (max-width: 1024px) {
-  .lienzo {
-    max-width: 440px;
-  }
-}
-
-@media (max-width: 900px) {
-  .lienzo {
-    max-width: 90%;
-    right: -10%;
-    opacity: 0.15;
-  }
+  opacity: 1; /* Completamente visible y sólido */
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.65));
 }
 
 .etiquetaPdf {
-  font-family: var(--font-body);
+  font-family: var(--font-body, sans-serif);
   font-weight: 700;
   font-size: 8.5px;
   fill: #ffffff;
@@ -33,7 +24,7 @@
 }
 
 .titulo {
-  font-family: var(--font-body);
+  font-family: var(--font-body, sans-serif);
   font-weight: 700;
   font-size: 12.5px;
   fill: #f8fafc;
@@ -47,24 +38,25 @@
 }
 
 .detalle {
-  font-family: var(--font-body);
+  font-family: var(--font-body, sans-serif);
   font-weight: 500;
   font-size: 9.5px;
   fill: #94a3b8;
 }
 
 .pregunta {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading, "Syne", sans-serif);
   font-weight: 800;
   font-size: 15px;
   fill: #fde047;
 }
 
+/* Tarjetas sólidas con fondo legible y borde iluminado */
 .fondoTarjeta {
   fill: #0c101c;
-  fill-opacity: 0.94;
-  stroke-width: 1.2;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+  fill-opacity: 0.96;
+  stroke-width: 1.4;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
 }
 
 /* Documento: micro-respiración y escáner láser */
@@ -72,7 +64,7 @@
   transform-box: fill-box;
   transform-origin: center;
   animation: respirar 8s ease-in-out infinite;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5));
 }
 
 .escaner {
@@ -137,7 +129,7 @@
 
 @keyframes encender {
   0% { opacity: 0; }
-  10%, 65% { opacity: 0.85; }
+  10%, 65% { opacity: 1; } /* Subido a 1 para total nitidez del trazo neón */
   80%, 100% { opacity: 0; }
 }
 
